@@ -7,7 +7,7 @@ Backend REST API pour application de gestion de recettes.
 - Spring Boot
 - Spring Security (JWT)
 - Spring Data JPA
-- MySQL
+- Posgres
 - Swagger
 
 ##  Authentification
