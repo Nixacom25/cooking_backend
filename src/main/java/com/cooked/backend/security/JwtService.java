@@ -3,7 +3,7 @@ package com.cooked.backend.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -13,10 +13,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import com.cooked.backend.repository.BlacklistedTokenRepository;
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class JwtService {
 
-    private final String SECRET_KEY = "my_super_secret_key_for_cooking_backend_application_2026_should_be_long_enough";
+    @Value("${jwt.secret:my_super_secret_key_for_cooking_backend_application_2026_should_be_long_enough}")
+    private String secretKey;
+
+    private final BlacklistedTokenRepository blacklistedTokenRepository;
 
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -36,22 +43,18 @@ public class JwtService {
                 .setClaims(extraClaims)
                 .setSubject(email)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 24 hours
+                // NOTE: token has no expiration per requirements
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String email = extractEmail(token);
-        return (email.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        return (email.equals(userDetails.getUsername())) && !isTokenBlacklisted(token);
     }
 
-    private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
-
-    private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+    public boolean isTokenBlacklisted(String token) {
+        return blacklistedTokenRepository.existsByToken(token);
     }
 
     private Claims extractAllClaims(String token) {
@@ -63,9 +66,6 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        // Since we are using a raw string key in this example, we just get bytes.
-        // For production, referencing a Base64 encoded key is better.
-        // Ensuring the key is long enough for HS256 (256 bits = 32 bytes).
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+        return io.jsonwebtoken.security.Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 }

@@ -1,11 +1,23 @@
 package com.cooked.backend.service;
 
-import com.cooked.backend.dto.request.LoginRequest;
-import com.cooked.backend.dto.request.RegisterRequest;
+import com.cooked.backend.dto.request.*;
 import com.cooked.backend.dto.response.AuthResponse;
+import com.cooked.backend.dto.response.MessageResponse;
 
 public interface AuthService {
-    AuthResponse register(RegisterRequest request);
+    Object register(RegisterRequest request);
 
-    AuthResponse authenticate(LoginRequest request);
+    AuthResponse verifyEmail(VerifyEmailRequest request);
+
+    MessageResponse resendCode(ResendCodeRequest request);
+
+    AuthResponse login(LoginRequest request);
+
+    MessageResponse logout(String token);
+
+    MessageResponse forgotPassword(ForgotPasswordRequest request);
+
+    MessageResponse verifyResetCode(VerifyResetCodeRequest request);
+
+    MessageResponse resetPassword(ResetPasswordRequest request);
 }

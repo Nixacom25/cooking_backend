@@ -13,13 +13,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class LoginRequest {
 
-    @Email
-    @NotBlank
-    private String email;
+    @NotBlank(message = "Identifier (email or phone) is required")
+    private String identifier;
 
-    @NotBlank
     private String password;
 
-    @NotBlank
-    private String role;
+    private String provider; // e.g. "LOCAL", "GOOGLE", "APPLE"
 }

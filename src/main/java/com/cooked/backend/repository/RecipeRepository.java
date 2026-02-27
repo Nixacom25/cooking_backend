@@ -1,17 +1,18 @@
 package com.cooked.backend.repository;
 
 import com.cooked.backend.entity.Recipe;
-import com.cooked.backend.entity.User;
-import com.cooked.backend.entity.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+import java.util.UUID;
 import java.util.List;
 
-public interface RecipeRepository extends JpaRepository<Recipe, Long> {
+@Repository
+public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
+    Optional<Recipe> findByUserIdAndName(UUID userId, String name);
 
-    List<Recipe> findByUser(User user);
+    boolean existsByUserIdAndName(UUID userId, String name);
 
-    List<Recipe> findByCategory(Category category);
-
-    List<Recipe> findByTitleContainingIgnoreCase(String title);
+    List<Recipe> findAllByUserId(UUID userId);
 }

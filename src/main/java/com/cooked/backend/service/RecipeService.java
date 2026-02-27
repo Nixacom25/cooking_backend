@@ -1,15 +1,18 @@
 package com.cooked.backend.service;
 
-import java.util.List;
-
-import com.cooked.backend.dto.request.RecipeRequest;
+import com.cooked.backend.dto.request.CreateRecipeRequest;
+import com.cooked.backend.dto.response.MessageResponse;
 import com.cooked.backend.dto.response.RecipeResponse;
 
+import java.util.List;
+import java.util.UUID;
+
 public interface RecipeService {
+    RecipeResponse create(String userEmail, CreateRecipeRequest request);
 
-    RecipeResponse create(RecipeRequest request, Long userId);
+    List<RecipeResponse> getMyRecipes(String userEmail);
 
-    List<RecipeResponse> getAll();
+    RecipeResponse getRecipe(UUID id, String userEmail);
 
-    void delete(Long id);
+    MessageResponse delete(UUID id, String userEmail);
 }
