@@ -19,6 +19,8 @@ public class CreateRecipeRequest {
     @Valid
     private List<IngredientPayload> ingredients;
 
+    private List<String> steps;
+
     // Optional: cookbooks to attach to upon creation
     private List<UUID> cookbookIds;
 }

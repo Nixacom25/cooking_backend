@@ -9,6 +9,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -41,6 +43,16 @@ public class Recipe {
 
     @Column(nullable = true)
     private Integer kcal;
+
+    @ElementCollection
+    @CollectionTable(name = "recipe_steps", joinColumns = @JoinColumn(name = "recipe_id"))
+    @Column(name = "step", length = 2000)
+    @Builder.Default
+    private List<String> steps = new ArrayList<>();
+
+    @Column(name = "is_public", nullable = false)
+    @Builder.Default
+    private boolean isPublic = false;
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RecipeIngredient> recipeIngredients;

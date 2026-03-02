@@ -16,6 +16,9 @@ public class RecipeResponse {
     private Integer cookTime;
     private Integer kcal;
     private List<RecipeIngredientResponse> ingredients;
+    private List<String> steps;
+    private boolean isPublic;
+    private boolean isFavorite;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -15,4 +15,14 @@ public interface RecipeService {
     RecipeResponse getRecipe(UUID id, String userEmail);
 
     MessageResponse delete(UUID id, String userEmail);
+
+    MessageResponse togglePublicVisibility(UUID id, String userEmail);
+
+    org.springframework.data.domain.Page<RecipeResponse> getExploreRecipes(
+            org.springframework.data.domain.Pageable pageable);
+
+    MessageResponse toggleFavorite(UUID id, String userEmail);
+
+    org.springframework.data.domain.Page<RecipeResponse> getFavoriteRecipes(String userEmail,
+            org.springframework.data.domain.Pageable pageable);
 }

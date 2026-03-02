@@ -14,6 +14,7 @@ import com.cooked.backend.repository.BlacklistedTokenRepository;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.repository.UserSubscriptionRepository;
 import com.cooked.backend.security.JwtService;
+import com.cooked.backend.service.ActivityLogService;
 import com.cooked.backend.service.AuthService;
 import com.cooked.backend.service.EmailService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Random;
@@ -36,8 +38,10 @@ public class AuthServiceImpl implements AuthService {
         private final EmailService emailService;
         private final BlacklistedTokenRepository blacklistedTokenRepository;
         private final UserSubscriptionRepository userSubscriptionRepository;
+        private final ActivityLogService activityLogService;
 
         @Override
+        @Transactional
         public Object register(RegisterRequest request) {
                 if (userRepository.existsByEmail(request.getEmail())) {
                         throw new EmailAlreadyExistsException("Email already exists");
@@ -94,8 +98,9 @@ public class AuthServiceImpl implements AuthService {
                                 .resendCount(0)
                                 .build();
 
-                userRepository.save(user);
+                User savedUser = userRepository.save(user);
 
+                // Assign 1 Month free trial
                 com.cooked.backend.entity.UserSubscription trialSubscription = com.cooked.backend.entity.UserSubscription
                                 .builder()
                                 .user(user)
@@ -106,7 +111,12 @@ public class AuthServiceImpl implements AuthService {
                                 .build();
                 userSubscriptionRepository.save(trialSubscription);
 
-                if (provider == Provider.LOCAL) {
+                // Track Registration Activity
+                activityLogService.logActivity(savedUser, "Account Created",
+                                "Welcome to Cooked! Your account has been successfully created.");
+
+                // If local, send verification email
+                if (request.getProvider() == null || request.getProvider().equalsIgnoreCase(Provider.LOCAL.name())) {
                         emailService.sendOtpEmail(user.getEmail(), otp);
                         return new MessageResponse("User registered successfully. Please verify your email.");
                 } else {
@@ -207,6 +217,8 @@ public class AuthServiceImpl implements AuthService {
                                 || "APPLE".equalsIgnoreCase(request.getProvider())) {
                         // Skip password check for simulated OAuth
                         String token = jwtService.generateToken(user.getEmail());
+                        activityLogService.logActivity(user, "Login Successful",
+                                        "User logged in via " + request.getProvider());
                         return new AuthResponse(token);
                 }
 
@@ -214,6 +226,7 @@ public class AuthServiceImpl implements AuthService {
                                 new UsernamePasswordAuthenticationToken(user.getEmail(), request.getPassword()));
 
                 String token = jwtService.generateToken(user.getEmail());
+                activityLogService.logActivity(user, "Login Successful", "User logged in successfully.");
                 return new AuthResponse(token);
         }
 
@@ -263,6 +276,7 @@ public class AuthServiceImpl implements AuthService {
                 userRepository.save(user);
 
                 emailService.sendOtpEmail(user.getEmail(), otp);
+                activityLogService.logActivity(user, "Forgot Password", "Password reset OTP requested.");
 
                 return new MessageResponse("Password reset OTP sent");
         }
@@ -288,6 +302,8 @@ public class AuthServiceImpl implements AuthService {
                 // Give them 15 minutes to use the reset window
                 user.setOtpExpiration(LocalDateTime.now().plusMinutes(15));
                 userRepository.save(user);
+                activityLogService.logActivity(user, "Password Reset Code Verified",
+                                "OTP for password reset successfully verified.");
 
                 return new MessageResponse("Code verified successfully. You can now reset your password.");
         }
@@ -310,11 +326,11 @@ public class AuthServiceImpl implements AuthService {
                 user.setPassword(passwordEncoder.encode(request.getNewPassword()));
                 user.setOtpCode(null);
                 user.setOtpExpiration(null);
-                user.setResendCount(0);
-                user.setLockoutUntil(null);
                 userRepository.save(user);
 
-                return new MessageResponse("Password reset successfully");
+                activityLogService.logActivity(user, "Password Changed", "Your password has been successfully reset.");
+
+                return new MessageResponse("Password reset successful.");
         }
 
         private String generateOtp() {

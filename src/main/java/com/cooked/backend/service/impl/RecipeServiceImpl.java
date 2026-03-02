@@ -10,6 +10,7 @@ import com.cooked.backend.exception.BadRequestException;
 import com.cooked.backend.exception.ResourceNotFoundException;
 import com.cooked.backend.repository.*;
 import com.cooked.backend.service.RecipeService;
+import com.cooked.backend.service.ActivityLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,8 @@ public class RecipeServiceImpl implements RecipeService {
     private final UserRepository userRepository;
     private final IngredientRepository ingredientRepository;
     private final CookbookRepository cookbookRepository;
+    private final ActivityLogService activityLogService;
+    private final FavoriteRecipeRepository favoriteRecipeRepository;
 
     @Override
     @Transactional
@@ -42,6 +45,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .image(request.getImage())
                 .cookTime(request.getCookTime())
                 .kcal(request.getKcal())
+                .steps(request.getSteps() != null ? request.getSteps() : new java.util.ArrayList<>())
                 .build();
 
         // Handle Cookbook Links
@@ -88,7 +92,9 @@ public class RecipeServiceImpl implements RecipeService {
             cookbookRepository.save(cb);
         }
 
-        return mapToResponse(savedRecipe);
+        activityLogService.logActivity(user, "New Recipe", "You created the recipe '" + savedRecipe.getName() + "'.");
+
+        return mapToResponse(savedRecipe, user);
     }
 
     @Override
@@ -97,7 +103,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return recipeRepository.findAllByUserId(user.getId()).stream()
-                .map(this::mapToResponse)
+                .map(recipe -> mapToResponse(recipe, user))
                 .collect(Collectors.toList());
     }
 
@@ -106,16 +112,12 @@ public class RecipeServiceImpl implements RecipeService {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
 
-        if (!recipe.getUser().getEmail().equals(userEmail)) {
-            // "si un autre cree le meme nom cela doit pas lui affiché erreur"
-            // So everyone's recipes are their own. We just restrict viewing to own for now,
-            // or public?
-            // The prompt says uniqueness is per-client, doesn't explicitly restrict
-            // viewing, but generally you only see your own in a dashboard.
+        if (!recipe.getUser().getEmail().equals(userEmail) && !recipe.isPublic()) {
             throw new BadRequestException("You do not have permission to view this recipe.");
         }
 
-        return mapToResponse(recipe);
+        User user = userRepository.findByEmail(userEmail).orElse(null);
+        return mapToResponse(recipe, user);
     }
 
     @Override
@@ -138,7 +140,71 @@ public class RecipeServiceImpl implements RecipeService {
         return new MessageResponse("Recipe deleted successfully.");
     }
 
-    private RecipeResponse mapToResponse(Recipe recipe) {
+    @Override
+    @Transactional
+    public MessageResponse togglePublicVisibility(UUID id, String userEmail) {
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
+
+        if (!recipe.getUser().getEmail().equals(userEmail)) {
+            throw new BadRequestException("You do not have permission to modify this recipe.");
+        }
+
+        recipe.setPublic(!recipe.isPublic());
+        recipeRepository.save(recipe);
+
+        String status = recipe.isPublic() ? "public" : "private";
+        return new MessageResponse("Recipe is now " + status);
+    }
+
+    @Override
+    public org.springframework.data.domain.Page<RecipeResponse> getExploreRecipes(
+            org.springframework.data.domain.Pageable pageable) {
+        return recipeRepository.findByIsPublicTrue(pageable)
+                .map(recipe -> mapToResponse(recipe, null));
+    }
+
+    @Override
+    @Transactional
+    public MessageResponse toggleFavorite(UUID id, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
+
+        if (!recipe.isPublic() && !recipe.getUser().getId().equals(user.getId())) {
+            throw new BadRequestException("You cannot favorite a private recipe that is not yours.");
+        }
+
+        Optional<FavoriteRecipe> existing = favoriteRecipeRepository.findByUserAndRecipe(user, recipe);
+        if (existing.isPresent()) {
+            favoriteRecipeRepository.delete(existing.get());
+            return new MessageResponse("Recipe removed from favorites");
+        } else {
+            FavoriteRecipe favorite = FavoriteRecipe.builder()
+                    .user(user)
+                    .recipe(recipe)
+                    .build();
+            favoriteRecipeRepository.save(favorite);
+            return new MessageResponse("Recipe added to favorites");
+        }
+    }
+
+    @Override
+    public org.springframework.data.domain.Page<RecipeResponse> getFavoriteRecipes(String userEmail,
+            org.springframework.data.domain.Pageable pageable) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return favoriteRecipeRepository.findByUserOrderByCreatedAtDesc(user, pageable)
+                .map(fav -> mapToResponse(fav.getRecipe(), user));
+    }
+
+    private RecipeResponse mapToResponse(Recipe recipe, User user) {
+        boolean isFavorite = false;
+        if (user != null) {
+            isFavorite = favoriteRecipeRepository.existsByUserAndRecipe(user, recipe);
+        }
+
         List<RecipeIngredientResponse> ingResponses = recipe.getRecipeIngredients() == null ? Collections.emptyList()
                 : recipe.getRecipeIngredients().stream().map(ri -> RecipeIngredientResponse.builder()
                         .id(ri.getIngredient().getId())
@@ -154,6 +220,9 @@ public class RecipeServiceImpl implements RecipeService {
                 .cookTime(recipe.getCookTime())
                 .kcal(recipe.getKcal())
                 .ingredients(ingResponses)
+                .steps(recipe.getSteps())
+                .isPublic(recipe.isPublic())
+                .isFavorite(isFavorite)
                 .createdAt(recipe.getCreatedAt())
                 .updatedAt(recipe.getUpdatedAt())
                 .build();

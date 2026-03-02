@@ -12,6 +12,7 @@ import com.cooked.backend.repository.SubscriptionPlanRepository;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.repository.UserSubscriptionRepository;
 import com.cooked.backend.service.SubscriptionService;
+import com.cooked.backend.service.ActivityLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final SubscriptionPlanRepository planRepository;
     private final UserSubscriptionRepository userSubscriptionRepository;
     private final UserRepository userRepository;
+    private final ActivityLogService activityLogService;
 
     @Override
     public SubscriptionPlan getPlan() {
@@ -97,8 +99,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         userSubscriptionRepository.save(subscription);
 
-        return new MessageResponse(
-                "Payment successful! Subscription updated until " + subscription.getEndDate().toLocalDate());
+        activityLogService.logActivity(user, "Subscription Successful",
+                "Your subscription has been extended. Thank you for using Cooked!");
+
+        return new MessageResponse("Payment successful, subscription activated/renewed.");
     }
 
     @Override

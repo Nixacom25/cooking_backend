@@ -15,4 +15,6 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
     boolean existsByUserIdAndName(UUID userId, String name);
 
     List<Recipe> findAllByUserId(UUID userId);
+
+    org.springframework.data.domain.Page<Recipe> findByIsPublicTrue(org.springframework.data.domain.Pageable pageable);
 }

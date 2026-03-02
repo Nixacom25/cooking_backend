@@ -62,6 +62,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public MessageResponse updatePreferences(String email,
+            com.cooked.backend.dto.request.UpdatePreferencesRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setDietaryPreferences(request.getDietaryPreferences());
+        user.setAllergies(request.getAllergies());
+        userRepository.save(user);
+
+        return new MessageResponse("Preferences updated successfully");
+    }
+
+    @Override
     public MessageResponse updatePassword(String email, UpdatePasswordRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));

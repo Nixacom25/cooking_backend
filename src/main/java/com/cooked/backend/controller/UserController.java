@@ -42,6 +42,12 @@ public class UserController {
         return ResponseEntity.ok(userService.updateCurrentUser(authentication.getName(), request));
     }
 
+    @PutMapping("/me/preferences")
+    public ResponseEntity<MessageResponse> updatePreferences(Authentication authentication,
+            @Valid @RequestBody com.cooked.backend.dto.request.UpdatePreferencesRequest request) {
+        return ResponseEntity.ok(userService.updatePreferences(authentication.getName(), request));
+    }
+
     @PutMapping("/password-reset")
     public ResponseEntity<MessageResponse> updatePassword(Authentication authentication,
             @Valid @RequestBody UpdatePasswordRequest request) {

@@ -13,6 +13,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -61,10 +62,23 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Status status;
 
+    @ElementCollection
+    @CollectionTable(name = "user_dietary_preferences", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "preference")
+    @Builder.Default
+    private List<String> dietaryPreferences = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "user_allergies", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "allergy")
+    @Builder.Default
+    private List<String> allergies = new ArrayList<>();
+
     private String photo;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private Provider provider = Provider.LOCAL;
 
     private String providerId;
@@ -73,6 +87,7 @@ public class User implements UserDetails {
     private LocalDateTime otpExpiration;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer resendCount = 0;
 
     private LocalDateTime lockoutUntil;

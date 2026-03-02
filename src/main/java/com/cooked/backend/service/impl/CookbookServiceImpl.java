@@ -10,6 +10,7 @@ import com.cooked.backend.exception.ResourceNotFoundException;
 import com.cooked.backend.repository.CookbookRepository;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.service.CookbookService;
+import com.cooked.backend.service.ActivityLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,7 @@ public class CookbookServiceImpl implements CookbookService {
 
     private final CookbookRepository cookbookRepository;
     private final UserRepository userRepository;
+    private final ActivityLogService activityLogService;
 
     @Override
     public CookbookResponse create(String userEmail, CreateCookbookRequest request) {
@@ -34,14 +36,18 @@ public class CookbookServiceImpl implements CookbookService {
             throw new BadRequestException("You already have a cookbook named '" + request.getName() + "'.");
         }
 
-        Cookbook cookbook = Cookbook.builder()
+        Cookbook cb = Cookbook.builder()
                 .user(user)
                 .name(request.getName())
                 // recipes will be initialized when recipes are added
                 .build();
 
-        Cookbook saved = cookbookRepository.save(cookbook);
-        return mapToResponse(saved);
+        Cookbook savedCb = cookbookRepository.save(cb);
+
+        activityLogService.logActivity(user, "Cookbook Created",
+                "Successfully created cookbook named '" + request.getName() + "'.");
+
+        return mapToResponse(savedCb);
     }
 
     @Override

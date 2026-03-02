@@ -16,6 +16,8 @@ public interface UserService {
 
     UserResponse updateCurrentUser(String email, UpdateUserRequest request);
 
+    MessageResponse updatePreferences(String email, com.cooked.backend.dto.request.UpdatePreferencesRequest request);
+
     MessageResponse updatePassword(String email, UpdatePasswordRequest request);
 
     MessageResponse uploadProfilePhoto(String email, org.springframework.web.multipart.MultipartFile file);
