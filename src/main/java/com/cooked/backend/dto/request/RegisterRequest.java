@@ -38,4 +38,27 @@ public class RegisterRequest {
 
     @Parameter(description = "Provider (LOCAL, GOOGLE, APPLE)")
     private String provider; // e.g. "LOCAL", "GOOGLE", "APPLE"
+
+    @Parameter(description = "Discovery source (social, friend, etc.)")
+    private String discoverySource;
+
+    @Parameter(description = "Other discovery source details")
+    private String otherDiscoverySource;
+
+    private java.util.List<String> dietaryPreferences;
+    private java.util.List<String> allergies;
+    private java.util.List<String> foodDislikes;
+    private java.util.Map<String, Integer> flavorDna;
+    private String spiceLevel;
+    private String cookingSkill;
+    private String cookingTimePreference;
+    private String cookingFrequency;
+    private String cookingTarget;
+    private java.util.List<String> favoriteCuisines;
+    private java.util.List<String> kitchenAppliances;
+    private String mealPlanningStyle;
+    private java.util.List<String> notificationPreferences;
+    private java.util.List<String> onboardingGoals;
+    private Integer onboardingRating;
+    private String onboardingFeedback;
 }

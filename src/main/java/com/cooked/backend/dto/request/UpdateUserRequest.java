@@ -11,6 +11,8 @@ public class UpdateUserRequest {
     @NotBlank
     private String lastname;
 
-    @NotBlank
     private String phone;
+
+    private String discoverySource;
+    private String otherDiscoverySource;
 }

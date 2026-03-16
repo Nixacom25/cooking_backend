@@ -124,7 +124,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .monthlyPrice(BigDecimal.valueOf(20))
                 .yearlyPrice(BigDecimal.valueOf(200))
                 .yearlyDiscountPercentage(16.67) // Approximate savings
-                .trialDays(30)
+                .trialDays(3)
                 .build();
         return planRepository.save(plan);
     }

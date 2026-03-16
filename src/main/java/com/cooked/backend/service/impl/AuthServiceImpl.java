@@ -46,7 +46,11 @@ public class AuthServiceImpl implements AuthService {
                 if (userRepository.existsByEmail(request.getEmail())) {
                         throw new EmailAlreadyExistsException("Email already exists");
                 }
-                if (request.getPhone() != null && userRepository.existsByPhone(request.getPhone())) {
+                String phone = (request.getPhone() != null && !request.getPhone().trim().isEmpty())
+                                ? request.getPhone().trim()
+                                : null;
+
+                if (phone != null && userRepository.existsByPhone(phone)) {
                         throw new BadRequestException("Phone number already exists");
                 }
 
@@ -62,9 +66,6 @@ public class AuthServiceImpl implements AuthService {
                 if (provider == Provider.LOCAL) {
                         if (request.getPassword() == null || request.getPassword().isEmpty()) {
                                 throw new BadRequestException("Password is required for local registration");
-                        }
-                        if (request.getPhone() == null || request.getPhone().isEmpty()) {
-                                throw new BadRequestException("Phone is required for local registration");
                         }
                 } else {
                         if (request.getFirstname() == null || request.getFirstname().isEmpty()) {
@@ -96,6 +97,35 @@ public class AuthServiceImpl implements AuthService {
                                 .otpCode(provider == Provider.LOCAL ? otp : null)
                                 .otpExpiration(provider == Provider.LOCAL ? LocalDateTime.now().plusMinutes(15) : null)
                                 .resendCount(0)
+                                .discoverySource(request.getDiscoverySource())
+                                .otherDiscoverySource(request.getOtherDiscoverySource())
+                                .dietaryPreferences(request.getDietaryPreferences() != null
+                                                ? request.getDietaryPreferences()
+                                                : new java.util.ArrayList<>())
+                                .allergies(request.getAllergies() != null ? request.getAllergies()
+                                                : new java.util.ArrayList<>())
+                                .foodDislikes(request.getFoodDislikes() != null ? request.getFoodDislikes()
+                                                : new java.util.ArrayList<>())
+                                .flavorDna(request.getFlavorDna() != null ? request.getFlavorDna()
+                                                : new java.util.HashMap<>())
+                                .spiceLevel(request.getSpiceLevel())
+                                .cookingSkill(request.getCookingSkill())
+                                .cookingTimePreference(request.getCookingTimePreference())
+                                .cookingFrequency(request.getCookingFrequency())
+                                .cookingTarget(request.getCookingTarget())
+                                .favoriteCuisines(request.getFavoriteCuisines() != null ? request.getFavoriteCuisines()
+                                                : new java.util.ArrayList<>())
+                                .kitchenAppliances(
+                                                request.getKitchenAppliances() != null ? request.getKitchenAppliances()
+                                                                : new java.util.ArrayList<>())
+                                .mealPlanningStyle(request.getMealPlanningStyle())
+                                .notificationPreferences(request.getNotificationPreferences() != null
+                                                ? request.getNotificationPreferences()
+                                                : new java.util.ArrayList<>())
+                                .onboardingGoals(request.getOnboardingGoals() != null ? request.getOnboardingGoals()
+                                                : new java.util.ArrayList<>())
+                                .onboardingRating(request.getOnboardingRating())
+                                .onboardingFeedback(request.getOnboardingFeedback())
                                 .build();
 
                 User savedUser = userRepository.save(user);
@@ -105,7 +135,7 @@ public class AuthServiceImpl implements AuthService {
                                 .builder()
                                 .user(user)
                                 .startDate(LocalDateTime.now())
-                                .endDate(LocalDateTime.now().plusDays(30))
+                                .endDate(LocalDateTime.now().plusDays(3))
                                 .status(com.cooked.backend.entity.SubscriptionStatus.TRIAL)
                                 .isYearly(false)
                                 .build();

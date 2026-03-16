@@ -14,4 +14,18 @@ import java.util.List;
 public class UpdatePreferencesRequest {
     private List<String> dietaryPreferences;
     private List<String> allergies;
+    private List<String> foodDislikes;
+    private java.util.Map<String, Integer> flavorDna;
+    private String spiceLevel;
+    private String cookingSkill;
+    private String cookingTimePreference;
+    private String cookingFrequency;
+    private String cookingTarget;
+    private List<String> favoriteCuisines;
+    private List<String> kitchenAppliances;
+    private String mealPlanningStyle;
+    private List<String> notificationPreferences;
+    private List<String> onboardingGoals;
+    private Integer onboardingRating;
+    private String onboardingFeedback;
 }

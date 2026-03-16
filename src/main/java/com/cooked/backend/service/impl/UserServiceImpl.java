@@ -56,6 +56,8 @@ public class UserServiceImpl implements UserService {
         user.setFirstname(request.getFirstname());
         user.setLastname(request.getLastname());
         user.setPhone(request.getPhone());
+        user.setDiscoverySource(request.getDiscoverySource());
+        user.setOtherDiscoverySource(request.getOtherDiscoverySource());
         userRepository.save(user);
 
         return userMapper.toResponse(user);
@@ -69,6 +71,20 @@ public class UserServiceImpl implements UserService {
 
         user.setDietaryPreferences(request.getDietaryPreferences());
         user.setAllergies(request.getAllergies());
+        user.setFoodDislikes(request.getFoodDislikes());
+        user.setFlavorDna(request.getFlavorDna());
+        user.setSpiceLevel(request.getSpiceLevel());
+        user.setCookingSkill(request.getCookingSkill());
+        user.setCookingTimePreference(request.getCookingTimePreference());
+        user.setCookingFrequency(request.getCookingFrequency());
+        user.setCookingTarget(request.getCookingTarget());
+        user.setFavoriteCuisines(request.getFavoriteCuisines());
+        user.setKitchenAppliances(request.getKitchenAppliances());
+        user.setMealPlanningStyle(request.getMealPlanningStyle());
+        user.setNotificationPreferences(request.getNotificationPreferences());
+        user.setOnboardingGoals(request.getOnboardingGoals());
+        user.setOnboardingRating(request.getOnboardingRating());
+        user.setOnboardingFeedback(request.getOnboardingFeedback());
         userRepository.save(user);
 
         return new MessageResponse("Preferences updated successfully");
@@ -181,6 +197,8 @@ public class UserServiceImpl implements UserService {
         user.setFirstname(request.getFirstname());
         user.setLastname(request.getLastname());
         user.setPhone(request.getPhone());
+        user.setDiscoverySource(request.getDiscoverySource());
+        user.setOtherDiscoverySource(request.getOtherDiscoverySource());
         userRepository.save(user);
 
         return userMapper.toResponse(user);

@@ -1,9 +1,11 @@
 package com.cooked.backend.controller;
 
+import com.cooked.backend.dto.request.AiRecipeGenerationRequest;
 import com.cooked.backend.dto.request.CreateRecipeRequest;
+import com.cooked.backend.dto.response.AiIngredientDetectionResponse;
 import com.cooked.backend.dto.response.MessageResponse;
 import com.cooked.backend.dto.response.RecipeResponse;
-import com.cooked.backend.service.OpenAiService;
+import com.cooked.backend.service.AiService;
 import com.cooked.backend.service.RecipeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -27,7 +29,7 @@ import java.util.UUID;
 public class RecipeController {
 
     private final RecipeService recipeService;
-    private final OpenAiService openAiService;
+    private final AiService aiService;
 
     @Operation(summary = "Import Recipe via Link (AI)")
     @PostMapping("/import")
@@ -37,17 +39,32 @@ public class RecipeController {
         if (url == null || url.isBlank()) {
             throw new com.cooked.backend.exception.BadRequestException("URL is required");
         }
-        return ResponseEntity.ok(openAiService.extractRecipeFromLink(url, auth.getName()));
+        return ResponseEntity.ok(aiService.extractRecipeFromLink(url, auth.getName()));
     }
 
-    @Operation(summary = "Scan Recipe via Image (AI)")
-    @PostMapping(value = "/scan", consumes = "multipart/form-data")
-    public ResponseEntity<CreateRecipeRequest> scanRecipeViaImage(@RequestParam("file") MultipartFile file,
+    @Operation(summary = "Detect Ingredients from Image (AI)")
+    @PostMapping(value = "/detect-ingredients", consumes = "multipart/form-data")
+    public ResponseEntity<AiIngredientDetectionResponse> detectIngredients(@RequestParam("file") MultipartFile file,
             Authentication auth) {
         if (file.isEmpty()) {
             throw new com.cooked.backend.exception.BadRequestException("Image file is required");
         }
-        return ResponseEntity.ok(openAiService.extractRecipeFromImage(file, auth.getName()));
+        return ResponseEntity.ok(aiService.detectIngredients(file, auth.getName()));
+    }
+
+    @Operation(summary = "Generate Recipes from Ingredients (AI)")
+    @PostMapping("/generate-ai-recipes")
+    public ResponseEntity<List<CreateRecipeRequest>> generateAiRecipes(
+            @Valid @RequestBody AiRecipeGenerationRequest request,
+            Authentication auth) {
+        return ResponseEntity.ok(aiService.generateRecipes(request, auth.getName()));
+    }
+
+    @Operation(summary = "Scan Recipe via Image (Deprecated)")
+    @PostMapping(value = "/scan", consumes = "multipart/form-data")
+    public ResponseEntity<AiIngredientDetectionResponse> scanRecipeViaImage(@RequestParam("file") MultipartFile file,
+            Authentication auth) {
+        return detectIngredients(file, auth);
     }
 
     @Operation(summary = "Create a new recipe")
