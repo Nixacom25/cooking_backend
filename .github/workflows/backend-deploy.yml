@@ -41,7 +41,12 @@ jobs:
     - name: Trigger Render Deploy
       if: github.event_name == 'push'
       run: |
-         curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+          echo "ERROR: RENDER_DEPLOY_HOOK_URL is not set. Skipping deploy trigger."
+          echo "Please add it to your GitHub Repository Secrets."
+          exit 1
+        fi
+        curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
 
   # Example Deployment to a VPS via SSH
   # deploy:
