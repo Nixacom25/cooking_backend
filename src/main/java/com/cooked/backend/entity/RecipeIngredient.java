@@ -1,10 +1,7 @@
 package com.cooked.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -25,10 +22,14 @@ public class RecipeIngredient {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recipe_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Recipe recipe;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ingredient_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Ingredient ingredient;
 
     @Column(nullable = false)

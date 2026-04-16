@@ -20,13 +20,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.cooked.backend.service.CloudinaryService;
 
 import java.util.UUID;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -36,6 +33,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final CloudinaryService cloudinaryService;
 
     @Override
     public UserResponse getCurrentUser(String email) {
@@ -49,7 +47,9 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (!user.getPhone().equals(request.getPhone()) && userRepository.existsByPhone(request.getPhone())) {
+        if (request.getPhone() != null && !request.getPhone().isEmpty() &&
+                !java.util.Objects.equals(user.getPhone(), request.getPhone()) &&
+                userRepository.existsByPhone(request.getPhone())) {
             throw new BadRequestException("Phone number already exists");
         }
 
@@ -58,6 +58,10 @@ public class UserServiceImpl implements UserService {
         user.setPhone(request.getPhone());
         user.setDiscoverySource(request.getDiscoverySource());
         user.setOtherDiscoverySource(request.getOtherDiscoverySource());
+        user.setLanguage(request.getLanguage());
+        user.setCountry(request.getCountry());
+        user.setAlternativeRegion(request.getAlternativeRegion());
+        user.setMeasurementSystem(request.getMeasurementSystem());
         userRepository.save(user);
 
         return userMapper.toResponse(user);
@@ -72,6 +76,10 @@ public class UserServiceImpl implements UserService {
         user.setDietaryPreferences(request.getDietaryPreferences());
         user.setAllergies(request.getAllergies());
         user.setFoodDislikes(request.getFoodDislikes());
+        user.setLanguage(request.getLanguage());
+        user.setCountry(request.getCountry());
+        user.setAlternativeRegion(request.getAlternativeRegion());
+        user.setMeasurementSystem(request.getMeasurementSystem());
         user.setFlavorDna(request.getFlavorDna());
         user.setSpiceLevel(request.getSpiceLevel());
         user.setCookingSkill(request.getCookingSkill());
@@ -190,7 +198,9 @@ public class UserServiceImpl implements UserService {
             throw new BadRequestException("User is not a " + expectedRole.name());
         }
 
-        if (!user.getPhone().equals(request.getPhone()) && userRepository.existsByPhone(request.getPhone())) {
+        if (request.getPhone() != null && !request.getPhone().isEmpty() &&
+                !java.util.Objects.equals(user.getPhone(), request.getPhone()) &&
+                userRepository.existsByPhone(request.getPhone())) {
             throw new BadRequestException("Phone number already exists");
         }
 
@@ -199,6 +209,8 @@ public class UserServiceImpl implements UserService {
         user.setPhone(request.getPhone());
         user.setDiscoverySource(request.getDiscoverySource());
         user.setOtherDiscoverySource(request.getOtherDiscoverySource());
+        user.setLanguage(request.getLanguage());
+        user.setCountry(request.getCountry());
         userRepository.save(user);
 
         return userMapper.toResponse(user);
@@ -214,21 +226,13 @@ public class UserServiceImpl implements UserService {
         }
 
         try {
-            String uploadDir = "uploads/profiles/";
-            Path uploadPath = Paths.get(uploadDir);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-            String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-            Path filePath = uploadPath.resolve(filename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            user.setPhoto("/" + uploadDir + filename);
+            String photoUrl = cloudinaryService.upload(file);
+            user.setPhoto(photoUrl);
             userRepository.save(user);
 
             return new MessageResponse("Profile photo updated successfully");
         } catch (IOException e) {
-            throw new RuntimeException("Could not store file", e);
+            throw new RuntimeException("Could not store file to Cloudinary", e);
         }
     }
 }

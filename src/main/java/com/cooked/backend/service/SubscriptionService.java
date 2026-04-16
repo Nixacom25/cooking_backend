@@ -15,5 +15,9 @@ public interface SubscriptionService {
 
     MessageResponse paySubscription(String userEmail, SubscriptionPaymentRequest request);
 
+    MessageResponse verifyReceipt(String userEmail, com.cooked.backend.dto.request.IapReceiptRequest request);
+
+    java.util.List<com.cooked.backend.dto.response.SubscriptionPaymentResponse> getPaymentHistory(String userEmail);
+
     void processExpiredSubscriptions();
 }

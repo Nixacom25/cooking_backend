@@ -19,6 +19,8 @@ public class UserResponse {
     private String profilePictureUrl;
     private String discoverySource;
     private String otherDiscoverySource;
+    private String language;
+    private String country;
     private java.util.List<String> dietaryPreferences;
     private java.util.List<String> allergies;
     private java.util.List<String> foodDislikes;

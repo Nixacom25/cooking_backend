@@ -60,11 +60,24 @@ public class RecipeController {
         return ResponseEntity.ok(aiService.generateRecipes(request, auth.getName()));
     }
 
-    @Operation(summary = "Scan Recipe via Image (Deprecated)")
+    @Operation(summary = "Scan Recipe via Image (Live)")
     @PostMapping(value = "/scan", consumes = "multipart/form-data")
-    public ResponseEntity<AiIngredientDetectionResponse> scanRecipeViaImage(@RequestParam("file") MultipartFile file,
+    public ResponseEntity<com.cooked.backend.dto.response.ScanResponse> scanRecipeViaImage(
+            @RequestParam("file") MultipartFile file,
             Authentication auth) {
-        return detectIngredients(file, auth);
+        return ResponseEntity.ok(aiService.scan(file, auth.getName()));
+    }
+
+    @Operation(summary = "Scan Typed Ingredients (AI)")
+    @PostMapping("/scan-typed")
+    public ResponseEntity<com.cooked.backend.dto.response.ScanResponse> scanTypedIngredients(
+            @RequestBody Map<String, List<String>> payload,
+            Authentication auth) {
+        List<String> ingredients = payload.get("ingredients");
+        if (ingredients == null || ingredients.isEmpty()) {
+            throw new com.cooked.backend.exception.BadRequestException("Ingredients list is required");
+        }
+        return ResponseEntity.ok(aiService.scanTyped(ingredients, auth.getName()));
     }
 
     @Operation(summary = "Create a new recipe")
@@ -121,5 +134,42 @@ public class RecipeController {
             @RequestParam(defaultValue = "10") int size) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
         return ResponseEntity.ok(recipeService.getFavoriteRecipes(auth.getName(), pageable));
+    }
+
+    @Operation(summary = "Get top creators based on recipe usage")
+    @GetMapping("/top-creators")
+    public ResponseEntity<org.springframework.data.domain.Page<com.cooked.backend.dto.response.CreatorResponse>> getTopCreators(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return ResponseEntity.ok(recipeService.getTopCreators(pageable));
+    }
+
+    @Operation(summary = "Get popular recipes based on usage")
+    @GetMapping("/popular")
+    public ResponseEntity<org.springframework.data.domain.Page<RecipeResponse>> getPopularRecipes(
+            @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return ResponseEntity.ok(recipeService.getPopularRecipes(category, email, pageable));
+    }
+
+    @Operation(summary = "Search recipes on the web")
+    @GetMapping("/web-search")
+    public ResponseEntity<List<Map<String, String>>> searchWeb(@RequestParam String query) {
+        return ResponseEntity.ok(aiService.searchWeb(query));
+    }
+
+    @Operation(summary = "Get user's recent imports")
+    @GetMapping("/imports")
+    public ResponseEntity<org.springframework.data.domain.Page<RecipeResponse>> getRecentImports(
+            Authentication auth,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return ResponseEntity.ok(recipeService.getRecentImports(auth.getName(), pageable));
     }
 }

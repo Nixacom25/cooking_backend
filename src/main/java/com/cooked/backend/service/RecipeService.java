@@ -8,21 +8,30 @@ import java.util.List;
 import java.util.UUID;
 
 public interface RecipeService {
-    RecipeResponse create(String userEmail, CreateRecipeRequest request);
+        RecipeResponse create(String userEmail, CreateRecipeRequest request);
 
-    List<RecipeResponse> getMyRecipes(String userEmail);
+        List<RecipeResponse> getMyRecipes(String userEmail);
 
-    RecipeResponse getRecipe(UUID id, String userEmail);
+        RecipeResponse getRecipe(UUID id, String userEmail);
 
-    MessageResponse delete(UUID id, String userEmail);
+        MessageResponse delete(UUID id, String userEmail);
 
-    MessageResponse togglePublicVisibility(UUID id, String userEmail);
+        MessageResponse togglePublicVisibility(UUID id, String userEmail);
 
-    org.springframework.data.domain.Page<RecipeResponse> getExploreRecipes(
-            org.springframework.data.domain.Pageable pageable);
+        org.springframework.data.domain.Page<RecipeResponse> getExploreRecipes(
+                        org.springframework.data.domain.Pageable pageable);
 
-    MessageResponse toggleFavorite(UUID id, String userEmail);
+        MessageResponse toggleFavorite(UUID id, String userEmail);
 
-    org.springframework.data.domain.Page<RecipeResponse> getFavoriteRecipes(String userEmail,
-            org.springframework.data.domain.Pageable pageable);
+        org.springframework.data.domain.Page<RecipeResponse> getFavoriteRecipes(String userEmail,
+                        org.springframework.data.domain.Pageable pageable);
+
+        org.springframework.data.domain.Page<com.cooked.backend.dto.response.CreatorResponse> getTopCreators(
+                        org.springframework.data.domain.Pageable pageable);
+
+        org.springframework.data.domain.Page<RecipeResponse> getPopularRecipes(String category, String userEmail,
+                        org.springframework.data.domain.Pageable pageable);
+
+        org.springframework.data.domain.Page<RecipeResponse> getRecentImports(String userEmail,
+                        org.springframework.data.domain.Pageable pageable);
 }

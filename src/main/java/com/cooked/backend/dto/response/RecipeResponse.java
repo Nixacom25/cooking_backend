@@ -15,10 +15,15 @@ public class RecipeResponse {
     private String image;
     private Integer cookTime;
     private Integer kcal;
+    private String category;
+    private Integer servings;
+    private String tips;
+    private RecipeCreatorResponse creator;
     private List<RecipeIngredientResponse> ingredients;
     private List<String> steps;
     private boolean isPublic;
     private boolean isFavorite;
+    private String sourceUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

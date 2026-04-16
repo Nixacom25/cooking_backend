@@ -15,6 +15,10 @@ public class UpdatePreferencesRequest {
     private List<String> dietaryPreferences;
     private List<String> allergies;
     private List<String> foodDislikes;
+    private String language;
+    private String country;
+    private String alternativeRegion;
+    private String measurementSystem;
     private java.util.Map<String, Integer> flavorDna;
     private String spiceLevel;
     private String cookingSkill;

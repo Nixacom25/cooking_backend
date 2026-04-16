@@ -15,11 +15,14 @@ public class CreateRecipeRequest {
     private String image;
     private Integer cookTime;
     private Integer kcal;
+    private Integer servings;
+    private String tips;
 
     @Valid
     private List<IngredientPayload> ingredients;
 
     private List<String> steps;
+    private String sourceUrl;
 
     // Optional: cookbooks to attach to upon creation
     private List<UUID> cookbookIds;

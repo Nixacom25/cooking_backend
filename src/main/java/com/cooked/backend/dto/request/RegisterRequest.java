@@ -19,7 +19,6 @@ public class RegisterRequest {
     private String firstname;
 
     @Parameter(description = "User's last name")
-    @NotBlank
     private String lastname;
 
     @Parameter(description = "User's phone number")
@@ -44,6 +43,11 @@ public class RegisterRequest {
 
     @Parameter(description = "Other discovery source details")
     private String otherDiscoverySource;
+
+    private String language;
+    private String country;
+    private String alternativeRegion;
+    private String measurementSystem;
 
     private java.util.List<String> dietaryPreferences;
     private java.util.List<String> allergies;

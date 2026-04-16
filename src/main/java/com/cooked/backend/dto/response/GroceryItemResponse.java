@@ -13,6 +13,8 @@ public class GroceryItemResponse {
     private UUID id;
     private IngredientResponse ingredient;
     private UUID recipeId; // Null if manual
+    private String recipeName;
+    private String recipeImage;
     private String quantity;
     private Boolean isBought;
     private LocalDate plannedDate;

@@ -3,6 +3,7 @@ package com.cooked.backend.service.impl;
 import com.cooked.backend.dto.request.CreateRecipeRequest;
 import com.cooked.backend.dto.request.IngredientPayload;
 import com.cooked.backend.dto.response.MessageResponse;
+import com.cooked.backend.dto.response.RecipeCreatorResponse;
 import com.cooked.backend.dto.response.RecipeIngredientResponse;
 import com.cooked.backend.dto.response.RecipeResponse;
 import com.cooked.backend.entity.*;
@@ -45,6 +46,9 @@ public class RecipeServiceImpl implements RecipeService {
                 .image(request.getImage())
                 .cookTime(request.getCookTime())
                 .kcal(request.getKcal())
+                .servings(request.getServings())
+                .tips(request.getTips())
+                .sourceUrl(request.getSourceUrl())
                 .steps(request.getSteps() != null ? request.getSteps() : new java.util.ArrayList<>())
                 .build();
 
@@ -160,7 +164,7 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     public org.springframework.data.domain.Page<RecipeResponse> getExploreRecipes(
             org.springframework.data.domain.Pageable pageable) {
-        return recipeRepository.findByIsPublicTrue(pageable)
+        return recipeRepository.findByIsPublicTrueOrderByCreatedAtDesc(pageable)
                 .map(recipe -> mapToResponse(recipe, null));
     }
 
@@ -199,6 +203,37 @@ public class RecipeServiceImpl implements RecipeService {
                 .map(fav -> mapToResponse(fav.getRecipe(), user));
     }
 
+    @Override
+    public org.springframework.data.domain.Page<com.cooked.backend.dto.response.CreatorResponse> getTopCreators(
+            org.springframework.data.domain.Pageable pageable) {
+        return recipeRepository.findTopCreators(pageable)
+                .map(r -> com.cooked.backend.dto.response.CreatorResponse.builder()
+                        .id(((User) r[0]).getId())
+                        .firstname(((User) r[0]).getFirstname())
+                        .lastname(((User) r[0]).getLastname())
+                        .photo(((User) r[0]).getPhoto())
+                        .publicRecipeCount((long) r[1])
+                        .totalUsageCount((long) r[2])
+                        .build());
+    }
+
+    @Override
+    public org.springframework.data.domain.Page<RecipeResponse> getPopularRecipes(String category, String userEmail,
+            org.springframework.data.domain.Pageable pageable) {
+        User user = userEmail != null ? userRepository.findByEmail(userEmail).orElse(null) : null;
+        return recipeRepository.findPopularRecipes(category, pageable)
+                .map(r -> mapToResponse((Recipe) r[0], user));
+    }
+
+    @Override
+    public org.springframework.data.domain.Page<RecipeResponse> getRecentImports(String userEmail,
+            org.springframework.data.domain.Pageable pageable) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return recipeRepository.findByUserIdAndSourceUrlIsNotNullOrderByCreatedAtDesc(user.getId(), pageable)
+                .map(recipe -> mapToResponse(recipe, user));
+    }
+
     private RecipeResponse mapToResponse(Recipe recipe, User user) {
         boolean isFavorite = false;
         if (user != null) {
@@ -219,10 +254,20 @@ public class RecipeServiceImpl implements RecipeService {
                 .image(recipe.getImage())
                 .cookTime(recipe.getCookTime())
                 .kcal(recipe.getKcal())
+                .category(recipe.getCategory())
+                .creator(RecipeCreatorResponse.builder()
+                        .id(recipe.getUser().getId())
+                        .firstname(recipe.getUser().getFirstname())
+                        .lastname(recipe.getUser().getLastname())
+                        .photo(recipe.getUser().getPhoto())
+                        .build())
                 .ingredients(ingResponses)
                 .steps(recipe.getSteps())
+                .servings(recipe.getServings())
+                .tips(recipe.getTips())
                 .isPublic(recipe.isPublic())
                 .isFavorite(isFavorite)
+                .sourceUrl(recipe.getSourceUrl())
                 .createdAt(recipe.getCreatedAt())
                 .updatedAt(recipe.getUpdatedAt())
                 .build();

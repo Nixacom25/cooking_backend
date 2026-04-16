@@ -50,4 +50,18 @@ public class SubscriptionController {
             @Valid @RequestBody SubscriptionPaymentRequest request) {
         return ResponseEntity.ok(subscriptionService.paySubscription(authentication.getName(), request));
     }
+
+    @Operation(summary = "Get user's subscription payment history")
+    @GetMapping("/history")
+    public ResponseEntity<java.util.List<com.cooked.backend.dto.response.SubscriptionPaymentResponse>> getHistory(
+            Authentication authentication) {
+        return ResponseEntity.ok(subscriptionService.getPaymentHistory(authentication.getName()));
+    }
+
+    @Operation(summary = "Verify Native IAP Receipt")
+    @PostMapping("/verify-receipt")
+    public ResponseEntity<MessageResponse> verifyReceipt(Authentication authentication,
+            @Valid @RequestBody com.cooked.backend.dto.request.IapReceiptRequest request) {
+        return ResponseEntity.ok(subscriptionService.verifyReceipt(authentication.getName(), request));
+    }
 }

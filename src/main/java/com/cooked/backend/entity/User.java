@@ -84,6 +84,11 @@ public class User implements UserDetails {
     private String discoverySource;
     private String otherDiscoverySource;
 
+    private String language;
+    private String country;
+    private String alternativeRegion;
+    private String measurementSystem;
+
     @ElementCollection
     @CollectionTable(name = "user_flavor_dna", joinColumns = @JoinColumn(name = "user_id"))
     @MapKeyColumn(name = "flavor_key")

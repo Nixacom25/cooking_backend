@@ -32,6 +32,13 @@ public class CookbookController {
         return ResponseEntity.ok(cookbookService.create(auth.getName(), request));
     }
 
+    @Operation(summary = "Update a Cookbook")
+    @PutMapping("/{id}")
+    public ResponseEntity<CookbookResponse> update(@PathVariable UUID id, Authentication auth,
+            @Valid @RequestBody CreateCookbookRequest request) {
+        return ResponseEntity.ok(cookbookService.update(id, auth.getName(), request));
+    }
+
     @Operation(summary = "Get all my Cookbooks")
     @GetMapping
     public ResponseEntity<List<CookbookResponse>> getMyCookbooks(Authentication auth) {

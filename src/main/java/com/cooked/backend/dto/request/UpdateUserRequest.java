@@ -15,4 +15,8 @@ public class UpdateUserRequest {
 
     private String discoverySource;
     private String otherDiscoverySource;
+    private String language;
+    private String country;
+    private String alternativeRegion;
+    private String measurementSystem;
 }

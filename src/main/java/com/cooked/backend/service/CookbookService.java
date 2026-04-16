@@ -10,6 +10,8 @@ import java.util.UUID;
 public interface CookbookService {
     CookbookResponse create(String userEmail, CreateCookbookRequest request);
 
+    CookbookResponse update(UUID id, String userEmail, CreateCookbookRequest request);
+
     List<CookbookResponse> getMyCookbooks(String userEmail);
 
     CookbookResponse getCookbook(UUID id, String userEmail);

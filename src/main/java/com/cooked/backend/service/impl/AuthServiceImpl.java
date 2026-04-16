@@ -26,7 +26,21 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Random;
+import com.cooked.backend.entity.DeviceSession;
+import com.cooked.backend.repository.DeviceSessionRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.beans.factory.annotation.Value;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import java.util.Collections;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -39,6 +53,13 @@ public class AuthServiceImpl implements AuthService {
         private final BlacklistedTokenRepository blacklistedTokenRepository;
         private final UserSubscriptionRepository userSubscriptionRepository;
         private final ActivityLogService activityLogService;
+        private final DeviceSessionRepository deviceSessionRepository;
+
+        @Value("${google.client.id:YOUR_GOOGLE_CLIENT_ID}")
+        private String googleClientId;
+
+        @Value("${apple.client.id:YOUR_APPLE_CLIENT_ID}")
+        private String appleClientId;
 
         @Override
         @Transactional
@@ -63,18 +84,20 @@ public class AuthServiceImpl implements AuthService {
                         }
                 }
 
+                String firstname = request.getFirstname();
+                String lastname = request.getLastname();
+
+                // Logic: If lastname is empty and firstname has multiple words, split it
+                if ((lastname == null || lastname.trim().isEmpty()) && firstname != null && firstname.trim().contains(" ")) {
+                        String trimmedName = firstname.trim();
+                        int lastSpaceIndex = trimmedName.lastIndexOf(" ");
+                        firstname = trimmedName.substring(0, lastSpaceIndex).trim();
+                        lastname = trimmedName.substring(lastSpaceIndex).trim();
+                }
+
                 if (provider == Provider.LOCAL) {
                         if (request.getPassword() == null || request.getPassword().isEmpty()) {
                                 throw new BadRequestException("Password is required for local registration");
-                        }
-                } else {
-                        if (request.getFirstname() == null || request.getFirstname().isEmpty()) {
-                                throw new BadRequestException(
-                                                "Firstname is required for " + provider.name() + " registration");
-                        }
-                        if (request.getLastname() == null || request.getLastname().isEmpty()) {
-                                throw new BadRequestException(
-                                                "Lastname is required for " + provider.name() + " registration");
                         }
                 }
 
@@ -85,8 +108,8 @@ public class AuthServiceImpl implements AuthService {
                 String otp = generateOtp();
 
                 var user = User.builder()
-                                .firstname(request.getFirstname())
-                                .lastname(request.getLastname())
+                                .firstname(firstname)
+                                .lastname(lastname)
                                 .phone(request.getPhone())
                                 .email(request.getEmail())
                                 .password(passwordEncoder.encode(password))
@@ -99,6 +122,10 @@ public class AuthServiceImpl implements AuthService {
                                 .resendCount(0)
                                 .discoverySource(request.getDiscoverySource())
                                 .otherDiscoverySource(request.getOtherDiscoverySource())
+                                .language(request.getLanguage())
+                                .country(request.getCountry())
+                                .alternativeRegion(request.getAlternativeRegion())
+                                .measurementSystem(request.getMeasurementSystem())
                                 .dietaryPreferences(request.getDietaryPreferences() != null
                                                 ? request.getDietaryPreferences()
                                                 : new java.util.ArrayList<>())
@@ -130,16 +157,8 @@ public class AuthServiceImpl implements AuthService {
 
                 User savedUser = userRepository.save(user);
 
-                // Assign 1 Month free trial
-                com.cooked.backend.entity.UserSubscription trialSubscription = com.cooked.backend.entity.UserSubscription
-                                .builder()
-                                .user(user)
-                                .startDate(LocalDateTime.now())
-                                .endDate(LocalDateTime.now().plusDays(3))
-                                .status(com.cooked.backend.entity.SubscriptionStatus.TRIAL)
-                                .isYearly(false)
-                                .build();
-                userSubscriptionRepository.save(trialSubscription);
+                // Assign default trial
+                assignTrial(savedUser);
 
                 // Track Registration Activity
                 activityLogService.logActivity(savedUser, "Account Created",
@@ -231,6 +250,69 @@ public class AuthServiceImpl implements AuthService {
         public AuthResponse login(LoginRequest request) {
                 User user;
 
+                // 1. Handle Social Providers First (Auto-registration supported)
+                if ("GOOGLE".equalsIgnoreCase(request.getProvider())) {
+                        try {
+                                GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(),
+                                                new GsonFactory())
+                                                .setAudience(Collections.singletonList(googleClientId))
+                                                .build();
+
+                                GoogleIdToken idToken = verifier.verify(request.getPassword()); // password field carries the idToken
+                                if (idToken != null) {
+                                        GoogleIdToken.Payload payload = idToken.getPayload();
+                                        String email = payload.getEmail();
+
+                                        user = userRepository.findByEmail(email).orElseGet(() -> {
+                                                log.info("Creating new user for social login: {}", email);
+                                                String firstname = (String) payload.get("given_name");
+                                                String lastname = (String) payload.get("family_name");
+
+                                                User newUser = User.builder()
+                                                                .email(email)
+                                                                .firstname(firstname != null && !firstname.isEmpty()
+                                                                                ? firstname
+                                                                                : "User")
+                                                                .lastname(lastname != null && !lastname.isEmpty() ? lastname
+                                                                                : "Cooked")
+                                                                .provider(Provider.GOOGLE)
+                                                                .status(Status.ACTIVE)
+                                                                .role(Role.CLIENT)
+                                                                .password(passwordEncoder
+                                                                                .encode(java.util.UUID.randomUUID().toString()))
+                                                                .build();
+                                                User savedUser = userRepository.save(newUser);
+
+                                                // Assign default trial for new social user
+                                                assignTrial(savedUser);
+                                                return savedUser;
+                                        });
+                                } else {
+                                        log.error("Google Token verification returned null for email provided");
+                                        throw new BadRequestException("Invalid Google Token");
+                                }
+                        } catch (Exception e) {
+                                log.error("Google Authentication failed: {}", e.getMessage(), e);
+                                throw new BadRequestException("Google Authentication failed: " + e.getMessage());
+                        }
+
+                        String token = jwtService.generateToken(user.getEmail());
+                        activityLogService.logActivity(user, "Login Successful", "User logged in via Google");
+                        recordSession(user, token);
+                        return new AuthResponse(token);
+                }
+
+                if ("APPLE".equalsIgnoreCase(request.getProvider())) {
+                        // Apple implementation... (omitted for brevity as it's currently a placeholder throwing error)
+                        throw new BadRequestException(
+                                        "Apple Login is currently being configured. Please use Google or Email.");
+                }
+
+                // 2. Handle Standard Login (Email/Phone + Password)
+                if (request.getIdentifier() == null || request.getIdentifier().trim().isEmpty()) {
+                        throw new BadRequestException("Email or phone is required");
+                }
+
                 if (request.getIdentifier().contains("@")) {
                         user = userRepository.findByEmail(request.getIdentifier())
                                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -243,20 +325,12 @@ public class AuthServiceImpl implements AuthService {
                         throw new BadRequestException("Please verify your account first or account is not active");
                 }
 
-                if ("GOOGLE".equalsIgnoreCase(request.getProvider())
-                                || "APPLE".equalsIgnoreCase(request.getProvider())) {
-                        // Skip password check for simulated OAuth
-                        String token = jwtService.generateToken(user.getEmail());
-                        activityLogService.logActivity(user, "Login Successful",
-                                        "User logged in via " + request.getProvider());
-                        return new AuthResponse(token);
-                }
-
                 authenticationManager.authenticate(
                                 new UsernamePasswordAuthenticationToken(user.getEmail(), request.getPassword()));
 
                 String token = jwtService.generateToken(user.getEmail());
                 activityLogService.logActivity(user, "Login Successful", "User logged in successfully.");
+                recordSession(user, token);
                 return new AuthResponse(token);
         }
 
@@ -270,6 +344,9 @@ public class AuthServiceImpl implements AuthService {
                                         .build();
                         blacklistedTokenRepository.save(blacklistedToken);
                 }
+
+                deviceSessionRepository.findByToken(token).ifPresent(deviceSessionRepository::delete);
+
                 return new MessageResponse("Logged out successfully");
         }
 
@@ -367,5 +444,68 @@ public class AuthServiceImpl implements AuthService {
                 Random random = new Random();
                 int otp = 100000 + random.nextInt(900000);
                 return String.valueOf(otp);
+        }
+
+        private void assignTrial(User user) {
+                com.cooked.backend.entity.UserSubscription trialSubscription = com.cooked.backend.entity.UserSubscription
+                                .builder()
+                                .user(user)
+                                .startDate(LocalDateTime.now())
+                                .endDate(LocalDateTime.now().plusDays(3))
+                                .status(com.cooked.backend.entity.SubscriptionStatus.TRIAL)
+                                .isYearly(false)
+                                .build();
+                userSubscriptionRepository.save(trialSubscription);
+        }
+
+        private void recordSession(User user, String token) {
+                try {
+                        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder
+                                        .getRequestAttributes();
+                        if (attrs != null) {
+                                HttpServletRequest req = attrs.getRequest();
+                                String userAgent = req.getHeader("User-Agent");
+                                String ipAddress = req.getHeader("X-Forwarded-For");
+                                if (ipAddress == null || ipAddress.isEmpty()) {
+                                        ipAddress = req.getRemoteAddr();
+                                } else {
+                                        ipAddress = ipAddress.split(",")[0].trim();
+                                }
+
+                                String deviceName = "Unknown Device";
+                                if (userAgent != null) {
+                                        if (userAgent.contains("iPhone"))
+                                                deviceName = "iPhone";
+                                        else if (userAgent.contains("Macintosh"))
+                                                deviceName = "MacBook";
+                                        else if (userAgent.contains("iPad"))
+                                                deviceName = "iPad";
+                                        else if (userAgent.contains("Android"))
+                                                deviceName = "Android Device";
+                                        else if (userAgent.contains("Windows"))
+                                                deviceName = "Windows PC";
+                                        else if (userAgent.contains("Linux"))
+                                                deviceName = "Linux PC";
+                                        else if (userAgent.contains("Dart") || userAgent.contains("Flutter"))
+                                                deviceName = "Cooked Mobile App";
+                                        else
+                                                deviceName = userAgent.length() > 30
+                                                                ? userAgent.substring(0, 30) + "..."
+                                                                : userAgent;
+                                }
+
+                                DeviceSession session = DeviceSession.builder()
+                                                .user(user)
+                                                .deviceName(deviceName)
+                                                .ipAddress(ipAddress != null ? ipAddress : "Unknown")
+                                                .location("Unknown Location")
+                                                .token(token)
+                                                .build();
+
+                                deviceSessionRepository.save(session);
+                        }
+                } catch (Exception e) {
+                        // Ignore failure
+                }
         }
 }

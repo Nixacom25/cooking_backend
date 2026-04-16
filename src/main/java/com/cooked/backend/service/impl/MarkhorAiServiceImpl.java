@@ -3,15 +3,14 @@ package com.cooked.backend.service.impl;
 import com.cooked.backend.dto.request.AiRecipeGenerationRequest;
 import com.cooked.backend.dto.request.CreateRecipeRequest;
 import com.cooked.backend.dto.response.AiIngredientDetectionResponse;
+import com.cooked.backend.dto.response.AiRecipeListResponse;
 import com.cooked.backend.entity.User;
 import com.cooked.backend.exception.BadRequestException;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.service.AiService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -64,9 +63,7 @@ public class MarkhorAiServiceImpl implements AiService {
             body.add("image", imageResource);
 
             // User preferences part (JSON-stringified)
-            Map<String, Object> prefs = Map.of(
-                    "allergies", user.getAllergies(),
-                    "preferences", user.getDietaryPreferences());
+            AiRecipeGenerationRequest.UserPreferencesPayload prefs = mapUserToPreferences(user);
             body.add("user_preferences", objectMapper.writeValueAsString(prefs));
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
@@ -87,24 +84,133 @@ public class MarkhorAiServiceImpl implements AiService {
         }
     }
 
+    private AiRecipeGenerationRequest.UserPreferencesPayload mapUserToPreferences(User user) {
+        return AiRecipeGenerationRequest.UserPreferencesPayload.builder()
+                .allergies(user.getAllergies())
+                .preferences(user.getDietaryPreferences())
+                .dislikes(user.getFoodDislikes())
+                .cuisines_love(user.getFavoriteCuisines())
+                .kitchen_tools(user.getKitchenAppliances())
+                .cooking_goals(user.getOnboardingGoals())
+                .DNA(user.getFlavorDna())
+                .skill_level(mapSkillLevel(user.getCookingSkill()))
+                .time_minutes(user.getCookingTimePreference())
+                .servings(null) // Not explicitly in User entity yet, or could be mapped if found
+                .build();
+    }
+
+    private String mapSkillLevel(String skill) {
+        if (skill == null) return "HomeCook";
+        String s = skill.toLowerCase();
+        if (s.contains("begin")) return "total_beginer";
+        if (s.contains("semi") || s.contains("advanced")) return "Advanced Semi Pro";
+        if (s.contains("confident")) return "ConfidentCook";
+        return "HomeCook";
+    }
+
     @Override
     public List<CreateRecipeRequest> generateRecipes(AiRecipeGenerationRequest request, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        if (request.getUser_preferences() == null) {
+            request.setUser_preferences(mapUserToPreferences(user));
+        }
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<AiRecipeGenerationRequest> requestEntity = new HttpEntity<>(request, headers);
 
-        ResponseEntity<List<CreateRecipeRequest>> response = restTemplate.exchange(
+        ResponseEntity<AiRecipeListResponse> response = restTemplate.postForEntity(
                 baseUrl + "/api/recipes/generate",
-                HttpMethod.POST,
                 requestEntity,
-                new ParameterizedTypeReference<List<CreateRecipeRequest>>() {
-                });
+                AiRecipeListResponse.class);
 
-        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            return response.getBody();
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && response.getBody().isSuccess()) {
+            return response.getBody().getRecipes();
         }
 
         return Collections.emptyList();
+    }
+
+    @Override
+    public com.cooked.backend.dto.response.ScanResponse scan(MultipartFile file, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+
+            // Image part
+            ByteArrayResource imageResource = new ByteArrayResource(file.getBytes()) {
+                @Override
+                public String getFilename() {
+                    return file.getOriginalFilename();
+                }
+            };
+            body.add("image", imageResource);
+
+            // User preferences part (JSON-stringified)
+            AiRecipeGenerationRequest.UserPreferencesPayload prefs = mapUserToPreferences(user);
+            body.add("user_preferences", objectMapper.writeValueAsString(prefs));
+            body.add("user_id", user.getId().toString());
+
+            HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+            ResponseEntity<com.cooked.backend.dto.response.ScanResponse> response = restTemplate.postForEntity(
+                    baseUrl + "/api/analyze",
+                    requestEntity,
+                    com.cooked.backend.dto.response.ScanResponse.class);
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && response.getBody().isSuccess()) {
+                return response.getBody();
+            }
+
+            throw new BadRequestException("Failed to analyze image/recipes from AI.");
+
+        } catch (IOException e) {
+            throw new BadRequestException("Could not process image: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public com.cooked.backend.dto.response.ScanResponse scanTyped(List<String> ingredients, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            Map<String, Object> body = new java.util.HashMap<>();
+            body.put("ingredients", ingredients);
+            body.put("user_preferences", mapUserToPreferences(user));
+            body.put("user_id", user.getId().toString());
+
+            HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+            ResponseEntity<com.cooked.backend.dto.response.ScanResponse> response = restTemplate.postForEntity(
+                    baseUrl + "/api/analyze",
+                    requestEntity,
+                    com.cooked.backend.dto.response.ScanResponse.class);
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && response.getBody().isSuccess()) {
+                return response.getBody();
+            }
+
+            throw new BadRequestException("Failed to analyze ingredients/recipes from AI.");
+
+        } catch (Exception e) {
+            throw new BadRequestException("Could not process typed analyze: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public List<Map<String, String>> searchWeb(String query) {
+        throw new UnsupportedOperationException("Web search not supported by Markhor AI yet.");
     }
 }
