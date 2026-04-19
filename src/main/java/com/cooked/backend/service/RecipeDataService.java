@@ -10,4 +10,6 @@ public interface RecipeDataService {
     List<RecipeData> getAll();
     RecipeData getById(Long id);
     void delete(Long id);
+    RecipeData update(Long id, String name, MultipartFile image);
+    void deleteMultiple(List<Long> ids);
 }

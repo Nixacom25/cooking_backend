@@ -137,4 +137,39 @@ public class RecipeDataServiceImpl implements RecipeDataService {
         }
         recipeDataRepository.deleteById(id);
     }
+
+    @Override
+    public RecipeData update(Long id, String name, MultipartFile image) {
+        RecipeData recipeData = getById(id);
+        
+        // Update name if changed
+        if (name != null && !name.equals(recipeData.getName())) {
+            // Check uniqueness if name changed
+            if (recipeDataRepository.existsByName(name)) {
+                throw new BadRequestException("Recipe with name '" + name + "' already exists.");
+            }
+            recipeData.setName(name);
+        }
+
+        // Update image if provided
+        if (image != null && !image.isEmpty()) {
+            try {
+                String imageUrl = cloudinaryService.upload(image);
+                recipeData.setImageUrl(imageUrl);
+            } catch (IOException e) {
+                log.error("Failed to upload new image for recipe: {}", id, e);
+                throw new BadRequestException("Failed to upload image: " + e.getMessage());
+            }
+        }
+
+        return recipeDataRepository.save(recipeData);
+    }
+
+    @Override
+    public void deleteMultiple(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return;
+        }
+        recipeDataRepository.deleteAllById(ids);
+    }
 }

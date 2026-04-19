@@ -42,9 +42,23 @@ public class RecipeDataController {
         return ResponseEntity.ok(recipeDataService.getById(id));
     }
 
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<RecipeData> update(
+            @PathVariable Long id,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "image", required = false) MultipartFile image) {
+        return ResponseEntity.ok(recipeDataService.update(id, name, image));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         recipeDataService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/bulk")
+    public ResponseEntity<Void> deleteMultiple(@RequestParam("ids") List<Long> ids) {
+        recipeDataService.deleteMultiple(ids);
         return ResponseEntity.noContent().build();
     }
 }
