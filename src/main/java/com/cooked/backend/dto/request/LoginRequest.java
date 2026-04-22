@@ -18,4 +18,9 @@ public class LoginRequest {
     private String password;
 
     private String provider; // e.g. "LOCAL", "GOOGLE", "APPLE"
+
+    private boolean isSignup;
+    private String firstname;
+    private String lastname;
+    private String phone;
 }

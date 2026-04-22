@@ -24,7 +24,8 @@ public class AiIngredientDetectionResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RestrictedIngredient {
-        private String ingredient;
+        private String name;
+        private String icon;
         private String reason;
     }
 }

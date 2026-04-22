@@ -16,6 +16,8 @@ public interface AiService {
 
     List<CreateRecipeRequest> generateRecipes(AiRecipeGenerationRequest request, String email);
 
+    List<CreateRecipeRequest> generateInitialRecipes(com.cooked.backend.entity.User user, int count);
+
     ScanResponse scan(MultipartFile file, String email);
 
     ScanResponse scanTyped(List<String> ingredients, String email);

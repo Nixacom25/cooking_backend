@@ -15,9 +15,13 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendOtpEmail(String to, String otp) {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("Cooked <no-reply@cooked.app>");
         message.setTo(to);
-        message.setSubject("Your OTP Code");
-        message.setText("Your OTP code is: " + otp + ".\nIt is valid for 15 minutes.");
+        message.setSubject("Votre code de vérification Cooked");
+        message.setText("Bonjour,\n\n" +
+                "Votre code de vérification est : " + otp + "\n\n" +
+                "Ce code expirera bientôt. Si vous n'avez pas demandé ce code, veuillez ignorer cet e-mail.\n\n" +
+                "– Équipe Cooked");
         try {
             mailSender.send(message);
         } catch (Exception e) {

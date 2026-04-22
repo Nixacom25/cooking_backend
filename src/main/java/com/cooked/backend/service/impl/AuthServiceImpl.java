@@ -8,7 +8,6 @@ import com.cooked.backend.entity.Role;
 import com.cooked.backend.entity.Status;
 import com.cooked.backend.entity.User;
 import com.cooked.backend.exception.BadRequestException;
-import com.cooked.backend.exception.EmailAlreadyExistsException;
 import com.cooked.backend.exception.ResourceNotFoundException;
 import com.cooked.backend.repository.BlacklistedTokenRepository;
 import com.cooked.backend.repository.UserRepository;
@@ -17,7 +16,10 @@ import com.cooked.backend.security.JwtService;
 import com.cooked.backend.service.ActivityLogService;
 import com.cooked.backend.service.AuthService;
 import com.cooked.backend.service.EmailService;
+import com.cooked.backend.service.UserInitializationService;
 import lombok.RequiredArgsConstructor;
+import lombok.Data;
+import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -52,6 +54,7 @@ public class AuthServiceImpl implements AuthService {
         private final EmailService emailService;
         private final BlacklistedTokenRepository blacklistedTokenRepository;
         private final UserSubscriptionRepository userSubscriptionRepository;
+        private final UserInitializationService userInitializationService;
         private final ActivityLogService activityLogService;
         private final DeviceSessionRepository deviceSessionRepository;
 
@@ -65,14 +68,14 @@ public class AuthServiceImpl implements AuthService {
         @Transactional
         public Object register(RegisterRequest request) {
                 if (userRepository.existsByEmail(request.getEmail())) {
-                        throw new EmailAlreadyExistsException("Email already exists");
+                        throw new BadRequestException("This account already exists with this email. Please log in.");
                 }
                 String phone = (request.getPhone() != null && !request.getPhone().trim().isEmpty())
                                 ? request.getPhone().trim()
                                 : null;
 
                 if (phone != null && userRepository.existsByPhone(phone)) {
-                        throw new BadRequestException("Phone number already exists");
+                        throw new BadRequestException("This phone number is already used by another account.");
                 }
 
                 Provider provider = Provider.LOCAL;
@@ -98,6 +101,25 @@ public class AuthServiceImpl implements AuthService {
                 if (provider == Provider.LOCAL) {
                         if (request.getPassword() == null || request.getPassword().isEmpty()) {
                                 throw new BadRequestException("Password is required for local registration");
+                        }
+                }
+
+                if (provider != Provider.LOCAL) {
+                        try {
+                                // Social Registration Security: Verify token before proceeding
+                                SocialUserInfo socialInfo = verifySocialToken(provider.name(), request.getPassword());
+                                if (!socialInfo.getEmail().equalsIgnoreCase(request.getEmail())) {
+                                        log.error("Social Registration email mismatch: Token has {}, Request has {}", socialInfo.getEmail(), request.getEmail());
+                                        throw new BadRequestException("Email verification failed: provider identity does not match request email");
+                                }
+                                // Use verified names if not provided in request
+                                if (firstname == null || firstname.isEmpty()) firstname = socialInfo.getFirstname();
+                                if (lastname == null || lastname.isEmpty()) lastname = socialInfo.getLastname();
+                        } catch (BadRequestException e) {
+                                throw e;
+                        } catch (Exception e) {
+                                log.error("Social Registration verification failed: {}", e.getMessage(), e);
+                                throw new BadRequestException("Social verification failed: " + e.getMessage());
                         }
                 }
 
@@ -164,13 +186,21 @@ public class AuthServiceImpl implements AuthService {
                 activityLogService.logActivity(savedUser, "Account Created",
                                 "Welcome to Cooked! Your account has been successfully created.");
 
+                // Initialize Account Content (Cookbooks, Recipes)
+                userInitializationService.initializeAccount(savedUser);
+
                 // If local, send verification email
                 if (request.getProvider() == null || request.getProvider().equalsIgnoreCase(Provider.LOCAL.name())) {
                         emailService.sendOtpEmail(user.getEmail(), otp);
                         return new MessageResponse("User registered successfully. Please verify your email.");
                 } else {
-                        String token = jwtService.generateToken(user.getEmail());
-                        return new AuthResponse(token);
+                        String token = jwtService.generateToken(savedUser.getEmail());
+                        recordSession(savedUser, token);
+                        return AuthResponse.builder()
+                                        .token(token)
+                                        .success(true)
+                                        .message("Registration successful")
+                                        .build();
                 }
         }
 
@@ -202,7 +232,11 @@ public class AuthServiceImpl implements AuthService {
                 userRepository.save(user);
 
                 String token = jwtService.generateToken(user.getEmail());
-                return new AuthResponse(token);
+                return AuthResponse.builder()
+                                .token(token)
+                                .success(true)
+                                .message("Email verified successfully")
+                                .build();
         }
 
         @Override
@@ -251,61 +285,72 @@ public class AuthServiceImpl implements AuthService {
                 User user;
 
                 // 1. Handle Social Providers First (Auto-registration supported)
-                if ("GOOGLE".equalsIgnoreCase(request.getProvider())) {
+                if ("GOOGLE".equalsIgnoreCase(request.getProvider()) || "APPLE".equalsIgnoreCase(request.getProvider())) {
                         try {
-                                GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(),
-                                                new GsonFactory())
-                                                .setAudience(Collections.singletonList(googleClientId))
-                                                .build();
+                                SocialUserInfo socialInfo = verifySocialToken(request.getProvider(), request.getPassword());
+                                String email = socialInfo.getEmail();
 
-                                GoogleIdToken idToken = verifier.verify(request.getPassword()); // password field carries the idToken
-                                if (idToken != null) {
-                                        GoogleIdToken.Payload payload = idToken.getPayload();
-                                        String email = payload.getEmail();
+                                user = userRepository.findByEmail(email).orElseGet(() -> {
+                                        if (!request.isSignup()) {
+                                                log.warn("Social Login failed: Account {} not found and isSignup is false", email);
+                                                throw new BadRequestException("Account not found, please sign up.");
+                                        }
 
-                                        user = userRepository.findByEmail(email).orElseGet(() -> {
-                                                log.info("Creating new user for social login: {}", email);
-                                                String firstname = (String) payload.get("given_name");
-                                                String lastname = (String) payload.get("family_name");
+                                        log.info("Creating new user for social signup via login endpoint: {}", email);
+                                        
+                                        // Refined name splitting logic: last word is lastname, rest is firstname
+                                        String rawFirst = socialInfo.getFirstname() != null ? socialInfo.getFirstname() : request.getFirstname();
+                                        String rawLast = socialInfo.getLastname() != null ? socialInfo.getLastname() : request.getLastname();
+                                        
+                                        String fullName = ((rawFirst != null ? rawFirst : "") + " " + (rawLast != null ? rawLast : "")).trim();
+                                        if (fullName.isEmpty()) fullName = "User Cooked";
 
-                                                User newUser = User.builder()
-                                                                .email(email)
-                                                                .firstname(firstname != null && !firstname.isEmpty()
-                                                                                ? firstname
-                                                                                : "User")
-                                                                .lastname(lastname != null && !lastname.isEmpty() ? lastname
-                                                                                : "Cooked")
-                                                                .provider(Provider.GOOGLE)
-                                                                .status(Status.ACTIVE)
-                                                                .role(Role.CLIENT)
-                                                                .password(passwordEncoder
-                                                                                .encode(java.util.UUID.randomUUID().toString()))
-                                                                .build();
-                                                User savedUser = userRepository.save(newUser);
+                                        String firstname;
+                                        String lastname;
 
-                                                // Assign default trial for new social user
-                                                assignTrial(savedUser);
-                                                return savedUser;
-                                        });
-                                } else {
-                                        log.error("Google Token verification returned null for email provided");
-                                        throw new BadRequestException("Invalid Google Token");
-                                }
+                                        int lastSpaceIndex = fullName.lastIndexOf(' ');
+                                        if (lastSpaceIndex != -1) {
+                                                firstname = fullName.substring(0, lastSpaceIndex).trim();
+                                                lastname = fullName.substring(lastSpaceIndex + 1).trim();
+                                        } else {
+                                                firstname = fullName;
+                                                lastname = ""; // User said lastname is not mandatory
+                                        }
+
+                                        String phone = request.getPhone();
+
+                                        User newUser = User.builder()
+                                                        .email(email)
+                                                        .firstname(firstname)
+                                                        .lastname(lastname)
+                                                        .phone(phone != null && !phone.isEmpty() ? phone : null)
+                                                        .provider(Provider.valueOf(request.getProvider().toUpperCase()))
+                                                        .status(Status.ACTIVE)
+                                                        .role(Role.CLIENT)
+                                                        .resendCount(0)
+                                                        .password(passwordEncoder
+                                                                        .encode(java.util.UUID.randomUUID().toString()))
+                                                        .build();
+                                        User savedUser = userRepository.save(newUser);
+                                        assignTrial(savedUser);
+                                        userInitializationService.initializeAccount(savedUser);
+                                        return savedUser;
+                                });
+                        } catch (BadRequestException e) {
+                                throw e;
                         } catch (Exception e) {
-                                log.error("Google Authentication failed: {}", e.getMessage(), e);
-                                throw new BadRequestException("Google Authentication failed: " + e.getMessage());
+                                log.error("Social Authentication failed: {}", e.getMessage(), e);
+                                throw new BadRequestException("Social Authentication failed: " + e.getMessage());
                         }
 
                         String token = jwtService.generateToken(user.getEmail());
-                        activityLogService.logActivity(user, "Login Successful", "User logged in via Google");
+                        activityLogService.logActivity(user, "Login Successful", "User logged in via " + request.getProvider());
                         recordSession(user, token);
-                        return new AuthResponse(token);
-                }
-
-                if ("APPLE".equalsIgnoreCase(request.getProvider())) {
-                        // Apple implementation... (omitted for brevity as it's currently a placeholder throwing error)
-                        throw new BadRequestException(
-                                        "Apple Login is currently being configured. Please use Google or Email.");
+                        return AuthResponse.builder()
+                                        .token(token)
+                                        .success(true)
+                                        .message("Social login successful")
+                                        .build();
                 }
 
                 // 2. Handle Standard Login (Email/Phone + Password)
@@ -331,7 +376,11 @@ public class AuthServiceImpl implements AuthService {
                 String token = jwtService.generateToken(user.getEmail());
                 activityLogService.logActivity(user, "Login Successful", "User logged in successfully.");
                 recordSession(user, token);
-                return new AuthResponse(token);
+                return AuthResponse.builder()
+                                .token(token)
+                                .success(true)
+                                .message("Login successful")
+                                .build();
         }
 
         @Override
@@ -460,52 +509,73 @@ public class AuthServiceImpl implements AuthService {
 
         private void recordSession(User user, String token) {
                 try {
-                        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder
-                                        .getRequestAttributes();
-                        if (attrs != null) {
-                                HttpServletRequest req = attrs.getRequest();
-                                String userAgent = req.getHeader("User-Agent");
-                                String ipAddress = req.getHeader("X-Forwarded-For");
-                                if (ipAddress == null || ipAddress.isEmpty()) {
-                                        ipAddress = req.getRemoteAddr();
-                                } else {
-                                        ipAddress = ipAddress.split(",")[0].trim();
-                                }
+                        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
+                                        .getRequest();
+                        String userAgent = request.getHeader("User-Agent");
+                        String ipAddress = request.getRemoteAddr();
+                        String deviceName = "Unknown Device";
 
-                                String deviceName = "Unknown Device";
-                                if (userAgent != null) {
-                                        if (userAgent.contains("iPhone"))
-                                                deviceName = "iPhone";
-                                        else if (userAgent.contains("Macintosh"))
-                                                deviceName = "MacBook";
-                                        else if (userAgent.contains("iPad"))
-                                                deviceName = "iPad";
-                                        else if (userAgent.contains("Android"))
-                                                deviceName = "Android Device";
-                                        else if (userAgent.contains("Windows"))
-                                                deviceName = "Windows PC";
-                                        else if (userAgent.contains("Linux"))
-                                                deviceName = "Linux PC";
-                                        else if (userAgent.contains("Dart") || userAgent.contains("Flutter"))
-                                                deviceName = "Cooked Mobile App";
-                                        else
-                                                deviceName = userAgent.length() > 30
-                                                                ? userAgent.substring(0, 30) + "..."
-                                                                : userAgent;
-                                }
-
-                                DeviceSession session = DeviceSession.builder()
-                                                .user(user)
-                                                .deviceName(deviceName)
-                                                .ipAddress(ipAddress != null ? ipAddress : "Unknown")
-                                                .location("Unknown Location")
-                                                .token(token)
-                                                .build();
-
-                                deviceSessionRepository.save(session);
+                        if (userAgent != null) {
+                                if (userAgent.contains("iPhone") || userAgent.contains("iPad"))
+                                        deviceName = "iOS Device";
+                                else if (userAgent.contains("Android"))
+                                        deviceName = "Android Device";
+                                else if (userAgent.contains("Windows"))
+                                        deviceName = "Windows PC";
+                                else if (userAgent.contains("Linux"))
+                                        deviceName = "Linux PC";
+                                else if (userAgent.contains("Dart") || userAgent.contains("Flutter"))
+                                        deviceName = "Cooked Mobile App";
+                                else
+                                        deviceName = userAgent.length() > 30 ? userAgent.substring(0, 30) + "..." : userAgent;
                         }
+
+                        DeviceSession session = DeviceSession.builder()
+                                        .user(user)
+                                        .token(token)
+                                        .deviceName(deviceName)
+                                        .ipAddress(ipAddress)
+                                        .lastActive(LocalDateTime.now())
+                                        .build();
+
+                        deviceSessionRepository.save(session);
                 } catch (Exception e) {
-                        // Ignore failure
+                        log.warn("Could not record session: {}", e.getMessage());
                 }
+        }
+
+        private SocialUserInfo verifySocialToken(String provider, String token) throws Exception {
+                if ("GOOGLE".equalsIgnoreCase(provider)) {
+                        log.info("Verifying Google token with Client ID: {}", googleClientId);
+                        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                                        .setAudience(Collections.singletonList(googleClientId))
+                                        .build();
+
+                        if (token == null || token.isEmpty()) {
+                                throw new BadRequestException("Missing Google ID Token");
+                        }
+
+                        GoogleIdToken idToken = verifier.verify(token);
+                        if (idToken != null) {
+                                GoogleIdToken.Payload payload = idToken.getPayload();
+                                return new SocialUserInfo(
+                                                payload.getEmail(),
+                                                (String) payload.get("given_name"),
+                                                (String) payload.get("family_name"));
+                        }
+                        throw new BadRequestException("Invalid Google Token");
+                } else if ("APPLE".equalsIgnoreCase(provider)) {
+                        // Apple validation logic would go here
+                        throw new BadRequestException("Apple authentication is coming soon.");
+                }
+                throw new BadRequestException("Unsupported social provider: " + provider);
+        }
+
+        @Data
+        @AllArgsConstructor
+        private static class SocialUserInfo {
+                private String email;
+                private String firstname;
+                private String lastname;
         }
 }

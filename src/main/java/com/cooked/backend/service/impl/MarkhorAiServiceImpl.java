@@ -135,6 +135,18 @@ public class MarkhorAiServiceImpl implements AiService {
     }
 
     @Override
+    public List<CreateRecipeRequest> generateInitialRecipes(User user, int count) {
+        // Construct a request that asks for 'count' recipes based on mapped preferences
+        AiRecipeGenerationRequest request = AiRecipeGenerationRequest.builder()
+                .ingredients(Collections.emptyList()) // General generation
+                .user_preferences(mapUserToPreferences(user))
+                .build();
+        
+        // Markhor API typically returns multiple recipes, we'll just use the default set or request multiple
+        return generateRecipes(request, user.getEmail());
+    }
+
+    @Override
     public com.cooked.backend.dto.response.ScanResponse scan(MultipartFile file, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("User not found"));
