@@ -11,6 +11,5 @@ public class IngredientPayload {
     // Optional icon or emoji
     private String icon;
 
-    @NotBlank(message = "Quantity is required (e.g. 250g)")
     private String quantity;
 }

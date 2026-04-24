@@ -14,6 +14,7 @@ public class CreateRecipeRequest {
 
     private String image;
     private Integer cookTime;
+    private Integer prepTime;
     private Integer kcal;
     private Integer servings;
     private String tips;

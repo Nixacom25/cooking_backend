@@ -44,4 +44,6 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
 
         org.springframework.data.domain.Page<Recipe> findByUserIdAndSourceUrlIsNotNullOrderByCreatedAtDesc(
                         UUID userId, org.springframework.data.domain.Pageable pageable);
+
+        int deleteByIsSuggestedTrueAndExpiresAtBefore(java.time.LocalDateTime now);
 }

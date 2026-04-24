@@ -59,8 +59,10 @@ public class AiServiceImpl implements AiService {
             if (lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg") ||
                     lowerUrl.endsWith(".png") || lowerUrl.endsWith(".webp")) {
                 String visionPrompt = String.format(
-                        "Analyze this image of a dish and provide the recipe. " +
+                        "Analyze this image of a dish and provide the complete detailed recipe. " +
                                 "Dietary restrictions: Allergies: %s, Preferences: %s. " +
+                                "Include prepTime and cookTime in minutes. " +
+                                "Provide a deep preparation flow from prep to finish. " +
                                 "IMPORTANT: Return ONLY raw JSON. " +
                                 "Return JSON in this format: %s",
                         String.join(", ", user.getAllergies()),
@@ -73,14 +75,17 @@ public class AiServiceImpl implements AiService {
                 return req;
             }
 
-            Document doc = Jsoup.connect(url).userAgent("Mozilla/5.0").timeout(10000).get();
+            Document doc = Jsoup.connect(url).userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36").timeout(20000).get();
             String pageText = String.format("Title: %s\nContent: %s", doc.title(), doc.body().text());
-            if (pageText.length() > 5000) pageText = pageText.substring(0, 5000);
+            if (pageText.length() > 20000) pageText = pageText.substring(0, 20000);
 
             String scrapingPrompt = String.format(
                     "Extract the recipe from this text: %s. " +
                             "User Allergies: %s, Preferences: %s. " +
                             "Provide a high-quality Unsplash image URL in the 'image' field. " +
+                            "IMPORTANT: You must extract very detailed steps. Cover the entire preparation flow from Preparation to Finishing. " +
+                            "If the text is insufficient, use your culinary knowledge to fill in the gaps for a professional result but stay true to the dish. " +
+                            "Include prepTime and cookTime in minutes. " +
                             "IMPORTANT: Return ONLY raw JSON. " +
                             "Return JSON in this format: %s",
                     pageText,
@@ -88,7 +93,7 @@ public class AiServiceImpl implements AiService {
                     String.join(", ", user.getDietaryPreferences()),
                     RECIPE_JSON_FORMAT);
 
-            String responseJson = sanitizeJson(callOpenAi("Extract recipe from link", scrapingPrompt));
+            String responseJson = sanitizeJson(callOpenAi("Extract recipe from link", scrapingPrompt, "gpt-4o"));
             CreateRecipeRequest req = objectMapper.readValue(responseJson, CreateRecipeRequest.class);
             req.setSourceUrl(url);
             return req;
@@ -96,7 +101,8 @@ public class AiServiceImpl implements AiService {
             if (e.getStatusCode() == 429) throw new AiServiceException("Website is blocking us. Please try scanning a screenshot.", "SCRAPING_BLOCKED");
             throw new AiServiceException("Failed to fetch recipe from link: HTTP " + e.getStatusCode(), "SCRAPING_HTTP_ERROR");
         } catch (Exception e) {
-            throw new AiServiceException("Failed to extract recipe from AI.", "IA_GPT_ERROR");
+            log.error("AI Error extracting recipe from {}: {}", url, e.getMessage());
+            throw new AiServiceException("Failed to extract recipe from AI. Ensure the link points to a valid recipe page.", "IA_GPT_ERROR");
         }
     }
 
@@ -262,12 +268,18 @@ public class AiServiceImpl implements AiService {
     private static final String RECIPE_JSON_FORMAT = """
             {
               "name": "Recipe Name",
+              "prepTime": 15,
               "cookTime": 30,
               "kcal": 500,
+              "servings": 4,
               "image": "https://images.unsplash.com/photo-...",
               "ingredients": [{"name": "name", "quantity": "2 cups", "icon": "🥕"}],
-              "steps": ["Step 1", "Step 2"],
-              "tips": "Cooking advice"
+              "steps": [
+                "Detailed preparation: (Wash, peel, cut ingredients, marinate if needed)",
+                "Main cooking steps: (Heat, combine, timing, specific techniques)",
+                "Finishing touches: (Seasoning, plating, garnish)"
+              ],
+              "tips": "Pro tips for flavor, storage, or substitutions."
             }""";
 
     private String callOpenAiVision(String imageUrl, String prompt) throws JsonProcessingException {
@@ -295,13 +307,13 @@ public class AiServiceImpl implements AiService {
         throw new AiServiceException("AI Analysis failed. Please try again.", "IA_VISION_FAILURE");
     }
 
-    private String callOpenAi(String title, String prompt) throws JsonProcessingException {
+    private String callOpenAi(String title, String prompt, String model) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(openAiApiKey);
 
         Map<String, Object> requestBody = Map.of(
-                "model", "gpt-4o-mini",
+                "model", model != null ? model : "gpt-4o-mini",
                 "messages", List.of(
                         Map.of("role", "system", "content", "You are a master chef assistant. Output raw JSON ONLY."),
                         Map.of("role", "user", "content", prompt)),
@@ -317,6 +329,10 @@ public class AiServiceImpl implements AiService {
             return root.path("choices").get(0).path("message").path("content").asText();
         }
         throw new AiServiceException("AI Generation failed. Please try again.", "IA_GPT_FAILURE");
+    }
+
+    private String callOpenAi(String title, String prompt) throws JsonProcessingException {
+        return callOpenAi(title, prompt, "gpt-4o-mini");
     }
 
     @Override

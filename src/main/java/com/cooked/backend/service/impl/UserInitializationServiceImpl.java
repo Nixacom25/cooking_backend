@@ -13,6 +13,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -32,27 +33,27 @@ public class UserInitializationServiceImpl implements UserInitializationService 
     public void initializeAccount(User user) {
         log.info("Starting account initialization for user: {}", user.getEmail());
         try {
-            // 1. Create Default Cookbooks
-            Cookbook favoritesCb = createCookbook(user, "Mes Favoris");
-            log.info("Created default cookbook: {}", favoritesCb.getName());
+            // 1. Create Only One Default Cookbook for Tutorial
             Cookbook toTryCb = createCookbook(user, "À Tester");
+            log.info("Created default cookbook: {}", toTryCb.getName());
 
-            // 2. Generate 8 Initial Recipes via AI
-            List<CreateRecipeRequest> initialRecipes = aiService.generateInitialRecipes(user, 8);
+            // 2. Generate 4 Initial Suggested Recipes via AI
+            List<CreateRecipeRequest> initialRecipes = aiService.generateInitialRecipes(user, 4);
 
             if (initialRecipes != null && !initialRecipes.isEmpty()) {
+                LocalDateTime expiration = LocalDateTime.now().plusDays(3);
                 for (CreateRecipeRequest req : initialRecipes) {
                     try {
-                        saveRecipeForUser(user, req, toTryCb);
+                        saveSuggestedRecipeForUser(user, req, expiration);
                     } catch (Exception e) {
-                        log.error("Failed to save initial recipe '{}' for user: {}", req.getName(), user.getEmail(), e);
+                        log.error("Failed to save initial suggested recipe '{}' for user: {}", req.getName(), user.getEmail(), e);
                     }
                 }
-                log.info("Successfully initialized {} recipes for user: {}", initialRecipes.size(), user.getEmail());
+                log.info("Successfully initialized {} suggested recipes for user: {}", initialRecipes.size(), user.getEmail());
             }
 
             activityLogService.logActivity(user, "Onboarding Complete", 
-                "Your account is ready! We've added some personalized recipes to your 'À Tester' cookbook.");
+                "Your account is ready! We've added some personalized suggestions for you to explore.");
 
         } catch (Exception e) {
             log.error("Critical error during account initialization for user: {}", user.getEmail(), e);
@@ -68,8 +69,8 @@ public class UserInitializationServiceImpl implements UserInitializationService 
         return cookbookRepository.save(cb);
     }
 
-    private void saveRecipeForUser(User user, CreateRecipeRequest request, Cookbook targetCookbook) {
-        // Build Recipe Entity
+    private void saveSuggestedRecipeForUser(User user, CreateRecipeRequest request, LocalDateTime expiration) {
+        // Build Recipe Entity as Suggested
         Recipe recipe = Recipe.builder()
                 .user(user)
                 .name(request.getName())
@@ -80,7 +81,8 @@ public class UserInitializationServiceImpl implements UserInitializationService 
                 .tips(request.getTips())
                 .sourceUrl(request.getSourceUrl())
                 .steps(request.getSteps() != null ? request.getSteps() : new ArrayList<>())
-                .cookbooks(new HashSet<>(Collections.singletonList(targetCookbook)))
+                .isSuggested(true)
+                .expiresAt(expiration)
                 .build();
 
         // Save Recipe first to get ID
@@ -106,9 +108,5 @@ public class UserInitializationServiceImpl implements UserInitializationService 
         }
         savedRecipe.setRecipeIngredients(recipeIngredients);
         recipeRepository.save(savedRecipe);
-
-        // Update target cookbook
-        targetCookbook.getRecipes().add(savedRecipe);
-        cookbookRepository.save(targetCookbook);
     }
 }

@@ -38,7 +38,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
-import java.util.Collections;
+import java.util.Arrays;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -465,7 +465,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         @Override
-        public MessageResponse resetPassword(ResetPasswordRequest request) {
+        public AuthResponse resetPassword(ResetPasswordRequest request) {
                 User user;
                 if (request.getIdentifier().contains("@")) {
                         user = userRepository.findByEmail(request.getIdentifier())
@@ -484,9 +484,17 @@ public class AuthServiceImpl implements AuthService {
                 user.setOtpExpiration(null);
                 userRepository.save(user);
 
+                emailService.sendAccountUpdateEmail(user.getEmail(), "Your account password has been reset successfully.");
                 activityLogService.logActivity(user, "Password Changed", "Your password has been successfully reset.");
 
-                return new MessageResponse("Password reset successful.");
+                String token = jwtService.generateToken(user.getEmail());
+                recordSession(user, token);
+
+                return AuthResponse.builder()
+                                .token(token)
+                                .success(true)
+                                .message("Password reset successful. You are now logged in.")
+                                .build();
         }
 
         private String generateOtp() {
@@ -546,9 +554,13 @@ public class AuthServiceImpl implements AuthService {
 
         private SocialUserInfo verifySocialToken(String provider, String token) throws Exception {
                 if ("GOOGLE".equalsIgnoreCase(provider)) {
-                        log.info("Verifying Google token with Client ID: {}", googleClientId);
+                        log.info("Verifying Google token");
+                        
+                        // Support multiple client IDs (comma-separated)
+                        java.util.List<String> audiences = Arrays.asList(googleClientId.split(","));
+                        
                         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
-                                        .setAudience(Collections.singletonList(googleClientId))
+                                        .setAudience(audiences)
                                         .build();
 
                         if (token == null || token.isEmpty()) {
@@ -563,6 +575,7 @@ public class AuthServiceImpl implements AuthService {
                                                 (String) payload.get("given_name"),
                                                 (String) payload.get("family_name"));
                         }
+                        log.error("Google Token verification returned null for audiences: {}", audiences);
                         throw new BadRequestException("Invalid Google Token");
                 } else if ("APPLE".equalsIgnoreCase(provider)) {
                         // Apple validation logic would go here

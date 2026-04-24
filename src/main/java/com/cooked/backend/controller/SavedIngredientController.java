@@ -27,6 +27,25 @@ public class SavedIngredientController {
 
     private final UserSavedIngredientRepository savedIngredientRepository;
     private final UserRepository userRepository;
+    private final com.cooked.backend.repository.IngredientRepository ingredientRepository;
+    private final com.cooked.backend.repository.RecipeIngredientRepository recipeIngredientRepository;
+
+    @Operation(summary = "Get recently used ingredients")
+    @GetMapping("/recent")
+    public ResponseEntity<List<com.cooked.backend.entity.Ingredient>> getRecentIngredients(Authentication auth) {
+        User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new BadRequestException("User not found"));
+        return ResponseEntity.ok(recipeIngredientRepository.findRecentIngredientsByUserId(user.getId(), org.springframework.data.domain.PageRequest.of(0, 10)));
+    }
+
+    @Operation(summary = "Search for ingredients")
+    @GetMapping("/search")
+    public ResponseEntity<List<com.cooked.backend.entity.Ingredient>> searchIngredients(@RequestParam String q) {
+        if (q == null || q.length() < 2) {
+            return ResponseEntity.ok(List.of());
+        }
+        return ResponseEntity.ok(ingredientRepository.findByNameContainingIgnoreCase(q));
+    }
 
     @Operation(summary = "Get all my saved ingredients")
     @GetMapping("/saved")
@@ -48,6 +67,16 @@ public class SavedIngredientController {
 
         User user = userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new BadRequestException("User not found"));
+
+        // Check if already exists for this user to avoid duplication (or just return existing)
+        java.util.List<UserSavedIngredient> all = savedIngredientRepository.findAllByUserOrderByCreatedAtDesc(user);
+        java.util.Optional<UserSavedIngredient> existing = all.stream()
+                .filter(i -> i.getName().equalsIgnoreCase(name))
+                .findFirst();
+
+        if (existing.isPresent()) {
+            return ResponseEntity.ok(existing.get());
+        }
 
         UserSavedIngredient savedIngredient = UserSavedIngredient.builder()
                 .user(user)

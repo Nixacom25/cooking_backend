@@ -19,5 +19,5 @@ public interface AuthService {
 
     MessageResponse verifyResetCode(VerifyResetCodeRequest request);
 
-    MessageResponse resetPassword(ResetPasswordRequest request);
+    AuthResponse resetPassword(ResetPasswordRequest request);
 }

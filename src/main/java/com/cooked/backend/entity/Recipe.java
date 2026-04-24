@@ -16,9 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "recipes", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "user_id", "name" })
-})
+@Table(name = "recipes")
 public class Recipe {
 
     @Id
@@ -31,30 +29,33 @@ public class Recipe {
     @EqualsAndHashCode.Exclude
     private User user;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String name;
 
-    @Column(nullable = true)
+    @Column(nullable = true, columnDefinition = "TEXT")
     private String image;
 
     @Column(nullable = true)
     private Integer cookTime; // In minutes
 
     @Column(nullable = true)
-    private Integer kcal;
+    private Integer prepTime; // In minutes
 
     @Column(nullable = true)
+    private Integer kcal;
+
+    @Column(nullable = true, columnDefinition = "TEXT")
     private String category;
 
     @Column(nullable = true)
     private Integer servings;
 
-    @Column(nullable = true, length = 2000)
+    @Column(nullable = true, columnDefinition = "TEXT")
     private String tips;
 
     @ElementCollection
     @CollectionTable(name = "recipe_steps", joinColumns = @JoinColumn(name = "recipe_id"))
-    @Column(name = "step", length = 2000)
+    @Column(name = "step", columnDefinition = "TEXT")
     @Builder.Default
     private List<String> steps = new ArrayList<>();
 
@@ -72,7 +73,7 @@ public class Recipe {
     @EqualsAndHashCode.Exclude
     private Set<Cookbook> cookbooks;
 
-    @Column(name = "source_url", nullable = true, length = 1000)
+    @Column(name = "source_url", nullable = true, columnDefinition = "TEXT")
     private String sourceUrl;
 
     @CreationTimestamp
@@ -80,4 +81,11 @@ public class Recipe {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Column(name = "is_suggested", nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean isSuggested = false;
+
+    @Column(name = "expires_at", nullable = true)
+    private LocalDateTime expiresAt;
 }

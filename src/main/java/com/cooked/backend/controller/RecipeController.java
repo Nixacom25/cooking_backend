@@ -172,4 +172,17 @@ public class RecipeController {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
         return ResponseEntity.ok(recipeService.getRecentImports(auth.getName(), pageable));
     }
+
+    @Operation(summary = "Validate a suggested recipe")
+    @PutMapping("/{id}/validate")
+    public ResponseEntity<RecipeResponse> validate(@PathVariable UUID id, Authentication auth) {
+        return ResponseEntity.ok(recipeService.validateSuggestedRecipe(id, auth.getName()));
+    }
+
+    @Operation(summary = "Get sharing link and mark as public")
+    @GetMapping("/{id}/share")
+    public ResponseEntity<Map<String, String>> getShareLink(@PathVariable UUID id, Authentication auth) {
+        String link = recipeService.getShareLink(id, auth.getName());
+        return ResponseEntity.ok(Map.of("link", link));
+    }
 }

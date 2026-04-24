@@ -34,4 +34,8 @@ public interface RecipeService {
 
         org.springframework.data.domain.Page<RecipeResponse> getRecentImports(String userEmail,
                         org.springframework.data.domain.Pageable pageable);
+                        
+        RecipeResponse validateSuggestedRecipe(UUID id, String userEmail);
+
+        String getShareLink(UUID id, String userEmail);
 }

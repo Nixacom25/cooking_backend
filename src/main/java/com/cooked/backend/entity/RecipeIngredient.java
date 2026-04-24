@@ -32,7 +32,7 @@ public class RecipeIngredient {
     @EqualsAndHashCode.Exclude
     private Ingredient ingredient;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String quantity;
 
     @CreationTimestamp

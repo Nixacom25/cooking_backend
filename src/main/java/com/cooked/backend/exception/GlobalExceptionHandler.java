@@ -53,11 +53,30 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Authentication Failed: " + ex.getMessage(), "AUTH", "UNAUTHORIZED");
     }
 
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(org.springframework.dao.DataIntegrityViolationException ex) {
+        String msg = "A database conflict occurred. This item might already exist.";
+        if (ex.getMessage() != null && ex.getMessage().contains("duplicate key")) {
+            msg = "An item with this name already exists.";
+        }
+        return buildErrorResponse(HttpStatus.CONFLICT, msg, "DATABASE", "DUPLICATE_ENTRY");
+    }
+
+    @ExceptionHandler(org.springframework.transaction.TransactionSystemException.class)
+    public ResponseEntity<ErrorResponse> handleTransaction(org.springframework.transaction.TransactionSystemException ex) {
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "A transaction error occurred. Please try again.", "BACKEND", "TRANSACTION_ERROR");
+    }
+
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(jakarta.validation.ConstraintViolationException ex) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Validation error: " + ex.getMessage(), "VALIDATION", "CONSTRAINT_VIOLATION");
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
         // Log the exception for internal tracking
-        ex.printStackTrace();
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred: " + ex.getMessage(), "BACKEND", "INTERNAL_SERVER_ERROR");
+        System.err.println("CRITICAL_ERROR: " + ex.getMessage());
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Server error", "BACKEND", "INTERNAL_SERVER_ERROR");
     }
 
     private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String message, String source, String errorCode) {

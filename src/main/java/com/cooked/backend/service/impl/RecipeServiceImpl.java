@@ -36,15 +36,13 @@ public class RecipeServiceImpl implements RecipeService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (recipeRepository.existsByUserIdAndName(user.getId(), request.getName())) {
-            throw new BadRequestException("You already have a recipe named '" + request.getName() + "'.");
-        }
 
         Recipe recipe = Recipe.builder()
                 .user(user)
                 .name(request.getName())
                 .image(request.getImage())
                 .cookTime(request.getCookTime())
+                .prepTime(request.getPrepTime())
                 .kcal(request.getKcal())
                 .servings(request.getServings())
                 .tips(request.getTips())
@@ -82,7 +80,7 @@ public class RecipeServiceImpl implements RecipeService {
                 RecipeIngredient ri = RecipeIngredient.builder()
                         .recipe(savedRecipe)
                         .ingredient(ingredient)
-                        .quantity(payload.getQuantity())
+                        .quantity((payload.getQuantity() == null || payload.getQuantity().isBlank()) ? "1" : payload.getQuantity())
                         .build();
                 recipeIngredients.add(ri);
             }
@@ -234,6 +232,46 @@ public class RecipeServiceImpl implements RecipeService {
                 .map(recipe -> mapToResponse(recipe, user));
     }
 
+    @Override
+    @Transactional
+    public RecipeResponse validateSuggestedRecipe(UUID id, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
+
+        if (!recipe.getUser().getId().equals(user.getId())) {
+            throw new BadRequestException("You do not have permission to validate this recipe.");
+        }
+
+        recipe.setSuggested(false);
+        recipe.setExpiresAt(null);
+
+        // Add to "À Tester" cookbook automatically
+        Cookbook toTryCb = cookbookRepository.findByUserIdAndName(user.getId(), "À Tester")
+                .orElseGet(() -> {
+                    Cookbook cb = Cookbook.builder()
+                            .user(user)
+                            .name("À Tester")
+                            .recipes(new HashSet<>())
+                            .build();
+                    return cookbookRepository.save(cb);
+                });
+
+        if (recipe.getCookbooks() == null) {
+            recipe.setCookbooks(new HashSet<>());
+        }
+        recipe.getCookbooks().add(toTryCb);
+        toTryCb.getRecipes().add(recipe);
+        
+        cookbookRepository.save(toTryCb);
+        Recipe saved = recipeRepository.save(recipe);
+
+        activityLogService.logActivity(user, "Recipe Validated", "You saved the suggestion '" + saved.getName() + "'.");
+
+        return mapToResponse(saved, user);
+    }
+
     private RecipeResponse mapToResponse(Recipe recipe, User user) {
         boolean isFavorite = false;
         if (user != null) {
@@ -253,6 +291,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .name(recipe.getName())
                 .image(recipe.getImage())
                 .cookTime(recipe.getCookTime())
+                .prepTime(recipe.getPrepTime())
                 .kcal(recipe.getKcal())
                 .category(recipe.getCategory())
                 .creator(RecipeCreatorResponse.builder()
@@ -270,6 +309,23 @@ public class RecipeServiceImpl implements RecipeService {
                 .sourceUrl(recipe.getSourceUrl())
                 .createdAt(recipe.getCreatedAt())
                 .updatedAt(recipe.getUpdatedAt())
+                .isSuggested(recipe.isSuggested())
+                .expiresAt(recipe.getExpiresAt())
+                .shareUrl("https://cooked.nixacom.com/recipes/" + recipe.getId())
                 .build();
+    }
+    @Override
+    @Transactional
+    public String getShareLink(UUID id, String userEmail) {
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
+
+        // Mark as public if not already
+        if (!recipe.isPublic()) {
+            recipe.setPublic(true);
+            recipeRepository.save(recipe);
+        }
+
+        return "https://cooked.nixacom.com/recipes/" + recipe.getId();
     }
 }

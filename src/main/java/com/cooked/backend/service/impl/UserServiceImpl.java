@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.cooked.backend.service.CloudinaryService;
+import com.cooked.backend.service.EmailService;
 
 import java.util.UUID;
 import java.io.IOException;
@@ -34,6 +35,7 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final CloudinaryService cloudinaryService;
+    private final EmailService emailService;
 
     @Override
     public UserResponse getCurrentUser(String email) {
@@ -63,6 +65,8 @@ public class UserServiceImpl implements UserService {
         user.setAlternativeRegion(request.getAlternativeRegion());
         user.setMeasurementSystem(request.getMeasurementSystem());
         userRepository.save(user);
+
+        emailService.sendAccountUpdateEmail(email, "Your profile information has been updated successfully.");
 
         return userMapper.toResponse(user);
     }
@@ -109,6 +113,8 @@ public class UserServiceImpl implements UserService {
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+
+        emailService.sendAccountUpdateEmail(email, "Your account password has been changed successfully.");
 
         return new MessageResponse("Password updated successfully");
     }
@@ -229,6 +235,8 @@ public class UserServiceImpl implements UserService {
             String photoUrl = cloudinaryService.upload(file);
             user.setPhoto(photoUrl);
             userRepository.save(user);
+
+            emailService.sendAccountUpdateEmail(email, "Your profile photo has been updated successfully.");
 
             return new MessageResponse("Profile photo updated successfully");
         } catch (IOException e) {

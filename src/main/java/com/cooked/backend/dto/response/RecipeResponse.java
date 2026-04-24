@@ -14,6 +14,7 @@ public class RecipeResponse {
     private String name;
     private String image;
     private Integer cookTime;
+    private Integer prepTime;
     private Integer kcal;
     private String category;
     private Integer servings;
@@ -24,6 +25,9 @@ public class RecipeResponse {
     private boolean isPublic;
     private boolean isFavorite;
     private String sourceUrl;
+    private String shareUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private boolean isSuggested;
+    private LocalDateTime expiresAt;
 }
