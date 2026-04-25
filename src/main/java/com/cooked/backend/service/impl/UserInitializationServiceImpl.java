@@ -33,11 +33,7 @@ public class UserInitializationServiceImpl implements UserInitializationService 
     public void initializeAccount(User user) {
         log.info("Starting account initialization for user: {}", user.getEmail());
         try {
-            // 1. Create Only One Default Cookbook for Tutorial
-            Cookbook toTryCb = createCookbook(user, "À Tester");
-            log.info("Created default cookbook: {}", toTryCb.getName());
-
-            // 2. Generate 4 Initial Suggested Recipes via AI
+            // 1. Generate 4 Initial Suggested Recipes via AI
             List<CreateRecipeRequest> initialRecipes = aiService.generateInitialRecipes(user, 4);
 
             if (initialRecipes != null && !initialRecipes.isEmpty()) {
@@ -81,8 +77,8 @@ public class UserInitializationServiceImpl implements UserInitializationService 
                 .tips(request.getTips())
                 .sourceUrl(request.getSourceUrl())
                 .steps(request.getSteps() != null ? request.getSteps() : new ArrayList<>())
-                .isSuggested(true)
                 .expiresAt(expiration)
+                .origin(RecipeOrigin.SUGGESTED)
                 .build();
 
         // Save Recipe first to get ID

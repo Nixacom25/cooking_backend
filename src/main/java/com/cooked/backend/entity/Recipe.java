@@ -82,10 +82,17 @@ public class Recipe {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @Column(name = "is_suggested", nullable = false, columnDefinition = "boolean default false")
+    @ElementCollection
+    @CollectionTable(name = "recipe_equipment", joinColumns = @JoinColumn(name = "recipe_id"))
+    @Column(name = "item", columnDefinition = "TEXT")
     @Builder.Default
-    private boolean isSuggested = false;
+    private List<String> equipment = new ArrayList<>();
 
     @Column(name = "expires_at", nullable = true)
     private LocalDateTime expiresAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "origin", nullable = false)
+    @Builder.Default
+    private RecipeOrigin origin = RecipeOrigin.MANUAL;
 }

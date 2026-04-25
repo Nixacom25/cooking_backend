@@ -15,6 +15,7 @@ public class AiRecipeGenerationRequest {
     private List<String> ingredients;
     // user_preferences can also be sent optionally based on API docs screenshot
     private UserPreferencesPayload user_preferences;
+    private String custom_instructions;
 
     @Data
     @Builder

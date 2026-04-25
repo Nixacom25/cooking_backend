@@ -49,16 +49,22 @@ public class GroceryItemServiceImpl implements GroceryItemService {
                                         .orElse(null);
                 }
 
-                // Check for existing duplicate
+                // Check for existing duplicate (Global merging per ingredient/date)
                 java.util.Optional<GroceryItem> existing = groceryItemRepository
-                                .findByUserIdAndIngredientIdAndRecipeIdAndPlannedDate(
+                                .findByUserIdAndIngredientIdAndPlannedDate(
                                                 user.getId(),
                                                 ingredient.getId(),
-                                                recipe != null ? recipe.getId() : null,
                                                 request.getPlannedDate());
-
+ 
                 if (existing.isPresent()) {
-                        return mapToResponse(existing.get());
+                        GroceryItem item = existing.get();
+                        String newQuantity = combineQuantities(item.getQuantity(), request.getQuantity());
+                        item.setQuantity(newQuantity);
+                        // Optional: update recipeId if it was null?
+                        if (item.getRecipe() == null && recipe != null) {
+                            item.setRecipe(recipe);
+                        }
+                        return mapToResponse(groceryItemRepository.save(item));
                 }
 
                 GroceryItem item = GroceryItem.builder()
@@ -139,4 +145,34 @@ public class GroceryItemServiceImpl implements GroceryItemService {
                                 .updatedAt(item.getUpdatedAt())
                                 .build();
         }
+
+        private String combineQuantities(String q1, String q2) {
+        if (q1 == null || q1.isEmpty()) return q2;
+        if (q2 == null || q2.isEmpty()) return q1;
+
+        // Simple numeric sum if both are pure numbers
+        try {
+            double d1 = Double.parseDouble(q1.trim());
+            double d2 = Double.parseDouble(q2.trim());
+            double sum = d1 + d2;
+            if (sum == (long) sum) return String.valueOf((long) sum);
+            return String.valueOf(sum);
+        } catch (NumberFormatException e) {
+            // Check if they have the same unit (e.g. "200 g" + "300 g")
+            String[] parts1 = q1.trim().split("\\s+");
+            String[] parts2 = q2.trim().split("\\s+");
+            
+            if (parts1.length == 2 && parts2.length == 2 && parts1[1].equalsIgnoreCase(parts2[1])) {
+                try {
+                    double d1 = Double.parseDouble(parts1[0]);
+                    double d2 = Double.parseDouble(parts2[0]);
+                    double sum = d1 + d2;
+                    String sSum = sum == (long) sum ? String.valueOf((long) sum) : String.valueOf(sum);
+                    return sSum + " " + parts1[1];
+                } catch (NumberFormatException ex) {}
+            }
+        }
+
+        return q1 + " + " + q2;
+    }
 }

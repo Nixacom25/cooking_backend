@@ -117,6 +117,14 @@ public class MarkhorAiServiceImpl implements AiService {
             request.setUser_preferences(mapUserToPreferences(user));
         }
 
+        // Standardize output format as per user requirements
+        request.setCustom_instructions(
+            "Format the recipe with: " +
+            "1. 'equipment': a list of necessary tools. " +
+            "2. 'steps': each step MUST follow the format 'Step X: Title\\nDescription'. " +
+            "Include heat levels, prep/cook instructions, and finishing steps."
+        );
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -128,7 +136,9 @@ public class MarkhorAiServiceImpl implements AiService {
                 AiRecipeListResponse.class);
 
         if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && response.getBody().isSuccess()) {
-            return response.getBody().getRecipes();
+            List<CreateRecipeRequest> recipes = response.getBody().getRecipes();
+            // Origin will be set by caller or defaults to SCAN if coming from regular generation
+            return recipes;
         }
 
         return Collections.emptyList();
@@ -143,7 +153,11 @@ public class MarkhorAiServiceImpl implements AiService {
                 .build();
         
         // Markhor API typically returns multiple recipes, we'll just use the default set or request multiple
-        return generateRecipes(request, user.getEmail());
+        List<CreateRecipeRequest> recipes = generateRecipes(request, user.getEmail());
+        for (CreateRecipeRequest r : recipes) {
+            r.setOrigin("SUGGESTED");
+        }
+        return recipes;
     }
 
     @Override
@@ -179,7 +193,13 @@ public class MarkhorAiServiceImpl implements AiService {
                     com.cooked.backend.dto.response.ScanResponse.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && response.getBody().isSuccess()) {
-                return response.getBody();
+                com.cooked.backend.dto.response.ScanResponse scanRes = response.getBody();
+                if (scanRes != null && scanRes.getRecipes() != null) {
+                    for (CreateRecipeRequest r : scanRes.getRecipes()) {
+                        r.setOrigin("SCAN");
+                    }
+                }
+                return scanRes;
             }
 
             throw new BadRequestException("Failed to analyze image/recipes from AI.");
@@ -211,7 +231,13 @@ public class MarkhorAiServiceImpl implements AiService {
                     com.cooked.backend.dto.response.ScanResponse.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && response.getBody().isSuccess()) {
-                return response.getBody();
+                com.cooked.backend.dto.response.ScanResponse scanRes = response.getBody();
+                if (scanRes != null && scanRes.getRecipes() != null) {
+                    for (CreateRecipeRequest r : scanRes.getRecipes()) {
+                        r.setOrigin("SCAN");
+                    }
+                }
+                return scanRes;
             }
 
             throw new BadRequestException("Failed to analyze ingredients/recipes from AI.");

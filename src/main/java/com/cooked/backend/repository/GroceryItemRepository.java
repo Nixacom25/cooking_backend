@@ -16,4 +16,7 @@ public interface GroceryItemRepository extends JpaRepository<GroceryItem, UUID> 
 
     java.util.Optional<GroceryItem> findByUserIdAndIngredientIdAndRecipeIdAndPlannedDate(
             UUID userId, UUID ingredientId, UUID recipeId, LocalDate plannedDate);
+
+    java.util.Optional<GroceryItem> findByUserIdAndIngredientIdAndPlannedDate(
+            UUID userId, UUID ingredientId, LocalDate plannedDate);
 }

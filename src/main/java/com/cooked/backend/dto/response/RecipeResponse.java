@@ -22,6 +22,7 @@ public class RecipeResponse {
     private RecipeCreatorResponse creator;
     private List<RecipeIngredientResponse> ingredients;
     private List<String> steps;
+    private List<String> equipment;
     private boolean isPublic;
     private boolean isFavorite;
     private String sourceUrl;
@@ -30,4 +31,5 @@ public class RecipeResponse {
     private LocalDateTime updatedAt;
     private boolean isSuggested;
     private LocalDateTime expiresAt;
+    private String origin;
 }

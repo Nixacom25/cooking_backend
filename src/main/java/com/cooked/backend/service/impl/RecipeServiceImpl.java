@@ -30,6 +30,25 @@ public class RecipeServiceImpl implements RecipeService {
     private final ActivityLogService activityLogService;
     private final FavoriteRecipeRepository favoriteRecipeRepository;
 
+    @jakarta.annotation.PostConstruct
+    public void migrateOrigins() {
+        System.out.println("Starting recipes origin migration...");
+        List<Recipe> recipes = recipeRepository.findAll();
+        long count = 0;
+        for (Recipe r : recipes) {
+            if (r.getOrigin() == RecipeOrigin.MANUAL || r.getOrigin() == null) {
+                r.setOrigin(RecipeOrigin.SCAN);
+                count++;
+            }
+        }
+        if (count > 0) {
+            recipeRepository.saveAll(recipes);
+            System.out.println("Successfully migrated " + count + " recipes to SCAN origin.");
+        } else {
+            System.out.println("No recipes needed migration.");
+        }
+    }
+
     @Override
     @Transactional
     public RecipeResponse create(String userEmail, CreateRecipeRequest request) {
@@ -48,6 +67,9 @@ public class RecipeServiceImpl implements RecipeService {
                 .tips(request.getTips())
                 .sourceUrl(request.getSourceUrl())
                 .steps(request.getSteps() != null ? request.getSteps() : new java.util.ArrayList<>())
+                .equipment(request.getEquipment() != null ? request.getEquipment() : new java.util.ArrayList<>())
+                .origin(request.getOrigin() != null ? RecipeOrigin.valueOf(request.getOrigin().toUpperCase()) : 
+                        (request.getSourceUrl() != null && !request.getSourceUrl().isBlank() ? RecipeOrigin.IMPORT : RecipeOrigin.MANUAL))
                 .build();
 
         // Handle Cookbook Links
@@ -228,7 +250,7 @@ public class RecipeServiceImpl implements RecipeService {
             org.springframework.data.domain.Pageable pageable) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        return recipeRepository.findByUserIdAndSourceUrlIsNotNullOrderByCreatedAtDesc(user.getId(), pageable)
+        return recipeRepository.findByUserIdAndOriginOrderByCreatedAtDesc(user.getId(), RecipeOrigin.IMPORT, pageable)
                 .map(recipe -> mapToResponse(recipe, user));
     }
 
@@ -244,27 +266,12 @@ public class RecipeServiceImpl implements RecipeService {
             throw new BadRequestException("You do not have permission to validate this recipe.");
         }
 
-        recipe.setSuggested(false);
+        // When validating a suggestion, it becomes a "MANUAL" or "SCAN" recipe but not a suggestion anymore
+        // Actually, we'll keep it as SCAN if it was suggested? 
+        // User says "marque toutes les recipes deja creer par default a scan"
+        recipe.setOrigin(RecipeOrigin.SCAN);
         recipe.setExpiresAt(null);
 
-        // Add to "À Tester" cookbook automatically
-        Cookbook toTryCb = cookbookRepository.findByUserIdAndName(user.getId(), "À Tester")
-                .orElseGet(() -> {
-                    Cookbook cb = Cookbook.builder()
-                            .user(user)
-                            .name("À Tester")
-                            .recipes(new HashSet<>())
-                            .build();
-                    return cookbookRepository.save(cb);
-                });
-
-        if (recipe.getCookbooks() == null) {
-            recipe.setCookbooks(new HashSet<>());
-        }
-        recipe.getCookbooks().add(toTryCb);
-        toTryCb.getRecipes().add(recipe);
-        
-        cookbookRepository.save(toTryCb);
         Recipe saved = recipeRepository.save(recipe);
 
         activityLogService.logActivity(user, "Recipe Validated", "You saved the suggestion '" + saved.getName() + "'.");
@@ -302,6 +309,7 @@ public class RecipeServiceImpl implements RecipeService {
                         .build())
                 .ingredients(ingResponses)
                 .steps(recipe.getSteps())
+                .equipment(new java.util.ArrayList<>(recipe.getEquipment()))
                 .servings(recipe.getServings())
                 .tips(recipe.getTips())
                 .isPublic(recipe.isPublic())
@@ -309,8 +317,9 @@ public class RecipeServiceImpl implements RecipeService {
                 .sourceUrl(recipe.getSourceUrl())
                 .createdAt(recipe.getCreatedAt())
                 .updatedAt(recipe.getUpdatedAt())
-                .isSuggested(recipe.isSuggested())
+                .isSuggested(recipe.getOrigin() == RecipeOrigin.SUGGESTED)
                 .expiresAt(recipe.getExpiresAt())
+                .origin(recipe.getOrigin() != null ? recipe.getOrigin().name() : null)
                 .shareUrl("https://cooked.nixacom.com/recipes/" + recipe.getId())
                 .build();
     }

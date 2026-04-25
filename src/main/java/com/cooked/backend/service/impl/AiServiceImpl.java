@@ -60,11 +60,13 @@ public class AiServiceImpl implements AiService {
                     lowerUrl.endsWith(".png") || lowerUrl.endsWith(".webp")) {
                 String visionPrompt = String.format(
                         "Analyze this image of a dish and provide the complete detailed recipe. " +
+                                "Source URL: %s. " +
                                 "Dietary restrictions: Allergies: %s, Preferences: %s. " +
                                 "Include prepTime and cookTime in minutes. " +
                                 "Provide a deep preparation flow from prep to finish. " +
                                 "IMPORTANT: Return ONLY raw JSON. " +
                                 "Return JSON in this format: %s",
+                        url,
                         String.join(", ", user.getAllergies()),
                         String.join(", ", user.getDietaryPreferences()),
                         RECIPE_JSON_FORMAT);
@@ -75,22 +77,31 @@ public class AiServiceImpl implements AiService {
                 return req;
             }
 
-            Document doc = Jsoup.connect(url).userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36").timeout(20000).get();
-            String pageText = String.format("Title: %s\nContent: %s", doc.title(), doc.body().text());
-            if (pageText.length() > 20000) pageText = pageText.substring(0, 20000);
+            Document doc = Jsoup.connect(url)
+                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
+                .timeout(20000)
+                .get();
+            
+            // Clean up the document to reduce noise
+            doc.select("script, style, footer, nav, aside").remove();
+            String pageText = String.format("Source URL: %s\nTitle: %s\nContent: %s", url, doc.title(), doc.body().text());
+            if (pageText.length() > 25000) pageText = pageText.substring(0, 25000);
 
             String scrapingPrompt = String.format(
-                    "Extract the recipe from this text: %s. " +
+                    "CRITICAL TASK: Extract the EXACT recipe from the provided text for the URL: %s. " +
+                            "Text Content: %s. " +
                             "User Allergies: %s, Preferences: %s. " +
-                            "Provide a high-quality Unsplash image URL in the 'image' field. " +
-                            "IMPORTANT: You must extract very detailed steps. Cover the entire preparation flow from Preparation to Finishing. " +
-                            "If the text is insufficient, use your culinary knowledge to fill in the gaps for a professional result but stay true to the dish. " +
+                            "IMPORTANT: Many websites have sidebars with 'other recipes'. IGNORE THEM. Focus ONLY on the main recipe of the page. " +
+                            "IMAGE EXTRACTION: If you cannot find a direct image URL for the dish in the text, use a high-quality relevant image URL from Unsplash (e.g., https://images.unsplash.com/photo-...) specifically for this dish: %s. " +
+                            "If the text is insufficient, you may infer missing details to ensure a complete recipe, but DO NOT invent a different dish. " +
                             "Include prepTime and cookTime in minutes. " +
                             "IMPORTANT: Return ONLY raw JSON. " +
                             "Return JSON in this format: %s",
+                    url,
                     pageText,
                     String.join(", ", user.getAllergies()),
                     String.join(", ", user.getDietaryPreferences()),
+                    doc.title(),
                     RECIPE_JSON_FORMAT);
 
             String responseJson = sanitizeJson(callOpenAi("Extract recipe from link", scrapingPrompt, "gpt-4o"));
@@ -102,7 +113,7 @@ public class AiServiceImpl implements AiService {
             throw new AiServiceException("Failed to fetch recipe from link: HTTP " + e.getStatusCode(), "SCRAPING_HTTP_ERROR");
         } catch (Exception e) {
             log.error("AI Error extracting recipe from {}: {}", url, e.getMessage());
-            throw new AiServiceException("Failed to extract recipe from AI. Ensure the link points to a valid recipe page.", "IA_GPT_ERROR");
+            throw new AiServiceException("Failed to extract recipe. Please ensure the link points to a valid recipe page and try again.", "IA_GPT_ERROR");
         }
     }
 
@@ -140,15 +151,22 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public List<CreateRecipeRequest> generateRecipes(AiRecipeGenerationRequest request, String email) {
+        return generateRecipes(request, email, "gpt-4o");
+    }
+
+    public List<CreateRecipeRequest> generateRecipes(AiRecipeGenerationRequest request, String email, String model) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         try {
             String allowedNames = String.join(", ", request.getIngredients());
             String generationPrompt = String.format(
-                    "Based on these ingredients: %s. " +
-                            "User Allergies: %s, Preferences: %s. " +
-                            "Generate between 6 and 10 distinct, practical recipes. Provide high-quality Unsplash images for each. " +
+                    "STRICT REQUIREMENT: Generate recipes using ONLY these ingredients: %s. " +
+                            "You MAY assume the user has basic seasonings: salt, pepper, and cooking oil. " +
+                            "DO NOT include any other ingredients (like spinach, butter, milk, flour, etc.) unless they are explicitly listed above. " +
+                            "The recipes must be practical and achievable with ONLY the provided items. " +
+                            "User Allergies: %s, Dietary Preferences: %s. " +
+                            "Generate between 6 and 10 distinct recipes. Provide high-quality Unsplash images for each. " +
                             "IMPORTANT: Return ONLY raw JSON. " +
                             "Format: {\"recipes\": [%s]}",
                     allowedNames,
@@ -156,7 +174,7 @@ public class AiServiceImpl implements AiService {
                     String.join(", ", user.getDietaryPreferences()),
                     RECIPE_JSON_FORMAT);
 
-            String recipesJson = sanitizeJson(callOpenAi("Generate recipes", generationPrompt));
+            String recipesJson = sanitizeJson(callOpenAi("Generate recipes", generationPrompt, model));
             JsonNode recipesNode = objectMapper.readTree(recipesJson);
             return objectMapper.convertValue(recipesNode.path("recipes"), new TypeReference<List<CreateRecipeRequest>>() {});
         } catch (Exception e) {
@@ -238,14 +256,19 @@ public class AiServiceImpl implements AiService {
                     String.join(", ", user.getAllergies()),
                     String.join(", ", user.getDietaryPreferences()));
 
-            String responseJson = sanitizeJson(callOpenAi("Categorize ingredients", categorizationPrompt));
+            String responseJson = sanitizeJson(callOpenAi("Categorize ingredients", categorizationPrompt, "gpt-4o-mini"));
             AiIngredientDetectionResponse categorization = objectMapper.readValue(responseJson, AiIngredientDetectionResponse.class);
 
             List<String> allowedNames = categorization.getAllowed_ingredients().stream()
                     .map(IngredientPayload::getName)
                     .toList();
             
-            List<CreateRecipeRequest> recipes = generateRecipes(AiRecipeGenerationRequest.builder().ingredients(allowedNames).build(), email);
+            // For speed (<= 3s requirement), use gpt-4o-mini for initial scan
+            List<CreateRecipeRequest> recipes = generateRecipes(
+                AiRecipeGenerationRequest.builder().ingredients(allowedNames).build(), 
+                email, 
+                "gpt-4o-mini"
+            );
 
             return ScanResponse.builder()
                     .success(true)
@@ -261,6 +284,7 @@ public class AiServiceImpl implements AiService {
                     .recipes(recipes)
                     .build();
         } catch (Exception e) {
+            log.error("Error in scanTyped: {}", e.getMessage());
             throw new AiServiceException("Failed to process ingredients. Please check your list.", "IA_TYPED_SCAN_ERROR");
         }
     }
@@ -288,7 +312,7 @@ public class AiServiceImpl implements AiService {
         headers.setBearerAuth(openAiApiKey);
 
         Map<String, Object> requestBody = Map.of(
-                "model", "gpt-4o",
+                "model", "gpt-4o-mini",
                 "messages", List.of(
                         Map.of("role", "user", "content", List.of(
                                 Map.of("type", "text", "text", prompt),

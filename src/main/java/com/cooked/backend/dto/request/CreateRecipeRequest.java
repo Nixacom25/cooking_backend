@@ -23,8 +23,11 @@ public class CreateRecipeRequest {
     private List<IngredientPayload> ingredients;
 
     private List<String> steps;
+    private List<String> equipment;
     private String sourceUrl;
 
     // Optional: cookbooks to attach to upon creation
     private List<UUID> cookbookIds;
+
+    private String origin;
 }
