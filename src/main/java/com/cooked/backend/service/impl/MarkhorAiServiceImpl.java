@@ -120,8 +120,9 @@ public class MarkhorAiServiceImpl implements AiService {
         // Standardize output format as per user requirements
         request.setCustom_instructions(
             "Format the recipe with: " +
-            "1. 'equipment': a list of necessary tools. " +
-            "2. 'steps': each step MUST follow the format 'Step X: Title\\nDescription'. " +
+            "1. 'ingredients': the list of ingredients. " +
+            "2. 'equipment': a comprehensive list of all kitchen tools and equipment necessary for the preparation of this recipe. " +
+            "3. 'steps': each step MUST follow the format 'Step X: Title\\nDescription'. " +
             "Include heat levels, prep/cook instructions, and finishing steps."
         );
 
@@ -184,6 +185,13 @@ public class MarkhorAiServiceImpl implements AiService {
             AiRecipeGenerationRequest.UserPreferencesPayload prefs = mapUserToPreferences(user);
             body.add("user_preferences", objectMapper.writeValueAsString(prefs));
             body.add("user_id", user.getId().toString());
+            
+            String customInstructions = "Format the recipe with: " +
+                "1. 'ingredients': the list of ingredients. " +
+                "2. 'equipment': a comprehensive list of all kitchen tools and equipment necessary for the preparation of this recipe. " +
+                "3. 'steps': each step MUST follow the format 'Step X: Title\\nDescription'. " +
+                "Include heat levels, prep/cook instructions, and finishing steps.";
+            body.add("custom_instructions", customInstructions);
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
@@ -222,6 +230,13 @@ public class MarkhorAiServiceImpl implements AiService {
             body.put("ingredients", ingredients);
             body.put("user_preferences", mapUserToPreferences(user));
             body.put("user_id", user.getId().toString());
+            
+            String customInstructions = "Format the recipe with: " +
+                "1. 'ingredients': the list of ingredients. " +
+                "2. 'equipment': a comprehensive list of all kitchen tools and equipment necessary for the preparation of this recipe. " +
+                "3. 'steps': each step MUST follow the format 'Step X: Title\\nDescription'. " +
+                "Include heat levels, prep/cook instructions, and finishing steps.";
+            body.put("custom_instructions", customInstructions);
 
             HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
@@ -250,5 +265,10 @@ public class MarkhorAiServiceImpl implements AiService {
     @Override
     public List<Map<String, String>> searchWeb(String query) {
         throw new UnsupportedOperationException("Web search not supported by Markhor AI yet.");
+    }
+
+    @Override
+    public List<String> generateTrendingDishes() {
+        return List.of("Sushi", "Tacos", "Pizza", "Pad Thai", "Croissant", "Butter Chicken");
     }
 }

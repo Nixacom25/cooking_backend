@@ -381,4 +381,19 @@ public class AiServiceImpl implements AiService {
             throw new AiServiceException("Web search failed.", "WEB_SEARCH_ERROR");
         }
     }
+
+    @Override
+    public List<String> generateTrendingDishes() {
+        try {
+            String prompt = "Generate 6 popular and trending dish names from around the world. " +
+                    "IMPORTANT: Return ONLY raw JSON in this format: {\"trending\": [\"Dish 1\", \"Dish 2\", \"Dish 3\", \"Dish 4\", \"Dish 5\", \"Dish 6\"]}";
+                    
+            String responseJson = sanitizeJson(callOpenAi("Generate trending dishes", prompt, "gpt-4o-mini"));
+            JsonNode root = objectMapper.readTree(responseJson);
+            return objectMapper.convertValue(root.path("trending"), new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            log.error("Failed to generate trending dishes: {}", e.getMessage());
+            return java.util.Collections.emptyList();
+        }
+    }
 }

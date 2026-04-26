@@ -7,6 +7,7 @@ import com.cooked.backend.dto.response.MessageResponse;
 import com.cooked.backend.dto.response.RecipeResponse;
 import com.cooked.backend.service.AiService;
 import com.cooked.backend.service.RecipeService;
+import com.cooked.backend.service.TrendingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,6 +31,7 @@ public class RecipeController {
 
     private final RecipeService recipeService;
     private final AiService aiService;
+    private final TrendingService trendingService;
 
     @Operation(summary = "Import Recipe via Link (AI)")
     @PostMapping("/import")
@@ -161,6 +163,12 @@ public class RecipeController {
     @GetMapping("/web-search")
     public ResponseEntity<List<Map<String, String>>> searchWeb(@RequestParam String query) {
         return ResponseEntity.ok(aiService.searchWeb(query));
+    }
+
+    @Operation(summary = "Get daily AI trending dishes")
+    @GetMapping("/trending-ai")
+    public ResponseEntity<List<String>> getTrendingAiDishes() {
+        return ResponseEntity.ok(trendingService.getTrendingDishes());
     }
 
     @Operation(summary = "Get user's recent imports")
