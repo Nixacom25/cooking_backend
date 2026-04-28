@@ -59,10 +59,16 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         org.springframework.data.domain.Page<Recipe> findByUserIdAndOriginOrderByCreatedAtDesc(
                         UUID userId, com.cooked.backend.entity.RecipeOrigin origin, org.springframework.data.domain.Pageable pageable);
 
+        @org.springframework.data.jpa.repository.Modifying
+        @org.springframework.transaction.annotation.Transactional
         int deleteByOriginAndExpiresAtBefore(com.cooked.backend.entity.RecipeOrigin origin, java.time.LocalDateTime now);
         
+        @org.springframework.data.jpa.repository.Modifying
+        @org.springframework.transaction.annotation.Transactional
         int deleteByOrigin(com.cooked.backend.entity.RecipeOrigin origin);
         
+        @org.springframework.data.jpa.repository.Modifying
+        @org.springframework.transaction.annotation.Transactional
         void deleteByUserId(UUID userId);
 
         @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r.cuisine FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.cuisine IS NOT NULL")

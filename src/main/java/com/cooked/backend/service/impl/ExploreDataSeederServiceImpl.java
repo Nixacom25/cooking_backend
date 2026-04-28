@@ -141,12 +141,6 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
                 for (Map<String, Object> data : recipesData) {
                     try {
                         String name = (String) data.get("name");
-                        // Check if recipe already exists for this system user
-                        if (recipeRepository.existsByUserIdAndName(systemUser.getId(), name)) {
-                            log.debug("Recipe '{}' already exists, skipping.", name);
-                            continue;
-                        }
-
                         @SuppressWarnings("unchecked")
                         List<Map<String, String>> ingredients = (List<Map<String, String>>) data.get("ingredients");
                         @SuppressWarnings("unchecked")
@@ -154,17 +148,27 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
                         @SuppressWarnings("unchecked")
                         List<String> equipment = (List<String>) data.get("equipment");
 
-                        createRecipe(systemUser, 
-                            name,
-                            (String) data.get("cuisine"),
-                            (String) data.get("category"),
-                            data.get("prepTime") != null ? (Integer) data.get("prepTime") : 0,
-                            data.get("cookTime") != null ? (Integer) data.get("cookTime") : 0,
-                            data.get("kcal") != null ? (Integer) data.get("kcal") : 0,
-                            ingredients,
-                            steps,
-                            equipment
-                        );
+                        // Find existing or create new
+                        Recipe recipe = recipeRepository.findByUserIdAndName(systemUser.getId(), name)
+                                .orElseGet(() -> Recipe.builder()
+                                        .user(systemUser)
+                                        .name(name)
+                                        .origin(RecipeOrigin.EXPLORE)
+                                        .isPublic(true)
+                                        .build());
+
+                        // Update fields
+                        recipe.setCuisine((String) data.get("cuisine"));
+                        recipe.setCategory((String) data.get("category"));
+                        recipe.setPrepTime(data.get("prepTime") != null ? (Integer) data.get("prepTime") : 0);
+                        recipe.setCookTime(data.get("cookTime") != null ? (Integer) data.get("cookTime") : 0);
+                        recipe.setKcal(data.get("kcal") != null ? (Integer) data.get("kcal") : 0);
+                        recipe.setSteps(new ArrayList<>(steps));
+                        recipe.setEquipment(new ArrayList<>(equipment));
+                        recipe.setServings(2);
+
+                        Recipe saved = recipeRepository.save(recipe);
+                        updateIngredients(saved, ingredients);
                     } catch (Exception e) {
                         log.error("Failed to create recipe: {}", data.get("name"), e);
                     }
@@ -179,27 +183,13 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
         log.info("Explore data seeding complete!");
     }
 
-    private void createRecipe(User user, String name, String cuisine, String category, int prep, int cook, int kcal, 
-                               List<Map<String, String>> ingredients, List<String> steps, List<String> equipment) {
-        
-        Recipe recipe = Recipe.builder()
-                .user(user)
-                .name(name)
-                .cuisine(cuisine)
-                .category(category)
-                .prepTime(prep)
-                .cookTime(cook)
-                .kcal(kcal)
-                .servings(2)
-                .isPublic(true)
-                .origin(RecipeOrigin.EXPLORE)
-                .steps(new ArrayList<>(steps))
-                .equipment(new ArrayList<>(equipment))
-                .build();
+    private void updateIngredients(Recipe recipe, List<Map<String, String>> ingredients) {
+        if (recipe.getRecipeIngredients() == null) {
+            recipe.setRecipeIngredients(new HashSet<>());
+        } else {
+            recipe.getRecipeIngredients().clear();
+        }
 
-        Recipe saved = recipeRepository.save(recipe);
-
-        Set<RecipeIngredient> recipeIngredients = new HashSet<>();
         if (ingredients != null) {
             for (Map<String, String> ingData : ingredients) {
                 String ingName = ingData.get("name");
@@ -209,7 +199,7 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
 
                 Ingredient ingredient = ingredientRepository.findByName(lowerName)
                         .map(existing -> {
-                            existing.setIcon(icon); // Update icon if needed
+                            existing.setIcon(icon);
                             return ingredientRepository.save(existing);
                         })
                         .orElseGet(() -> ingredientRepository.save(Ingredient.builder()
@@ -217,14 +207,13 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
                                 .icon(icon)
                                 .build()));
 
-                recipeIngredients.add(RecipeIngredient.builder()
-                        .recipe(saved)
+                recipe.getRecipeIngredients().add(RecipeIngredient.builder()
+                        .recipe(recipe)
                         .ingredient(ingredient)
                         .quantity(quantity)
                         .build());
             }
         }
-        saved.setRecipeIngredients(recipeIngredients);
-        recipeRepository.save(saved);
+        recipeRepository.save(recipe);
     }
 }

@@ -1,1838 +1,4881 @@
 [
   {
     "name": "Spaghetti Bolognese",
-    "image": "assets/images/recipe_pasta.png",
+    "cuisine": "Italian",
+    "category": "Italian",
     "prepTime": 15,
     "cookTime": 30,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Italian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 650,
+    "ingredients": [
+      {
+        "name": "Spaghetti",
+        "quantity": "200g"
+      },
+      {
+        "name": "Ground Beef",
+        "quantity": "250g"
+      },
+      {
+        "name": "Tomato Sauce",
+        "quantity": "400ml"
+      },
+      {
+        "name": "Onion",
+        "quantity": "1 medium"
+      },
+      {
+        "name": "Garlic",
+        "quantity": "2 cloves"
+      }
+    ],
+    "steps": [
+      "Boil spaghetti in salted water until al dente.",
+      "Sauté chopped onion and garlic in a pan.",
+      "Add ground beef and brown it thoroughly.",
+      "Pour in tomato sauce and simmer for 15 minutes.",
+      "Mix pasta with sauce and serve with parmesan."
+    ],
+    "equipment": [
+      "Large Pot",
+      "Frying Pan",
+      "Colander"
+    ]
   },
   {
     "name": "Chicken Alfredo",
-    "image": "assets/images/others.png",
+    "cuisine": "Italian",
+    "category": "Italian",
     "prepTime": 10,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Italian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 750,
+    "ingredients": [
+      {
+        "name": "Fettuccine Pasta",
+        "quantity": "200g"
+      },
+      {
+        "name": "Chicken Breast",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Heavy Cream",
+        "quantity": "200ml"
+      },
+      {
+        "name": "Parmesan Cheese",
+        "quantity": "50g"
+      },
+      {
+        "name": "Butter",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Cook fettuccine according to package directions.",
+      "Slice and cook chicken in butter until golden.",
+      "Add cream and parmesan to the pan to create sauce.",
+      "Toss pasta into the creamy chicken mixture."
+    ],
+    "equipment": [
+      "Pot",
+      "Sauté Pan"
+    ]
   },
   {
     "name": "Margherita Pizza",
-    "image": "assets/images/others.png",
+    "cuisine": "Italian",
+    "category": "Italian",
     "prepTime": 20,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Italian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 800,
+    "ingredients": [
+      {
+        "name": "Pizza Dough",
+        "quantity": "1 ball"
+      },
+      {
+        "name": "Tomato Puree",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Fresh Mozzarella",
+        "quantity": "125g"
+      },
+      {
+        "name": "Fresh Basil",
+        "quantity": "handful"
+      },
+      {
+        "name": "Olive Oil",
+        "quantity": "1 tbsp"
+      }
+    ],
+    "steps": [
+      "Preheat oven to 220°C (430°F).",
+      "Roll out pizza dough on a floured surface.",
+      "Spread tomato puree and top with mozzarella.",
+      "Bake for 12-15 minutes until crust is golden.",
+      "Top with fresh basil and a drizzle of olive oil."
+    ],
+    "equipment": [
+      "Oven",
+      "Baking Sheet",
+      "Rolling Pin"
+    ]
   },
   {
     "name": "Lasagna",
-    "image": "assets/images/others.png",
+    "cuisine": "Italian",
+    "category": "Italian",
     "prepTime": 30,
     "cookTime": 45,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Italian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 720,
+    "ingredients": [
+      {
+        "name": "Lasagna Sheets",
+        "quantity": "12 units"
+      },
+      {
+        "name": "Ricotta Cheese",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Mozzarella",
+        "quantity": "2 cups shredded"
+      },
+      {
+        "name": "Meat Sauce",
+        "quantity": "3 cups"
+      },
+      {
+        "name": "Egg",
+        "quantity": "1 unit"
+      }
+    ],
+    "steps": [
+      "Preheat oven to 190°C (375°F).",
+      "Mix ricotta, egg, and half of the mozzarella.",
+      "Layer meat sauce, lasagna sheets, and cheese mixture in a dish.",
+      "Repeat layers until ingredients are used up.",
+      "Bake for 45 minutes until bubbly and golden."
+    ],
+    "equipment": [
+      "9x13 Baking Dish",
+      "Mixing Bowl"
+    ]
   },
   {
     "name": "Penne Arrabbiata",
-    "image": "assets/images/others.png",
+    "cuisine": "Italian",
+    "category": "Italian",
     "prepTime": 10,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Italian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 480,
+    "ingredients": [
+      {
+        "name": "Penne Pasta",
+        "quantity": "200g"
+      },
+      {
+        "name": "Tomato Puree",
+        "quantity": "400ml"
+      },
+      {
+        "name": "Dried Red Chili Flakes",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Garlic",
+        "quantity": "3 cloves"
+      },
+      {
+        "name": "Olive Oil",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Cook penne in boiling salted water.",
+      "Sauté minced garlic and chili flakes in olive oil.",
+      "Add tomato puree and simmer for 10 minutes.",
+      "Toss pasta into the spicy sauce.",
+      "Garnish with fresh parsley."
+    ],
+    "equipment": [
+      "Large Pot",
+      "Skillet"
+    ]
   },
   {
     "name": "Carbonara",
-    "image": "assets/images/others.png",
+    "cuisine": "Italian",
+    "category": "Italian",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Italian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 600,
+    "ingredients": [
+      {
+        "name": "Spaghetti",
+        "quantity": "200g"
+      },
+      {
+        "name": "Pancetta or Guanciale",
+        "quantity": "100g"
+      },
+      {
+        "name": "Large Eggs",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Pecorino Romano",
+        "quantity": "50g"
+      },
+      {
+        "name": "Black Pepper",
+        "quantity": "lots of it"
+      }
+    ],
+    "steps": [
+      "Boil spaghetti until al dente.",
+      "Fry pancetta until crispy in a large pan.",
+      "Whisk eggs and cheese together in a bowl.",
+      "Combine hot pasta with pancetta, then remove from heat.",
+      "Quickly toss egg mixture with pasta (heat from pasta cooks the egg)."
+    ],
+    "equipment": [
+      "Large Pot",
+      "Skillet",
+      "Whisking Bowl"
+    ]
   },
   {
     "name": "Caprese Salad",
-    "image": "assets/images/others.png",
+    "cuisine": "Italian",
+    "category": "Italian",
     "prepTime": 10,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Italian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 250,
+    "ingredients": [
+      {
+        "name": "Fresh Tomatoes",
+        "quantity": "2 large"
+      },
+      {
+        "name": "Fresh Mozzarella",
+        "quantity": "200g"
+      },
+      {
+        "name": "Fresh Basil Leaves",
+        "quantity": "handful"
+      },
+      {
+        "name": "Balsamic Glaze",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Extra Virgin Olive Oil",
+        "quantity": "1 tbsp"
+      }
+    ],
+    "steps": [
+      "Slice tomatoes and mozzarella into 1cm thick rounds.",
+      "Alternate tomato and mozzarella slices on a plate.",
+      "Tuck basil leaves between the slices.",
+      "Drizzle with olive oil and balsamic glaze.",
+      "Season with salt and pepper."
+    ],
+    "equipment": [
+      "Sharp Knife",
+      "Serving Platter"
+    ]
   },
   {
     "name": "Risotto",
-    "image": "assets/images/others.png",
+    "cuisine": "Italian",
+    "category": "Italian",
     "prepTime": 10,
     "cookTime": 35,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Italian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 550,
+    "ingredients": [
+      {
+        "name": "Arborio Rice",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Chicken or Veg Broth",
+        "quantity": "3 cups"
+      },
+      {
+        "name": "White Wine",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Shallot",
+        "quantity": "1 unit minced"
+      },
+      {
+        "name": "Parmesan Cheese",
+        "quantity": "1/2 cup"
+      }
+    ],
+    "steps": [
+      "Heat broth in a separate pot to a simmer.",
+      "Sauté shallots in butter until translucent.",
+      "Add rice and toast for 2 minutes.",
+      "Deglaze with wine and stir until absorbed.",
+      "Add broth 1 ladle at a time, stirring constantly until absorbed."
+    ],
+    "equipment": [
+      "Large Saucepan",
+      "Broth Pot",
+      "Wooden Spoon"
+    ]
   },
   {
     "name": "Bruschetta",
-    "image": "assets/images/others.png",
+    "cuisine": "Italian",
+    "category": "Italian",
     "prepTime": 10,
     "cookTime": 10,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Italian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 220,
+    "ingredients": [
+      {
+        "name": "Baguette",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Roma Tomatoes",
+        "quantity": "3 units diced"
+      },
+      {
+        "name": "Garlic",
+        "quantity": "2 cloves"
+      },
+      {
+        "name": "Fresh Basil",
+        "quantity": "handful chopped"
+      },
+      {
+        "name": "Olive Oil",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Slice baguette and toast until golden.",
+      "Rub each toast slice with a raw garlic clove.",
+      "Mix diced tomatoes, basil, and olive oil in a bowl.",
+      "Spoon tomato mixture onto the toasted bread."
+    ],
+    "equipment": [
+      "Knife",
+      "Toaster or Oven"
+    ]
   },
   {
     "name": "Chicken Tacos",
-    "image": "assets/images/others.png",
+    "cuisine": "Mexican",
+    "category": "Mexican",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Mexican",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 450,
+    "ingredients": [
+      {
+        "name": "Corn Tortillas",
+        "quantity": "6 units"
+      },
+      {
+        "name": "Chicken Thighs",
+        "quantity": "300g"
+      },
+      {
+        "name": "Onion",
+        "quantity": "1 small"
+      },
+      {
+        "name": "Cilantro",
+        "quantity": "handful"
+      },
+      {
+        "name": "Lime",
+        "quantity": "1 unit"
+      }
+    ],
+    "steps": [
+      "Season and grill chicken until cooked through.",
+      "Chop chicken into small bite-sized pieces.",
+      "Warm tortillas on a hot skillet.",
+      "Assemble tacos with chicken, onions, and cilantro.",
+      "Serve with a squeeze of lime juice."
+    ],
+    "equipment": [
+      "Skillet",
+      "Chef Knife",
+      "Cutting Board"
+    ]
   },
   {
     "name": "Beef Burrito",
-    "image": "assets/images/others.png",
+    "cuisine": "Mexican",
+    "category": "Mexican",
     "prepTime": 15,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Mexican",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 600,
+    "ingredients": [
+      {
+        "name": "Large Flour Tortilla",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Ground Beef",
+        "quantity": "200g"
+      },
+      {
+        "name": "Rice",
+        "quantity": "1 cup cooked"
+      },
+      {
+        "name": "Black Beans",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Shredded Cheese",
+        "quantity": "1/2 cup"
+      }
+    ],
+    "steps": [
+      "Cook ground beef with taco seasoning.",
+      "Layer rice, beans, beef, and cheese on the tortilla.",
+      "Fold the sides and roll tightly into a burrito.",
+      "Optional: Toast the burrito on a pan for extra crunch."
+    ],
+    "equipment": [
+      "Pan",
+      "Spatula"
+    ]
   },
   {
     "name": "Quesadilla",
-    "image": "assets/images/others.png",
+    "cuisine": "Mexican",
+    "category": "Mexican",
     "prepTime": 10,
     "cookTime": 10,
     "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Mexican",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "ingredients": [
+      {
+        "name": "Flour Tortillas",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Monterey Jack Cheese",
+        "quantity": "1 cup shredded"
+      },
+      {
+        "name": "Jalapeños",
+        "quantity": "optional"
+      },
+      {
+        "name": "Sour Cream",
+        "quantity": "for dipping"
+      }
+    ],
+    "steps": [
+      "Place one tortilla in a dry skillet over medium heat.",
+      "Sprinkle cheese and optional jalapeños evenly.",
+      "Top with the second tortilla.",
+      "Cook for 3 minutes per side until cheese melts.",
+      "Slice into wedges and serve with sour cream."
+    ],
+    "equipment": [
+      "Large Skillet",
+      "Pizza Cutter"
+    ]
   },
   {
     "name": "Guacamole",
-    "image": "assets/images/others.png",
+    "cuisine": "Mexican",
+    "category": "Mexican",
     "prepTime": 10,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Mexican",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 280,
+    "ingredients": [
+      {
+        "name": "Ripe Avocados",
+        "quantity": "3 units"
+      },
+      {
+        "name": "Lime Juice",
+        "quantity": "1 tbsp"
+      },
+      {
+        "name": "Red Onion",
+        "quantity": "1/4 cup minced"
+      },
+      {
+        "name": "Cilantro",
+        "quantity": "2 tbsp chopped"
+      },
+      {
+        "name": "Salt",
+        "quantity": "1/2 tsp"
+      }
+    ],
+    "steps": [
+      "Mash avocado flesh in a bowl with a fork.",
+      "Stir in lime juice, salt, onion, and cilantro.",
+      "Adjust seasoning to taste.",
+      "Serve immediately with chips."
+    ],
+    "equipment": [
+      "Medium Bowl",
+      "Fork"
+    ]
   },
   {
     "name": "Enchiladas",
-    "image": "assets/images/others.png",
+    "cuisine": "Mexican",
+    "category": "Mexican",
     "prepTime": 20,
     "cookTime": 25,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Mexican",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 580,
+    "ingredients": [
+      {
+        "name": "Corn Tortillas",
+        "quantity": "8 units"
+      },
+      {
+        "name": "Shredded Chicken",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Enchilada Sauce",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Cheese",
+        "quantity": "1 cup"
+      }
+    ],
+    "steps": [
+      "Preheat oven to 180°C (350°F).",
+      "Dip tortillas in sauce to soften.",
+      "Fill with chicken and roll up.",
+      "Place rolls in a baking dish, cover with extra sauce and cheese.",
+      "Bake for 20 minutes until bubbling."
+    ],
+    "equipment": [
+      "Baking Dish",
+      "Small Pan"
+    ]
   },
   {
     "name": "Nachos",
-    "image": "assets/images/others.png",
+    "cuisine": "Mexican",
+    "category": "Mexican",
     "prepTime": 10,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Mexican",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 900,
+    "ingredients": [
+      {
+        "name": "Tortilla Chips",
+        "quantity": "1 large bag"
+      },
+      {
+        "name": "Nacho Cheese Sauce",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Black Beans",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Pickled Jalapeños",
+        "quantity": "handful"
+      },
+      {
+        "name": "Guacamole",
+        "quantity": "1/2 cup"
+      }
+    ],
+    "steps": [
+      "Spread chips on a large baking sheet.",
+      "Drizzle cheese sauce and beans over the chips.",
+      "Bake at 200°C for 5-8 minutes.",
+      "Top with jalapeños and guacamole before serving."
+    ],
+    "equipment": [
+      "Baking Sheet",
+      "Oven"
+    ]
   },
   {
     "name": "Street Corn (Elote)",
-    "image": "assets/images/others.png",
+    "cuisine": "Mexican",
+    "category": "Mexican",
     "prepTime": 10,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Mexican",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 320,
+    "ingredients": [
+      {
+        "name": "Corn on the Cob",
+        "quantity": "4 units"
+      },
+      {
+        "name": "Mayonnaise",
+        "quantity": "1/4 cup"
+      },
+      {
+        "name": "Cotija Cheese",
+        "quantity": "1/2 cup crumbled"
+      },
+      {
+        "name": "Chili Powder",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Lime",
+        "quantity": "1 unit"
+      }
+    ],
+    "steps": [
+      "Grill corn until slightly charred all over.",
+      "Brush mayonnaise onto the hot corn.",
+      "Roll corn in crumbled Cotija cheese.",
+      "Dust with chili powder and serve with lime wedges."
+    ],
+    "equipment": [
+      "Grill",
+      "Silicone Brush"
+    ]
   },
   {
     "name": "Rice and Beans",
-    "image": "assets/images/others.png",
+    "cuisine": "Mexican",
+    "category": "Mexican",
     "prepTime": 5,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Mexican",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 350,
+    "ingredients": [
+      {
+        "name": "White Rice",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Black Beans",
+        "quantity": "1 can rinsed"
+      },
+      {
+        "name": "Cumin",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Garlic Powder",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Vegetable Broth",
+        "quantity": "2 cups"
+      }
+    ],
+    "steps": [
+      "Cook rice in broth with cumin and garlic powder.",
+      "Once rice is cooked, fold in the black beans.",
+      "Simmer for 5 more minutes to heat through.",
+      "Fluff with a fork and serve."
+    ],
+    "equipment": [
+      "Medium Saucepan",
+      "Fork"
+    ]
   },
   {
     "name": "Chicken Fried Rice",
-    "image": "assets/images/others.png",
+    "cuisine": "Chinese",
+    "category": "Chinese",
     "prepTime": 10,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Chinese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 500,
+    "ingredients": [
+      {
+        "name": "Cooked Rice",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Chicken Breast",
+        "quantity": "150g diced"
+      },
+      {
+        "name": "Peas and Carrots",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Soy Sauce",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Eggs",
+        "quantity": "2 units"
+      }
+    ],
+    "steps": [
+      "Scramble eggs in a wok and set aside.",
+      "Stir-fry chicken until cooked through.",
+      "Add vegetables and rice to the wok.",
+      "Mix in soy sauce and scrambled eggs.",
+      "Toss everything over high heat for 3 minutes."
+    ],
+    "equipment": [
+      "Wok",
+      "Spatula"
+    ]
   },
   {
     "name": "Beef and Broccoli",
-    "image": "assets/images/others.png",
+    "cuisine": "Chinese",
+    "category": "Chinese",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Chinese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 420,
+    "ingredients": [
+      {
+        "name": "Flank Steak",
+        "quantity": "300g sliced"
+      },
+      {
+        "name": "Broccoli Florets",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Oyster Sauce",
+        "quantity": "3 tbsp"
+      },
+      {
+        "name": "Ginger",
+        "quantity": "1 tsp minced"
+      },
+      {
+        "name": "Cornstarch",
+        "quantity": "1 tsp"
+      }
+    ],
+    "steps": [
+      "Marinate beef in a little soy sauce and cornstarch.",
+      "Steam broccoli until bright green.",
+      "Sear beef in a hot wok in batches.",
+      "Add broccoli and oyster sauce back to the pan.",
+      "Stir until the sauce thickens and coats everything."
+    ],
+    "equipment": [
+      "Wok",
+      "Steamer Basket"
+    ]
   },
   {
     "name": "Sweet and Sour Chicken",
-    "image": "assets/images/others.png",
+    "cuisine": "Chinese",
+    "category": "Chinese",
     "prepTime": 20,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Chinese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 600,
+    "ingredients": [
+      {
+        "name": "Chicken Breast",
+        "quantity": "300g cubed"
+      },
+      {
+        "name": "Pineapple Chunks",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Bell Peppers",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Sweet and Sour Sauce",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Flour",
+        "quantity": "for coating"
+      }
+    ],
+    "steps": [
+      "Dredge chicken in flour and fry until crispy.",
+      "Sauté peppers and pineapple in a separate pan.",
+      "Add sweet and sour sauce and bring to a simmer.",
+      "Toss in the crispy chicken and serve immediately."
+    ],
+    "equipment": [
+      "Deep Fryer or Large Pot",
+      "Skillet"
+    ]
   },
   {
     "name": "Lo Mein",
-    "image": "assets/images/others.png",
+    "cuisine": "Chinese",
+    "category": "Chinese",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Chinese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 450,
+    "ingredients": [
+      {
+        "name": "Egg Noodles",
+        "quantity": "200g"
+      },
+      {
+        "name": "Cabbage",
+        "quantity": "1 cup shredded"
+      },
+      {
+        "name": "Carrots",
+        "quantity": "1/2 cup julienned"
+      },
+      {
+        "name": "Soy Sauce",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Sesame Oil",
+        "quantity": "1 tsp"
+      }
+    ],
+    "steps": [
+      "Cook noodles and drain.",
+      "Stir-fry vegetables until tender.",
+      "Add noodles and sauces to the wok.",
+      "Toss over high heat until well combined."
+    ],
+    "equipment": [
+      "Wok",
+      "Tongs"
+    ]
   },
   {
     "name": "Dumplings",
-    "image": "assets/images/others.png",
+    "cuisine": "Chinese",
+    "category": "Chinese",
     "prepTime": 30,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Chinese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 350,
+    "ingredients": [
+      {
+        "name": "Dumpling Wrappers",
+        "quantity": "20 units"
+      },
+      {
+        "name": "Ground Pork",
+        "quantity": "200g"
+      },
+      {
+        "name": "Napa Cabbage",
+        "quantity": "1 cup finely chopped"
+      },
+      {
+        "name": "Green Onions",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Soy Sauce",
+        "quantity": "1 tbsp"
+      }
+    ],
+    "steps": [
+      "Mix pork, cabbage, and seasonings in a bowl.",
+      "Place a spoonful of filling on each wrapper.",
+      "Pleat the edges to seal the dumplings.",
+      "Pan-fry until the bottom is crispy, then steam with a splash of water."
+    ],
+    "equipment": [
+      "Mixing Bowl",
+      "Skillet with Lid"
+    ]
   },
   {
     "name": "Kung Pao Chicken",
-    "image": "assets/images/others.png",
+    "cuisine": "Chinese",
+    "category": "Chinese",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Chinese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 480,
+    "ingredients": [
+      {
+        "name": "Chicken Breast",
+        "quantity": "300g cubed"
+      },
+      {
+        "name": "Peanuts",
+        "quantity": "1/4 cup roasted"
+      },
+      {
+        "name": "Dried Red Chilies",
+        "quantity": "5 units"
+      },
+      {
+        "name": "Hoisin Sauce",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Zucchini",
+        "quantity": "1 unit diced"
+      }
+    ],
+    "steps": [
+      "Sauté chilies and garlic in oil until fragrant.",
+      "Add chicken and cook until browned.",
+      "Stir in zucchini and hoisin sauce.",
+      "Fold in peanuts right before serving for crunch."
+    ],
+    "equipment": [
+      "Wok"
+    ]
   },
   {
     "name": "Egg Rolls",
-    "image": "assets/images/others.png",
+    "cuisine": "Chinese",
+    "category": "Chinese",
     "prepTime": 20,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Chinese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 380,
+    "ingredients": [
+      {
+        "name": "Egg Roll Wrappers",
+        "quantity": "10 units"
+      },
+      {
+        "name": "Shredded Cabbage",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Carrots",
+        "quantity": "1/2 cup julienned"
+      },
+      {
+        "name": "Ground Pork",
+        "quantity": "150g"
+      },
+      {
+        "name": "Ginger",
+        "quantity": "1/2 tsp"
+      }
+    ],
+    "steps": [
+      "Sauté pork and vegetables until tender.",
+      "Place filling in wrappers and roll tightly.",
+      "Seal edges with a bit of egg wash.",
+      "Deep fry until golden and crispy.",
+      "Serve with sweet chili sauce."
+    ],
+    "equipment": [
+      "Wok",
+      "Deep Fryer"
+    ]
   },
   {
     "name": "Hot and Sour Soup",
-    "image": "assets/images/others.png",
+    "cuisine": "Chinese",
+    "category": "Chinese",
     "prepTime": 10,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Chinese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 220,
+    "ingredients": [
+      {
+        "name": "Chicken Broth",
+        "quantity": "4 cups"
+      },
+      {
+        "name": "Tofu",
+        "quantity": "200g cubed"
+      },
+      {
+        "name": "Bamboo Shoots",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Rice Vinegar",
+        "quantity": "3 tbsp"
+      },
+      {
+        "name": "White Pepper",
+        "quantity": "1 tsp"
+      }
+    ],
+    "steps": [
+      "Bring broth to a boil with vegetables and tofu.",
+      "Add vinegar, soy sauce, and white pepper.",
+      "Stir in a cornstarch slurry to thicken.",
+      "Slowly drizzle in a beaten egg while stirring."
+    ],
+    "equipment": [
+      "Large Pot"
+    ]
   },
   {
     "name": "Sushi Rolls",
-    "image": "assets/images/others.png",
+    "cuisine": "Japanese",
+    "category": "Japanese",
     "prepTime": 40,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Japanese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 300,
+    "ingredients": [
+      {
+        "name": "Sushi Rice",
+        "quantity": "2 cups cooked"
+      },
+      {
+        "name": "Nori Sheets",
+        "quantity": "4 units"
+      },
+      {
+        "name": "Fresh Salmon or Tuna",
+        "quantity": "150g"
+      },
+      {
+        "name": "Cucumber",
+        "quantity": "1 unit julienned"
+      },
+      {
+        "name": "Rice Vinegar",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Season rice with rice vinegar while warm.",
+      "Place nori sheet on a bamboo mat.",
+      "Spread rice evenly over the nori, leaving a small gap at the top.",
+      "Place fish and cucumber in the center.",
+      "Roll tightly and slice into 8 pieces."
+    ],
+    "equipment": [
+      "Bamboo Sushi Mat",
+      "Sharp Knife",
+      "Rice Cooker"
+    ]
   },
   {
     "name": "Chicken Teriyaki",
-    "image": "assets/images/others.png",
+    "cuisine": "Japanese",
+    "category": "Japanese",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Japanese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 450,
+    "ingredients": [
+      {
+        "name": "Chicken Thighs",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Teriyaki Sauce",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Sesame Seeds",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Broccoli",
+        "quantity": "1 cup steamed"
+      }
+    ],
+    "steps": [
+      "Pan-sear chicken thighs until skin is crispy.",
+      "Pour teriyaki sauce over the chicken and simmer.",
+      "Glaze the chicken until the sauce is thick.",
+      "Slice chicken and serve over rice with sesame seeds."
+    ],
+    "equipment": [
+      "Skillet",
+      "Chef Knife"
+    ]
   },
   {
     "name": "Ramen",
-    "image": "assets/images/others.png",
+    "cuisine": "Japanese",
+    "category": "Japanese",
     "prepTime": 20,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Japanese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 520,
+    "ingredients": [
+      {
+        "name": "Ramen Noodles",
+        "quantity": "1 pack"
+      },
+      {
+        "name": "Pork Belly or Chicken",
+        "quantity": "2 slices"
+      },
+      {
+        "name": "Soft-boiled Egg",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Miso Paste",
+        "quantity": "1 tbsp"
+      },
+      {
+        "name": "Dashi Stock",
+        "quantity": "2 cups"
+      }
+    ],
+    "steps": [
+      "Cook noodles in boiling water and drain.",
+      "Combine dashi stock and miso paste in a pot.",
+      "Add cooked meat and noodles to a bowl.",
+      "Pour hot broth over and top with the egg."
+    ],
+    "equipment": [
+      "Large Stock Pot",
+      "Soup Bowl"
+    ]
   },
   {
     "name": "Tempura",
-    "image": "assets/images/others.png",
+    "cuisine": "Japanese",
+    "category": "Japanese",
     "prepTime": 20,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Japanese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 450,
+    "ingredients": [
+      {
+        "name": "Shrimp",
+        "quantity": "4 units"
+      },
+      {
+        "name": "Sweet Potato",
+        "quantity": "4 slices"
+      },
+      {
+        "name": "Tempura Batter",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Ice Water",
+        "quantity": "1 cup"
+      }
+    ],
+    "steps": [
+      "Mix cold water and flour to make a light batter.",
+      "Dip shrimp and vegetables into batter.",
+      "Fry in hot oil until light golden and crispy.",
+      "Serve with tentsuyu dipping sauce."
+    ],
+    "equipment": [
+      "Deep Skillet or Wok"
+    ]
   },
   {
     "name": "Miso Soup",
-    "image": "assets/images/others.png",
+    "cuisine": "Japanese",
+    "category": "Japanese",
     "prepTime": 5,
     "cookTime": 10,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Japanese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 80,
+    "ingredients": [
+      {
+        "name": "Dashi Stock",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Miso Paste",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Tofu",
+        "quantity": "100g cubed"
+      },
+      {
+        "name": "Seaweed (Wakame)",
+        "quantity": "1 tsp"
+      }
+    ],
+    "steps": [
+      "Bring dashi stock to a boil.",
+      "Add seaweed and tofu.",
+      "Whisk in miso paste through a strainer.",
+      "Serve hot immediately (do not boil after adding miso)."
+    ],
+    "equipment": [
+      "Small Pot"
+    ]
   },
   {
     "name": "Yakisoba",
-    "image": "assets/images/others.png",
+    "cuisine": "Japanese",
+    "category": "Japanese",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Japanese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 520,
+    "ingredients": [
+      {
+        "name": "Yakisoba Noodles",
+        "quantity": "200g"
+      },
+      {
+        "name": "Pork Belly",
+        "quantity": "100g"
+      },
+      {
+        "name": "Cabbage",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Yakisoba Sauce",
+        "quantity": "3 tbsp"
+      }
+    ],
+    "steps": [
+      "Fry pork and cabbage in a pan.",
+      "Add noodles and a splash of water.",
+      "Pour in sauce and stir-fry until combined.",
+      "Garnish with pickled ginger and seaweed powder."
+    ],
+    "equipment": [
+      "Large Skillet or Griddle"
+    ]
   },
   {
     "name": "Katsu Chicken",
-    "image": "assets/images/others.png",
+    "cuisine": "Japanese",
+    "category": "Japanese",
     "prepTime": 15,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Japanese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 580,
+    "ingredients": [
+      {
+        "name": "Chicken Breast",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Panko Breadcrumbs",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Flour",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Egg",
+        "quantity": "1 unit"
+      }
+    ],
+    "steps": [
+      "Flatten chicken and season.",
+      "Coat in flour, then egg, then panko.",
+      "Fry until golden and crispy.",
+      "Serve sliced with tonkatsu sauce and shredded cabbage."
+    ],
+    "equipment": [
+      "Frying Pan"
+    ]
   },
   {
     "name": "Pad Thai",
-    "image": "assets/images/others.png",
+    "cuisine": "Thai",
+    "category": "Thai",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Thai",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 480,
+    "ingredients": [
+      {
+        "name": "Rice Noodles",
+        "quantity": "200g"
+      },
+      {
+        "name": "Shrimp or Tofu",
+        "quantity": "150g"
+      },
+      {
+        "name": "Tamarind Paste",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Fish Sauce",
+        "quantity": "1 tbsp"
+      },
+      {
+        "name": "Peanuts",
+        "quantity": "crushed for garnish"
+      }
+    ],
+    "steps": [
+      "Soak noodles in warm water until soft.",
+      "Stir-fry shrimp or tofu in a wok.",
+      "Add noodles and tamarind sauce mixture.",
+      "Toss with bean sprouts and scrambled eggs.",
+      "Serve with lime and crushed peanuts."
+    ],
+    "equipment": [
+      "Wok",
+      "Spatula"
+    ]
   },
   {
     "name": "Green Curry",
-    "image": "assets/images/others.png",
+    "cuisine": "Thai",
+    "category": "Thai",
     "prepTime": 15,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Thai",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 550,
+    "ingredients": [
+      {
+        "name": "Green Curry Paste",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Coconut Milk",
+        "quantity": "1 can"
+      },
+      {
+        "name": "Chicken Breast",
+        "quantity": "250g"
+      },
+      {
+        "name": "Bamboo Shoots",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Thai Basil",
+        "quantity": "handful"
+      }
+    ],
+    "steps": [
+      "Sauté curry paste in coconut milk fat until fragrant.",
+      "Add chicken and cook until opaque.",
+      "Pour in remaining coconut milk and bamboo shoots.",
+      "Simmer for 10 minutes.",
+      "Finish with Thai basil and fish sauce to taste."
+    ],
+    "equipment": [
+      "Pot"
+    ]
   },
   {
     "name": "Red Curry",
-    "image": "assets/images/others.png",
+    "cuisine": "Thai",
+    "category": "Thai",
     "prepTime": 15,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Thai",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 580,
+    "ingredients": [
+      {
+        "name": "Red Curry Paste",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Coconut Milk",
+        "quantity": "1 can"
+      },
+      {
+        "name": "Beef or Duck",
+        "quantity": "250g"
+      },
+      {
+        "name": "Eggplant",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Thai Basil",
+        "quantity": "handful"
+      }
+    ],
+    "steps": [
+      "Sauté red curry paste in coconut milk fat.",
+      "Add meat and cook until tender.",
+      "Pour in remaining coconut milk and vegetables.",
+      "Simmer for 15 minutes.",
+      "Garnish with basil and serve with jasmine rice."
+    ],
+    "equipment": [
+      "Pot"
+    ]
   },
   {
     "name": "Thai Basil Chicken",
-    "image": "assets/images/others.png",
+    "cuisine": "Thai",
+    "category": "Thai",
     "prepTime": 10,
     "cookTime": 10,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Thai",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 420,
+    "ingredients": [
+      {
+        "name": "Ground Chicken",
+        "quantity": "300g"
+      },
+      {
+        "name": "Thai Basil Leaves",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Birdseye Chilies",
+        "quantity": "3 units"
+      },
+      {
+        "name": "Garlic",
+        "quantity": "4 cloves"
+      },
+      {
+        "name": "Oyster Sauce",
+        "quantity": "1 tbsp"
+      }
+    ],
+    "steps": [
+      "Pound chilies and garlic into a paste.",
+      "Stir-fry the paste until fragrant.",
+      "Add chicken and cook until browned.",
+      "Stir in sauces and a lot of basil leaves.",
+      "Serve with a fried egg on top of rice."
+    ],
+    "equipment": [
+      "Wok",
+      "Mortar and Pestle"
+    ]
   },
   {
     "name": "Mango Sticky Rice",
-    "image": "assets/images/others.png",
+    "cuisine": "Thai",
+    "category": "Thai",
     "prepTime": 15,
     "cookTime": 30,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Thai",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 350,
+    "ingredients": [
+      {
+        "name": "Sticky Rice",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Ripe Mango",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Coconut Cream",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Sugar",
+        "quantity": "3 tbsp"
+      },
+      {
+        "name": "Salt",
+        "quantity": "pinch"
+      }
+    ],
+    "steps": [
+      "Steam sticky rice until tender.",
+      "Mix warm rice with sweetened coconut cream.",
+      "Let it sit for 20 minutes to absorb.",
+      "Serve with sliced fresh mango on the side."
+    ],
+    "equipment": [
+      "Steamer",
+      "Bowl"
+    ]
   },
   {
     "name": "Tom Yum Soup",
-    "image": "assets/images/others.png",
+    "cuisine": "Thai",
+    "category": "Thai",
     "prepTime": 15,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Thai",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 250,
+    "ingredients": [
+      {
+        "name": "Shrimp",
+        "quantity": "200g"
+      },
+      {
+        "name": "Lemongrass",
+        "quantity": "2 stalks"
+      },
+      {
+        "name": "Galangal",
+        "quantity": "3 slices"
+      },
+      {
+        "name": "Kaffir Lime Leaves",
+        "quantity": "4 units"
+      },
+      {
+        "name": "Mushrooms",
+        "quantity": "1 cup"
+      }
+    ],
+    "steps": [
+      "Boil water with lemongrass, galangal, and lime leaves.",
+      "Add mushrooms and shrimp.",
+      "Season with fish sauce, lime juice, and chili paste.",
+      "Simmer until shrimp is cooked.",
+      "Garnish with cilantro."
+    ],
+    "equipment": [
+      "Pot"
+    ]
   },
   {
     "name": "Butter Chicken",
-    "image": "assets/images/others.png",
+    "cuisine": "Indian",
+    "category": "Indian",
     "prepTime": 20,
     "cookTime": 30,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Indian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 680,
+    "ingredients": [
+      {
+        "name": "Chicken Thighs",
+        "quantity": "400g"
+      },
+      {
+        "name": "Tomato Puree",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Heavy Cream",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Garam Masala",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Butter",
+        "quantity": "3 tbsp"
+      }
+    ],
+    "steps": [
+      "Marinate chicken in yogurt and spices.",
+      "Grill or pan-fry chicken until charred.",
+      "Simmer tomato puree, butter, and spices in a pot.",
+      "Add cream and chicken to the sauce.",
+      "Simmer until thickened and serve with naan."
+    ],
+    "equipment": [
+      "Large Pot",
+      "Skillet"
+    ]
   },
   {
     "name": "Chicken Tikka Masala",
-    "image": "assets/images/others.png",
+    "cuisine": "Indian",
+    "category": "Indian",
     "prepTime": 20,
     "cookTime": 30,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Indian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 650,
+    "ingredients": [
+      {
+        "name": "Chicken Breast",
+        "quantity": "400g"
+      },
+      {
+        "name": "Yogurt",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Turmeric",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Cumin",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Heavy Cream",
+        "quantity": "1/2 cup"
+      }
+    ],
+    "steps": [
+      "Marinate chicken in yogurt and spices for 2 hours.",
+      "Roast chicken until cooked through.",
+      "Prepare a spiced tomato cream sauce.",
+      "Combine chicken and sauce and simmer."
+    ],
+    "equipment": [
+      "Oven or Tandoor",
+      "Saucepan"
+    ]
   },
   {
     "name": "Biryani",
-    "image": "assets/images/others.png",
+    "cuisine": "Indian",
+    "category": "Indian",
     "prepTime": 30,
     "cookTime": 40,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Indian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 750,
+    "ingredients": [
+      {
+        "name": "Basmati Rice",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Lamb or Chicken",
+        "quantity": "400g"
+      },
+      {
+        "name": "Biryani Spices",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Onions",
+        "quantity": "2 large fried"
+      },
+      {
+        "name": "Saffron Milk",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Parboil rice with whole spices.",
+      "Cook meat with biryani spices and yogurt.",
+      "Layer meat and rice in a heavy pot.",
+      "Top with fried onions and saffron milk.",
+      "Seal and cook on low heat (Dum) for 20 minutes."
+    ],
+    "equipment": [
+      "Heavy Bottom Pot",
+      "Lid"
+    ]
   },
   {
     "name": "Naan",
-    "image": "assets/images/others.png",
+    "cuisine": "Indian",
+    "category": "Indian",
     "prepTime": 20,
     "cookTime": 10,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Indian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 280,
+    "ingredients": [
+      {
+        "name": "All-purpose Flour",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Yogurt",
+        "quantity": "1/4 cup"
+      },
+      {
+        "name": "Yeast",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Garlic Butter",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Knead flour, yogurt, and yeast into a soft dough.",
+      "Let it rise for 2 hours.",
+      "Roll into flat circles.",
+      "Cook in a very hot oven or on a skillet until bubbly.",
+      "Brush with garlic butter."
+    ],
+    "equipment": [
+      "Skillet or Pizza Stone",
+      "Rolling Pin"
+    ]
   },
   {
     "name": "Chana Masala",
-    "image": "assets/images/others.png",
+    "cuisine": "Indian",
+    "category": "Indian",
     "prepTime": 15,
     "cookTime": 25,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Indian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 380,
+    "ingredients": [
+      {
+        "name": "Chickpeas",
+        "quantity": "2 cans"
+      },
+      {
+        "name": "Onion",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Tomato Puree",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Ginger-Garlic Paste",
+        "quantity": "1 tbsp"
+      },
+      {
+        "name": "Chana Masala Spice",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Sauté onions and ginger-garlic paste.",
+      "Add tomato puree and spices.",
+      "Stir in chickpeas and a bit of water.",
+      "Simmer for 15 minutes.",
+      "Garnish with fresh coriander."
+    ],
+    "equipment": [
+      "Pot"
+    ]
   },
   {
     "name": "Dal",
-    "image": "assets/images/others.png",
+    "cuisine": "Indian",
+    "category": "Indian",
     "prepTime": 10,
     "cookTime": 30,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Indian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 320,
+    "ingredients": [
+      {
+        "name": "Red Lentils",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Turmeric",
+        "quantity": "1/2 tsp"
+      },
+      {
+        "name": "Cumin Seeds",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Garlic",
+        "quantity": "3 cloves"
+      },
+      {
+        "name": "Ghee",
+        "quantity": "1 tbsp"
+      }
+    ],
+    "steps": [
+      "Boil lentils with turmeric until soft.",
+      "In a small pan, heat ghee and sizzle cumin and garlic.",
+      "Pour the spiced ghee over the lentils (Tadka).",
+      "Season with salt and serve."
+    ],
+    "equipment": [
+      "Pot",
+      "Small Tempering Pan"
+    ]
   },
   {
     "name": "Samosas",
-    "image": "assets/images/others.png",
+    "cuisine": "Indian",
+    "category": "Indian",
     "prepTime": 30,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Indian",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 450,
+    "ingredients": [
+      {
+        "name": "Potatoes",
+        "quantity": "2 units boiled"
+      },
+      {
+        "name": "Peas",
+        "quantity": "1/4 cup"
+      },
+      {
+        "name": "Samosa Pastry",
+        "quantity": "10 units"
+      },
+      {
+        "name": "Cumin",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Oil",
+        "quantity": "for frying"
+      }
+    ],
+    "steps": [
+      "Mash potatoes and mix with peas and spices.",
+      "Fold pastry into triangles around the filling.",
+      "Seal edges with a bit of water.",
+      "Deep fry until golden brown and crispy."
+    ],
+    "equipment": [
+      "Deep Fryer or Wok"
+    ]
   },
   {
     "name": "Bibimbap",
-    "image": "assets/images/others.png",
+    "cuisine": "Korean",
+    "category": "Korean",
     "prepTime": 20,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Korean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 450,
+    "ingredients": [
+      {
+        "name": "Rice",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Spinach",
+        "quantity": "1 bunch"
+      },
+      {
+        "name": "Bean Sprouts",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Carrot",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Fried Egg",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Gochujang",
+        "quantity": "1 tbsp"
+      }
+    ],
+    "steps": [
+      "Sauté each vegetable separately with a bit of sesame oil.",
+      "Place rice in a bowl and arrange vegetables on top.",
+      "Add a fried egg in the center.",
+      "Serve with gochujang sauce and mix before eating."
+    ],
+    "equipment": [
+      "Small Frying Pan",
+      "Mixing Bowl"
+    ]
   },
   {
     "name": "Korean BBQ Beef (Bulgogi)",
-    "image": "assets/images/others.png",
+    "cuisine": "Korean",
+    "category": "Korean",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Korean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 500,
+    "ingredients": [
+      {
+        "name": "Thinly Sliced Beef",
+        "quantity": "300g"
+      },
+      {
+        "name": "Soy Sauce",
+        "quantity": "3 tbsp"
+      },
+      {
+        "name": "Sugar",
+        "quantity": "1 tbsp"
+      },
+      {
+        "name": "Sesame Oil",
+        "quantity": "1 tbsp"
+      },
+      {
+        "name": "Garlic",
+        "quantity": "2 cloves minced"
+      }
+    ],
+    "steps": [
+      "Marinate beef in soy sauce, sugar, and garlic for 30 minutes.",
+      "Stir-fry beef over high heat until caramelized.",
+      "Garnish with green onions and sesame seeds."
+    ],
+    "equipment": [
+      "Skillet or Grill"
+    ]
   },
   {
     "name": "Kimchi Fried Rice",
-    "image": "assets/images/others.png",
+    "cuisine": "Korean",
+    "category": "Korean",
     "prepTime": 10,
     "cookTime": 10,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Korean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 420,
+    "ingredients": [
+      {
+        "name": "Cooked Rice",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Kimchi",
+        "quantity": "1 cup chopped"
+      },
+      {
+        "name": "Kimchi Juice",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Gochujang",
+        "quantity": "1 tbsp"
+      },
+      {
+        "name": "Fried Egg",
+        "quantity": "1 unit"
+      }
+    ],
+    "steps": [
+      "Stir-fry kimchi in a pan with a bit of oil.",
+      "Add rice and break up any clumps.",
+      "Mix in gochujang and kimchi juice.",
+      "Stir-fry for 5 minutes until well combined.",
+      "Serve with a fried egg on top."
+    ],
+    "equipment": [
+      "Skillet"
+    ]
   },
   {
     "name": "Tteokbokki",
-    "image": "assets/images/others.png",
+    "cuisine": "Korean",
+    "category": "Korean",
     "prepTime": 10,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Korean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 380,
+    "ingredients": [
+      {
+        "name": "Rice Cakes",
+        "quantity": "200g"
+      },
+      {
+        "name": "Gochujang",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Fish Cakes",
+        "quantity": "100g"
+      },
+      {
+        "name": "Sugar",
+        "quantity": "1 tbsp"
+      },
+      {
+        "name": "Green Onions",
+        "quantity": "2 units"
+      }
+    ],
+    "steps": [
+      "Boil rice cakes and fish cakes in a small amount of water.",
+      "Stir in gochujang and sugar.",
+      "Simmer until the sauce thickens and rice cakes are soft.",
+      "Garnish with green onions."
+    ],
+    "equipment": [
+      "Saucepan"
+    ]
   },
   {
     "name": "Korean Fried Chicken",
-    "image": "assets/images/others.png",
+    "cuisine": "Korean",
+    "category": "Korean",
     "prepTime": 20,
     "cookTime": 30,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Korean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 750,
+    "ingredients": [
+      {
+        "name": "Chicken Wings",
+        "quantity": "500g"
+      },
+      {
+        "name": "Cornstarch",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Sweet and Spicy Glaze",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Oil",
+        "quantity": "for frying"
+      }
+    ],
+    "steps": [
+      "Coat chicken wings in cornstarch.",
+      "Double-fry for extra crispiness.",
+      "Toss wings in the spicy Korean glaze while hot.",
+      "Sprinkle with sesame seeds."
+    ],
+    "equipment": [
+      "Deep Fryer",
+      "Large Bowl"
+    ]
   },
   {
     "name": "Omelette",
-    "image": "assets/images/recipe_omelet.png",
+    "cuisine": "French",
+    "category": "French",
     "prepTime": 5,
     "cookTime": 5,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "French",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 300,
+    "ingredients": [
+      {
+        "name": "Eggs",
+        "quantity": "3 units"
+      },
+      {
+        "name": "Butter",
+        "quantity": "1 tbsp"
+      },
+      {
+        "name": "Salt",
+        "quantity": "pinch"
+      }
+    ],
+    "steps": [
+      "Whisk eggs.",
+      "Melt butter in pan.",
+      "Cook eggs until set.",
+      "Fold and serve."
+    ],
+    "equipment": []
   },
   {
     "name": "Ratatouille",
-    "image": "assets/images/others.png",
+    "cuisine": "French",
+    "category": "French",
     "prepTime": 20,
     "cookTime": 40,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "French",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 180,
+    "ingredients": [
+      {
+        "name": "Eggplant",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Zucchini",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Red Bell Pepper",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Tomato Puree",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Herbes de Provence",
+        "quantity": "1 tsp"
+      }
+    ],
+    "steps": [
+      "Slice all vegetables into thin rounds.",
+      "Arrange vegetables in a spiral pattern in a dish over tomato puree.",
+      "Drizzle with olive oil and sprinkle with herbs.",
+      "Cover and bake for 40 minutes until tender."
+    ],
+    "equipment": [
+      "Round Baking Dish",
+      "Mandoline Slicer"
+    ]
   },
   {
     "name": "Coq au Vin",
-    "image": "assets/images/others.png",
+    "cuisine": "French",
+    "category": "French",
     "prepTime": 30,
     "cookTime": 60,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "French",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 680,
+    "ingredients": [
+      {
+        "name": "Chicken Quarters",
+        "quantity": "4 units"
+      },
+      {
+        "name": "Red Wine (Burgundy)",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Bacon Lardons",
+        "quantity": "100g"
+      },
+      {
+        "name": "Mushrooms",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Pearl Onions",
+        "quantity": "1/2 cup"
+      }
+    ],
+    "steps": [
+      "Brown chicken in a heavy pot and remove.",
+      "Sauté bacon, onions, and mushrooms.",
+      "Return chicken to pot and pour in wine.",
+      "Simmer on low for 1 hour until tender.",
+      "Thicken sauce with a bit of flour and butter."
+    ],
+    "equipment": [
+      "Dutch Oven"
+    ]
   },
   {
     "name": "Croque Monsieur",
-    "image": "assets/images/others.png",
+    "cuisine": "French",
+    "category": "French",
     "prepTime": 10,
     "cookTime": 10,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "French",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 550,
+    "ingredients": [
+      {
+        "name": "Sourdough Bread",
+        "quantity": "2 slices"
+      },
+      {
+        "name": "Ham",
+        "quantity": "2 slices"
+      },
+      {
+        "name": "Gruyère Cheese",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Béchamel Sauce",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Butter bread and toast one side.",
+      "Layer ham and cheese between bread slices.",
+      "Top with béchamel sauce and extra cheese.",
+      "Broil in the oven until bubbly and brown."
+    ],
+    "equipment": [
+      "Oven",
+      "Baking Sheet"
+    ]
   },
   {
     "name": "French Onion Soup",
-    "image": "assets/images/others.png",
+    "cuisine": "French",
+    "category": "French",
     "prepTime": 20,
     "cookTime": 45,
     "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "French",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "ingredients": [
+      {
+        "name": "Yellow Onions",
+        "quantity": "4 large"
+      },
+      {
+        "name": "Beef Broth",
+        "quantity": "4 cups"
+      },
+      {
+        "name": "Baguette Slices",
+        "quantity": "4 units"
+      },
+      {
+        "name": "Gruyère Cheese",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Thyme",
+        "quantity": "1 sprig"
+      }
+    ],
+    "steps": [
+      "Caramelize onions in butter for 30 minutes until deep brown.",
+      "Add broth and thyme, simmer for 15 minutes.",
+      "Ladle soup into crocks.",
+      "Top with baguette and cheese, broil until melted."
+    ],
+    "equipment": [
+      "Pot",
+      "Oven-safe Bowls"
+    ]
   },
   {
     "name": "Crepes",
-    "image": "assets/images/others.png",
+    "cuisine": "French",
+    "category": "French",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "French",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 250,
+    "ingredients": [
+      {
+        "name": "Flour",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Eggs",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Milk",
+        "quantity": "1.5 cups"
+      },
+      {
+        "name": "Butter",
+        "quantity": "1 tbsp melted"
+      },
+      {
+        "name": "Sugar",
+        "quantity": "1 tbsp"
+      }
+    ],
+    "steps": [
+      "Whisk ingredients until smooth.",
+      "Pour a thin layer of batter into a hot non-stick pan.",
+      "Cook for 1 minute per side.",
+      "Fill with chocolate, fruit, or sugar."
+    ],
+    "equipment": [
+      "Crepe Pan or Non-stick Skillet"
+    ]
   },
   {
     "name": "Grilled Chicken Bowl",
-    "image": "assets/images/others.png",
+    "cuisine": "Mediterranean",
+    "category": "Mediterranean",
     "prepTime": 15,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Mediterranean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 450,
+    "ingredients": [
+      {
+        "name": "Chicken Breast",
+        "quantity": "250g"
+      },
+      {
+        "name": "Quinoa",
+        "quantity": "1 cup cooked"
+      },
+      {
+        "name": "Cherry Tomatoes",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Cucumber",
+        "quantity": "1/2 unit"
+      },
+      {
+        "name": "Hummus",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Grill chicken until cooked through.",
+      "Assemble bowl with quinoa, tomatoes, and cucumber.",
+      "Top with grilled chicken and a dollop of hummus."
+    ],
+    "equipment": [
+      "Grill",
+      "Bowl"
+    ]
   },
   {
     "name": "Falafel",
-    "image": "assets/images/others.png",
+    "cuisine": "Mediterranean",
+    "category": "Mediterranean",
     "prepTime": 20,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Mediterranean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 320,
+    "ingredients": [
+      {
+        "name": "Chickpeas",
+        "quantity": "1 can drained"
+      },
+      {
+        "name": "Parsley",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Garlic",
+        "quantity": "2 cloves"
+      },
+      {
+        "name": "Cumin",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Flour",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Pulse chickpeas, herbs, and spices in a food processor.",
+      "Form mixture into small balls.",
+      "Fry in hot oil until brown and crispy.",
+      "Serve with pita and tahini sauce."
+    ],
+    "equipment": [
+      "Food Processor",
+      "Deep Skillet"
+    ]
   },
   {
     "name": "Hummus",
-    "image": "assets/images/others.png",
+    "cuisine": "Mediterranean",
+    "category": "Mediterranean",
     "prepTime": 15,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Mediterranean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 180,
+    "ingredients": [
+      {
+        "name": "Chickpeas",
+        "quantity": "1 can"
+      },
+      {
+        "name": "Tahini",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Lemon Juice",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Garlic",
+        "quantity": "1 clove"
+      }
+    ],
+    "steps": [
+      "Blend all ingredients in a food processor until smooth.",
+      "Drizzle with olive oil and serve with pita."
+    ],
+    "equipment": [
+      "Food Processor"
+    ]
   },
   {
     "name": "Greek Salad",
-    "image": "assets/images/others.png",
+    "cuisine": "Mediterranean",
+    "category": "Mediterranean",
     "prepTime": 15,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Mediterranean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 220,
+    "ingredients": [
+      {
+        "name": "Cucumber",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Tomato",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Feta Cheese",
+        "quantity": "100g"
+      },
+      {
+        "name": "Olives",
+        "quantity": "1/2 cup"
+      }
+    ],
+    "steps": [
+      "Chop veggies and toss with olives and feta.",
+      "Drizzle with olive oil and oregano."
+    ],
+    "equipment": [
+      "Bowl"
+    ]
   },
   {
     "name": "Shawarma",
-    "image": "assets/images/others.png",
+    "cuisine": "Mediterranean",
+    "category": "Mediterranean",
     "prepTime": 20,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Mediterranean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 550,
+    "ingredients": [
+      {
+        "name": "Chicken",
+        "quantity": "400g"
+      },
+      {
+        "name": "Shawarma Spices",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Pita Bread",
+        "quantity": "4 units"
+      }
+    ],
+    "steps": [
+      "Season and grill chicken.",
+      "Slice and serve in pita with garlic sauce."
+    ],
+    "equipment": [
+      "Grill"
+    ]
   },
   {
     "name": "Couscous Bowl",
-    "image": "assets/images/others.png",
+    "cuisine": "Mediterranean",
+    "category": "Mediterranean",
     "prepTime": 10,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Mediterranean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 380,
+    "ingredients": [
+      {
+        "name": "Couscous",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Roasted Veggies",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Chickpeas",
+        "quantity": "1/2 cup"
+      }
+    ],
+    "steps": [
+      "Prepare couscous and fluff.",
+      "Top with roasted veggies and chickpeas."
+    ],
+    "equipment": [
+      "Bowl"
+    ]
   },
   {
     "name": "Chicken Shawarma",
-    "image": "assets/images/others.png",
+    "cuisine": "Middle Eastern",
+    "category": "Middle Eastern",
     "prepTime": 20,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Middle Eastern",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 480,
+    "ingredients": [
+      {
+        "name": "Chicken",
+        "quantity": "400g"
+      },
+      {
+        "name": "Cumin",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Turmeric",
+        "quantity": "1 tsp"
+      }
+    ],
+    "steps": [
+      "Grill spiced chicken and slice thinly."
+    ],
+    "equipment": []
   },
   {
     "name": "Lamb Kofta",
-    "image": "assets/images/others.png",
+    "cuisine": "Middle Eastern",
+    "category": "Middle Eastern",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Middle Eastern",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 420,
+    "ingredients": [
+      {
+        "name": "Ground Lamb",
+        "quantity": "300g"
+      },
+      {
+        "name": "Parsley",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Onion",
+        "quantity": "1 unit"
+      }
+    ],
+    "steps": [
+      "Mix ingredients, form onto skewers and grill."
+    ],
+    "equipment": []
   },
   {
     "name": "Hummus Plate",
-    "image": "assets/images/others.png",
+    "cuisine": "Middle Eastern",
+    "category": "Middle Eastern",
     "prepTime": 15,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Middle Eastern",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 200,
+    "ingredients": [
+      {
+        "name": "Hummus",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Olive Oil",
+        "quantity": "1 tbsp"
+      },
+      {
+        "name": "Paprika",
+        "quantity": "pinch"
+      }
+    ],
+    "steps": [
+      "Spread hummus on a plate and drizzle with oil."
+    ],
+    "equipment": []
   },
   {
     "name": "Falafel Wrap",
-    "image": "assets/images/others.png",
+    "cuisine": "Middle Eastern",
+    "category": "Middle Eastern",
     "prepTime": 20,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Middle Eastern",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 450,
+    "ingredients": [
+      {
+        "name": "Falafel",
+        "quantity": "4 units"
+      },
+      {
+        "name": "Pita",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Tahini",
+        "quantity": "1 tbsp"
+      }
+    ],
+    "steps": [
+      "Place falafel in pita and top with tahini."
+    ],
+    "equipment": []
   },
   {
     "name": "Tabbouleh",
-    "image": "assets/images/others.png",
+    "cuisine": "Middle Eastern",
+    "category": "Middle Eastern",
     "prepTime": 20,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Middle Eastern",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 150,
+    "ingredients": [
+      {
+        "name": "Parsley",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Bulgur",
+        "quantity": "1/4 cup"
+      },
+      {
+        "name": "Tomato",
+        "quantity": "1 unit"
+      }
+    ],
+    "steps": [
+      "Finely chop parsley and tomato, mix with soaked bulgur."
+    ],
+    "equipment": []
   },
   {
     "name": "Rice Pilaf",
-    "image": "assets/images/others.png",
+    "cuisine": "Middle Eastern",
+    "category": "Middle Eastern",
     "prepTime": 10,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Middle Eastern",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 320,
+    "ingredients": [
+      {
+        "name": "Rice",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Vermicelli",
+        "quantity": "1/4 cup"
+      },
+      {
+        "name": "Butter",
+        "quantity": "1 tbsp"
+      }
+    ],
+    "steps": [
+      "Brown vermicelli in butter, add rice and water, then cook."
+    ],
+    "equipment": []
   },
   {
     "name": "Quiche Lorraine",
-    "image": "assets/images/others.png",
+    "cuisine": "French Specialties",
+    "category": "French Specialties",
     "prepTime": 20,
     "cookTime": 35,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "French Specialties",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 480,
+    "ingredients": [
+      {
+        "name": "Pie Crust",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Bacon",
+        "quantity": "150g"
+      },
+      {
+        "name": "Eggs",
+        "quantity": "4 units"
+      },
+      {
+        "name": "Heavy Cream",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Nutmeg",
+        "quantity": "pinch"
+      }
+    ],
+    "steps": [
+      "Pre-bake pie crust for 10 minutes.",
+      "Cook bacon until crispy and place in crust.",
+      "Whisk eggs, cream, and nutmeg.",
+      "Pour over bacon and bake at 180°C for 30 minutes."
+    ],
+    "equipment": [
+      "Tart Pan"
+    ]
   },
   {
     "name": "Beef Bourguignon",
-    "image": "assets/images/others.png",
+    "cuisine": "French Specialties",
+    "category": "French Specialties",
     "prepTime": 40,
     "cookTime": 120,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "French Specialties",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 620,
+    "ingredients": [
+      {
+        "name": "Beef Chuck",
+        "quantity": "500g"
+      },
+      {
+        "name": "Red Wine",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Carrots",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Mushrooms",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Garlic",
+        "quantity": "3 cloves"
+      }
+    ],
+    "steps": [
+      "Sear beef cubes in a hot pot.",
+      "Add vegetables and sauté.",
+      "Deglaze with wine and add herbs.",
+      "Slow cook for 2 hours until meat falls apart."
+    ],
+    "equipment": [
+      "Slow Cooker or Dutch Oven"
+    ]
   },
   {
     "name": "Paella",
-    "image": "assets/images/others.png",
+    "cuisine": "Spanish",
+    "category": "Spanish",
     "prepTime": 20,
     "cookTime": 40,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Spanish",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 580,
+    "ingredients": [
+      {
+        "name": "Paella Rice",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Shrimp",
+        "quantity": "200g"
+      },
+      {
+        "name": "Saffron",
+        "quantity": "pinch"
+      },
+      {
+        "name": "Peas",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Chicken Thighs",
+        "quantity": "2 units"
+      }
+    ],
+    "steps": [
+      "Brown chicken in a wide shallow pan.",
+      "Add rice and saffron, stirring to coat.",
+      "Pour in broth and simmer without stirring.",
+      "Add shrimp and peas for the last 10 minutes.",
+      "Let rest for 5 minutes before serving."
+    ],
+    "equipment": [
+      "Paella Pan or Large Skillet"
+    ]
   },
   {
-    "name": "Tortilla Espa\u00f1ola",
-    "image": "assets/images/others.png",
+    "name": "Tortilla Española",
+    "cuisine": "Spanish",
+    "category": "Spanish",
     "prepTime": 15,
     "cookTime": 25,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Spanish",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 350,
+    "ingredients": [
+      {
+        "name": "Potatoes",
+        "quantity": "3 units sliced"
+      },
+      {
+        "name": "Eggs",
+        "quantity": "5 units"
+      },
+      {
+        "name": "Onion",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Olive Oil",
+        "quantity": "1/2 cup"
+      }
+    ],
+    "steps": [
+      "Fry potatoes and onions in oil until soft.",
+      "Drain oil and mix with beaten eggs.",
+      "Cook in a pan on medium heat until set.",
+      "Flip using a plate and cook the other side."
+    ],
+    "equipment": [
+      "Non-stick Pan",
+      "Large Plate"
+    ]
   },
   {
     "name": "Patatas Bravas",
-    "image": "assets/images/others.png",
+    "cuisine": "Spanish",
+    "category": "Spanish",
     "prepTime": 15,
     "cookTime": 30,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Spanish",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 420,
+    "ingredients": [
+      {
+        "name": "Potatoes",
+        "quantity": "4 units cubed"
+      },
+      {
+        "name": "Tomato Puree",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Smoked Paprika",
+        "quantity": "1 tbsp"
+      },
+      {
+        "name": "Garlic Aioli",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Deep fry or roast potato cubes until crispy.",
+      "Make a spicy tomato sauce with paprika.",
+      "Toss potatoes in sauce and top with aioli."
+    ],
+    "equipment": [
+      "Deep Fryer or Oven"
+    ]
   },
   {
     "name": "Garlic Shrimp",
-    "image": "assets/images/others.png",
+    "cuisine": "Spanish",
+    "category": "Spanish",
     "prepTime": 10,
     "cookTime": 10,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Spanish",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 310,
+    "ingredients": [
+      {
+        "name": "Shrimp",
+        "quantity": "250g"
+      },
+      {
+        "name": "Garlic",
+        "quantity": "4 cloves sliced"
+      },
+      {
+        "name": "Olive Oil",
+        "quantity": "3 tbsp"
+      },
+      {
+        "name": "Red Chili Flakes",
+        "quantity": "1/2 tsp"
+      }
+    ],
+    "steps": [
+      "Sizzle garlic and chili in olive oil.",
+      "Add shrimp and cook until pink (2 mins).",
+      "Serve sizzling hot with bread."
+    ],
+    "equipment": [
+      "Small Cast Iron Skillet"
+    ]
   },
   {
     "name": "Churros",
-    "image": "assets/images/others.png",
+    "cuisine": "Spanish",
+    "category": "Spanish",
     "prepTime": 20,
     "cookTime": 20,
     "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Spanish",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "ingredients": [
+      {
+        "name": "Water",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Flour",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Butter",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Cinnamon Sugar",
+        "quantity": "for coating"
+      }
+    ],
+    "steps": [
+      "Boil water and butter, then stir in flour.",
+      "Pipe dough through a star tip into hot oil.",
+      "Fry until golden and roll in cinnamon sugar.",
+      "Serve with chocolate dipping sauce."
+    ],
+    "equipment": [
+      "Piping Bag with Star Tip",
+      "Deep Fryer"
+    ]
   },
   {
     "name": "Gyro",
-    "image": "assets/images/others.png",
+    "cuisine": "Greek",
+    "category": "Greek",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Greek",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
-  },
-  {
-    "name": "Greek Salad",
-    "image": "assets/images/others.png",
-    "prepTime": 10,
-    "cookTime": 0,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Greek",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 480,
+    "ingredients": [
+      {
+        "name": "Pita Bread",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Lamb or Chicken",
+        "quantity": "200g sliced"
+      },
+      {
+        "name": "Tzatziki",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Tomato and Onion",
+        "quantity": "sliced"
+      }
+    ],
+    "steps": [
+      "Grill meat with Mediterranean spices.",
+      "Warm pita and spread with tzatziki.",
+      "Fill with meat, tomato, and onion.",
+      "Roll up and serve."
+    ],
+    "equipment": [
+      "Grill Pan"
+    ]
   },
   {
     "name": "Moussaka",
-    "image": "assets/images/others.png",
+    "cuisine": "Greek",
+    "category": "Greek",
     "prepTime": 40,
     "cookTime": 60,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Greek",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 650,
+    "ingredients": [
+      {
+        "name": "Eggplant",
+        "quantity": "2 large sliced"
+      },
+      {
+        "name": "Ground Lamb",
+        "quantity": "300g"
+      },
+      {
+        "name": "Tomato Sauce",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Béchamel Sauce",
+        "quantity": "2 cups"
+      }
+    ],
+    "steps": [
+      "Fry eggplant slices until golden.",
+      "Layer lamb sauce and eggplant in a dish.",
+      "Top with a thick layer of béchamel.",
+      "Bake at 180°C for 45 minutes."
+    ],
+    "equipment": [
+      "Casserole Dish"
+    ]
   },
   {
     "name": "Souvlaki",
-    "image": "assets/images/others.png",
+    "cuisine": "Greek",
+    "category": "Greek",
     "prepTime": 20,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Greek",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 380,
+    "ingredients": [
+      {
+        "name": "Pork or Chicken Skewers",
+        "quantity": "4 units"
+      },
+      {
+        "name": "Lemon Juice",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Oregano",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Garlic",
+        "quantity": "2 cloves"
+      }
+    ],
+    "steps": [
+      "Marinate skewers in lemon, garlic, and oregano.",
+      "Grill until charred and cooked through.",
+      "Serve with pita and lemon wedges."
+    ],
+    "equipment": [
+      "Grill"
+    ]
   },
   {
     "name": "Tzatziki",
-    "image": "assets/images/others.png",
+    "cuisine": "Greek",
+    "category": "Greek",
     "prepTime": 10,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Greek",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 120,
+    "ingredients": [
+      {
+        "name": "Greek Yogurt",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Grated Cucumber",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Garlic",
+        "quantity": "1 clove minced"
+      },
+      {
+        "name": "Dill",
+        "quantity": "1 tsp"
+      }
+    ],
+    "steps": [
+      "Squeeze excess water from cucumber.",
+      "Mix all ingredients in a bowl.",
+      "Chill for 30 minutes before serving."
+    ],
+    "equipment": [
+      "Bowl",
+      "Grater"
+    ]
   },
   {
     "name": "Jerk Chicken",
-    "image": "assets/images/others.png",
+    "cuisine": "Caribbean",
+    "category": "Caribbean",
     "prepTime": 20,
     "cookTime": 45,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Caribbean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 520,
+    "ingredients": [
+      {
+        "name": "Chicken Quarters",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Jerk Seasoning",
+        "quantity": "3 tbsp"
+      },
+      {
+        "name": "Scotch Bonnet Pepper",
+        "quantity": "1 unit minced"
+      },
+      {
+        "name": "Thyme",
+        "quantity": "3 sprigs"
+      },
+      {
+        "name": "Allspice",
+        "quantity": "1 tsp"
+      }
+    ],
+    "steps": [
+      "Rub chicken with jerk seasoning and let marinate.",
+      "Grill over medium heat, turning occasionally.",
+      "Baste with extra sauce during cooking.",
+      "Serve with rice and peas."
+    ],
+    "equipment": [
+      "Grill",
+      "Tongs"
+    ]
   },
   {
     "name": "Rice and Peas",
-    "image": "assets/images/others.png",
+    "cuisine": "Caribbean",
+    "category": "Caribbean",
     "prepTime": 10,
     "cookTime": 40,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Caribbean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 420,
+    "ingredients": [
+      {
+        "name": "Basmati Rice",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Kidney Beans (Peas)",
+        "quantity": "1 can"
+      },
+      {
+        "name": "Coconut Milk",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Scotch Bonnet Pepper",
+        "quantity": "1 unit whole"
+      },
+      {
+        "name": "Thyme",
+        "quantity": "2 sprigs"
+      }
+    ],
+    "steps": [
+      "Rinse rice and place in a pot with coconut milk and water.",
+      "Add beans, whole pepper (do not burst), and thyme.",
+      "Bring to a boil then simmer on low for 20 minutes.",
+      "Remove thyme and pepper before fluffing with a fork."
+    ],
+    "equipment": [
+      "Large Pot"
+    ]
   },
   {
     "name": "Curry Chicken",
-    "image": "assets/images/others.png",
+    "cuisine": "Caribbean",
+    "category": "Caribbean",
     "prepTime": 20,
     "cookTime": 35,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Caribbean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 480,
+    "ingredients": [
+      {
+        "name": "Chicken Pieces",
+        "quantity": "500g"
+      },
+      {
+        "name": "Jamaican Curry Powder",
+        "quantity": "3 tbsp"
+      },
+      {
+        "name": "Potatoes",
+        "quantity": "2 units cubed"
+      },
+      {
+        "name": "Carrots",
+        "quantity": "1 unit sliced"
+      },
+      {
+        "name": "Coconut Milk",
+        "quantity": "1/2 cup"
+      }
+    ],
+    "steps": [
+      "Season chicken with curry powder and let marinate.",
+      "Brown chicken in a pot.",
+      "Add vegetables and coconut milk.",
+      "Simmer for 30 minutes until chicken is tender."
+    ],
+    "equipment": [
+      "Large Pot"
+    ]
   },
   {
     "name": "Fried Plantains",
-    "image": "assets/images/others.png",
+    "cuisine": "Caribbean",
+    "category": "Caribbean",
     "prepTime": 5,
     "cookTime": 10,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Caribbean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 220,
+    "ingredients": [
+      {
+        "name": "Ripe Plantains",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Vegetable Oil",
+        "quantity": "for frying"
+      },
+      {
+        "name": "Salt",
+        "quantity": "pinch"
+      }
+    ],
+    "steps": [
+      "Peel and slice plantains diagonally.",
+      "Fry in hot oil until golden brown and caramelized.",
+      "Drain on paper towels and sprinkle with salt."
+    ],
+    "equipment": [
+      "Frying Pan"
+    ]
   },
   {
     "name": "Oxtail",
-    "image": "assets/images/others.png",
+    "cuisine": "Caribbean",
+    "category": "Caribbean",
     "prepTime": 20,
     "cookTime": 120,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "Caribbean",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 750,
+    "ingredients": [
+      {
+        "name": "Oxtail Pieces",
+        "quantity": "1kg"
+      },
+      {
+        "name": "Broad Beans",
+        "quantity": "1 can"
+      },
+      {
+        "name": "Browning Sauce",
+        "quantity": "1 tbsp"
+      },
+      {
+        "name": "Allspice",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Ginger",
+        "quantity": "1 tbsp minced"
+      }
+    ],
+    "steps": [
+      "Season oxtail and brown in a pot.",
+      "Add water and spices, simmer for 2 hours until tender.",
+      "Add broad beans for the last 15 minutes to thicken sauce.",
+      "Serve with rice and peas."
+    ],
+    "equipment": [
+      "Pressure Cooker or Heavy Pot"
+    ]
   },
   {
     "name": "Jollof Rice",
-    "image": "assets/images/others.png",
+    "cuisine": "West African",
+    "category": "West African",
     "prepTime": 20,
     "cookTime": 45,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "West African",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 480,
+    "ingredients": [
+      {
+        "name": "Long Grain Rice",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Tomato Paste",
+        "quantity": "3 tbsp"
+      },
+      {
+        "name": "Red Bell Peppers",
+        "quantity": "2 units blended"
+      },
+      {
+        "name": "Onions",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Thyme",
+        "quantity": "1 tsp"
+      }
+    ],
+    "steps": [
+      "Fry onions and tomato paste in oil.",
+      "Add blended pepper mixture and spices, cook for 10 minutes.",
+      "Add rice and enough water/broth to cover.",
+      "Cover tightly and steam until rice is tender and dry."
+    ],
+    "equipment": [
+      "Large Heavy Pot with Lid"
+    ]
   },
   {
     "name": "Suya",
-    "image": "assets/images/others.png",
+    "cuisine": "West African",
+    "category": "West African",
     "prepTime": 20,
     "cookTime": 15,
     "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "West African",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "ingredients": [
+      {
+        "name": "Beef Sirloin",
+        "quantity": "300g thinly sliced"
+      },
+      {
+        "name": "Kuli-Kuli (Peanut Spice)",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Cayenne Pepper",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Ginger Powder",
+        "quantity": "1 tsp"
+      }
+    ],
+    "steps": [
+      "Coat beef slices heavily with Suya spice mix.",
+      "Thread onto skewers.",
+      "Grill over high heat for 3-4 minutes per side.",
+      "Serve with sliced onions and tomatoes."
+    ],
+    "equipment": [
+      "Grill",
+      "Metal Skewers"
+    ]
   },
   {
     "name": "Egusi Soup",
-    "image": "assets/images/others.png",
+    "cuisine": "West African",
+    "category": "West African",
     "prepTime": 20,
     "cookTime": 40,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "West African",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 550,
+    "ingredients": [
+      {
+        "name": "Ground Egusi Seeds",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Spinach",
+        "quantity": "2 cups chopped"
+      },
+      {
+        "name": "Assorted Meat",
+        "quantity": "300g"
+      },
+      {
+        "name": "Palm Oil",
+        "quantity": "1/4 cup"
+      },
+      {
+        "name": "Crayfish Powder",
+        "quantity": "1 tbsp"
+      }
+    ],
+    "steps": [
+      "Cook meat until tender.",
+      "Mix egusi with a little water to form a paste.",
+      "Fry egusi paste in palm oil until it forms lumps.",
+      "Add meat broth and crayfish, simmer for 15 minutes.",
+      "Add spinach and cook for 5 more minutes."
+    ],
+    "equipment": [
+      "Large Pot"
+    ]
   },
   {
     "name": "Fried Rice (West African style)",
-    "image": "assets/images/others.png",
+    "cuisine": "West African",
+    "category": "West African",
     "prepTime": 20,
     "cookTime": 30,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "West African",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 480,
+    "ingredients": [
+      {
+        "name": "Parboiled Rice",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Mixed Vegetables",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Liver or Shrimp",
+        "quantity": "100g diced"
+      },
+      {
+        "name": "Curry Powder",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Thyme",
+        "quantity": "1/2 tsp"
+      }
+    ],
+    "steps": [
+      "Sauté vegetables and meat in oil.",
+      "Add parboiled rice and spices.",
+      "Stir-fry until rice is well coated and heated through.",
+      "Serve with fried plantain and chicken."
+    ],
+    "equipment": [
+      "Large Skillet or Wok"
+    ]
   },
   {
     "name": "Grilled Fish",
-    "image": "assets/images/others.png",
+    "cuisine": "West African",
+    "category": "West African",
     "prepTime": 15,
     "cookTime": 30,
     "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "West African",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "ingredients": [
+      {
+        "name": "Whole Tilapia",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Ginger and Garlic",
+        "quantity": "minced"
+      },
+      {
+        "name": "Scotch Bonnet",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Lemon",
+        "quantity": "1 unit"
+      }
+    ],
+    "steps": [
+      "Score the fish and marinate with spices.",
+      "Grill over charcoal or in an oven.",
+      "Baste with spicy oil during grilling.",
+      "Serve with fried yam or plantain."
+    ],
+    "equipment": [
+      "Grill or Oven"
+    ]
   },
   {
     "name": "Plantain",
-    "image": "assets/images/others.png",
+    "cuisine": "West African",
+    "category": "West African",
     "prepTime": 5,
     "cookTime": 10,
-    "kcal": 400,
-    "category": "Cuisine",
-    "cuisine": "West African",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
-  },
-  {
-    "name": "Grilled Chicken Bowl",
-    "image": "assets/images/others.png",
-    "prepTime": 15,
-    "cookTime": 20,
-    "kcal": 400,
-    "category": "High Protein, Low Calorie",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 220,
+    "ingredients": [
+      {
+        "name": "Ripe Plantain",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Oil",
+        "quantity": "for frying"
+      }
+    ],
+    "steps": [
+      "Slice and fry until golden brown.",
+      "Serve as a side dish."
+    ],
+    "equipment": [
+      "Frying Pan"
+    ]
   },
   {
     "name": "Turkey Lettuce Wraps",
-    "image": "assets/images/others.png",
+    "cuisine": "High Protein, Low Calorie",
+    "category": "High Protein, Low Calorie",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "High Protein, Low Calorie",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 320,
+    "ingredients": [
+      {
+        "name": "Ground Turkey",
+        "quantity": "300g"
+      },
+      {
+        "name": "Butter Lettuce Leaves",
+        "quantity": "8 units"
+      },
+      {
+        "name": "Water Chestnuts",
+        "quantity": "1/4 cup"
+      },
+      {
+        "name": "Hoisin Sauce",
+        "quantity": "1 tbsp"
+      }
+    ],
+    "steps": [
+      "Brown turkey in a pan.",
+      "Add chopped chestnuts and hoisin sauce.",
+      "Spoon mixture into lettuce leaves and serve."
+    ],
+    "equipment": []
   },
   {
     "name": "Garlic Shrimp with Vegetables",
-    "image": "assets/images/others.png",
+    "cuisine": "High Protein, Low Calorie",
+    "category": "High Protein, Low Calorie",
     "prepTime": 10,
     "cookTime": 10,
-    "kcal": 400,
-    "category": "High Protein, Low Calorie",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 280,
+    "ingredients": [
+      {
+        "name": "Shrimp",
+        "quantity": "200g"
+      },
+      {
+        "name": "Zucchini",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Bell Peppers",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Garlic",
+        "quantity": "3 cloves"
+      }
+    ],
+    "steps": [
+      "Sauté vegetables in a pan.",
+      "Add shrimp and garlic, cook until pink.",
+      "Serve hot."
+    ],
+    "equipment": []
   },
   {
     "name": "Baked Salmon with Asparagus",
-    "image": "assets/images/recipe_salmon.png",
+    "cuisine": "High Protein, Low Calorie",
+    "category": "High Protein, Low Calorie",
     "prepTime": 10,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "High Protein, Low Calorie",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 380,
+    "ingredients": [
+      {
+        "name": "Salmon Fillet",
+        "quantity": "200g"
+      },
+      {
+        "name": "Asparagus",
+        "quantity": "1 bunch"
+      },
+      {
+        "name": "Lemon",
+        "quantity": "1/2 unit"
+      }
+    ],
+    "steps": [
+      "Bake salmon and asparagus at 200°C for 15 minutes."
+    ],
+    "equipment": []
   },
   {
     "name": "Chicken Stir-Fry",
-    "image": "assets/images/recipe_stir_fry.png",
+    "cuisine": "High Protein, Low Calorie",
+    "category": "High Protein, Low Calorie",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "High Protein, Low Calorie",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 420,
+    "ingredients": [
+      {
+        "name": "Chicken",
+        "quantity": "200g"
+      },
+      {
+        "name": "Bell Peppers",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Soy Sauce",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Stir-fry chicken and peppers in a hot pan."
+    ],
+    "equipment": []
   },
   {
     "name": "Greek Yogurt Chicken Salad",
-    "image": "assets/images/others.png",
+    "cuisine": "High Protein, Low Calorie",
+    "category": "High Protein, Low Calorie",
     "prepTime": 15,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "High Protein, Low Calorie",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 310,
+    "ingredients": [
+      {
+        "name": "Chicken Breast",
+        "quantity": "200g cooked"
+      },
+      {
+        "name": "Greek Yogurt",
+        "quantity": "1/4 cup"
+      },
+      {
+        "name": "Celery",
+        "quantity": "1/2 cup"
+      }
+    ],
+    "steps": [
+      "Mix all ingredients in a bowl and serve on lettuce."
+    ],
+    "equipment": []
   },
   {
     "name": "Egg White Omelet",
-    "image": "assets/images/others.png",
+    "cuisine": "High Protein, Low Calorie",
+    "category": "High Protein, Low Calorie",
     "prepTime": 5,
     "cookTime": 10,
-    "kcal": 400,
-    "category": "High Protein, Low Calorie",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 180,
+    "ingredients": [
+      {
+        "name": "Egg Whites",
+        "quantity": "4 units"
+      },
+      {
+        "name": "Spinach",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Feta",
+        "quantity": "1 tbsp"
+      }
+    ],
+    "steps": [
+      "Cook egg whites with spinach and top with feta."
+    ],
+    "equipment": []
   },
   {
     "name": "Chocolate Chip Cookies",
-    "image": "assets/images/others.png",
+    "cuisine": "Easy Desserts",
+    "category": "Easy Desserts",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Easy Desserts",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 150,
+    "ingredients": [
+      {
+        "name": "Flour",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Chocolate Chips",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Butter",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Sugar",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Egg",
+        "quantity": "1 unit"
+      }
+    ],
+    "steps": [
+      "Cream butter and sugar, then add egg.",
+      "Mix in flour and chocolate chips.",
+      "Drop spoonfuls onto a baking sheet.",
+      "Bake at 180°C for 10-12 minutes."
+    ],
+    "equipment": [
+      "Baking Sheet",
+      "Mixing Bowl"
+    ]
   },
   {
     "name": "Brownies",
-    "image": "assets/images/others.png",
+    "cuisine": "Easy Desserts",
+    "category": "Easy Desserts",
     "prepTime": 15,
     "cookTime": 30,
-    "kcal": 400,
-    "category": "Easy Desserts",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 220,
+    "ingredients": [
+      {
+        "name": "Cocoa Powder",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Flour",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Butter",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Sugar",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Eggs",
+        "quantity": "2 units"
+      }
+    ],
+    "steps": [
+      "Melt butter and mix with sugar and cocoa.",
+      "Whisk in eggs and fold in flour.",
+      "Pour into a square pan and bake at 170°C for 25 minutes."
+    ],
+    "equipment": [
+      "8x8 Square Pan"
+    ]
   },
   {
     "name": "Cheesecake Cups",
-    "image": "assets/images/others.png",
+    "cuisine": "Easy Desserts",
+    "category": "Easy Desserts",
     "prepTime": 20,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Easy Desserts",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 250,
+    "ingredients": [
+      {
+        "name": "Cream Cheese",
+        "quantity": "200g"
+      },
+      {
+        "name": "Graham Cracker Crumbs",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Sugar",
+        "quantity": "1/4 cup"
+      }
+    ],
+    "steps": [
+      "Beat cream cheese and sugar, spoon over crumbs in cups and chill."
+    ],
+    "equipment": []
   },
   {
     "name": "Banana Bread",
-    "image": "assets/images/others.png",
+    "cuisine": "Easy Desserts",
+    "category": "Easy Desserts",
     "prepTime": 15,
     "cookTime": 60,
-    "kcal": 400,
-    "category": "Easy Desserts",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 200,
+    "ingredients": [
+      {
+        "name": "Ripe Bananas",
+        "quantity": "3 units"
+      },
+      {
+        "name": "Flour",
+        "quantity": "1.5 cups"
+      },
+      {
+        "name": "Sugar",
+        "quantity": "3/4 cup"
+      }
+    ],
+    "steps": [
+      "Mash bananas, mix with other ingredients and bake in a loaf pan."
+    ],
+    "equipment": []
   },
   {
     "name": "Strawberry Shortcake",
-    "image": "assets/images/others.png",
+    "cuisine": "Easy Desserts",
+    "category": "Easy Desserts",
     "prepTime": 20,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Easy Desserts",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 320,
+    "ingredients": [
+      {
+        "name": "Shortcakes",
+        "quantity": "4 units"
+      },
+      {
+        "name": "Strawberries",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Whipped Cream",
+        "quantity": "1 cup"
+      }
+    ],
+    "steps": [
+      "Top shortcakes with sliced strawberries and whipped cream."
+    ],
+    "equipment": []
   },
   {
     "name": "Chocolate Mug Cake",
-    "image": "assets/images/others.png",
+    "cuisine": "Easy Desserts",
+    "category": "Easy Desserts",
     "prepTime": 5,
     "cookTime": 2,
-    "kcal": 400,
-    "category": "Easy Desserts",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 280,
+    "ingredients": [
+      {
+        "name": "Flour",
+        "quantity": "4 tbsp"
+      },
+      {
+        "name": "Cocoa",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Milk",
+        "quantity": "3 tbsp"
+      }
+    ],
+    "steps": [
+      "Mix in a mug and microwave for 90 seconds."
+    ],
+    "equipment": []
   },
   {
     "name": "Fruit Yogurt Parfait",
-    "image": "assets/images/others.png",
+    "cuisine": "Easy Desserts",
+    "category": "Easy Desserts",
     "prepTime": 10,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Easy Desserts",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
-  },
-  {
-    "name": "Chicken Stir-Fry",
-    "image": "assets/images/recipe_stir_fry.png",
-    "prepTime": 10,
-    "cookTime": 15,
-    "kcal": 400,
-    "category": "30-Minute Meals",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 220,
+    "ingredients": [
+      {
+        "name": "Yogurt",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Granola",
+        "quantity": "1/4 cup"
+      },
+      {
+        "name": "Berries",
+        "quantity": "1/2 cup"
+      }
+    ],
+    "steps": [
+      "Layer yogurt, granola, and berries in a glass."
+    ],
+    "equipment": []
   },
   {
     "name": "Garlic Butter Shrimp",
-    "image": "assets/images/others.png",
+    "cuisine": "30-Minute Meals",
+    "category": "30-Minute Meals",
     "prepTime": 10,
     "cookTime": 10,
-    "kcal": 400,
-    "category": "30-Minute Meals",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 350,
+    "ingredients": [
+      {
+        "name": "Shrimp",
+        "quantity": "300g"
+      },
+      {
+        "name": "Butter",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Garlic",
+        "quantity": "4 cloves"
+      }
+    ],
+    "steps": [
+      "Sauté garlic in butter.",
+      "Add shrimp and cook for 3 minutes.",
+      "Serve with bread or pasta."
+    ],
+    "equipment": []
   },
   {
     "name": "Beef Tacos",
-    "image": "assets/images/others.png",
+    "cuisine": "30-Minute Meals",
+    "category": "30-Minute Meals",
     "prepTime": 10,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "30-Minute Meals",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 500,
+    "ingredients": [
+      {
+        "name": "Ground Beef",
+        "quantity": "300g"
+      },
+      {
+        "name": "Taco Shells",
+        "quantity": "6 units"
+      },
+      {
+        "name": "Shredded Lettuce",
+        "quantity": "1 cup"
+      }
+    ],
+    "steps": [
+      "Cook beef with spices.",
+      "Fill taco shells with beef and lettuce.",
+      "Serve with salsa."
+    ],
+    "equipment": []
   },
   {
     "name": "Fried Rice",
-    "image": "assets/images/others.png",
+    "cuisine": "30-Minute Meals",
+    "category": "30-Minute Meals",
     "prepTime": 10,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "30-Minute Meals",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 380,
+    "ingredients": [
+      {
+        "name": "Rice",
+        "quantity": "2 cups cooked"
+      },
+      {
+        "name": "Peas and Carrots",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Egg",
+        "quantity": "1 unit"
+      }
+    ],
+    "steps": [
+      "Stir-fry veggies and rice, then scramble in an egg."
+    ],
+    "equipment": []
   },
   {
     "name": "Pasta Alfredo",
-    "image": "assets/images/recipe_pasta.png",
+    "cuisine": "30-Minute Meals",
+    "category": "30-Minute Meals",
     "prepTime": 10,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "30-Minute Meals",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 450,
+    "ingredients": [
+      {
+        "name": "Pasta",
+        "quantity": "200g"
+      },
+      {
+        "name": "Alfredo Sauce",
+        "quantity": "1 cup"
+      }
+    ],
+    "steps": [
+      "Boil pasta and toss with warm alfredo sauce."
+    ],
+    "equipment": []
   },
   {
     "name": "Chicken Quesadilla",
-    "image": "assets/images/others.png",
+    "cuisine": "30-Minute Meals",
+    "category": "30-Minute Meals",
     "prepTime": 10,
     "cookTime": 10,
-    "kcal": 400,
-    "category": "30-Minute Meals",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 420,
+    "ingredients": [
+      {
+        "name": "Tortilla",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Cheese",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Chicken",
+        "quantity": "100g"
+      }
+    ],
+    "steps": [
+      "Place chicken and cheese in tortillas and grill until melted."
+    ],
+    "equipment": []
   },
   {
     "name": "Chicken and Rice Bowl",
-    "image": "assets/images/others.png",
+    "cuisine": "Meal Prep Favorites",
+    "category": "Meal Prep Favorites",
     "prepTime": 15,
     "cookTime": 30,
-    "kcal": 400,
-    "category": "Meal Prep Favorites",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 520,
+    "ingredients": [
+      {
+        "name": "Chicken",
+        "quantity": "500g"
+      },
+      {
+        "name": "Rice",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Vegetables",
+        "quantity": "2 cups"
+      }
+    ],
+    "steps": [
+      "Cook rice and chicken separately.",
+      "Divide into 4 containers with vegetables.",
+      "Reheat and enjoy for lunch."
+    ],
+    "equipment": []
   },
   {
     "name": "Ground Turkey Bowls",
-    "image": "assets/images/others.png",
+    "cuisine": "Meal Prep Favorites",
+    "category": "Meal Prep Favorites",
     "prepTime": 15,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Meal Prep Favorites",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 480,
+    "ingredients": [
+      {
+        "name": "Ground Turkey",
+        "quantity": "500g"
+      },
+      {
+        "name": "Sweet Potato",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Spinach",
+        "quantity": "2 cups"
+      }
+    ],
+    "steps": [
+      "Roast potatoes and cook turkey.",
+      "Combine in meal prep containers."
+    ],
+    "equipment": []
   },
   {
     "name": "Salmon with Veggies",
-    "image": "assets/images/recipe_salmon.png",
+    "cuisine": "Meal Prep Favorites",
+    "category": "Meal Prep Favorites",
     "prepTime": 10,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Meal Prep Favorites",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 450,
+    "ingredients": [
+      {
+        "name": "Salmon",
+        "quantity": "400g"
+      },
+      {
+        "name": "Broccoli",
+        "quantity": "2 cups"
+      }
+    ],
+    "steps": [
+      "Bake salmon and broccoli, then portion for the week."
+    ],
+    "equipment": []
   },
   {
     "name": "Egg Muffins",
-    "image": "assets/images/others.png",
+    "cuisine": "Meal Prep Favorites",
+    "category": "Meal Prep Favorites",
     "prepTime": 15,
     "cookTime": 25,
-    "kcal": 400,
-    "category": "Meal Prep Favorites",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 180,
+    "ingredients": [
+      {
+        "name": "Eggs",
+        "quantity": "6 units"
+      },
+      {
+        "name": "Spinach",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Cheese",
+        "quantity": "1/4 cup"
+      }
+    ],
+    "steps": [
+      "Bake whisked eggs and veggies in muffin tins."
+    ],
+    "equipment": []
   },
   {
     "name": "Pasta Meal Prep",
-    "image": "assets/images/recipe_pasta.png",
+    "cuisine": "Meal Prep Favorites",
+    "category": "Meal Prep Favorites",
     "prepTime": 15,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Meal Prep Favorites",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 550,
+    "ingredients": [
+      {
+        "name": "Penne",
+        "quantity": "300g"
+      },
+      {
+        "name": "Marinara Sauce",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Meatballs",
+        "quantity": "12 units"
+      }
+    ],
+    "steps": [
+      "Cook pasta and meatballs, then portion with sauce."
+    ],
+    "equipment": []
   },
   {
     "name": "Stir-Fry Boxes",
-    "image": "assets/images/recipe_stir_fry.png",
+    "cuisine": "Meal Prep Favorites",
+    "category": "Meal Prep Favorites",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Meal Prep Favorites",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 480,
+    "ingredients": [
+      {
+        "name": "Beef",
+        "quantity": "400g"
+      },
+      {
+        "name": "Mixed Veggies",
+        "quantity": "3 cups"
+      }
+    ],
+    "steps": [
+      "Stir-fry and portion with rice or noodles."
+    ],
+    "equipment": []
   },
   {
     "name": "Mac and Cheese",
-    "image": "assets/images/others.png",
+    "cuisine": "Comfort Food",
+    "category": "Comfort Food",
     "prepTime": 15,
     "cookTime": 30,
-    "kcal": 400,
-    "category": "Comfort Food",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 650,
+    "ingredients": [
+      {
+        "name": "Macaroni",
+        "quantity": "250g"
+      },
+      {
+        "name": "Cheddar Cheese",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Milk",
+        "quantity": "1 cup"
+      }
+    ],
+    "steps": [
+      "Boil pasta.",
+      "Melt cheese and milk into a sauce.",
+      "Combine and bake until bubbly."
+    ],
+    "equipment": []
   },
   {
     "name": "Fried Chicken",
-    "image": "assets/images/others.png",
+    "cuisine": "Comfort Food",
+    "category": "Comfort Food",
     "prepTime": 20,
     "cookTime": 30,
-    "kcal": 400,
-    "category": "Comfort Food",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 750,
+    "ingredients": [
+      {
+        "name": "Chicken Drumsticks",
+        "quantity": "4 units"
+      },
+      {
+        "name": "Flour",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Buttermilk",
+        "quantity": "1 cup"
+      }
+    ],
+    "steps": [
+      "Dip chicken in buttermilk then flour.",
+      "Deep fry until golden brown."
+    ],
+    "equipment": []
   },
   {
     "name": "Mashed Potatoes",
-    "image": "assets/images/others.png",
+    "cuisine": "Comfort Food",
+    "category": "Comfort Food",
     "prepTime": 15,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Comfort Food",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 300,
+    "ingredients": [
+      {
+        "name": "Potatoes",
+        "quantity": "4 units"
+      },
+      {
+        "name": "Butter",
+        "quantity": "2 tbsp"
+      },
+      {
+        "name": "Cream",
+        "quantity": "1/4 cup"
+      }
+    ],
+    "steps": [
+      "Boil potatoes and mash with butter and cream."
+    ],
+    "equipment": []
   },
   {
     "name": "Chicken Pot Pie",
-    "image": "assets/images/others.png",
+    "cuisine": "Comfort Food",
+    "category": "Comfort Food",
     "prepTime": 30,
     "cookTime": 40,
-    "kcal": 400,
-    "category": "Comfort Food",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 580,
+    "ingredients": [
+      {
+        "name": "Pie Crust",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Chicken",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Mixed Veggies",
+        "quantity": "1 cup"
+      }
+    ],
+    "steps": [
+      "Fill crust with chicken and veggies in gravy and bake."
+    ],
+    "equipment": []
   },
   {
     "name": "Beef Stew",
-    "image": "assets/images/others.png",
+    "cuisine": "Comfort Food",
+    "category": "Comfort Food",
     "prepTime": 20,
     "cookTime": 90,
-    "kcal": 400,
-    "category": "Comfort Food",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 520,
+    "ingredients": [
+      {
+        "name": "Beef Cubes",
+        "quantity": "500g"
+      },
+      {
+        "name": "Potatoes",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Beef Broth",
+        "quantity": "4 cups"
+      }
+    ],
+    "steps": [
+      "Slow cook beef and veggies in broth until tender."
+    ],
+    "equipment": []
   },
   {
     "name": "Grilled Cheese",
-    "image": "assets/images/others.png",
+    "cuisine": "Comfort Food",
+    "category": "Comfort Food",
     "prepTime": 5,
     "cookTime": 10,
-    "kcal": 400,
-    "category": "Comfort Food",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 350,
+    "ingredients": [
+      {
+        "name": "Bread",
+        "quantity": "2 slices"
+      },
+      {
+        "name": "Cheese",
+        "quantity": "2 slices"
+      },
+      {
+        "name": "Butter",
+        "quantity": "1 tbsp"
+      }
+    ],
+    "steps": [
+      "Grill sandwich in buttered pan until golden."
+    ],
+    "equipment": []
   },
   {
     "name": "Avocado Toast",
-    "image": "assets/images/others.png",
+    "cuisine": "Healthy Breakfasts",
+    "category": "Healthy Breakfasts",
     "prepTime": 5,
     "cookTime": 5,
-    "kcal": 400,
-    "category": "Healthy Breakfasts",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 320,
+    "ingredients": [
+      {
+        "name": "Sourdough Bread",
+        "quantity": "1 slice"
+      },
+      {
+        "name": "Avocado",
+        "quantity": "1/2 unit"
+      },
+      {
+        "name": "Egg",
+        "quantity": "1 unit"
+      }
+    ],
+    "steps": [
+      "Toast bread.",
+      "Mash avocado on top.",
+      "Add a poached egg and seasoning."
+    ],
+    "equipment": []
   },
   {
     "name": "Oatmeal Bowl",
-    "image": "assets/images/others.png",
+    "cuisine": "Healthy Breakfasts",
+    "category": "Healthy Breakfasts",
     "prepTime": 5,
     "cookTime": 5,
-    "kcal": 400,
-    "category": "Healthy Breakfasts",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 280,
+    "ingredients": [
+      {
+        "name": "Oats",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Milk",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Berries",
+        "quantity": "1/4 cup"
+      }
+    ],
+    "steps": [
+      "Cook oats in milk.",
+      "Top with fresh berries and honey."
+    ],
+    "equipment": []
   },
   {
     "name": "Smoothie Bowl",
-    "image": "assets/images/others.png",
+    "cuisine": "Healthy Breakfasts",
+    "category": "Healthy Breakfasts",
     "prepTime": 10,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Healthy Breakfasts",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 310,
+    "ingredients": [
+      {
+        "name": "Frozen Berries",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Banana",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Almond Milk",
+        "quantity": "1/2 cup"
+      }
+    ],
+    "steps": [
+      "Blend thick and top with granola and seeds."
+    ],
+    "equipment": []
   },
   {
     "name": "Egg Scramble",
-    "image": "assets/images/others.png",
+    "cuisine": "Healthy Breakfasts",
+    "category": "Healthy Breakfasts",
     "prepTime": 5,
     "cookTime": 5,
-    "kcal": 400,
-    "category": "Healthy Breakfasts",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 220,
+    "ingredients": [
+      {
+        "name": "Eggs",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Spinach",
+        "quantity": "1/2 cup"
+      }
+    ],
+    "steps": [
+      "Scramble eggs with spinach."
+    ],
+    "equipment": []
   },
   {
     "name": "Greek Yogurt Bowl",
-    "image": "assets/images/others.png",
+    "cuisine": "Healthy Breakfasts",
+    "category": "Healthy Breakfasts",
     "prepTime": 5,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Healthy Breakfasts",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 280,
+    "ingredients": [
+      {
+        "name": "Greek Yogurt",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Honey",
+        "quantity": "1 tbsp"
+      },
+      {
+        "name": "Nuts",
+        "quantity": "1/4 cup"
+      }
+    ],
+    "steps": [
+      "Top yogurt with nuts and honey."
+    ],
+    "equipment": []
   },
   {
     "name": "Protein Pancakes",
-    "image": "assets/images/others.png",
+    "cuisine": "Healthy Breakfasts",
+    "category": "Healthy Breakfasts",
     "prepTime": 10,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Healthy Breakfasts",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 350,
+    "ingredients": [
+      {
+        "name": "Protein Powder",
+        "quantity": "1 scoop"
+      },
+      {
+        "name": "Egg",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Banana",
+        "quantity": "1 unit"
+      }
+    ],
+    "steps": [
+      "Mash banana, mix with egg and powder, then fry."
+    ],
+    "equipment": []
   },
   {
     "name": "Chicken Wrap",
-    "image": "assets/images/others.png",
+    "cuisine": "Quick Lunches",
+    "category": "Quick Lunches",
     "prepTime": 10,
     "cookTime": 5,
-    "kcal": 400,
-    "category": "Quick Lunches",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 350,
+    "ingredients": [
+      {
+        "name": "Tortilla",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Grilled Chicken",
+        "quantity": "100g"
+      },
+      {
+        "name": "Lettuce",
+        "quantity": "handful"
+      }
+    ],
+    "steps": [
+      "Place ingredients on tortilla.",
+      "Roll up and serve cold or toasted."
+    ],
+    "equipment": []
   },
   {
     "name": "Turkey Sandwich",
-    "image": "assets/images/others.png",
+    "cuisine": "Quick Lunches",
+    "category": "Quick Lunches",
     "prepTime": 5,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Quick Lunches",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 310,
+    "ingredients": [
+      {
+        "name": "Whole Wheat Bread",
+        "quantity": "2 slices"
+      },
+      {
+        "name": "Turkey Slices",
+        "quantity": "3 units"
+      },
+      {
+        "name": "Cheese",
+        "quantity": "1 slice"
+      }
+    ],
+    "steps": [
+      "Assemble sandwich with mayo or mustard."
+    ],
+    "equipment": []
   },
   {
     "name": "Caesar Salad",
-    "image": "assets/images/others.png",
+    "cuisine": "Quick Lunches",
+    "category": "Quick Lunches",
     "prepTime": 15,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Quick Lunches",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 380,
+    "ingredients": [
+      {
+        "name": "Romaine Lettuce",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Croutons",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Caesar Dressing",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Toss lettuce with dressing and croutons."
+    ],
+    "equipment": []
   },
   {
     "name": "Rice Bowl",
-    "image": "assets/images/others.png",
+    "cuisine": "Quick Lunches",
+    "category": "Quick Lunches",
     "prepTime": 10,
     "cookTime": 10,
     "kcal": 400,
-    "category": "Quick Lunches",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "ingredients": [
+      {
+        "name": "Rice",
+        "quantity": "1 cup cooked"
+      },
+      {
+        "name": "Canned Beans",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Salsa",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Heat rice and beans, then top with salsa."
+    ],
+    "equipment": []
   },
   {
     "name": "Tuna Salad",
-    "image": "assets/images/others.png",
+    "cuisine": "Quick Lunches",
+    "category": "Quick Lunches",
     "prepTime": 10,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Quick Lunches",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
-  },
-  {
-    "name": "Quesadilla",
-    "image": "assets/images/others.png",
-    "prepTime": 5,
-    "cookTime": 10,
-    "kcal": 400,
-    "category": "Quick Lunches",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 320,
+    "ingredients": [
+      {
+        "name": "Canned Tuna",
+        "quantity": "1 can"
+      },
+      {
+        "name": "Mayo",
+        "quantity": "1 tbsp"
+      },
+      {
+        "name": "Crackers",
+        "quantity": "6 units"
+      }
+    ],
+    "steps": [
+      "Mix tuna and mayo, serve with crackers."
+    ],
+    "equipment": []
   },
   {
     "name": "Vegan Stir-Fry",
-    "image": "assets/images/others.png",
+    "cuisine": "Vegan Essentials",
+    "category": "Vegan Essentials",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Vegan Essentials",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 380,
+    "ingredients": [
+      {
+        "name": "Tofu",
+        "quantity": "200g"
+      },
+      {
+        "name": "Broccoli",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Soy Sauce",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Sauté tofu until golden.",
+      "Add broccoli and sauce.",
+      "Stir-fry for 5 minutes."
+    ],
+    "equipment": []
   },
   {
     "name": "Lentil Soup",
-    "image": "assets/images/others.png",
+    "cuisine": "Vegan Essentials",
+    "category": "Vegan Essentials",
     "prepTime": 15,
     "cookTime": 40,
-    "kcal": 400,
-    "category": "Vegan Essentials",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 320,
+    "ingredients": [
+      {
+        "name": "Lentils",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Carrots",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Vegetable Broth",
+        "quantity": "4 cups"
+      }
+    ],
+    "steps": [
+      "Boil everything until lentils are soft.",
+      "Season with salt and pepper."
+    ],
+    "equipment": []
   },
   {
     "name": "Chickpea Salad",
-    "image": "assets/images/others.png",
+    "cuisine": "Vegan Essentials",
+    "category": "Vegan Essentials",
     "prepTime": 15,
     "cookTime": 0,
-    "kcal": 400,
-    "category": "Vegan Essentials",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 310,
+    "ingredients": [
+      {
+        "name": "Chickpeas",
+        "quantity": "1 can"
+      },
+      {
+        "name": "Cucumber",
+        "quantity": "1/2 unit"
+      },
+      {
+        "name": "Tahini Dressing",
+        "quantity": "2 tbsp"
+      }
+    ],
+    "steps": [
+      "Toss chickpeas and cucumber with dressing."
+    ],
+    "equipment": []
   },
   {
     "name": "Vegan Tacos",
-    "image": "assets/images/others.png",
+    "cuisine": "Vegan Essentials",
+    "category": "Vegan Essentials",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Vegan Essentials",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 420,
+    "ingredients": [
+      {
+        "name": "Lentils",
+        "quantity": "1 cup cooked"
+      },
+      {
+        "name": "Taco Shells",
+        "quantity": "3 units"
+      },
+      {
+        "name": "Guacamole",
+        "quantity": "1/4 cup"
+      }
+    ],
+    "steps": [
+      "Fill shells with lentils and top with guac."
+    ],
+    "equipment": []
   },
   {
     "name": "Buddha Bowl",
-    "image": "assets/images/others.png",
+    "cuisine": "Vegan Essentials",
+    "category": "Vegan Essentials",
     "prepTime": 20,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Vegan Essentials",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 450,
+    "ingredients": [
+      {
+        "name": "Quinoa",
+        "quantity": "1 cup cooked"
+      },
+      {
+        "name": "Roasted Chickpeas",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Kale",
+        "quantity": "1 cup"
+      }
+    ],
+    "steps": [
+      "Assemble bowl with all ingredients and a lemon dressing."
+    ],
+    "equipment": []
   },
   {
     "name": "Vegan Curry",
-    "image": "assets/images/others.png",
+    "cuisine": "Vegan Essentials",
+    "category": "Vegan Essentials",
     "prepTime": 15,
     "cookTime": 25,
-    "kcal": 400,
-    "category": "Vegan Essentials",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 480,
+    "ingredients": [
+      {
+        "name": "Coconut Milk",
+        "quantity": "1 can"
+      },
+      {
+        "name": "Sweet Potato",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Chickpeas",
+        "quantity": "1 can"
+      }
+    ],
+    "steps": [
+      "Simmer veggies and chickpeas in coconut milk and curry spices."
+    ],
+    "equipment": []
   },
   {
     "name": "Grilled Chicken Salad",
-    "image": "assets/images/others.png",
+    "cuisine": "Low-Carb Meals",
+    "category": "Low-Carb Meals",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Low-Carb Meals",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 350,
+    "ingredients": [
+      {
+        "name": "Chicken Breast",
+        "quantity": "200g"
+      },
+      {
+        "name": "Mixed Greens",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Olive Oil",
+        "quantity": "1 tbsp"
+      }
+    ],
+    "steps": [
+      "Grill chicken and slice.",
+      "Toss with greens and oil."
+    ],
+    "equipment": []
   },
   {
     "name": "Zucchini Noodles",
-    "image": "assets/images/others.png",
+    "cuisine": "Low-Carb Meals",
+    "category": "Low-Carb Meals",
     "prepTime": 15,
     "cookTime": 10,
-    "kcal": 400,
-    "category": "Low-Carb Meals",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 180,
+    "ingredients": [
+      {
+        "name": "Zucchini",
+        "quantity": "2 units spiraled"
+      },
+      {
+        "name": "Tomato Sauce",
+        "quantity": "1/2 cup"
+      },
+      {
+        "name": "Garlic",
+        "quantity": "2 cloves"
+      }
+    ],
+    "steps": [
+      "Sauté garlic and zucchini noodles for 3 minutes.",
+      "Top with warm tomato sauce."
+    ],
+    "equipment": []
   },
   {
     "name": "Lettuce Wrap Burgers",
-    "image": "assets/images/others.png",
+    "cuisine": "Low-Carb Meals",
+    "category": "Low-Carb Meals",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": "Low-Carb Meals",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
-  },
-  {
-    "name": "Egg Scramble",
-    "image": "assets/images/others.png",
-    "prepTime": 5,
-    "cookTime": 5,
-    "kcal": 400,
-    "category": "Low-Carb Meals",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 380,
+    "ingredients": [
+      {
+        "name": "Beef Patty",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Lettuce Leaves",
+        "quantity": "2 large"
+      },
+      {
+        "name": "Tomato and Onion",
+        "quantity": "slices"
+      }
+    ],
+    "steps": [
+      "Grill patty and wrap in lettuce with veggies."
+    ],
+    "equipment": []
   },
   {
     "name": "Salmon and Veggies",
-    "image": "assets/images/recipe_salmon.png",
+    "cuisine": "Low-Carb Meals",
+    "category": "Low-Carb Meals",
     "prepTime": 10,
     "cookTime": 20,
-    "kcal": 400,
-    "category": "Low-Carb Meals",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 380,
+    "ingredients": [
+      {
+        "name": "Salmon",
+        "quantity": "200g"
+      },
+      {
+        "name": "Asparagus",
+        "quantity": "1 bunch"
+      }
+    ],
+    "steps": [
+      "Bake together at 200°C for 15 minutes."
+    ],
+    "equipment": []
   },
   {
     "name": "Cauliflower Rice Bowl",
-    "image": "assets/images/others.png",
-    "prepTime": 15,
-    "cookTime": 15,
-    "kcal": 400,
+    "cuisine": "Low-Carb Meals",
     "category": "Low-Carb Meals",
-    "cuisine": "International",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
-  },
-  {
-    "name": "Chicken Stir-Fry",
-    "image": "assets/images/recipe_stir_fry.png",
     "prepTime": 15,
     "cookTime": 15,
-    "kcal": 400,
-    "category": null,
-    "cuisine": null,
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 420,
+    "ingredients": [
+      {
+        "name": "Cauliflower Rice",
+        "quantity": "2 cups"
+      },
+      {
+        "name": "Ground Beef",
+        "quantity": "200g"
+      },
+      {
+        "name": "Peppers",
+        "quantity": "1/2 cup"
+      }
+    ],
+    "steps": [
+      "Sauté beef and peppers, then stir in cauliflower rice until warm."
+    ],
+    "equipment": []
   },
   {
     "name": "Grilled Salmon",
-    "image": "assets/images/recipe_salmon.png",
+    "cuisine": "Japanese",
+    "category": "Japanese",
     "prepTime": 10,
     "cookTime": 15,
-    "kcal": 400,
-    "category": null,
-    "cuisine": null,
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 420,
+    "ingredients": [
+      {
+        "name": "Salmon Fillet",
+        "quantity": "2 units"
+      },
+      {
+        "name": "Lemon",
+        "quantity": "1 unit"
+      },
+      {
+        "name": "Asparagus",
+        "quantity": "1 bunch"
+      },
+      {
+        "name": "Olive Oil",
+        "quantity": "1 tbsp"
+      },
+      {
+        "name": "Salt and Pepper",
+        "quantity": "to taste"
+      }
+    ],
+    "steps": [
+      "Season salmon with salt, pepper, and olive oil.",
+      "Preheat grill or pan over medium-high heat.",
+      "Grill salmon for 4-5 minutes per side.",
+      "Steam or grill asparagus simultaneously.",
+      "Garnish with lemon slices before serving."
+    ],
+    "equipment": [
+      "Grill Pan",
+      "Tongs"
+    ]
   },
   {
     "name": "Cheese Omelet",
-    "image": "assets/images/recipe_omelet.png",
+    "cuisine": "French",
+    "category": "French",
     "prepTime": 5,
     "cookTime": 5,
-    "kcal": 400,
-    "category": null,
-    "cuisine": null,
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 310,
+    "ingredients": [
+      {
+        "name": "Large Eggs",
+        "quantity": "3 units"
+      },
+      {
+        "name": "Cheddar Cheese",
+        "quantity": "1/4 cup shredded"
+      },
+      {
+        "name": "Butter",
+        "quantity": "1 tsp"
+      },
+      {
+        "name": "Chives",
+        "quantity": "for garnish"
+      }
+    ],
+    "steps": [
+      "Whisk eggs in a bowl with a pinch of salt.",
+      "Melt butter in a non-stick pan over medium heat.",
+      "Pour in eggs and let them set slightly.",
+      "Sprinkle cheese over one half and fold.",
+      "Cook for 1 more minute and serve."
+    ],
+    "equipment": [
+      "Non-stick Pan",
+      "Whisk",
+      "Spatula"
+    ]
   },
   {
     "name": "Chicken Alfredo Pasta",
-    "image": "assets/images/recipe_pasta.png",
+    "cuisine": "Italian",
+    "category": "Italian",
     "prepTime": 10,
     "cookTime": 20,
-    "kcal": 400,
-    "category": null,
-    "cuisine": null,
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "kcal": 550,
+    "ingredients": [
+      {
+        "name": "Penne Pasta",
+        "quantity": "200g"
+      },
+      {
+        "name": "Grilled Chicken",
+        "quantity": "1 cup"
+      },
+      {
+        "name": "Alfredo Sauce",
+        "quantity": "1 jar"
+      },
+      {
+        "name": "Parsley",
+        "quantity": "garnish"
+      }
+    ],
+    "steps": [
+      "Boil pasta in salted water until tender.",
+      "Heat alfredo sauce in a small pot.",
+      "Combine pasta, chicken, and sauce in a large bowl.",
+      "Toss well and garnish with fresh parsley."
+    ],
+    "equipment": [
+      "Large Pot",
+      "Mixing Bowl"
+    ]
   },
   {
     "name": "Tacos",
-    "image": "assets/images/others.png",
+    "cuisine": "Mexican",
+    "category": "Mexican",
     "prepTime": 15,
     "cookTime": 15,
     "kcal": 400,
-    "category": "Popular",
-    "cuisine": "Mexican",
     "ingredients": [],
-    "equipment": [],
-    "steps": []
-  },
-  {
-    "name": "Fried Rice",
-    "image": "assets/images/others.png",
-    "prepTime": 10,
-    "cookTime": 15,
-    "kcal": 400,
-    "category": "Popular",
-    "cuisine": "Chinese",
-    "ingredients": [],
-    "equipment": [],
-    "steps": []
+    "steps": [],
+    "equipment": []
   }
 ]
