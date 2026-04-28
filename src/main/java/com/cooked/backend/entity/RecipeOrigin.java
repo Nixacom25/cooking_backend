@@ -4,5 +4,6 @@ public enum RecipeOrigin {
     SUGGESTED,
     SCAN,
     IMPORT,
-    MANUAL
+    MANUAL,
+    EXPLORE
 }

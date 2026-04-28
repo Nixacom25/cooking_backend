@@ -47,6 +47,9 @@ public class Recipe {
     @Column(nullable = true, columnDefinition = "TEXT")
     private String category;
 
+    @Column(nullable = true, columnDefinition = "TEXT")
+    private String cuisine;
+
     @Column(nullable = true)
     private Integer servings;
 

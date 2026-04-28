@@ -65,6 +65,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .kcal(request.getKcal())
                 .servings(request.getServings())
                 .tips(request.getTips())
+                .cuisine(request.getCuisine())
                 .sourceUrl(request.getSourceUrl())
                 .steps(request.getSteps() != null ? request.getSteps() : new java.util.ArrayList<>())
                 .equipment(request.getEquipment() != null ? request.getEquipment() : new java.util.ArrayList<>())
@@ -183,8 +184,9 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     public org.springframework.data.domain.Page<RecipeResponse> getExploreRecipes(
+            String cuisine,
             org.springframework.data.domain.Pageable pageable) {
-        return recipeRepository.findByIsPublicTrueOrderByCreatedAtDesc(pageable)
+        return recipeRepository.findExploreRecipes(RecipeOrigin.EXPLORE, cuisine, pageable)
                 .map(recipe -> mapToResponse(recipe, null));
     }
 
@@ -241,7 +243,13 @@ public class RecipeServiceImpl implements RecipeService {
     public org.springframework.data.domain.Page<RecipeResponse> getPopularRecipes(String category, String userEmail,
             org.springframework.data.domain.Pageable pageable) {
         User user = userEmail != null ? userRepository.findByEmail(userEmail).orElse(null) : null;
-        return recipeRepository.findPopularRecipes(category, pageable)
+        
+        List<String> preferredCuisines = null;
+        if (user != null && user.getFavoriteCuisines() != null && !user.getFavoriteCuisines().isEmpty()) {
+            preferredCuisines = user.getFavoriteCuisines();
+        }
+
+        return recipeRepository.findPopularRecipes(category, preferredCuisines, pageable)
                 .map(r -> mapToResponse((Recipe) r[0], user));
     }
 
@@ -301,6 +309,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .prepTime(recipe.getPrepTime())
                 .kcal(recipe.getKcal())
                 .category(recipe.getCategory())
+                .cuisine(recipe.getCuisine())
                 .creator(RecipeCreatorResponse.builder()
                         .id(recipe.getUser().getId())
                         .firstname(recipe.getUser().getFirstname())
@@ -336,5 +345,21 @@ public class RecipeServiceImpl implements RecipeService {
         }
 
         return "https://cooked.nixacom.com/recipes/" + recipe.getId();
+    }
+
+    @Override
+    public Map<String, Long> getExploreCuisines() {
+        return recipeRepository.findCuisinesWithCount().stream()
+                .collect(Collectors.toMap(
+                        obj -> (String) obj[0],
+                        obj -> (Long) obj[1]));
+    }
+
+    @Override
+    public Map<String, Long> getExploreCategories() {
+        return recipeRepository.findCategoriesWithCount().stream()
+                .collect(Collectors.toMap(
+                        obj -> (String) obj[0],
+                        obj -> (Long) obj[1]));
     }
 }

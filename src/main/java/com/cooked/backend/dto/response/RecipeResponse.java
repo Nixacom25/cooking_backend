@@ -17,6 +17,7 @@ public class RecipeResponse {
     private Integer prepTime;
     private Integer kcal;
     private String category;
+    private String cuisine;
     private Integer servings;
     private String tips;
     private RecipeCreatorResponse creator;

@@ -5,6 +5,7 @@ import com.cooked.backend.dto.response.MessageResponse;
 import com.cooked.backend.dto.response.RecipeResponse;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface RecipeService {
@@ -19,6 +20,7 @@ public interface RecipeService {
         MessageResponse togglePublicVisibility(UUID id, String userEmail);
 
         org.springframework.data.domain.Page<RecipeResponse> getExploreRecipes(
+                        String cuisine,
                         org.springframework.data.domain.Pageable pageable);
 
         MessageResponse toggleFavorite(UUID id, String userEmail);
@@ -38,4 +40,8 @@ public interface RecipeService {
         RecipeResponse validateSuggestedRecipe(UUID id, String userEmail);
 
         String getShareLink(UUID id, String userEmail);
+        
+        Map<String, Long> getExploreCuisines();
+        
+        Map<String, Long> getExploreCategories();
 }

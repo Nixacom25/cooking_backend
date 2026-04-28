@@ -21,7 +21,6 @@ import java.util.*;
 @Slf4j
 public class UserInitializationServiceImpl implements UserInitializationService {
 
-    private final CookbookRepository cookbookRepository;
     private final RecipeRepository recipeRepository;
     private final IngredientRepository ingredientRepository;
     private final AiService aiService;
@@ -54,15 +53,6 @@ public class UserInitializationServiceImpl implements UserInitializationService 
         } catch (Exception e) {
             log.error("Critical error during account initialization for user: {}", user.getEmail(), e);
         }
-    }
-
-    private Cookbook createCookbook(User user, String name) {
-        Cookbook cb = Cookbook.builder()
-                .user(user)
-                .name(name)
-                .recipes(new HashSet<>())
-                .build();
-        return cookbookRepository.save(cb);
     }
 
     private void saveSuggestedRecipeForUser(User user, CreateRecipeRequest request, LocalDateTime expiration) {

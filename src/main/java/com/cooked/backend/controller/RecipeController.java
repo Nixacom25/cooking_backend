@@ -109,11 +109,24 @@ public class RecipeController {
     @Operation(summary = "Explore public recipes")
     @GetMapping("/explore")
     public ResponseEntity<org.springframework.data.domain.Page<RecipeResponse>> getExploreRecipes(
+            @RequestParam(required = false) String cuisine,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
                 org.springframework.data.domain.Sort.by("createdAt").descending());
-        return ResponseEntity.ok(recipeService.getExploreRecipes(pageable));
+        return ResponseEntity.ok(recipeService.getExploreRecipes(cuisine, pageable));
+    }
+
+    @Operation(summary = "Get all distinct explore cuisines")
+    @GetMapping("/explore/cuisines")
+    public ResponseEntity<Map<String, Long>> getExploreCuisines() {
+        return ResponseEntity.ok(recipeService.getExploreCuisines());
+    }
+
+    @Operation(summary = "Get all distinct explore categories")
+    @GetMapping("/explore/categories")
+    public ResponseEntity<Map<String, Long>> getExploreCategories() {
+        return ResponseEntity.ok(recipeService.getExploreCategories());
     }
 
     @Operation(summary = "Toggle recipe visibility")

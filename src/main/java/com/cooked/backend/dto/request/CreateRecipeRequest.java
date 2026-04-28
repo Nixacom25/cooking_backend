@@ -18,6 +18,7 @@ public class CreateRecipeRequest {
     private Integer kcal;
     private Integer servings;
     private String tips;
+    private String cuisine;
 
     @Valid
     private List<IngredientPayload> ingredients;

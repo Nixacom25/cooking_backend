@@ -16,7 +16,16 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
 
         List<Recipe> findAllByUserId(UUID userId);
 
-        org.springframework.data.domain.Page<Recipe> findByIsPublicTrueOrderByCreatedAtDesc(
+        @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.isPublic = true AND r.origin = :origin " +
+                        "AND (:cuisine IS NULL OR r.cuisine = :cuisine) " +
+                        "ORDER BY r.createdAt DESC")
+        org.springframework.data.domain.Page<Recipe> findExploreRecipes(
+                        @org.springframework.data.repository.query.Param("origin") com.cooked.backend.entity.RecipeOrigin origin,
+                        @org.springframework.data.repository.query.Param("cuisine") String cuisine,
+                        org.springframework.data.domain.Pageable pageable);
+
+        org.springframework.data.domain.Page<Recipe> findByOriginOrderByCreatedAtDesc(
+                        com.cooked.backend.entity.RecipeOrigin origin,
                         org.springframework.data.domain.Pageable pageable);
 
         @org.springframework.data.jpa.repository.Query("SELECT u, COUNT(DISTINCT r), " +
@@ -37,9 +46,11 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
                         "FROM Recipe r " +
                         "WHERE r.isPublic = true " +
                         "AND (:category IS NULL OR r.category = :category) " +
+                        "AND (COALESCE(:cuisines, NULL) IS NULL OR r.cuisine IN :cuisines) " +
                         "ORDER BY usageCount DESC")
         org.springframework.data.domain.Page<Object[]> findPopularRecipes(
                         @org.springframework.data.repository.query.Param("category") String category,
+                        @org.springframework.data.repository.query.Param("cuisines") List<String> cuisines,
                         org.springframework.data.domain.Pageable pageable);
 
         org.springframework.data.domain.Page<Recipe> findByUserIdAndSourceUrlIsNotNullOrderByCreatedAtDesc(
@@ -49,4 +60,17 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
                         UUID userId, com.cooked.backend.entity.RecipeOrigin origin, org.springframework.data.domain.Pageable pageable);
 
         int deleteByOriginAndExpiresAtBefore(com.cooked.backend.entity.RecipeOrigin origin, java.time.LocalDateTime now);
+        
+        int deleteByOrigin(com.cooked.backend.entity.RecipeOrigin origin);
+        
+        void deleteByUserId(UUID userId);
+
+        @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r.cuisine FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.cuisine IS NOT NULL")
+        List<String> findDistinctCuisines();
+
+    @org.springframework.data.jpa.repository.Query("SELECT r.category, COUNT(r) FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.category IS NOT NULL GROUP BY r.category")
+    List<Object[]> findCategoriesWithCount();
+
+    @org.springframework.data.jpa.repository.Query("SELECT r.cuisine, COUNT(r) FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.cuisine IS NOT NULL GROUP BY r.cuisine")
+    List<Object[]> findCuisinesWithCount();
 }
