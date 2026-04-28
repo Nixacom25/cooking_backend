@@ -130,10 +130,6 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
             systemUser = userRepository.save(newUser);
         }
 
-        // Delete ALL existing recipes for this system user to avoid duplicates
-        recipeRepository.deleteByUserId(systemUser.getId());
-        recipeRepository.flush(); // Ensure deletion is flushed before insertions
-
         // Load recipes from JSON
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -144,16 +140,30 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
                 
                 for (Map<String, Object> data : recipesData) {
                     try {
+                        String name = (String) data.get("name");
+                        // Check if recipe already exists for this system user
+                        if (recipeRepository.existsByUserIdAndName(systemUser.getId(), name)) {
+                            log.debug("Recipe '{}' already exists, skipping.", name);
+                            continue;
+                        }
+
+                        @SuppressWarnings("unchecked")
+                        List<Map<String, String>> ingredients = (List<Map<String, String>>) data.get("ingredients");
+                        @SuppressWarnings("unchecked")
+                        List<String> steps = (List<String>) data.get("steps");
+                        @SuppressWarnings("unchecked")
+                        List<String> equipment = (List<String>) data.get("equipment");
+
                         createRecipe(systemUser, 
-                            (String) data.get("name"),
+                            name,
                             (String) data.get("cuisine"),
                             (String) data.get("category"),
                             data.get("prepTime") != null ? (Integer) data.get("prepTime") : 0,
                             data.get("cookTime") != null ? (Integer) data.get("cookTime") : 0,
                             data.get("kcal") != null ? (Integer) data.get("kcal") : 0,
-                            (List<Map<String, String>>) data.get("ingredients"),
-                            (List<String>) data.get("steps"),
-                            (List<String>) data.get("equipment")
+                            ingredients,
+                            steps,
+                            equipment
                         );
                     } catch (Exception e) {
                         log.error("Failed to create recipe: {}", data.get("name"), e);
