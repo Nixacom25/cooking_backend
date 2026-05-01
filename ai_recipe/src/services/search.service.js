@@ -16,28 +16,35 @@ const searchRecipes = async (query) => {
         ? query
         : `${query} recipe`;
 
-    const url = `https://www.bing.com/search?q=${encodeURIComponent(searchQuery)}`;
+    const url = `https://www.ecosia.org/search?q=${encodeURIComponent(searchQuery)}`;
 
     let browser;
     try {
         browser = await chromium.launch({
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: [
+                '--no-sandbox', 
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--disable-gpu'
+            ]
         });
-        const page = await browser.newPage({
+        const context = await browser.newContext({
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
         });
+        const page = await context.newPage();
 
-        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
 
-        // Wait for results
-        await page.waitForSelector('li.b_algo', { timeout: 10000 }).catch(() => { });
+        // Wait for results to appear
+        await page.waitForSelector('article[data-test-id="mainline-result"]', { timeout: 10000 }).catch(() => { });
 
         const results = await page.evaluate(() => {
-            const items = Array.from(document.querySelectorAll('li.b_algo'));
+            const items = Array.from(document.querySelectorAll('article[data-test-id="mainline-result"]'));
             return items.slice(0, 10).map(el => {
                 const titleEl = el.querySelector('h2 a');
-                const snippetEl = el.querySelector('.b_caption p, .b_snippet');
+                const snippetEl = el.querySelector('.result-snippet, .result-body');
 
                 return {
                     title: titleEl?.innerText?.trim() || "",
@@ -50,8 +57,8 @@ const searchRecipes = async (query) => {
 
         return results;
     } catch (error) {
-        console.error("Search error:", error);
-        throw new AppError(502, 'BAD_GATEWAY', "Échec de la recherche sur le web");
+        console.error("Search error:", error.message);
+        throw new AppError(502, 'BAD_GATEWAY', "Échec de la recherche sur le web via Ecosia");
     } finally {
         if (browser) await browser.close();
     }
