@@ -51,14 +51,23 @@ jobs:
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/ai-recipe-service:latest
 
-    # --- TRIGGER DEPLOY (Optional) ---
-    - name: Trigger Deploy
+    # --- TRIGGER DEPLOYS ON RENDER ---
+    - name: Trigger Backend Deploy
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      env:
-        DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
       run: |
-        if [ ! -z "$DEPLOY_HOOK" ]; then
-          curl -X POST "$DEPLOY_HOOK"
+        if [ ! -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          echo "Backend deploy triggered!"
         else
-          echo "No deploy hook found, skipping."
+          echo "RENDER_DEPLOY_HOOK_URL not found, skipping."
+        fi
+
+    - name: Trigger AI Service Deploy
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        if [ ! -z "${{ secrets.RENDER_AI_DEPLOY_HOOK }}" ]; then
+          curl -X POST "${{ secrets.RENDER_AI_DEPLOY_HOOK }}"
+          echo "AI Service deploy triggered!"
+        else
+          echo "RENDER_AI_DEPLOY_HOOK not found, skipping."
         fi
