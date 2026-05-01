@@ -16,7 +16,6 @@ public class AppConfig {
     }
 
     @Bean
-    @Transactional
     public org.springframework.boot.CommandLineRunner dataInitializer(
             com.cooked.backend.service.ExploreDataSeederService exploreDataSeederService,
             jakarta.persistence.EntityManager entityManager) {
