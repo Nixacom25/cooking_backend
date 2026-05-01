@@ -108,6 +108,7 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
     );
 
     @Override
+    @Transactional
     public void seedExploreData() {
         log.info("Seeding Explore Data...");
 
