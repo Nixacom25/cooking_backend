@@ -12,6 +12,8 @@ import java.util.List;
 public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         Optional<Recipe> findByUserIdAndName(UUID userId, String name);
 
+        long countByOrigin(com.cooked.backend.entity.RecipeOrigin origin);
+
         boolean existsByUserIdAndName(UUID userId, String name);
 
         List<Recipe> findAllByUserId(UUID userId);

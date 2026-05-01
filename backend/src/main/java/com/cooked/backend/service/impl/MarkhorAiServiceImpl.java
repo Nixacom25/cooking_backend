@@ -49,7 +49,7 @@ public class MarkhorAiServiceImpl implements AiService {
         this.legacyAiService = legacyAiService;
     }
 
-    @Value("${ai.api.base-url:https://recipe.markhorsystems.com}")
+    @Value("${AI_API_BASE_URL:https://recipe.markhorsystems.com}")
     private String baseUrl;
 
     @Override

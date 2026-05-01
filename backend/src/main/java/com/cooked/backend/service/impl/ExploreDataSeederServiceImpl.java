@@ -110,6 +110,15 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
     @Override
     @Transactional
     public void seedExploreData() {
+        log.info("Checking if Explore Data needs seeding...");
+
+        // Check if we already have explore recipes to avoid re-running every time
+        long count = recipeRepository.countByOrigin(RecipeOrigin.EXPLORE);
+        if (count > 0) {
+            log.info("Explore Data already exists ({} recipes). Skipping seed.", count);
+            return;
+        }
+
         log.info("Seeding Explore Data...");
 
         Optional<User> existingUser = userRepository.findByEmail("explore@cooked.com");
