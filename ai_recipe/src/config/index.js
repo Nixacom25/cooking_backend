@@ -9,9 +9,6 @@ require('dotenv').config();
 
 const REQUIRED_VARS = [
   'OPENAI_API_KEY',
-  'MONGODB_URI',
-  'MONGODB_DB_NAME',
-  'REDIS_URL',
   'CLOUDINARY_CLOUD_NAME',
   'CLOUDINARY_API_KEY',
   'CLOUDINARY_API_SECRET',

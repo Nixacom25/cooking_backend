@@ -21,14 +21,16 @@ services:
     build: ./ai_recipe
     container_name: ai-recipe-service
     environment:
-      - PORT=3000
+      - PORT=${AI_PORT:-3000}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
       - SERP_API_KEY=${SERP_API_KEY}
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:27017/ai_recipe}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
     ports:
-      - "3000:3000"
+      - "${AI_PORT:-3000}:${AI_PORT:-3000}"
     networks:
       - cooked-network
     restart: always
@@ -44,10 +46,11 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/cooked_db
       - SPRING_DATASOURCE_USERNAME=${DB_USER:-postgres}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
-      - AI_API_BASE_URL=http://ai-recipe:3000
+      - AI_API_BASE_URL=http://ai-recipe:${AI_PORT:-3000}
       - JWT_SECRET=${JWT_SECRET}
+      - SERVER_PORT=${BACKEND_PORT:-8099}
     ports:
-      - "8099:8099"
+      - "${BACKEND_PORT:-8099}:${BACKEND_PORT:-8099}"
     networks:
       - cooked-network
     restart: always
