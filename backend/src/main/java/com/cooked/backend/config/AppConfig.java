@@ -26,9 +26,15 @@ public class AppConfig {
                 String sql = "DO $$ " +
                             "DECLARE r RECORD; " +
                             "BEGIN " +
+                            "  -- Supprimer les contraintes d'unicité\n" +
                             "  FOR r IN (SELECT conname FROM pg_constraint WHERE conrelid = 'recipes'::regclass AND contype = 'u') " +
                             "  LOOP " +
-                            "    EXECUTE 'ALTER TABLE recipes DROP CONSTRAINT ' || r.conname; " +
+                            "    EXECUTE 'ALTER TABLE recipes DROP CONSTRAINT IF EXISTS ' || r.conname; " +
+                            "  END LOOP; " +
+                            "  -- Supprimer les index uniques (parfois créés sans contrainte explicite)\n" +
+                            "  FOR r IN (SELECT indexname FROM pg_indexes WHERE tablename = 'recipes' AND indexdef LIKE '%UNIQUE INDEX%') " +
+                            "  LOOP " +
+                            "    EXECUTE 'DROP INDEX IF EXISTS ' || r.indexname; " +
                             "  END LOOP; " +
                             "END $$;";
                 entityManager.createNativeQuery(sql).executeUpdate();
