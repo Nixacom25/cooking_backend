@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # Database
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: cooked-db
+    environment:
+      POSTGRES_DB: cooked_db
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - cooked-network
+
+  # AI Recipe Service (Node.js + Playwright)
+  ai-recipe:
+    build: ./ai_recipe
+    container_name: ai-recipe-service
+    environment:
+      - PORT=3000
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - SERP_API_KEY=${SERP_API_KEY}
+    ports:
+      - "3000:3000"
+    networks:
+      - cooked-network
+    restart: always
+
+  # Backend Service (Spring Boot)
+  backend:
+    build: ./backend
+    container_name: cooked-backend
+    depends_on:
+      - postgres-db
+      - ai-recipe
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/cooked_db
+      - SPRING_DATASOURCE_USERNAME=${DB_USER:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+      - AI_API_BASE_URL=http://ai-recipe:3000
+      - JWT_SECRET=${JWT_SECRET}
+    ports:
+      - "8099:8099"
+    networks:
+      - cooked-network
+    restart: always
+
+networks:
+  cooked-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
