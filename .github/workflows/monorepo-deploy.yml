@@ -51,8 +51,14 @@ jobs:
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/ai-recipe-service:latest
 
-    # --- TRIGGER DEPLOY (Optional - example with Render) ---
+    # --- TRIGGER DEPLOY (Optional) ---
     - name: Trigger Deploy
-      if: github.event_name == 'push' && secrets.RENDER_DEPLOY_HOOK_URL != ''
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      env:
+        DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
       run: |
-        curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        if [ ! -z "$DEPLOY_HOOK" ]; then
+          curl -X POST "$DEPLOY_HOOK"
+        else
+          echo "No deploy hook found, skipping."
+        fi
