@@ -19,7 +19,6 @@ const analyzeRoutes = require('./routes/analyzeRoutes');
 const userRoutes = require('./routes/userRoutes');
 const extractRoutes = require('./routes/extractRoutes');
 const imageRoutes = require('./routes/imageRoutes');
-const searchRoutes = require('./routes/searchRoutes');
 const ingredientRoutes = require('./routes/ingredientRoutes');
 
 /**
@@ -101,7 +100,6 @@ function createApp() {
   app.use('/api/users', userRoutes);
   app.use('/api/extract', extractRoutes);
   app.use('/api/images', imageRoutes);
-  app.use('/api/search', searchRoutes);
   app.use('/api/ingredients', ingredientRoutes);
 
   // ------------------------------------------------------------------
