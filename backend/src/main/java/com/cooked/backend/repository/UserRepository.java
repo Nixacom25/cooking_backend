@@ -11,6 +11,11 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
 
+    long countBySubscriptionStatus(com.cooked.backend.entity.SubscriptionStatus status);
+
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.subscriptionStatus = :status AND u.createdAt <= :date")
+    java.util.List<User> findUsersForDrip(@org.springframework.data.repository.query.Param("date") java.time.LocalDateTime date, @org.springframework.data.repository.query.Param("status") com.cooked.backend.entity.SubscriptionStatus status);
+
     Optional<User> findByPhone(String phone);
 
     Optional<User> findByOtpCode(String otpCode);

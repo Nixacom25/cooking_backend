@@ -34,4 +34,7 @@ public class Ingredient {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public UUID getId() { return id; }
+    public String getName() { return name; }
 }

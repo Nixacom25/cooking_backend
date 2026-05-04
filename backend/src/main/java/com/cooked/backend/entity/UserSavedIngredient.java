@@ -33,4 +33,8 @@ public class UserSavedIngredient {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    public User getUser() { return user; }
+    public String getName() { return name; }
+    public String getIcon() { return icon; }
 }

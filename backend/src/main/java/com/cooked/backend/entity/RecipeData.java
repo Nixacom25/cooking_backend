@@ -34,4 +34,7 @@ public class RecipeData {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public String getName() { return name; }
+    public String getImageUrl() { return imageUrl; }
 }

@@ -1,20 +1,12 @@
 package com.cooked.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "user_subscriptions")
 public class UserSubscription {
@@ -23,6 +15,7 @@ public class UserSubscription {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @JsonIgnore
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -38,7 +31,6 @@ public class UserSubscription {
     private SubscriptionStatus status;
 
     @Column(nullable = false)
-    @Builder.Default
     private Boolean isYearly = false;
 
     @CreationTimestamp
@@ -46,4 +38,38 @@ public class UserSubscription {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+    public LocalDateTime getStartDate() { return startDate; }
+    public void setStartDate(LocalDateTime startDate) { this.startDate = startDate; }
+    public LocalDateTime getEndDate() { return endDate; }
+    public void setEndDate(LocalDateTime endDate) { this.endDate = endDate; }
+    public SubscriptionStatus getStatus() { return status; }
+    public void setStatus(SubscriptionStatus status) { this.status = status; }
+    public Boolean getIsYearly() { return isYearly; }
+    public void setIsYearly(Boolean isYearly) { this.isYearly = isYearly; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+
+    public static UserSubscriptionBuilder builder() {
+        return new UserSubscriptionBuilder();
+    }
+
+    public static class UserSubscriptionBuilder {
+        private final UserSubscription subscription = new UserSubscription();
+
+        public UserSubscriptionBuilder id(UUID id) { subscription.setId(id); return this; }
+        public UserSubscriptionBuilder user(User user) { subscription.setUser(user); return this; }
+        public UserSubscriptionBuilder startDate(LocalDateTime startDate) { subscription.setStartDate(startDate); return this; }
+        public UserSubscriptionBuilder endDate(LocalDateTime endDate) { subscription.setEndDate(endDate); return this; }
+        public UserSubscriptionBuilder status(SubscriptionStatus status) { subscription.setStatus(status); return this; }
+        public UserSubscriptionBuilder isYearly(Boolean isYearly) { subscription.setIsYearly(isYearly); return this; }
+
+        public UserSubscription build() {
+            return subscription;
+        }
+    }
 }

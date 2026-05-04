@@ -1,21 +1,21 @@
 package com.cooked.backend.service;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 @Service
-@Slf4j
 public class KeepAliveTask {
+    private static final Logger log = LoggerFactory.getLogger(KeepAliveTask.class);
 
     private final RestTemplate restTemplate;
 
     @Value("${AI_API_BASE_URL:https://recipe.markhorsystems.com}")
     private String aiBaseUrl;
 
-    // Use the backend's own public URL to keep it awake
     @Value("${APP_PUBLIC_URL:https://cooked-backend-latest.onrender.com}")
     private String backendUrl;
 
@@ -23,15 +23,10 @@ public class KeepAliveTask {
         this.restTemplate = new RestTemplate();
     }
 
-    /**
-     * Pings both services every 10 minutes to prevent Render spin-down.
-     * Render free tier spins down after 15 minutes of inactivity.
-     */
-    @Scheduled(fixedRate = 600000) // 10 minutes in milliseconds
+    @Scheduled(fixedRate = 600000)
     public void keepServicesAlive() {
         log.info("Running Keep-Alive task to prevent Render spin-down...");
         
-        // 1. Ping AI Service
         try {
             String aiHealthUrl = aiBaseUrl + "/health";
             restTemplate.getForObject(aiHealthUrl, String.class);
@@ -40,7 +35,6 @@ public class KeepAliveTask {
             log.warn("Could not ping AI Service: {}", e.getMessage());
         }
 
-        // 2. Ping Backend Service
         try {
             String backendHealthUrl = backendUrl + "/actuator/health";
             restTemplate.getForObject(backendHealthUrl, String.class);

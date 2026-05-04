@@ -2,11 +2,8 @@ package com.cooked.backend.dto.request;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
-
 import java.math.BigDecimal;
 
-@Data
 public class UpdateSubscriptionPlanRequest {
     @NotNull
     @Min(0)
@@ -23,4 +20,15 @@ public class UpdateSubscriptionPlanRequest {
     @NotNull
     @Min(0)
     private Integer trialDays;
+
+    public UpdateSubscriptionPlanRequest() {}
+
+    public BigDecimal getMonthlyPrice() { return monthlyPrice; }
+    public void setMonthlyPrice(BigDecimal monthlyPrice) { this.monthlyPrice = monthlyPrice; }
+    public BigDecimal getYearlyPrice() { return yearlyPrice; }
+    public void setYearlyPrice(BigDecimal yearlyPrice) { this.yearlyPrice = yearlyPrice; }
+    public Double getYearlyDiscountPercentage() { return yearlyDiscountPercentage; }
+    public void setYearlyDiscountPercentage(Double yearlyDiscountPercentage) { this.yearlyDiscountPercentage = yearlyDiscountPercentage; }
+    public Integer getTrialDays() { return trialDays; }
+    public void setTrialDays(Integer trialDays) { this.trialDays = trialDays; }
 }

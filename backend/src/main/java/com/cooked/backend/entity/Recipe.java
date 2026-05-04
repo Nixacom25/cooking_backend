@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,8 +24,6 @@ public class Recipe {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private User user;
 
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -67,13 +64,9 @@ public class Recipe {
     private boolean isPublic = false;
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private Set<RecipeIngredient> recipeIngredients;
 
     @ManyToMany(mappedBy = "recipes")
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private Set<Cookbook> cookbooks;
 
     @Column(name = "source_url", nullable = true, columnDefinition = "TEXT")
@@ -98,4 +91,48 @@ public class Recipe {
     @Column(name = "origin", nullable = false)
     @Builder.Default
     private RecipeOrigin origin = RecipeOrigin.MANUAL;
+
+    // --- Getters & Setters Manuels ---
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
+    public Integer getCookTime() { return cookTime; }
+    public void setCookTime(Integer cookTime) { this.cookTime = cookTime; }
+    public Integer getPrepTime() { return prepTime; }
+    public void setPrepTime(Integer prepTime) { this.prepTime = prepTime; }
+    public Integer getKcal() { return kcal; }
+    public void setKcal(Integer kcal) { this.kcal = kcal; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+    public String getCuisine() { return cuisine; }
+    public void setCuisine(String cuisine) { this.cuisine = cuisine; }
+    public Integer getServings() { return servings; }
+    public void setServings(Integer servings) { this.servings = servings; }
+    public String getTips() { return tips; }
+    public void setTips(String tips) { this.tips = tips; }
+    public List<String> getSteps() { return steps; }
+    public void setSteps(List<String> steps) { this.steps = steps; }
+    public boolean isPublic() { return isPublic; }
+    public void setPublic(boolean isPublic) { this.isPublic = isPublic; }
+    public Set<RecipeIngredient> getRecipeIngredients() { return recipeIngredients; }
+    public void setRecipeIngredients(Set<RecipeIngredient> recipeIngredients) { this.recipeIngredients = recipeIngredients; }
+    public Set<Cookbook> getCookbooks() { return cookbooks; }
+    public void setCookbooks(Set<Cookbook> cookbooks) { this.cookbooks = cookbooks; }
+    public String getSourceUrl() { return sourceUrl; }
+    public void setSourceUrl(String sourceUrl) { this.sourceUrl = sourceUrl; }
+    public List<String> getEquipment() { return equipment; }
+    public void setEquipment(List<String> equipment) { this.equipment = equipment; }
+    public LocalDateTime getExpiresAt() { return expiresAt; }
+    public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public RecipeOrigin getOrigin() { return origin; }
+    public void setOrigin(RecipeOrigin origin) { this.origin = origin; }
 }

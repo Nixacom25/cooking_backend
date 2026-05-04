@@ -1,67 +1,86 @@
 package com.cooked.backend.controller;
 
 import com.cooked.backend.dto.request.SubscriptionPaymentRequest;
-import com.cooked.backend.dto.request.UpdateSubscriptionPlanRequest;
-import com.cooked.backend.dto.response.MessageResponse;
-import com.cooked.backend.entity.SubscriptionPlan;
-import com.cooked.backend.entity.UserSubscription;
+import com.cooked.backend.dto.request.IapReceiptRequest;
+import com.cooked.backend.entity.User;
+import com.cooked.backend.service.PaywallService;
 import com.cooked.backend.service.SubscriptionService;
+import com.cooked.backend.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/subscriptions")
-@RequiredArgsConstructor
-@Tag(name = "Subscription", description = "Subscription Management APIs")
+@Tag(name = "Subscription", description = "Dynamic Paywall & Subscription Management")
 @SecurityRequirement(name = "bearerAuth")
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
+    private final PaywallService paywallService;
+    private final UserRepository userRepository;
 
-    @Operation(summary = "Get the current subscription plan details (Prices, etc.)")
+    public SubscriptionController(SubscriptionService subscriptionService,
+                                  PaywallService paywallService,
+                                  UserRepository userRepository) {
+        this.subscriptionService = subscriptionService;
+        this.paywallService = paywallService;
+        this.userRepository = userRepository;
+    }
+
+    @Operation(summary = "Get current user subscription")
+    @GetMapping("/me")
+    public ResponseEntity<?> getMySubscription(Authentication auth) {
+        return ResponseEntity.ok(subscriptionService.getMySubscription(auth.getName()));
+    }
+
+    @Operation(summary = "Get payment history")
+    @GetMapping("/history")
+    public ResponseEntity<?> getPaymentHistory(Authentication auth) {
+        return ResponseEntity.ok(subscriptionService.getPaymentHistory(auth.getName()));
+    }
+
+    @Operation(summary = "Process subscription payment")
+    @PostMapping("/pay")
+    public ResponseEntity<?> paySubscription(Authentication auth, @RequestBody SubscriptionPaymentRequest request) {
+        return ResponseEntity.ok(subscriptionService.paySubscription(auth.getName(), request));
+    }
+
+    @Operation(summary = "Verify IAP Receipt")
+    @PostMapping("/verify-receipt")
+    public ResponseEntity<?> verifyReceipt(Authentication auth, @RequestBody IapReceiptRequest request) {
+        return ResponseEntity.ok(subscriptionService.verifyReceipt(auth.getName(), request));
+    }
+
+    @Operation(summary = "Get subscription plan details")
     @GetMapping("/plan")
-    public ResponseEntity<SubscriptionPlan> getPlan() {
+    public ResponseEntity<?> getPlan() {
         return ResponseEntity.ok(subscriptionService.getPlan());
     }
 
-    @Operation(summary = "Update the subscription plan prices and discounts (Admin Only)")
-    @PutMapping("/plan")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<SubscriptionPlan> updatePlan(@Valid @RequestBody UpdateSubscriptionPlanRequest request) {
-        return ResponseEntity.ok(subscriptionService.updatePlan(request));
+    @Operation(summary = "Get Dynamic Paywall Config (A/B Testing)")
+    @GetMapping("/paywall-config")
+    public ResponseEntity<?> getPaywallConfig(Authentication auth) {
+        User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(paywallService.getConfigurationForUser(user));
     }
 
-    @Operation(summary = "Get my current subscription status")
-    @GetMapping("/me")
-    public ResponseEntity<UserSubscription> getMySubscription(Authentication authentication) {
-        return ResponseEntity.ok(subscriptionService.getMySubscription(authentication.getName()));
-    }
-
-    @Operation(summary = "Pay/renew subscription")
-    @PostMapping("/pay")
-    public ResponseEntity<MessageResponse> paySubscription(Authentication authentication,
-            @Valid @RequestBody SubscriptionPaymentRequest request) {
-        return ResponseEntity.ok(subscriptionService.paySubscription(authentication.getName(), request));
-    }
-
-    @Operation(summary = "Get user's subscription payment history")
-    @GetMapping("/history")
-    public ResponseEntity<java.util.List<com.cooked.backend.dto.response.SubscriptionPaymentResponse>> getHistory(
-            Authentication authentication) {
-        return ResponseEntity.ok(subscriptionService.getPaymentHistory(authentication.getName()));
-    }
-
-    @Operation(summary = "Verify Native IAP Receipt")
-    @PostMapping("/verify-receipt")
-    public ResponseEntity<MessageResponse> verifyReceipt(Authentication authentication,
-            @Valid @RequestBody com.cooked.backend.dto.request.IapReceiptRequest request) {
-        return ResponseEntity.ok(subscriptionService.verifyReceipt(authentication.getName(), request));
+    @Operation(summary = "Get current subscription status (legacy support)")
+    @GetMapping("/status")
+    public ResponseEntity<?> getStatus(Authentication auth) {
+        User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(Map.of(
+            "subscriptionStatus", user.getSubscriptionStatus(),
+            "subscriptionType", user.getSubscriptionType(),
+            "expiresAt", user.getSubscriptionExpiresAt() != null ? user.getSubscriptionExpiresAt() : "",
+            "isPremium", subscriptionService.isPremium(user)
+        ));
     }
 }

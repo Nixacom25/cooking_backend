@@ -40,4 +40,7 @@ public class RecipeIngredient {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public Ingredient getIngredient() { return ingredient; }
+    public String getQuantity() { return quantity; }
 }

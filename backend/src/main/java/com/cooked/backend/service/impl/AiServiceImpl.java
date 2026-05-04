@@ -16,9 +16,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -34,8 +35,8 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class AiServiceImpl implements AiService {
+    private static final Logger log = LoggerFactory.getLogger(AiServiceImpl.class);
 
     @Value("${openai.api.key}")
     private String openAiApiKey;
@@ -80,7 +81,6 @@ public class AiServiceImpl implements AiService {
                 .timeout(20000)
                 .get();
             
-            // Clean up the document to reduce noise
             doc.select("script, style, footer, nav, aside").remove();
             String pageText = String.format("Source URL: %s\nTitle: %s\nContent: %s", url, doc.title(), doc.body().text());
             if (pageText.length() > 25000) pageText = pageText.substring(0, 25000);
@@ -261,7 +261,6 @@ public class AiServiceImpl implements AiService {
                     .map(IngredientPayload::getName)
                     .toList();
             
-            // For speed (<= 3s requirement), use gpt-4o-mini for initial scan
             List<CreateRecipeRequest> recipes = generateRecipes(
                 AiRecipeGenerationRequest.builder().ingredients(allowedNames).build(), 
                 email, 

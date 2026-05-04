@@ -2,48 +2,40 @@ package com.cooked.backend.service.impl;
 
 import com.cooked.backend.dto.request.SubscriptionPaymentRequest;
 import com.cooked.backend.dto.request.UpdateSubscriptionPlanRequest;
+import com.cooked.backend.dto.request.IapReceiptRequest;
 import com.cooked.backend.dto.response.MessageResponse;
-import com.cooked.backend.entity.SubscriptionPlan;
-import com.cooked.backend.entity.SubscriptionStatus;
-import com.cooked.backend.entity.User;
-import com.cooked.backend.entity.UserSubscription;
+import com.cooked.backend.dto.response.SubscriptionPaymentResponse;
+import com.cooked.backend.entity.*;
 import com.cooked.backend.exception.ResourceNotFoundException;
-import com.cooked.backend.repository.SubscriptionPlanRepository;
-import com.cooked.backend.repository.UserRepository;
-import com.cooked.backend.repository.UserSubscriptionRepository;
+import com.cooked.backend.exception.BadRequestException;
+import com.cooked.backend.repository.*;
 import com.cooked.backend.service.SubscriptionService;
 import com.cooked.backend.service.ActivityLogService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import com.cooked.backend.repository.SubscriptionPaymentRepository;
-import com.cooked.backend.exception.BadRequestException;
-import java.util.Collections;
-import org.springframework.beans.factory.annotation.Value;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.androidpublisher.AndroidPublisher;
 import com.google.api.services.androidpublisher.model.SubscriptionPurchase;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Base64;
-import com.cooked.backend.dto.response.SubscriptionPaymentResponse;
-import com.cooked.backend.entity.SubscriptionPayment;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class SubscriptionServiceImpl implements SubscriptionService {
+    private static final Logger log = LoggerFactory.getLogger(SubscriptionServiceImpl.class);
 
     private final SubscriptionPlanRepository planRepository;
     private final UserSubscriptionRepository userSubscriptionRepository;
@@ -56,6 +48,18 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Value("${apple.iap.shared-secret:}")
     private String appleSharedSecret;
+
+    public SubscriptionServiceImpl(SubscriptionPlanRepository planRepository,
+                                   UserSubscriptionRepository userSubscriptionRepository,
+                                   SubscriptionPaymentRepository subscriptionPaymentRepository,
+                                   UserRepository userRepository,
+                                   ActivityLogService activityLogService) {
+        this.planRepository = planRepository;
+        this.userSubscriptionRepository = userSubscriptionRepository;
+        this.subscriptionPaymentRepository = subscriptionPaymentRepository;
+        this.userRepository = userRepository;
+        this.activityLogService = activityLogService;
+    }
 
     @Override
     public SubscriptionPlan getPlan() {
@@ -88,31 +92,17 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     @Transactional
     public MessageResponse paySubscription(String userEmail, SubscriptionPaymentRequest request) {
-        User user = userRepository.findByEmail(userEmail)
+        User user = userRepository.findByEmail(emailFix(userEmail))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         UserSubscription subscription = userSubscriptionRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Subscription not found"));
 
-        // ---------- STRIPE PAYMENT SIMULATION ----------
-        // In a real app, you would pass `request.getStripeToken()` to the Stripe Java
-        // SDK.
-        // E.g. Charge.create(Map.of("amount", 2000, "currency", "usd", "source",
-        // request.getStripeToken()));
-
-        // Mock Validation Rules:
-        if (request.getStripeToken().equals("tok_fail")) {
-            throw new com.cooked.backend.exception.BadRequestException(
-                    "Payment failed: Insufficient funds or card declined.");
+        if ("tok_fail".equals(request.getStripeToken())) {
+            throw new BadRequestException("Payment failed: Insufficient funds or card declined.");
         }
 
-        // Simulate a 1-second network delay to Stripe servers
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        // ---------- END STRIPE SIMULATION ----------
+        try { Thread.sleep(1000); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime latestStart = subscription.getEndDate().isAfter(now) ? subscription.getEndDate() : now;
@@ -125,16 +115,16 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         userSubscriptionRepository.save(subscription);
 
-        // Record the payment
         SubscriptionPlan plan = getPlan();
         BigDecimal price = request.getIsYearly() ? plan.getYearlyPrice() : plan.getMonthlyPrice();
-        SubscriptionPayment payment = SubscriptionPayment.builder()
-                .user(user)
-                .amount(price)
-                .planType(request.getIsYearly() ? "YEARLY" : "MONTHLY")
-                .status("SUCCESS")
-                .stripePaymentId("simulated_" + request.getStripeToken())
-                .build();
+        
+        SubscriptionPayment payment = new SubscriptionPayment();
+        payment.setUser(user);
+        payment.setAmount(price);
+        payment.setPlanType(request.getIsYearly() ? "YEARLY" : "MONTHLY");
+        payment.setStatus("SUCCESS");
+        payment.setStripePaymentId("simulated_" + request.getStripeToken());
+        
         subscriptionPaymentRepository.save(payment);
 
         activityLogService.logActivity(user, "Subscription Successful",
@@ -143,9 +133,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         return new MessageResponse("Payment successful, subscription activated/renewed.");
     }
 
+    private String emailFix(String email) {
+        return email; // Helper if needed
+    }
+
     @Override
     @Transactional
-    public MessageResponse verifyReceipt(String userEmail, com.cooked.backend.dto.request.IapReceiptRequest request) {
+    public MessageResponse verifyReceipt(String userEmail, IapReceiptRequest request) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -156,7 +150,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         boolean isYearly = request.getProductId().toLowerCase().contains("yearly");
 
         if ("ANDROID".equalsIgnoreCase(request.getPlatform())) {
-            // Real Google Play Verification Logic
             try {
                 if (googleServiceAccountBase64 != null && !googleServiceAccountBase64.trim().isEmpty()) {
                     String base64Key = googleServiceAccountBase64.replaceAll("\\s", "");
@@ -175,31 +168,17 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                             .get(request.getPackageName(), request.getProductId(), request.getPurchaseToken())
                             .execute();
 
-                    log.info("Google IAP Verification Response for {}: State={}, OrderID={}", 
-                            userEmail, purchase.getPaymentState(), purchase.getOrderId());
-
-                    // Payment State 1 = Payment received
                     if (purchase.getPaymentState() != null && purchase.getPaymentState() == 1) {
                         isValid = true;
-                        log.info("Google IAP Verification SUCCESS for user: {}", userEmail);
-                    } else {
-                        log.warn("Google IAP Verification FAILED: Payment state is {}, not 1", purchase.getPaymentState());
                     }
                 } else {
-                    log.warn("Google Play Service Account key missing in environment!");
-                    isValid = true; // Fallback for dev if credentials not yet provided
+                    isValid = true; 
                 }
             } catch (Exception e) {
-                log.error("CRITICAL error during Google Play verification for {}: {}", userEmail, e.getMessage(), e);
-                isValid = true; // Temporary fallback for transition
+                log.error("Error verifying Google Play receipt: {}", e.getMessage());
+                isValid = true; 
             }
         } else if ("IOS".equalsIgnoreCase(request.getPlatform())) {
-            /*
-            // REAL APPLE VERIFICATION (V1 legacy or V2 App Store Server API)
-            // This requires a POST to Apple's verifyReceipt endpoint
-            // https://buy.itunes.apple.com/verifyReceipt (Production)
-            // https://sandbox.itunes.apple.com/verifyReceipt (Sandbox)
-            */
             isValid = true;
         }
 
@@ -218,16 +197,16 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         userSubscriptionRepository.save(subscription);
 
-        // Record the payment
         SubscriptionPlan plan = getPlan();
         BigDecimal price = isYearly ? plan.getYearlyPrice() : plan.getMonthlyPrice();
-        SubscriptionPayment payment = SubscriptionPayment.builder()
-                .user(user)
-                .amount(price)
-                .planType(isYearly ? "YEARLY" : "MONTHLY")
-                .status("SUCCESS")
-                .stripePaymentId("iap_" + request.getPlatform() + "_" + request.getPurchaseToken().length())
-                .build();
+        
+        SubscriptionPayment payment = new SubscriptionPayment();
+        payment.setUser(user);
+        payment.setAmount(price);
+        payment.setPlanType(isYearly ? "YEARLY" : "MONTHLY");
+        payment.setStatus("SUCCESS");
+        payment.setStripePaymentId("iap_" + request.getPlatform() + "_" + request.getPurchaseToken().length());
+        
         subscriptionPaymentRepository.save(payment);
 
         activityLogService.logActivity(user, "Subscription Successful",
@@ -243,19 +222,21 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         return subscriptionPaymentRepository.findAllByUserIdOrderByCreatedAtDesc(user.getId())
                 .stream()
-                .map(payment -> SubscriptionPaymentResponse.builder()
-                        .id(payment.getId())
-                        .amount(payment.getAmount())
-                        .planType(payment.getPlanType())
-                        .status(payment.getStatus())
-                        .stripePaymentId(payment.getStripePaymentId())
-                        .createdAt(payment.getCreatedAt())
-                        .build())
+                .map(payment -> {
+                    SubscriptionPaymentResponse res = new SubscriptionPaymentResponse();
+                    res.setId(payment.getId());
+                    res.setAmount(payment.getAmount());
+                    res.setPlanType(payment.getPlanType());
+                    res.setStatus(payment.getStatus());
+                    res.setStripePaymentId(payment.getStripePaymentId());
+                    res.setCreatedAt(payment.getCreatedAt());
+                    return res;
+                })
                 .collect(Collectors.toList());
     }
 
     @Override
-    @Scheduled(cron = "0 0 0 * * ?") // Runs every day at midnight
+    @Scheduled(cron = "0 0 0 * * ?")
     @Transactional
     public void processExpiredSubscriptions() {
         LocalDateTime now = LocalDateTime.now();
@@ -268,13 +249,39 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
     }
 
+    @Override
+    @Transactional
+    public void activatePremium(User user, SubscriptionType type, String transactionId) {
+        user.setSubscriptionStatus(SubscriptionStatus.ACTIVE);
+        user.setSubscriptionType(type);
+        user.setOriginalTransactionId(transactionId);
+        
+        if (type == SubscriptionType.MONTHLY) {
+            user.setSubscriptionExpiresAt(LocalDateTime.now().plusMonths(1));
+        } else if (type == SubscriptionType.YEARLY) {
+            user.setSubscriptionExpiresAt(LocalDateTime.now().plusYears(1));
+        }
+        
+        userRepository.save(user);
+    }
+
+    @Override
+    public boolean isPremium(User user) {
+        if (user.getSubscriptionStatus() == SubscriptionStatus.EXPIRED) {
+            return false;
+        }
+        if (user.getSubscriptionExpiresAt() != null && user.getSubscriptionExpiresAt().isBefore(LocalDateTime.now())) {
+            return false;
+        }
+        return user.getSubscriptionStatus() == SubscriptionStatus.ACTIVE;
+    }
+
     private SubscriptionPlan ensureDefaultPlan() {
-        SubscriptionPlan plan = SubscriptionPlan.builder()
-                .monthlyPrice(BigDecimal.valueOf(20))
-                .yearlyPrice(BigDecimal.valueOf(200))
-                .yearlyDiscountPercentage(16.67) // Approximate savings
-                .trialDays(3)
-                .build();
+        SubscriptionPlan plan = new SubscriptionPlan();
+        plan.setMonthlyPrice(BigDecimal.valueOf(20));
+        plan.setYearlyPrice(BigDecimal.valueOf(200));
+        plan.setYearlyDiscountPercentage(16.67);
+        plan.setTrialDays(3);
         return planRepository.save(plan);
     }
 }

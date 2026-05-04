@@ -27,11 +27,14 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 @Primary
-@Slf4j
 @RequiredArgsConstructor
 public class MarkhorAiServiceImpl implements AiService {
+    private static final Logger log = LoggerFactory.getLogger(MarkhorAiServiceImpl.class);
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
