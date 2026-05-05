@@ -172,4 +172,49 @@ public class RecipeDataServiceImpl implements RecipeDataService {
         }
         recipeDataRepository.deleteAllById(ids);
     }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public java.util.Map<String, Object> bulkUpdateImages(List<MultipartFile> files) {
+        int updatedCount = 0;
+        List<String> failedFiles = new ArrayList<>();
+        
+        for (MultipartFile file : files) {
+            String originalName = file.getOriginalFilename();
+            if (originalName == null || originalName.isBlank()) continue;
+            
+            // Remove extension
+            String cleanName = originalName.contains(".") 
+                ? originalName.substring(0, originalName.lastIndexOf(".")) 
+                : originalName;
+            
+            // Replace separators with spaces to improve matching
+            String nameToSearch = cleanName.replace("_", " ").replace("-", " ").trim();
+            
+            List<RecipeData> recipes = recipeDataRepository.findByNameContainingIgnoreCase(nameToSearch);
+            
+            if (!recipes.isEmpty()) {
+                try {
+                    String imageUrl = cloudinaryService.upload(file);
+                    for (RecipeData r : recipes) {
+                        r.setImageUrl(imageUrl);
+                        recipeDataRepository.save(r);
+                        updatedCount++;
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to upload image for file: {}", originalName, e);
+                    failedFiles.add(originalName + " (Upload failed)");
+                }
+            } else {
+                log.warn("No recipe found for image: {}", originalName);
+                failedFiles.add(originalName + " (Recipe not found: " + nameToSearch + ")");
+            }
+        }
+        
+        return Map.of(
+            "updatedCount", updatedCount,
+            "failedCount", failedFiles.size(),
+            "failedFiles", failedFiles
+        );
+    }
 }

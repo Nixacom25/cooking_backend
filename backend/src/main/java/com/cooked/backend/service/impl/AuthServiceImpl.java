@@ -25,6 +25,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.ResponseEntity;
+import java.util.Map;
+import java.util.HashMap;
 
 import java.time.LocalDateTime;
 import java.util.Random;
@@ -38,6 +42,20 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import org.springframework.web.client.RestTemplate;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.spec.RSAPublicKeySpec;
+import java.math.BigInteger;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Arrays;
 
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +75,7 @@ public class AuthServiceImpl implements AuthService {
         private final UserInitializationService userInitializationService;
         private final ActivityLogService activityLogService;
         private final DeviceSessionRepository deviceSessionRepository;
+        private final RestTemplate restTemplate;
 
         @Value("${google.client.id:YOUR_GOOGLE_CLIENT_ID}")
         private String googleClientId;
@@ -578,10 +597,82 @@ public class AuthServiceImpl implements AuthService {
                         log.error("Google Token verification returned null for audiences: {}", audiences);
                         throw new BadRequestException("Invalid Google Token");
                 } else if ("APPLE".equalsIgnoreCase(provider)) {
-                        // Apple validation logic would go here
-                        throw new BadRequestException("Apple authentication is coming soon.");
+                        return verifyAppleToken(token);
                 }
                 throw new BadRequestException("Unsupported social provider: " + provider);
+        }
+
+        private SocialUserInfo verifyAppleToken(String identityToken) throws Exception {
+                log.info("Verifying Apple ID Token");
+
+                // 1. Get Apple Public Keys
+                String appleKeysUrl = "https://appleid.apple.com/auth/keys";
+                String keysResponse = restTemplate.getForObject(appleKeysUrl, String.class);
+
+                ObjectMapper mapper = new ObjectMapper();
+                com.fasterxml.jackson.databind.JsonNode keysNode = mapper.readTree(keysResponse).get("keys");
+
+                // 2. Parse the JWT Header to get kid
+                String[] parts = identityToken.split("\\.");
+                if (parts.length < 2) throw new BadRequestException("Invalid Apple Token format");
+                
+                String headerJson = new String(java.util.Base64.getDecoder().decode(parts[0]));
+                com.fasterxml.jackson.databind.JsonNode headerNode = mapper.readTree(headerJson);
+                String kid = headerNode.get("kid").asText();
+
+                // 3. Find matching key
+                com.fasterxml.jackson.databind.JsonNode matchingKey = null;
+                for (com.fasterxml.jackson.databind.JsonNode key : keysNode) {
+                        if (kid.equals(key.get("kid").asText())) {
+                                matchingKey = key;
+                                break;
+                        }
+                }
+
+                if (matchingKey == null) {
+                        throw new BadRequestException("Apple Public Key not found for kid: " + kid);
+                }
+
+                // 4. Construct Public Key
+                String nStr = matchingKey.get("n").asText();
+                String eStr = matchingKey.get("e").asText();
+
+                byte[] nBytes = java.util.Base64.getUrlDecoder().decode(nStr);
+                byte[] eBytes = java.util.Base64.getUrlDecoder().decode(eStr);
+
+                java.math.BigInteger n = new java.math.BigInteger(1, nBytes);
+                java.math.BigInteger e = new java.math.BigInteger(1, eBytes);
+
+                java.security.spec.RSAPublicKeySpec spec = new java.security.spec.RSAPublicKeySpec(n, e);
+                java.security.KeyFactory factory = java.security.KeyFactory.getInstance("RSA");
+                java.security.PublicKey publicKey = factory.generatePublic(spec);
+
+                // 5. Verify Signature and Claims
+                try {
+                        io.jsonwebtoken.Claims claims = io.jsonwebtoken.Jwts.parserBuilder()
+                                        .setSigningKey(publicKey)
+                                        .build()
+                                        .parseClaimsJws(identityToken)
+                                        .getBody();
+
+                        if (!"https://appleid.apple.com".equals(claims.getIssuer())) {
+                                throw new BadRequestException("Invalid Apple Token issuer");
+                        }
+
+                        // aud can be either Bundle ID (iOS) or Service ID (Web)
+                        String aud = claims.getAudience();
+                        if (!appleClientId.equals(aud)) {
+                                log.error("Apple audience mismatch. Expected: {}, Got: {}", appleClientId, aud);
+                                throw new BadRequestException("Invalid Apple Token audience");
+                        }
+
+                        String email = claims.get("email", String.class);
+                        // Apple doesn't always provide name in token, we might need it from request
+                        return new SocialUserInfo(email, null, null);
+                } catch (Exception ex) {
+                        log.error("Apple JWT verification failed: {}", ex.getMessage());
+                        throw new BadRequestException("Apple JWT verification failed: " + ex.getMessage());
+                }
         }
 
         @Data

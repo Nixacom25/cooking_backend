@@ -61,4 +61,9 @@ public class RecipeDataController {
         recipeDataService.deleteMultiple(ids);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping(value = "/bulk-update-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<java.util.Map<String, Object>> bulkUpdateImages(@RequestParam("files") List<MultipartFile> files) {
+        return ResponseEntity.ok(recipeDataService.bulkUpdateImages(files));
+    }
 }

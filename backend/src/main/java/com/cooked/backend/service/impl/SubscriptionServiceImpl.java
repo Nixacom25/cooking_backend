@@ -23,6 +23,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.ResponseEntity;
 
 import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
@@ -60,6 +62,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         this.userRepository = userRepository;
         this.activityLogService = activityLogService;
     }
+
+    private final RestTemplate restTemplate = new RestTemplate();
 
     @Override
     public SubscriptionPlan getPlan() {
@@ -179,7 +183,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 isValid = true; 
             }
         } else if ("IOS".equalsIgnoreCase(request.getPlatform())) {
-            isValid = true;
+            isValid = verifyAppleReceipt(request.getPurchaseToken());
         }
 
         if (!isValid) {
@@ -274,6 +278,52 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             return false;
         }
         return user.getSubscriptionStatus() == SubscriptionStatus.ACTIVE;
+    }
+
+    private boolean verifyAppleReceipt(String receiptData) {
+        log.info("Verifying Apple Receipt");
+        String url = "https://buy.itunes.apple.com/verifyReceipt";
+        
+        if (appleSharedSecret == null || appleSharedSecret.trim().isEmpty() || "VOTRE_SHARED_SECRET".equals(appleSharedSecret)) {
+            log.warn("Apple Shared Secret is not configured. Defaulting to VALID for testing.");
+            return true;
+        }
+
+        try {
+            boolean success = callAppleVerify(url, receiptData);
+            if (!success) {
+                // If status is 21007, retry with Sandbox
+                url = "https://sandbox.itunes.apple.com/verifyReceipt";
+                success = callAppleVerify(url, receiptData);
+            }
+            return success;
+        } catch (Exception e) {
+            log.error("Apple receipt verification error: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private boolean callAppleVerify(String url, String receiptData) {
+        try {
+            java.util.Map<String, String> body = new java.util.HashMap<>();
+            body.put("receipt-data", receiptData);
+            body.put("password", appleSharedSecret);
+
+            org.springframework.http.ResponseEntity<java.util.Map> response = restTemplate.postForEntity(url, body, java.util.Map.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Integer status = (Integer) response.getBody().get("status");
+                if (status != null && status == 0) {
+                    return true;
+                }
+                if (status != null && status == 21007) {
+                    return false; // Signal retry with sandbox
+                }
+                log.warn("Apple verification returned status: {}", status);
+            }
+        } catch (Exception e) {
+            log.error("Error calling Apple verify: {}", e.getMessage());
+        }
+        return false;
     }
 
     private SubscriptionPlan ensureDefaultPlan() {

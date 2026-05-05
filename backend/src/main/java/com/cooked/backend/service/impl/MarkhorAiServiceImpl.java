@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.context.annotation.Primary;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -131,10 +133,43 @@ public class MarkhorAiServiceImpl implements AiService {
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> data = (Map<String, Object>) response.getBody().get("data");
-                Map<String, Object> recipe = (Map<String, Object>) ((Map<String, Object>) data.get("recipe")).get("recipe");
-                recipe.put("origin", "IMPORT");
-                recipe.put("sourceUrl", url);
-                return objectMapper.convertValue(recipe, CreateRecipeRequest.class);
+                Map<String, Object> recipeMap = (Map<String, Object>) ((Map<String, Object>) data.get("recipe")).get("recipe");
+                recipeMap.put("origin", "IMPORT");
+                recipeMap.put("sourceUrl", url);
+                
+                CreateRecipeRequest request = objectMapper.convertValue(recipeMap, CreateRecipeRequest.class);
+                
+                // Fallback image extraction if the API missed it
+                if (request.getImage() == null || request.getImage().trim().isEmpty() || request.getImage().contains("placeholder")) {
+                    log.info("API missed image for {}, attempting fallback scraping", url);
+                    try {
+                        Document doc = Jsoup.connect(url)
+                                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                                .timeout(5000)
+                                .get();
+                        
+                        String ogImage = doc.select("meta[property=og:image]").attr("content");
+                        if (!ogImage.isEmpty()) {
+                            request.setImage(ogImage);
+                        } else {
+                            String twitterImage = doc.select("meta[name=twitter:image]").attr("content");
+                            if (!twitterImage.isEmpty()) {
+                                request.setImage(twitterImage);
+                            } else {
+                                // Try first large image in the article
+                                Element firstImage = doc.select("article img, .recipe-image img, .entry-content img").first();
+                                if (firstImage != null) {
+                                    String src = firstImage.absUrl("src");
+                                    if (!src.isEmpty()) request.setImage(src);
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.warn("Fallback scraping failed for image: {}", e.getMessage());
+                    }
+                }
+                
+                return request;
             }
         } catch (Exception e) {
             log.error("Extraction failed: {}", e.getMessage());
@@ -144,8 +179,21 @@ public class MarkhorAiServiceImpl implements AiService {
 
     @Override
     public List<CreateRecipeRequest> generateRecipes(AiRecipeGenerationRequest request, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("Utilisateur non trouvé"));
+
         try {
-            ResponseEntity<ScanResponse> response = restTemplate.postForEntity(baseUrl + "/api/recipes/generate", request, ScanResponse.class);
+            Map<String, Object> prefs = new HashMap<>();
+            prefs.put("allergies", user.getAllergies());
+            prefs.put("preferences", user.getDietaryPreferences());
+            prefs.put("cuisines_love", user.getFavoriteCuisines());
+            prefs.put("system_instructions", "Soyez extrêmement précis et généreux dans la section 'tips' (notes et conseils) pour chaque recette. Incluez des conseils sur la texture, les variantes de saveurs, et la conservation.");
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("ingredients", request.getIngredients());
+            body.put("user_preferences", prefs);
+
+            ResponseEntity<ScanResponse> response = restTemplate.postForEntity(baseUrl + "/api/recipes/generate", body, ScanResponse.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 List<CreateRecipeRequest> recipes = response.getBody().getRecipes();
                 for (CreateRecipeRequest r : recipes) r.setOrigin("MANUAL");
@@ -159,22 +207,125 @@ public class MarkhorAiServiceImpl implements AiService {
 
     @Override
     public ScanResponse scan(MultipartFile file, String email) {
-        throw new UnsupportedOperationException("Utilisez scanTyped.");
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("Utilisateur non trouvé"));
+
+        try {
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            body.add("image", file.getResource());
+            
+            Map<String, Object> prefs = new HashMap<>();
+            prefs.put("allergies", user.getAllergies());
+            prefs.put("preferences", user.getDietaryPreferences());
+            prefs.put("cuisines_love", user.getFavoriteCuisines());
+            prefs.put("kitchen_tools", user.getKitchenAppliances());
+            prefs.put("skill_level", user.getCookingSkill());
+            prefs.put("system_instructions", "Soyez extrêmement précis et généreux dans la section 'tips' (notes et conseils) pour chaque recette. Incluez des conseils sur la texture, les variantes de saveurs, et la conservation.");
+            
+            body.add("user_preferences", objectMapper.writeValueAsString(prefs));
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+            HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+            ResponseEntity<ScanResponse> response = restTemplate.postForEntity(baseUrl + "/api/analyze", requestEntity, ScanResponse.class);
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                ScanResponse res = response.getBody();
+                if (res.getRecipes() != null) {
+                    for (CreateRecipeRequest r : res.getRecipes()) {
+                        r.setOrigin("SCAN");
+                    }
+                }
+                return res;
+            }
+        } catch (Exception e) {
+            log.error("Scan failed: {}", e.getMessage());
+        }
+        throw new BadRequestException("Échec de l'analyse de l'image");
     }
 
     @Override
     public ScanResponse scanTyped(List<String> ingredients, String email) {
-        Map<String, Object> body = Map.of("ingredients", ingredients);
-        ResponseEntity<ScanResponse> response = restTemplate.postForEntity(baseUrl + "/api/recipes/generate", body, ScanResponse.class);
-        ScanResponse res = response.getBody();
-        if (res != null && res.getRecipes() != null) {
-            for (CreateRecipeRequest r : res.getRecipes()) r.setOrigin("SCAN");
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("Utilisateur non trouvé"));
+
+        try {
+            Map<String, Object> prefs = new HashMap<>();
+            prefs.put("allergies", user.getAllergies());
+            prefs.put("preferences", user.getDietaryPreferences());
+            prefs.put("cuisines_love", user.getFavoriteCuisines());
+            prefs.put("system_instructions", "Soyez extrêmement précis et généreux dans la section 'tips' (notes et conseils) pour chaque recette. Incluez des conseils sur la texture, les variantes de saveurs, et la conservation.");
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("ingredients", ingredients);
+            body.put("user_preferences", prefs);
+
+            ResponseEntity<ScanResponse> response = restTemplate.postForEntity(baseUrl + "/api/recipes/generate", body, ScanResponse.class);
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                ScanResponse res = response.getBody();
+                
+                // If the microservice didn't categorize, we can at least mark the recipes
+                if (res.getRecipes() != null) {
+                    for (CreateRecipeRequest r : res.getRecipes()) {
+                        r.setOrigin("SCAN");
+                    }
+                }
+                
+                // Ensure allowed_ingredients is populated if it was just a list of strings
+                if (res.getAllowed_ingredients() == null || res.getAllowed_ingredients().isEmpty()) {
+                    List<com.cooked.backend.dto.request.IngredientPayload> allowed = new ArrayList<>();
+                    for (String ing : ingredients) {
+                        com.cooked.backend.dto.request.IngredientPayload p = new com.cooked.backend.dto.request.IngredientPayload();
+                        p.setName(ing);
+                        p.setQuantity("-");
+                        allowed.add(p);
+                    }
+                    res.setAllowed_ingredients(allowed);
+                }
+                
+                return res;
+            }
+        } catch (Exception e) {
+            log.error("ScanTyped failed: {}", e.getMessage());
         }
-        return res;
+        throw new BadRequestException("Échec de la génération des recettes par ingrédients");
     }
 
     @Override
     public AiIngredientDetectionResponse detectIngredients(MultipartFile file, String email) {
-        throw new UnsupportedOperationException("Non supporté.");
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("Utilisateur non trouvé"));
+
+        try {
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            body.add("image", file.getResource());
+            
+            Map<String, Object> prefs = new HashMap<>();
+            prefs.put("allergies", user.getAllergies());
+            prefs.put("preferences", user.getDietaryPreferences());
+            
+            body.add("user_preferences", objectMapper.writeValueAsString(prefs));
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+            HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+            ResponseEntity<AiIngredientDetectionResponse> response = restTemplate.postForEntity(
+                baseUrl + "/api/ingredients/detect", 
+                requestEntity, 
+                AiIngredientDetectionResponse.class
+            );
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return response.getBody();
+            }
+        } catch (Exception e) {
+            log.error("Detection failed: {}", e.getMessage());
+        }
+        throw new BadRequestException("Échec de la détection des ingrédients");
     }
 }

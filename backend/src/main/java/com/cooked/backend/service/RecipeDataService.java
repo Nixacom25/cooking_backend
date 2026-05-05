@@ -12,4 +12,5 @@ public interface RecipeDataService {
     void delete(Long id);
     RecipeData update(Long id, String name, MultipartFile image);
     void deleteMultiple(List<Long> ids);
+    java.util.Map<String, Object> bulkUpdateImages(List<MultipartFile> files);
 }

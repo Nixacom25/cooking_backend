@@ -13,4 +13,5 @@ public interface RecipeDataRepository extends JpaRepository<RecipeData, Long> {
 
     @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM recipe_data ORDER BY RANDOM() LIMIT :limit", nativeQuery = true)
     List<RecipeData> findRandomRecipes(@org.springframework.data.repository.query.Param("limit") int limit);
+    List<RecipeData> findByNameContainingIgnoreCase(String name);
 }
