@@ -5,6 +5,7 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -98,11 +99,13 @@ public class EmailServiceImpl implements EmailService {
         </html>
         """;
 
+    @Async
     @Override
     public void sendOtpEmail(String to, String otp) {
         sendHtmlEmail(to, "Verify your account", String.format(OTP_TEMPLATE, otp));
     }
 
+    @Async
     @Override
     public void sendAccountUpdateEmail(String to, String message) {
         sendHtmlEmail(to, "Account Security Update", String.format(ACCOUNT_UPDATE_TEMPLATE, message));
