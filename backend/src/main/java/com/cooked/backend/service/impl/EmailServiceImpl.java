@@ -10,9 +10,13 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
+ 
+    @org.springframework.beans.factory.annotation.Value("${spring.mail.username}")
+    private String senderEmail;
 
     private static final String OTP_TEMPLATE = """
         <!DOCTYPE html>
@@ -116,14 +120,14 @@ public class EmailServiceImpl implements EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom("Cooked <no-reply@cooked.app>");
+            helper.setFrom("Cooked <" + senderEmail + ">");
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
         } catch (Exception e) {
-            System.err.println("Failed to send HTML email to " + to + ": " + e.getMessage());
+            log.error("Failed to send HTML email to {}: {}", to, e.getMessage(), e);
         }
     }
 }

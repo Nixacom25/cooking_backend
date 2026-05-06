@@ -19,9 +19,9 @@ public class OpenApiConfig {
                 return new OpenAPI()
                                 .info(new Info().title("Cooking Backend API").version("1.0.0"))
                                 .servers(List.of(
+                                                new Server().url("http://localhost:8099").description("Local Development Server"),
                                                 new Server().url("https://cooked-backend-latest.onrender.com")
-                                                                .description("Production Server"),
-                                                new Server().url("http://localhost:8080").description("Local Server")))
+                                                                .description("Production Server")))
                                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                                 .components(
                                                 new Components()
