@@ -191,25 +191,24 @@ public class RecipeDataServiceImpl implements RecipeDataService {
                 ? originalName.substring(0, originalName.lastIndexOf(".")) 
                 : originalName;
             
-            // Replace separators with spaces to improve matching
-            String nameToSearch = cleanName.replace("_", " ").replace("-", " ").trim();
+            // On ne remplace plus les tirets/underscores, on cherche le nom exact (sans extension)
+            String nameToSearch = cleanName.trim();
             
-            List<Recipe> recipes = recipeRepository.findByNameContainingIgnoreCase(nameToSearch);
+            java.util.Optional<Recipe> recipeOpt = recipeRepository.findByNameIgnoreCase(nameToSearch);
             
-            if (!recipes.isEmpty()) {
+            if (recipeOpt.isPresent()) {
                 try {
                     String imageUrl = cloudinaryService.upload(file);
-                    for (Recipe r : recipes) {
-                        r.setImage(imageUrl);
-                        recipeRepository.save(r);
-                        updatedCount++;
-                    }
+                    Recipe r = recipeOpt.get();
+                    r.setImage(imageUrl);
+                    recipeRepository.save(r);
+                    updatedCount++;
                 } catch (Exception e) {
                     log.error("Failed to upload image for file: {}", originalName, e);
                     failedFiles.add(originalName + " (Upload failed)");
                 }
             } else {
-                log.warn("No recipe found for image in recipes table: {}", originalName);
+                log.warn("No exact recipe found for image in recipes table: {}", nameToSearch);
                 failedFiles.add(originalName + " (Recipe not found: " + nameToSearch + ")");
             }
         }
@@ -219,5 +218,15 @@ public class RecipeDataServiceImpl implements RecipeDataService {
             "failedCount", failedFiles.size(),
             "failedFiles", failedFiles
         );
+    }
+
+    @Override
+    public List<Recipe> getRecipesMissingImages() {
+        return recipeRepository.findRecipesMissingImages();
+    }
+
+    @Override
+    public List<Recipe> getRecipesExistingInData() {
+        return recipeRepository.findRecipesExistingInData();
     }
 }

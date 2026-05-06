@@ -66,4 +66,14 @@ public class RecipeDataController {
     public ResponseEntity<java.util.Map<String, Object>> bulkUpdateImages(@RequestParam("files") List<MultipartFile> files) {
         return ResponseEntity.ok(recipeDataService.bulkUpdateImages(files));
     }
+
+    @GetMapping("/pending-images")
+    public ResponseEntity<List<com.cooked.backend.entity.Recipe>> getPendingImages() {
+        return ResponseEntity.ok(recipeDataService.getRecipesMissingImages());
+    }
+
+    @GetMapping("/sync-status")
+    public ResponseEntity<List<com.cooked.backend.entity.Recipe>> getSyncStatus() {
+        return ResponseEntity.ok(recipeDataService.getRecipesExistingInData());
+    }
 }
