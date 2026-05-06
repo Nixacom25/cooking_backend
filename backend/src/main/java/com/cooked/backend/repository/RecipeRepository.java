@@ -83,4 +83,6 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
 
     @org.springframework.data.jpa.repository.Query("SELECT r.cuisine, COUNT(r) FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.cuisine IS NOT NULL GROUP BY r.cuisine")
     List<Object[]> findCuisinesWithCount();
+
+    List<Recipe> findByNameContainingIgnoreCase(String name);
 }

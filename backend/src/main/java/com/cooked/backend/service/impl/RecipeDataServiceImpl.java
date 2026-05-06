@@ -1,8 +1,10 @@
 package com.cooked.backend.service.impl;
 
 import com.cooked.backend.entity.RecipeData;
+import com.cooked.backend.entity.Recipe;
 import com.cooked.backend.exception.BadRequestException;
 import com.cooked.backend.repository.RecipeDataRepository;
+import com.cooked.backend.repository.RecipeRepository;
 import com.cooked.backend.service.CloudinaryService;
 import com.cooked.backend.service.RecipeDataService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,6 +31,7 @@ import java.util.Map;
 public class RecipeDataServiceImpl implements RecipeDataService {
 
     private final RecipeDataRepository recipeDataRepository;
+    private final RecipeRepository recipeRepository;
     private final CloudinaryService cloudinaryService;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
@@ -191,14 +194,14 @@ public class RecipeDataServiceImpl implements RecipeDataService {
             // Replace separators with spaces to improve matching
             String nameToSearch = cleanName.replace("_", " ").replace("-", " ").trim();
             
-            List<RecipeData> recipes = recipeDataRepository.findByNameContainingIgnoreCase(nameToSearch);
+            List<Recipe> recipes = recipeRepository.findByNameContainingIgnoreCase(nameToSearch);
             
             if (!recipes.isEmpty()) {
                 try {
                     String imageUrl = cloudinaryService.upload(file);
-                    for (RecipeData r : recipes) {
-                        r.setImageUrl(imageUrl);
-                        recipeDataRepository.save(r);
+                    for (Recipe r : recipes) {
+                        r.setImage(imageUrl);
+                        recipeRepository.save(r);
                         updatedCount++;
                     }
                 } catch (Exception e) {
@@ -206,7 +209,7 @@ public class RecipeDataServiceImpl implements RecipeDataService {
                     failedFiles.add(originalName + " (Upload failed)");
                 }
             } else {
-                log.warn("No recipe found for image: {}", originalName);
+                log.warn("No recipe found for image in recipes table: {}", originalName);
                 failedFiles.add(originalName + " (Recipe not found: " + nameToSearch + ")");
             }
         }
