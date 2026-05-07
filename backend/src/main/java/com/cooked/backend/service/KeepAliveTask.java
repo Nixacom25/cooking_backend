@@ -12,6 +12,8 @@ public class KeepAliveTask {
     private static final Logger log = LoggerFactory.getLogger(KeepAliveTask.class);
 
     private final RestTemplate restTemplate;
+    private final ActivityTracker activityTracker;
+    private long lastPingTime = 0;
 
     @Value("${AI_API_BASE_URL:https://recipe.markhorsystems.com}")
     private String aiBaseUrl;
@@ -19,13 +21,28 @@ public class KeepAliveTask {
     @Value("${APP_PUBLIC_URL:https://cooked-backend-latest.onrender.com}")
     private String backendUrl;
 
-    public KeepAliveTask() {
+    public KeepAliveTask(ActivityTracker activityTracker) {
         this.restTemplate = new RestTemplate();
+        this.activityTracker = activityTracker;
     }
 
-    @Scheduled(fixedRate = 600000)
+    @Scheduled(fixedRate = 60000) // Check every minute
     public void keepServicesAlive() {
-        log.info("Running Keep-Alive task to prevent Render spin-down...");
+        long now = System.currentTimeMillis();
+        long tenMinutesMillis = 600000;
+
+        // Condition 1: Must be inactive for at least 10 minutes
+        if (!activityTracker.hasBeenInactiveFor(tenMinutesMillis)) {
+            return; // Still active, wait for inactivity
+        }
+
+        // Condition 2: Don't ping more than once every 10 minutes
+        if (now - lastPingTime < tenMinutesMillis) {
+            return;
+        }
+
+        log.info("App has been inactive for 10 minutes. Running Keep-Alive task to prevent Render spin-down...");
+        lastPingTime = now;
         
         try {
             String aiHealthUrl = aiBaseUrl + "/health";

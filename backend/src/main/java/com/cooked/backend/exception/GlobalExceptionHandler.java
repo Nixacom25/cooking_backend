@@ -55,9 +55,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrity(org.springframework.dao.DataIntegrityViolationException ex) {
-        String msg = "A database conflict occurred. This item might already exist.";
+        String msg = "This recipe is already in this cookbook";
         if (ex.getMessage() != null && ex.getMessage().contains("duplicate key")) {
-            msg = "An item with this name already exists.";
+            String lowerMsg = ex.getMessage().toLowerCase();
+            if (lowerMsg.contains("cookbooks") && lowerMsg.contains("name")) {
+                msg = "A cookbook with this name already exists.";
+            } else {
+                msg = "An item with this name already exists.";
+            }
         }
         return buildErrorResponse(HttpStatus.CONFLICT, msg, "DATABASE", "DUPLICATE_ENTRY");
     }

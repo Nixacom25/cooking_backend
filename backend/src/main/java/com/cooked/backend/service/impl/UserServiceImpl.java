@@ -49,12 +49,6 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (request.getPhone() != null && !request.getPhone().isEmpty() &&
-                !java.util.Objects.equals(user.getPhone(), request.getPhone()) &&
-                userRepository.existsByPhone(request.getPhone())) {
-            throw new BadRequestException("Phone number already exists");
-        }
-
         user.setFirstname(request.getFirstname());
         user.setLastname(request.getLastname());
         user.setPhone(request.getPhone());
@@ -178,9 +172,6 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException("Email already exists");
         }
-        if (userRepository.existsByPhone(request.getPhone())) {
-            throw new BadRequestException("Phone number already exists");
-        }
 
         User user = User.builder()
                 .firstname(request.getFirstname())
@@ -202,12 +193,6 @@ public class UserServiceImpl implements UserService {
 
         if (user.getRole() != expectedRole) {
             throw new BadRequestException("User is not a " + expectedRole.name());
-        }
-
-        if (request.getPhone() != null && !request.getPhone().isEmpty() &&
-                !java.util.Objects.equals(user.getPhone(), request.getPhone()) &&
-                userRepository.existsByPhone(request.getPhone())) {
-            throw new BadRequestException("Phone number already exists");
         }
 
         user.setFirstname(request.getFirstname());

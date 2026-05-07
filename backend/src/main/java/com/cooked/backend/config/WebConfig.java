@@ -13,9 +13,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     private final RateLimitInterceptor rateLimitInterceptor;
+    private final com.cooked.backend.security.ActivityInterceptor activityInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // Activity tracker for all endpoints
+        registry.addInterceptor(activityInterceptor).addPathPatterns("/**");
+
+        // Rate limit for specific endpoints
         registry.addInterceptor(rateLimitInterceptor)
                 .addPathPatterns("/auth/login", "/auth/forgot-password", "/auth/resend-code", "/auth/verify-email");
     }
