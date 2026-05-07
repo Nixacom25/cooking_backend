@@ -1,10 +1,7 @@
 package com.cooked.backend.service.impl;
 
 import com.cooked.backend.service.EmailService;
-import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -13,10 +10,17 @@ import org.springframework.stereotype.Service;
 @lombok.extern.slf4j.Slf4j
 public class EmailServiceImpl implements EmailService {
 
-    private final JavaMailSender mailSender;
+    private final org.springframework.web.client.RestTemplate restTemplate;
  
     @org.springframework.beans.factory.annotation.Value("${spring.mail.from}")
     private String senderEmail;
+
+    @org.springframework.beans.factory.annotation.Value("${spring.mail.password}")
+    private String brevoApiKey;
+
+    private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
+
+    // Templates (OTP_TEMPLATE, ACCOUNT_UPDATE_TEMPLATE) remain the same...
 
     private static final String OTP_TEMPLATE = """
         <!DOCTYPE html>
@@ -117,17 +121,31 @@ public class EmailServiceImpl implements EmailService {
 
     private void sendHtmlEmail(String to, String subject, String htmlContent) {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+            headers.set("api-key", brevoApiKey);
 
-            helper.setFrom("Cooked <" + senderEmail + ">");
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlContent, true);
+            java.util.Map<String, Object> body = new java.util.HashMap<>();
+            body.put("sender", java.util.Map.of("name", "Cooked", "email", senderEmail));
+            body.put("to", java.util.List.of(java.util.Map.of("email", to)));
+            body.put("subject", subject);
+            body.put("htmlContent", htmlContent);
 
-            mailSender.send(message);
+            org.springframework.http.HttpEntity<java.util.Map<String, Object>> entity = 
+                new org.springframework.http.HttpEntity<>(body, headers);
+
+            org.springframework.http.ResponseEntity<String> response = restTemplate.postForEntity(
+                BREVO_API_URL, entity, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("Email sent successfully to {} via Brevo API", to);
+            } else {
+                log.error("Failed to send email to {} via Brevo API. Status: {}, Body: {}", 
+                    to, response.getStatusCode(), response.getBody());
+            }
         } catch (Exception e) {
-            log.error("Failed to send HTML email to {} from {}: {}", to, senderEmail, e.getMessage(), e);
+            log.error("Failed to send HTML email to {} from {} via Brevo API: {}", 
+                to, senderEmail, e.getMessage(), e);
         }
     }
 }
