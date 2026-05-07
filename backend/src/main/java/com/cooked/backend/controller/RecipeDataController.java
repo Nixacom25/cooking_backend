@@ -6,9 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/recipe-data")
@@ -21,19 +18,19 @@ public class RecipeDataController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RecipeData> create(
             @RequestParam("name") String name,
-            @RequestParam(value = "image", required = false) MultipartFile image) {
+            @RequestParam(value = "image", required = false) org.springframework.web.multipart.MultipartFile image) {
         return ResponseEntity.ok(recipeDataService.create(name, image));
     }
 
     @PostMapping(value = "/bulk", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<List<RecipeData>> bulkCreate(
-            @RequestParam("names") List<String> names,
-            @RequestParam(value = "images", required = false) List<MultipartFile> images) {
+    public ResponseEntity<java.util.List<RecipeData>> bulkCreate(
+            @RequestParam("names") java.util.List<String> names,
+            @RequestParam(value = "images", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> images) {
         return ResponseEntity.ok(recipeDataService.bulkCreate(names, images));
     }
 
     @GetMapping
-    public ResponseEntity<List<RecipeData>> getAll() {
+    public ResponseEntity<java.util.List<RecipeData>> getAll() {
         return ResponseEntity.ok(recipeDataService.getAll());
     }
 
@@ -46,7 +43,7 @@ public class RecipeDataController {
     public ResponseEntity<RecipeData> update(
             @PathVariable Long id,
             @RequestParam(value = "name", required = false) String name,
-            @RequestParam(value = "image", required = false) MultipartFile image) {
+            @RequestParam(value = "image", required = false) org.springframework.web.multipart.MultipartFile image) {
         return ResponseEntity.ok(recipeDataService.update(id, name, image));
     }
 
@@ -57,23 +54,23 @@ public class RecipeDataController {
     }
 
     @DeleteMapping("/bulk")
-    public ResponseEntity<Void> deleteMultiple(@RequestParam("ids") List<Long> ids) {
+    public ResponseEntity<Void> deleteMultiple(@RequestParam("ids") java.util.List<Long> ids) {
         recipeDataService.deleteMultiple(ids);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping(value = "/bulk-update-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<java.util.Map<String, Object>> bulkUpdateImages(@RequestParam("files") List<MultipartFile> files) {
+    public ResponseEntity<java.util.Map<String, Object>> bulkUpdateImages(@RequestParam("files") java.util.List<org.springframework.web.multipart.MultipartFile> files) {
         return ResponseEntity.ok(recipeDataService.bulkUpdateImages(files));
     }
 
     @GetMapping("/pending-images")
-    public ResponseEntity<List<com.cooked.backend.entity.Recipe>> getPendingImages() {
+    public ResponseEntity<java.util.List<java.util.Map<String, Object>>> getPendingImages() {
         return ResponseEntity.ok(recipeDataService.getRecipesMissingImages());
     }
 
     @GetMapping("/sync-status")
-    public ResponseEntity<List<com.cooked.backend.entity.Recipe>> getSyncStatus() {
+    public ResponseEntity<java.util.List<java.util.Map<String, Object>>> getSyncStatus() {
         return ResponseEntity.ok(recipeDataService.getRecipesExistingInData());
     }
 }

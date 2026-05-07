@@ -86,11 +86,11 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
 
     List<Recipe> findByNameContainingIgnoreCase(String name);
 
-    Optional<Recipe> findByNameIgnoreCase(String name);
+    java.util.List<Recipe> findAllByNameIgnoreCase(String name);
 
-    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.image IS NULL OR r.image = '' OR r.image LIKE '%splash%'")
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.image IS NULL OR r.image = '' OR r.image LIKE '%unsplash%' OR r.image LIKE '%splash%'")
     List<Recipe> findRecipesMissingImages();
 
-    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.name IN (SELECT rd.name FROM RecipeData rd)")
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE LOWER(r.name) IN (SELECT LOWER(rd.name) FROM RecipeData rd)")
     List<Recipe> findRecipesExistingInData();
 }

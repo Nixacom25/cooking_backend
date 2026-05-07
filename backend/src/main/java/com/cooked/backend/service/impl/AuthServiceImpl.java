@@ -93,9 +93,7 @@ public class AuthServiceImpl implements AuthService {
                                 ? request.getPhone().trim()
                                 : null;
 
-                if (phone != null && userRepository.existsByPhone(phone)) {
-                        throw new BadRequestException("This phone number is already used by another account.");
-                }
+                // Phone is no longer unique or mandatory
 
                 Provider provider = Provider.LOCAL;
                 if (request.getProvider() != null && !request.getProvider().trim().isEmpty()) {
@@ -230,7 +228,7 @@ public class AuthServiceImpl implements AuthService {
                         user = userRepository.findByEmail(request.getIdentifier())
                                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 } else {
-                        user = userRepository.findByPhone(request.getIdentifier())
+                        user = userRepository.findFirstByPhone(request.getIdentifier())
                                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 }
 
@@ -265,7 +263,7 @@ public class AuthServiceImpl implements AuthService {
                         user = userRepository.findByEmail(request.getIdentifier())
                                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 } else {
-                        user = userRepository.findByPhone(request.getIdentifier())
+                        user = userRepository.findFirstByPhone(request.getIdentifier())
                                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 }
 
@@ -381,7 +379,7 @@ public class AuthServiceImpl implements AuthService {
                         user = userRepository.findByEmail(request.getIdentifier())
                                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 } else {
-                        user = userRepository.findByPhone(request.getIdentifier())
+                        user = userRepository.findFirstByPhone(request.getIdentifier())
                                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 }
 
@@ -433,7 +431,7 @@ public class AuthServiceImpl implements AuthService {
                         user = userRepository.findByEmail(request.getIdentifier())
                                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 } else {
-                        user = userRepository.findByPhone(request.getIdentifier())
+                        user = userRepository.findFirstByPhone(request.getIdentifier())
                                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 }
 
@@ -471,7 +469,7 @@ public class AuthServiceImpl implements AuthService {
                         user = userRepository.findByEmail(request.getIdentifier())
                                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 } else {
-                        user = userRepository.findByPhone(request.getIdentifier())
+                        user = userRepository.findFirstByPhone(request.getIdentifier())
                                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 }
 
@@ -498,7 +496,7 @@ public class AuthServiceImpl implements AuthService {
                         user = userRepository.findByEmail(request.getIdentifier())
                                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 } else {
-                        user = userRepository.findByPhone(request.getIdentifier())
+                        user = userRepository.findFirstByPhone(request.getIdentifier())
                                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 }
 
@@ -584,7 +582,13 @@ public class AuthServiceImpl implements AuthService {
                         log.info("Verifying Google token");
                         
                         // Support multiple client IDs (comma-separated)
-                        java.util.List<String> audiences = Arrays.asList(googleClientId.split(","));
+                        java.util.List<String> audiences = new java.util.ArrayList<>(Arrays.asList(googleClientId.split(",")));
+                        
+                        // Whitelist iOS Client ID if not already there
+                        String iosClientId = "560042995570-hgkusq0803t4lo1u9o0b3co6kfjncc1g.apps.googleusercontent.com";
+                        if (!audiences.contains(iosClientId)) {
+                                audiences.add(iosClientId);
+                        }
                         
                         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
                                         .setAudience(audiences)
@@ -602,8 +606,8 @@ public class AuthServiceImpl implements AuthService {
                                                 (String) payload.get("given_name"),
                                                 (String) payload.get("family_name"));
                         }
-                        log.error("Google Token verification returned null for audiences: {}", audiences);
-                        throw new BadRequestException("Invalid Google Token");
+                        log.error("Google Token verification failed. Audiences tried: {}", audiences);
+                        throw new BadRequestException("Invalid Google Token or audience mismatch");
                 } else if ("APPLE".equalsIgnoreCase(provider)) {
                         return verifyAppleToken(token);
                 }
@@ -669,8 +673,10 @@ public class AuthServiceImpl implements AuthService {
 
                         // aud can be either Bundle ID (iOS) or Service ID (Web)
                         String aud = claims.getAudience();
-                        if (!appleClientId.equals(aud)) {
-                                log.error("Apple audience mismatch. Expected: {}, Got: {}", appleClientId, aud);
+                        String iosBundleId = "com.cookedapp.app";
+                        
+                        if (!appleClientId.equals(aud) && !iosBundleId.equals(aud)) {
+                                log.error("Apple audience mismatch. Expected: {} or {}, Got: {}", appleClientId, iosBundleId, aud);
                                 throw new BadRequestException("Invalid Apple Token audience");
                         }
 
