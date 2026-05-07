@@ -389,8 +389,16 @@ public class AuthServiceImpl implements AuthService {
                         throw new BadRequestException("Please verify your account first or account is not active");
                 }
 
-                authenticationManager.authenticate(
-                                new UsernamePasswordAuthenticationToken(user.getEmail(), request.getPassword()));
+                try {
+                        authenticationManager.authenticate(
+                                        new UsernamePasswordAuthenticationToken(user.getEmail(), request.getPassword()));
+                } catch (org.springframework.security.authentication.BadCredentialsException e) {
+                        if (user.getProvider() != Provider.LOCAL) {
+                                throw new BadRequestException("This account was created via " + user.getProvider() + 
+                                        ". Please sign in with " + user.getProvider() + " or use 'Forgot Password' to set a local password.");
+                        }
+                        throw new BadRequestException("Invalid email or password.");
+                }
 
                 String token = jwtService.generateToken(user.getEmail());
                 activityLogService.logActivity(user, "Login Successful", "User logged in successfully.");

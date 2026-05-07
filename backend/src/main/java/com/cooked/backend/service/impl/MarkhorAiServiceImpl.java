@@ -187,6 +187,8 @@ public class MarkhorAiServiceImpl implements AiService {
             prefs.put("allergies", user.getAllergies());
             prefs.put("preferences", user.getDietaryPreferences());
             prefs.put("cuisines_love", user.getFavoriteCuisines());
+            prefs.put("kitchen_tools", user.getKitchenAppliances());
+            prefs.put("skill_level", normalizeSkillLevel(user.getCookingSkill()));
             prefs.put("system_instructions", "Soyez extrêmement précis et généreux dans la section 'tips' (notes et conseils) pour chaque recette. Incluez des conseils sur la texture, les variantes de saveurs, et la conservation.");
 
             Map<String, Object> body = new HashMap<>();
@@ -219,7 +221,7 @@ public class MarkhorAiServiceImpl implements AiService {
             prefs.put("preferences", user.getDietaryPreferences());
             prefs.put("cuisines_love", user.getFavoriteCuisines());
             prefs.put("kitchen_tools", user.getKitchenAppliances());
-            prefs.put("skill_level", user.getCookingSkill());
+            prefs.put("skill_level", normalizeSkillLevel(user.getCookingSkill()));
             prefs.put("system_instructions", "Soyez extrêmement précis et généreux dans la section 'tips' (notes et conseils) pour chaque recette. Incluez des conseils sur la texture, les variantes de saveurs, et la conservation.");
             
             body.add("user_preferences", objectMapper.writeValueAsString(prefs));
@@ -256,6 +258,8 @@ public class MarkhorAiServiceImpl implements AiService {
             prefs.put("allergies", user.getAllergies());
             prefs.put("preferences", user.getDietaryPreferences());
             prefs.put("cuisines_love", user.getFavoriteCuisines());
+            prefs.put("kitchen_tools", user.getKitchenAppliances());
+            prefs.put("skill_level", normalizeSkillLevel(user.getCookingSkill()));
             prefs.put("system_instructions", "Soyez extrêmement précis et généreux dans la section 'tips' (notes et conseils) pour chaque recette. Incluez des conseils sur la texture, les variantes de saveurs, et la conservation.");
 
             Map<String, Object> body = new HashMap<>();
@@ -327,5 +331,15 @@ public class MarkhorAiServiceImpl implements AiService {
             log.error("Detection failed: {}", e.getMessage());
         }
         throw new BadRequestException("Échec de la détection des ingrédients");
+    }
+
+    private String normalizeSkillLevel(String skill) {
+        if (skill == null) return "HomeCook";
+        String s = skill.trim();
+        if (s.equalsIgnoreCase("Total Beginner")) return "total_beginer";
+        if (s.equalsIgnoreCase("Home Cook")) return "HomeCook";
+        if (s.equalsIgnoreCase("Confident Cook")) return "ConfidentCook";
+        if (s.equalsIgnoreCase("Advanced / Semi-Pro")) return "Advanced Semi Pro";
+        return "HomeCook"; // Fallback
     }
 }
