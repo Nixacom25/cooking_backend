@@ -199,12 +199,21 @@ public class AuthServiceImpl implements AuthService {
                 // Assign default trial
                 assignTrial(savedUser);
 
-                // Track Registration Activity
-                activityLogService.logActivity(savedUser, "Account Created",
-                                "Welcome to Cooked! Your account has been successfully created.");
+                // Track Registration Activity and Initialize Account after transaction commits
+                // This prevents FK violations in async tasks
+                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            // Track Registration Activity
+                            activityLogService.logActivity(savedUser, "Account Created",
+                                            "Welcome to Cooked! Your account has been successfully created.");
 
-                // Initialize Account Content (Cookbooks, Recipes)
-                userInitializationService.initializeAccount(savedUser);
+                            // Initialize Account Content (Cookbooks, Recipes)
+                            userInitializationService.initializeAccount(savedUser);
+                        }
+                    }
+                );
 
                 // If local, send verification email
                 if (request.getProvider() == null || request.getProvider().equalsIgnoreCase(Provider.LOCAL.name())) {
@@ -298,6 +307,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         @Override
+        @Transactional
         public AuthResponse login(LoginRequest request) {
                 User user;
 
@@ -350,7 +360,15 @@ public class AuthServiceImpl implements AuthService {
                                                         .build();
                                         User savedUser = userRepository.save(newUser);
                                         assignTrial(savedUser);
-                                        userInitializationService.initializeAccount(savedUser);
+                                        
+                                        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                                            new org.springframework.transaction.support.TransactionSynchronization() {
+                                                @Override
+                                                public void afterCommit() {
+                                                    userInitializationService.initializeAccount(savedUser);
+                                                }
+                                            }
+                                        );
                                         return savedUser;
                                 });
                         } catch (BadRequestException e) {

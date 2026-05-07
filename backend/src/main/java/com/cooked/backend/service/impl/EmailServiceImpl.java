@@ -15,7 +15,7 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
  
-    @org.springframework.beans.factory.annotation.Value("${spring.mail.username}")
+    @org.springframework.beans.factory.annotation.Value("${spring.mail.from}")
     private String senderEmail;
 
     private static final String OTP_TEMPLATE = """
@@ -127,7 +127,7 @@ public class EmailServiceImpl implements EmailService {
 
             mailSender.send(message);
         } catch (Exception e) {
-            log.error("Failed to send HTML email to {}: {}", to, e.getMessage(), e);
+            log.error("Failed to send HTML email to {} from {}: {}", to, senderEmail, e.getMessage(), e);
         }
     }
 }

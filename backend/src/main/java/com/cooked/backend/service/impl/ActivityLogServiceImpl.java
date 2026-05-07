@@ -21,7 +21,6 @@ public class ActivityLogServiceImpl implements ActivityLogService {
     private final UserRepository userRepository;
 
     @Override
-    @Async
     public void logActivity(User user, String title, String message) {
         ActivityLog log = ActivityLog.builder()
                 .user(user)
