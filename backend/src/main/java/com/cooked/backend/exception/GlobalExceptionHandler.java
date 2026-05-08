@@ -60,6 +60,10 @@ public class GlobalExceptionHandler {
             String lowerMsg = ex.getMessage().toLowerCase();
             if (lowerMsg.contains("cookbooks") && lowerMsg.contains("name")) {
                 msg = "A cookbook with this name already exists.";
+            } else if (lowerMsg.contains("phone") || lowerMsg.contains("téléphone")) {
+                msg = "This phone number is already associated with an account.";
+            } else if (lowerMsg.contains("email") || lowerMsg.contains("users")) {
+                msg = "This account already exists. Please log in.";
             } else {
                 msg = "An item with this name already exists.";
             }

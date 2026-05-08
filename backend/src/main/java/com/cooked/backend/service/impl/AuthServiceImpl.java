@@ -325,23 +325,17 @@ public class AuthServiceImpl implements AuthService {
 
                                         log.info("Creating new user for social signup via login endpoint: {}", email);
                                         
-                                        // Refined name splitting logic: last word is lastname, rest is firstname
-                                        String rawFirst = socialInfo.getFirstname() != null ? socialInfo.getFirstname() : request.getFirstname();
-                                        String rawLast = socialInfo.getLastname() != null ? socialInfo.getLastname() : request.getLastname();
-                                        
-                                        String fullName = ((rawFirst != null ? rawFirst : "") + " " + (rawLast != null ? rawLast : "")).trim();
-                                        if (fullName.isEmpty()) fullName = "User Cooked";
+                                        String firstname = rawFirst != null ? rawFirst.trim() : "";
+                                        String lastname = rawLast != null ? rawLast.trim() : "";
 
-                                        String firstname;
-                                        String lastname;
-
-                                        int lastSpaceIndex = fullName.lastIndexOf(' ');
-                                        if (lastSpaceIndex != -1) {
-                                                firstname = fullName.substring(0, lastSpaceIndex).trim();
-                                                lastname = fullName.substring(lastSpaceIndex + 1).trim();
-                                        } else {
-                                                firstname = fullName;
-                                                lastname = ""; // User said lastname is not mandatory
+                                        // Refined splitting logic: If firstname already contains lastname at the end, remove it from firstname
+                                        if (!lastname.isEmpty() && firstname.toLowerCase().endsWith(lastname.toLowerCase())) {
+                                            firstname = firstname.substring(0, firstname.length() - lastname.length()).trim();
+                                        } else if (lastname.isEmpty() && firstname.contains(" ")) {
+                                            // Standard split if only firstname was provided
+                                            int lastSpaceIndex = firstname.lastIndexOf(' ');
+                                            lastname = firstname.substring(lastSpaceIndex + 1).trim();
+                                            firstname = firstname.substring(0, lastSpaceIndex).trim();
                                         }
 
                                         String phone = request.getPhone();

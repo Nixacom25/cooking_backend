@@ -107,7 +107,25 @@ public class MarkhorAiServiceImpl implements AiService {
                 return recipes;
             }
         } catch (Exception e) {
-            log.error("Initial suggestions failed: {}", e.getMessage());
+            log.error("Initial suggestions failed: {}. Falling back to local data pool.", e.getMessage());
+            
+            // Fallback: return a subset of the pool as suggested recipes
+            try {
+                List<com.cooked.backend.entity.RecipeData> pool = recipeDataRepository.findRandomRecipes(count);
+                List<CreateRecipeRequest> fallbackRecipes = new ArrayList<>();
+                for (com.cooked.backend.entity.RecipeData data : pool) {
+                    CreateRecipeRequest req = new CreateRecipeRequest();
+                    req.setName(data.getName());
+                    req.setImage(data.getImageUrl());
+                    req.setOrigin("ONBOARDING_FALLBACK");
+                    req.setCookTime(15 + new Random().nextInt(15)); // Random reasonable cook time
+                    req.setKcal(300 + new Random().nextInt(300)); // Random reasonable kcal
+                    fallbackRecipes.add(req);
+                }
+                return fallbackRecipes;
+            } catch (Exception fallbackEx) {
+                log.error("Fallback also failed: {}", fallbackEx.getMessage());
+            }
         }
         return Collections.emptyList();
     }

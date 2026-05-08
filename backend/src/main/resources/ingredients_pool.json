@@ -1,0 +1,2034 @@
+[
+  {
+    "name": "Aged Balsamic Vinegar",
+    "icon": "🍯"
+  },
+  {
+    "name": "Alfredo Sauce",
+    "icon": "🥛"
+  },
+  {
+    "name": "All-purpose Flour",
+    "icon": "🌾"
+  },
+  {
+    "name": "Almond or Whole Milk",
+    "icon": "🥛"
+  },
+  {
+    "name": "Amchur (Dried Mango Powder)",
+    "icon": "🥭"
+  },
+  {
+    "name": "Anchovy Broth (or Dashi)",
+    "icon": "🥣"
+  },
+  {
+    "name": "Aonori (Dried Seaweed Powder)",
+    "icon": "🌿"
+  },
+  {
+    "name": "Arborio or Carnaroli Rice",
+    "icon": "🍚"
+  },
+  {
+    "name": "Asparagus",
+    "icon": "🌿"
+  },
+  {
+    "name": "Assorted Meat (Beef, Cow Tripe)",
+    "icon": "🥩"
+  },
+  {
+    "name": "Avocado",
+    "icon": "🥑"
+  },
+  {
+    "name": "Baby Spinach",
+    "icon": "🥬"
+  },
+  {
+    "name": "Bacon Lardons",
+    "icon": "🥓"
+  },
+  {
+    "name": "Baguette",
+    "icon": "🥖"
+  },
+  {
+    "name": "Baking Powder",
+    "icon": "🧂"
+  },
+  {
+    "name": "Baking Soda",
+    "icon": "🧂"
+  },
+  {
+    "name": "Balsamic Glaze",
+    "icon": "🍯"
+  },
+  {
+    "name": "Bamboo Shoots",
+    "icon": "🎋"
+  },
+  {
+    "name": "Bamboo Shoots (Menma)",
+    "icon": "🎋"
+  },
+  {
+    "name": "Basmati Rice",
+    "icon": "🍚"
+  },
+  {
+    "name": "Bean Sprouts",
+    "icon": "🌱"
+  },
+  {
+    "name": "Beef Broth",
+    "icon": "🥣"
+  },
+  {
+    "name": "Beef Chuck",
+    "icon": "🥩"
+  },
+  {
+    "name": "Beef Chuck Cubes",
+    "icon": "🥩"
+  },
+  {
+    "name": "Beef Flank Steak",
+    "icon": "🥩"
+  },
+  {
+    "name": "Beef Liver or Shrimp",
+    "icon": "🥩"
+  },
+  {
+    "name": "Beef Sirloin or Flank",
+    "icon": "🥩"
+  },
+  {
+    "name": "Beef Stock",
+    "icon": "🥣"
+  },
+  {
+    "name": "Bell Pepper",
+    "icon": "🫑"
+  },
+  {
+    "name": "Bell Peppers",
+    "icon": "🫑"
+  },
+  {
+    "name": "Bell Peppers (Mix)",
+    "icon": "🫑"
+  },
+  {
+    "name": "Bell Peppers (Red/Green)",
+    "icon": "🫑"
+  },
+  {
+    "name": "Birdseye Chilies",
+    "icon": "🌶️"
+  },
+  {
+    "name": "Biryani Masala Spices",
+    "icon": "🧂"
+  },
+  {
+    "name": "Black Pepper",
+    "icon": "🧂"
+  },
+  {
+    "name": "Boiled Eggs",
+    "icon": "🥚"
+  },
+  {
+    "name": "Boiled Potatoes",
+    "icon": "🥔"
+  },
+  {
+    "name": "Bomba or Calasparra Rice",
+    "icon": "🍚"
+  },
+  {
+    "name": "Breadcrumbs",
+    "icon": "🍞"
+  },
+  {
+    "name": "Broccoli",
+    "icon": "🥦"
+  },
+  {
+    "name": "Broccoli Florets",
+    "icon": "🥦"
+  },
+  {
+    "name": "Brown or Green Lentils",
+    "icon": "🫘"
+  },
+  {
+    "name": "Brown Rice",
+    "icon": "🍚"
+  },
+  {
+    "name": "Brown Sugar",
+    "icon": "🧂"
+  },
+  {
+    "name": "Browning Sauce",
+    "icon": "🍶"
+  },
+  {
+    "name": "Butter Lettuce Leaves",
+    "icon": "🥬"
+  },
+  {
+    "name": "Béchamel Sauce",
+    "icon": "🥛"
+  },
+  {
+    "name": "Cabbage",
+    "icon": "🥬"
+  },
+  {
+    "name": "Caesar Dressing",
+    "icon": "🍶"
+  },
+  {
+    "name": "Canned Black Beans",
+    "icon": "🫘"
+  },
+  {
+    "name": "Canned Broad Beans (Butter Beans)",
+    "icon": "🫘"
+  },
+  {
+    "name": "Canned Chickpeas",
+    "icon": "🫘"
+  },
+  {
+    "name": "Canned Crushed Tomatoes",
+    "icon": "🍅"
+  },
+  {
+    "name": "Canned Kidney Beans",
+    "icon": "🫘"
+  },
+  {
+    "name": "Canned Kidney Beans (Peas)",
+    "icon": "🫘"
+  },
+  {
+    "name": "Canned Tuna in Water",
+    "icon": "🐟"
+  },
+  {
+    "name": "Canned Whole Peeled Tomatoes",
+    "icon": "🍅"
+  },
+  {
+    "name": "Carrot",
+    "icon": "🥕"
+  },
+  {
+    "name": "Carrots",
+    "icon": "🥕"
+  },
+  {
+    "name": "Cauliflower Rice",
+    "icon": "🥦"
+  },
+  {
+    "name": "Cayenne Pepper",
+    "icon": "🌶️"
+  },
+  {
+    "name": "Celery",
+    "icon": "🌿"
+  },
+  {
+    "name": "Celery Stalk",
+    "icon": "🌿"
+  },
+  {
+    "name": "Chana Masala Spice Mix",
+    "icon": "🧂"
+  },
+  {
+    "name": "Cherry Tomatoes",
+    "icon": "🍅"
+  },
+  {
+    "name": "Chia Seeds",
+    "icon": "🧂"
+  },
+  {
+    "name": "Chicken Bouillon Cube",
+    "icon": "🧂"
+  },
+  {
+    "name": "Chicken Breast",
+    "icon": "🍗"
+  },
+  {
+    "name": "Chicken Broth",
+    "icon": "🥣"
+  },
+  {
+    "name": "Chicken Drumsticks",
+    "icon": "🍗"
+  },
+  {
+    "name": "Chicken or Vegetable Broth",
+    "icon": "🥣"
+  },
+  {
+    "name": "Chicken Pieces (Bone-in)",
+    "icon": "🍗"
+  },
+  {
+    "name": "Chicken Quarters",
+    "icon": "🍗"
+  },
+  {
+    "name": "Chicken Stock",
+    "icon": "🥣"
+  },
+  {
+    "name": "Chicken Thighs",
+    "icon": "🍗"
+  },
+  {
+    "name": "Chicken Velouté (Gravy)",
+    "icon": "🥣"
+  },
+  {
+    "name": "Chicken Wings",
+    "icon": "🍗"
+  },
+  {
+    "name": "Chili Powder or Tajín",
+    "icon": "🌶️"
+  },
+  {
+    "name": "Chocolate Chips",
+    "icon": "🍫"
+  },
+  {
+    "name": "Cinnamon",
+    "icon": "🧂"
+  },
+  {
+    "name": "Cinnamon Powder",
+    "icon": "🧂"
+  },
+  {
+    "name": "Cinnamon Sugar",
+    "icon": "🧂"
+  },
+  {
+    "name": "Coconut Cream",
+    "icon": "🥥"
+  },
+  {
+    "name": "Coconut Milk",
+    "icon": "🥥"
+  },
+  {
+    "name": "Cold Cooked White Rice",
+    "icon": "🍚"
+  },
+  {
+    "name": "Cold Leftover Rice",
+    "icon": "🍚"
+  },
+  {
+    "name": "Compté or Emmental Cheese",
+    "icon": "🧀"
+  },
+  {
+    "name": "Cooked Black Beans",
+    "icon": "🫘"
+  },
+  {
+    "name": "Cooked Brown Lentils",
+    "icon": "🫘"
+  },
+  {
+    "name": "Cooked Brown Rice",
+    "icon": "🍚"
+  },
+  {
+    "name": "Cooked Chicken Breast",
+    "icon": "🍗"
+  },
+  {
+    "name": "Cooked Quinoa",
+    "icon": "🍚"
+  },
+  {
+    "name": "Cooked White Rice",
+    "icon": "🍚"
+  },
+  {
+    "name": "Cooking Spray",
+    "icon": "🫗"
+  },
+  {
+    "name": "Coriander Powder",
+    "icon": "🧂"
+  },
+  {
+    "name": "Corn Kernels",
+    "icon": "🌽"
+  },
+  {
+    "name": "Corn Tortilla Chips",
+    "icon": "🍟"
+  },
+  {
+    "name": "Corn Tortillas",
+    "icon": "🌮"
+  },
+  {
+    "name": "Cornstarch",
+    "icon": "🧂"
+  },
+  {
+    "name": "Cornstarch Slurry",
+    "icon": "🫗"
+  },
+  {
+    "name": "Cotija Cheese (or Feta)",
+    "icon": "🧀"
+  },
+  {
+    "name": "Creamy Hummus",
+    "icon": "🥣"
+  },
+  {
+    "name": "Cremini Mushrooms",
+    "icon": "🍄"
+  },
+  {
+    "name": "Crispy Fried Onions (Birista)",
+    "icon": "🧅"
+  },
+  {
+    "name": "Crumbled Feta",
+    "icon": "🧀"
+  },
+  {
+    "name": "Crumbled Feta Cheese",
+    "icon": "🧀"
+  },
+  {
+    "name": "Crusty Bread",
+    "icon": "🥖"
+  },
+  {
+    "name": "Cucumber",
+    "icon": "🥒"
+  },
+  {
+    "name": "Cumin",
+    "icon": "🧂"
+  },
+  {
+    "name": "Cumin Seeds",
+    "icon": "🧂"
+  },
+  {
+    "name": "Curry Powder",
+    "icon": "🧂"
+  },
+  {
+    "name": "Curry Powder & Dried Thyme",
+    "icon": "🧂"
+  },
+  {
+    "name": "Dark Chocolate",
+    "icon": "🍫"
+  },
+  {
+    "name": "Dark Soy Sauce",
+    "icon": "🍶"
+  },
+  {
+    "name": "Dashi or Chicken Stock",
+    "icon": "🥣"
+  },
+  {
+    "name": "Dashi Stock",
+    "icon": "🥣"
+  },
+  {
+    "name": "Diced Onions & Peppers",
+    "icon": "🧅"
+  },
+  {
+    "name": "Diced Roma Tomatoes",
+    "icon": "🍅"
+  },
+  {
+    "name": "Diced Tomatoes",
+    "icon": "🍅"
+  },
+  {
+    "name": "Dijon Mustard",
+    "icon": "🍶"
+  },
+  {
+    "name": "Dried Chickpeas",
+    "icon": "🫘"
+  },
+  {
+    "name": "Dried Cumin",
+    "icon": "🧂"
+  },
+  {
+    "name": "Dried Dill",
+    "icon": "🌿"
+  },
+  {
+    "name": "Dried Oregano",
+    "icon": "🌿"
+  },
+  {
+    "name": "Dried Oregano & Thyme",
+    "icon": "🌿"
+  },
+  {
+    "name": "Dried Red Chili Flakes",
+    "icon": "🌶️"
+  },
+  {
+    "name": "Dried Red Chilies",
+    "icon": "🌶️"
+  },
+  {
+    "name": "Dried Thyme",
+    "icon": "🌿"
+  },
+  {
+    "name": "Dried Wakame Seaweed",
+    "icon": "⬛"
+  },
+  {
+    "name": "Dry Couscous",
+    "icon": "🍚"
+  },
+  {
+    "name": "Dry Red Wine",
+    "icon": "🍷"
+  },
+  {
+    "name": "Dry Red Wine (Burgundy)",
+    "icon": "🍷"
+  },
+  {
+    "name": "Dry Red Wine (Pinot Noir)",
+    "icon": "🍷"
+  },
+  {
+    "name": "Dry White Wine",
+    "icon": "🍷"
+  },
+  {
+    "name": "Dumpling Wrappers",
+    "icon": "🥟"
+  },
+  {
+    "name": "Egg",
+    "icon": "🥚"
+  },
+  {
+    "name": "Egg Noodles",
+    "icon": "🍝"
+  },
+  {
+    "name": "Egg Roll Wrappers",
+    "icon": "🥟"
+  },
+  {
+    "name": "Egg Wash",
+    "icon": "🥚"
+  },
+  {
+    "name": "Egg Whites",
+    "icon": "🥚"
+  },
+  {
+    "name": "Egg Yolk",
+    "icon": "🥚"
+  },
+  {
+    "name": "Eggplant",
+    "icon": "🍆"
+  },
+  {
+    "name": "Eggs",
+    "icon": "🥚"
+  },
+  {
+    "name": "English Cucumber",
+    "icon": "🥒"
+  },
+  {
+    "name": "Extra Firm Tofu",
+    "icon": "🧊"
+  },
+  {
+    "name": "Extra Virgin Olive Oil",
+    "icon": "🫗"
+  },
+  {
+    "name": "Feta Cheese",
+    "icon": "🧀"
+  },
+  {
+    "name": "Fettuccine Pasta",
+    "icon": "🍝"
+  },
+  {
+    "name": "Fine Bulgur Wheat",
+    "icon": "🌾"
+  },
+  {
+    "name": "Fine Sea Salt",
+    "icon": "🧂"
+  },
+  {
+    "name": "Firm Tofu",
+    "icon": "🧊"
+  },
+  {
+    "name": "Fish Cakes (Eomuk)",
+    "icon": "🍥"
+  },
+  {
+    "name": "Fish Sauce",
+    "icon": "🍶"
+  },
+  {
+    "name": "Flaky Sea Salt",
+    "icon": "🧂"
+  },
+  {
+    "name": "Flank Steak",
+    "icon": "🥩"
+  },
+  {
+    "name": "Flat Rice Noodles",
+    "icon": "🍝"
+  },
+  {
+    "name": "Flour Tortillas",
+    "icon": "🫓"
+  },
+  {
+    "name": "French Fries",
+    "icon": "🍟"
+  },
+  {
+    "name": "Fresh Asparagus",
+    "icon": "🌿"
+  },
+  {
+    "name": "Fresh Baby Spinach",
+    "icon": "🥬"
+  },
+  {
+    "name": "Fresh Basil",
+    "icon": "🍃"
+  },
+  {
+    "name": "Fresh Basil Leaves",
+    "icon": "🍃"
+  },
+  {
+    "name": "Fresh Berries",
+    "icon": "🍓"
+  },
+  {
+    "name": "Fresh Chives",
+    "icon": "🌿"
+  },
+  {
+    "name": "Fresh Cilantro",
+    "icon": "🌿"
+  },
+  {
+    "name": "Fresh Corn on the Cob",
+    "icon": "🌽"
+  },
+  {
+    "name": "Fresh Cracked Pepper",
+    "icon": "🧂"
+  },
+  {
+    "name": "Fresh Dill",
+    "icon": "🌿"
+  },
+  {
+    "name": "Fresh Dill or Parsley",
+    "icon": "🌿"
+  },
+  {
+    "name": "Fresh Ginger",
+    "icon": "🫚"
+  },
+  {
+    "name": "Fresh Ginger & Garlic",
+    "icon": "🫚"
+  },
+  {
+    "name": "Fresh Guacamole",
+    "icon": "🥑"
+  },
+  {
+    "name": "Fresh Kale",
+    "icon": "🥬"
+  },
+  {
+    "name": "Fresh Lemon Juice",
+    "icon": "🍋"
+  },
+  {
+    "name": "Fresh Lime",
+    "icon": "🍋"
+  },
+  {
+    "name": "Fresh Lime Juice",
+    "icon": "🍋"
+  },
+  {
+    "name": "Fresh Limes",
+    "icon": "🍋"
+  },
+  {
+    "name": "Fresh Mint",
+    "icon": "🍃"
+  },
+  {
+    "name": "Fresh Mint and Coriander",
+    "icon": "🌿"
+  },
+  {
+    "name": "Fresh Mozzarella di Bufala",
+    "icon": "🧀"
+  },
+  {
+    "name": "Fresh Parsley",
+    "icon": "🌿"
+  },
+  {
+    "name": "Fresh Salsa",
+    "icon": "🍅"
+  },
+  {
+    "name": "Fresh Spinach",
+    "icon": "🥬"
+  },
+  {
+    "name": "Fresh Strawberries",
+    "icon": "🍓"
+  },
+  {
+    "name": "Fresh Thyme",
+    "icon": "🌿"
+  },
+  {
+    "name": "Fresh Zucchini",
+    "icon": "🥒"
+  },
+  {
+    "name": "Freshly Grated Parmesan",
+    "icon": "🧀"
+  },
+  {
+    "name": "Fried Egg",
+    "icon": "🥚"
+  },
+  {
+    "name": "Frozen Banana",
+    "icon": "🍌"
+  },
+  {
+    "name": "Frozen Mixed Berries",
+    "icon": "🫐"
+  },
+  {
+    "name": "Frozen Peas",
+    "icon": "🫛"
+  },
+  {
+    "name": "Frozen Peas and Carrots",
+    "icon": "🥕"
+  },
+  {
+    "name": "Full-fat Buttermilk",
+    "icon": "🥛"
+  },
+  {
+    "name": "Full-Fat Coconut Milk",
+    "icon": "🥥"
+  },
+  {
+    "name": "Full-Fat Cream Cheese",
+    "icon": "🧀"
+  },
+  {
+    "name": "Galangal",
+    "icon": "🫚"
+  },
+  {
+    "name": "Garam Masala",
+    "icon": "🧂"
+  },
+  {
+    "name": "Garlic",
+    "icon": "🧄"
+  },
+  {
+    "name": "Garlic Alioli",
+    "icon": "🧄"
+  },
+  {
+    "name": "Garlic Chives",
+    "icon": "🌿"
+  },
+  {
+    "name": "Garlic Powder",
+    "icon": "🧄"
+  },
+  {
+    "name": "Garlic Sauce (Toum)",
+    "icon": "🧄"
+  },
+  {
+    "name": "Ghee",
+    "icon": "🧈"
+  },
+  {
+    "name": "Ghee (Clarified Butter)",
+    "icon": "🧈"
+  },
+  {
+    "name": "Ginger Powder",
+    "icon": "🫚"
+  },
+  {
+    "name": "Ginger-Garlic Paste",
+    "icon": "🫚"
+  },
+  {
+    "name": "Glutinous Rice (Sticky Rice)",
+    "icon": "🍚"
+  },
+  {
+    "name": "Gochugaru (Chili Flakes)",
+    "icon": "🌶️"
+  },
+  {
+    "name": "Gochujang",
+    "icon": "🥫"
+  },
+  {
+    "name": "Gochujang (Chili Paste)",
+    "icon": "🥫"
+  },
+  {
+    "name": "Graham Cracker Crumbs",
+    "icon": "🍞"
+  },
+  {
+    "name": "Granola",
+    "icon": "🌾"
+  },
+  {
+    "name": "Granulated Sugar",
+    "icon": "🧂"
+  },
+  {
+    "name": "Grated Asian Pear",
+    "icon": "🍐"
+  },
+  {
+    "name": "Grated Kefalotyri or Parmesan",
+    "icon": "🧀"
+  },
+  {
+    "name": "Grated Parmesan",
+    "icon": "🧀"
+  },
+  {
+    "name": "Grated Parmesan Cheese",
+    "icon": "🧀"
+  },
+  {
+    "name": "Greek Pita Bread",
+    "icon": "🫓"
+  },
+  {
+    "name": "Greek Yogurt",
+    "icon": "🥛"
+  },
+  {
+    "name": "Greek Yogurt or Vanilla Yogurt",
+    "icon": "🥛"
+  },
+  {
+    "name": "Green Bell Pepper",
+    "icon": "🫑"
+  },
+  {
+    "name": "Green Chilies",
+    "icon": "🌶️"
+  },
+  {
+    "name": "Green Curry Paste",
+    "icon": "🥫"
+  },
+  {
+    "name": "Green Onion",
+    "icon": "🧅"
+  },
+  {
+    "name": "Green Onions",
+    "icon": "🧅"
+  },
+  {
+    "name": "Green Peas",
+    "icon": "🫛"
+  },
+  {
+    "name": "Grilled Chicken Breast",
+    "icon": "🍗"
+  },
+  {
+    "name": "Ground Allspice",
+    "icon": "🧂"
+  },
+  {
+    "name": "Ground Beef (80/20)",
+    "icon": "🥩"
+  },
+  {
+    "name": "Ground Beef (85/15)",
+    "icon": "🥩"
+  },
+  {
+    "name": "Ground Chicken",
+    "icon": "🍗"
+  },
+  {
+    "name": "Ground Cinnamon",
+    "icon": "🧂"
+  },
+  {
+    "name": "Ground Crayfish",
+    "icon": "🦐"
+  },
+  {
+    "name": "Ground Cumin",
+    "icon": "🧂"
+  },
+  {
+    "name": "Ground Egusi Seeds (Melon)",
+    "icon": "🍈"
+  },
+  {
+    "name": "Ground Lamb",
+    "icon": "🥩"
+  },
+  {
+    "name": "Ground Oats",
+    "icon": "🌾"
+  },
+  {
+    "name": "Ground Pork",
+    "icon": "🥩"
+  },
+  {
+    "name": "Ground Turkey",
+    "icon": "🥩"
+  },
+  {
+    "name": "Ground Turkey (93% lean)",
+    "icon": "🥩"
+  },
+  {
+    "name": "Gruyère Cheese",
+    "icon": "🧀"
+  },
+  {
+    "name": "Guacamole",
+    "icon": "🥑"
+  },
+  {
+    "name": "Guanciale (or Pancetta)",
+    "icon": "🥓"
+  },
+  {
+    "name": "Hard Taco Shells",
+    "icon": "🌮"
+  },
+  {
+    "name": "Heavy Cream",
+    "icon": "🥛"
+  },
+  {
+    "name": "Heavy Cream (Crème Liquide)",
+    "icon": "🥛"
+  },
+  {
+    "name": "Heavy Whipping Cream",
+    "icon": "🥛"
+  },
+  {
+    "name": "Hemp Seeds",
+    "icon": "🧂"
+  },
+  {
+    "name": "Herbes de Provence",
+    "icon": "🌿"
+  },
+  {
+    "name": "High-quality Brioche or Sourdough",
+    "icon": "🍞"
+  },
+  {
+    "name": "High-Quality Ham",
+    "icon": "🥩"
+  },
+  {
+    "name": "Hing (Asafoetida)",
+    "icon": "🧂"
+  },
+  {
+    "name": "Hoisin Sauce",
+    "icon": "🍶"
+  },
+  {
+    "name": "Homemade Falafel",
+    "icon": "🧆"
+  },
+  {
+    "name": "Homemade or Store-bought Shortcakes",
+    "icon": "🥧"
+  },
+  {
+    "name": "Honey",
+    "icon": "🍯"
+  },
+  {
+    "name": "Honey or Maple Syrup",
+    "icon": "🍯"
+  },
+  {
+    "name": "Honey-Almond Granola",
+    "icon": "🌾"
+  },
+  {
+    "name": "Hummus",
+    "icon": "🥣"
+  },
+  {
+    "name": "Ice Cold Water",
+    "icon": "🥛"
+  },
+  {
+    "name": "Ice Water",
+    "icon": "🥛"
+  },
+  {
+    "name": "Iceberg or Romaine Lettuce",
+    "icon": "🥬"
+  },
+  {
+    "name": "Instant Yeast",
+    "icon": "🧪"
+  },
+  {
+    "name": "Israeli Salad",
+    "icon": "🥗"
+  },
+  {
+    "name": "Italian Parsley",
+    "icon": "🌿"
+  },
+  {
+    "name": "Jamaican Curry Powder",
+    "icon": "🧂"
+  },
+  {
+    "name": "Jerk Seasoning Paste",
+    "icon": "🥫"
+  },
+  {
+    "name": "Kaffir Lime Leaves",
+    "icon": "🍃"
+  },
+  {
+    "name": "Kalamata Olives",
+    "icon": "🫒"
+  },
+  {
+    "name": "Kasuri Methi (Dried Fenugreek)",
+    "icon": "🌿"
+  },
+  {
+    "name": "Ketchup",
+    "icon": "🥫"
+  },
+  {
+    "name": "Kimchi Juice",
+    "icon": "🧃"
+  },
+  {
+    "name": "Korean Rice Cakes (Garaetteok)",
+    "icon": "🥖"
+  },
+  {
+    "name": "Kosher Salt",
+    "icon": "🧂"
+  },
+  {
+    "name": "Kosher Salt and Pepper",
+    "icon": "🧂"
+  },
+  {
+    "name": "Lamb or Chicken Strips",
+    "icon": "🥩"
+  },
+  {
+    "name": "Large Egg",
+    "icon": "🥚"
+  },
+  {
+    "name": "Large Eggs",
+    "icon": "🥚"
+  },
+  {
+    "name": "Large Flour Tortillas",
+    "icon": "🫓"
+  },
+  {
+    "name": "Large Pita Bread",
+    "icon": "🫓"
+  },
+  {
+    "name": "Large Raw Shrimp",
+    "icon": "🦐"
+  },
+  {
+    "name": "Large Shrimp",
+    "icon": "🦐"
+  },
+  {
+    "name": "Lean Beef Patty",
+    "icon": "🥩"
+  },
+  {
+    "name": "Lean Ground Beef",
+    "icon": "🥩"
+  },
+  {
+    "name": "Lemon",
+    "icon": "🍋"
+  },
+  {
+    "name": "Lemon Juice",
+    "icon": "🍋"
+  },
+  {
+    "name": "Lemon Vinaigrette",
+    "icon": "🫗"
+  },
+  {
+    "name": "Lemon Zest",
+    "icon": "🍋"
+  },
+  {
+    "name": "Lemongrass",
+    "icon": "🎋"
+  },
+  {
+    "name": "Light Mayonnaise",
+    "icon": "🥛"
+  },
+  {
+    "name": "Lime Juice",
+    "icon": "🍋"
+  },
+  {
+    "name": "Locust Beans (Iru)",
+    "icon": "🫘"
+  },
+  {
+    "name": "Long-Grain White or Basmati Rice",
+    "icon": "🍚"
+  },
+  {
+    "name": "Long-Grain White Rice",
+    "icon": "🍚"
+  },
+  {
+    "name": "Macaroni Pasta",
+    "icon": "🍝"
+  },
+  {
+    "name": "Marinara Sauce",
+    "icon": "🥫"
+  },
+  {
+    "name": "Marinated Flank Steak (Carne Asada)",
+    "icon": "🥩"
+  },
+  {
+    "name": "Mayonnaise",
+    "icon": "🥛"
+  },
+  {
+    "name": "Melted Butter",
+    "icon": "🧈"
+  },
+  {
+    "name": "Mexican Blend Cheese",
+    "icon": "🧀"
+  },
+  {
+    "name": "Mexican Oregano",
+    "icon": "🌿"
+  },
+  {
+    "name": "Minced Garlic",
+    "icon": "🧄"
+  },
+  {
+    "name": "Mirin",
+    "icon": "🍶"
+  },
+  {
+    "name": "Miso Paste",
+    "icon": "🥫"
+  },
+  {
+    "name": "Miso Paste (Red or White)",
+    "icon": "🥫"
+  },
+  {
+    "name": "Mixed Berries",
+    "icon": "🫐"
+  },
+  {
+    "name": "Mixed Berries (Blueberries/Raspberries)",
+    "icon": "🫐"
+  },
+  {
+    "name": "Mixed Mushrooms (Cremini, Shiitake)",
+    "icon": "🍄"
+  },
+  {
+    "name": "Mixed Peas and Carrots",
+    "icon": "🥕"
+  },
+  {
+    "name": "Mixed Salad Greens",
+    "icon": "🥬"
+  },
+  {
+    "name": "Mixed Stir-fry Vegetables",
+    "icon": "🥕"
+  },
+  {
+    "name": "Mixed Vegetables (Carrots, Peas, Corn)",
+    "icon": "🥕"
+  },
+  {
+    "name": "Monterey Jack or Sharp Cheddar",
+    "icon": "🧀"
+  },
+  {
+    "name": "Nacho Cheese Sauce",
+    "icon": "🧀"
+  },
+  {
+    "name": "Napa Cabbage",
+    "icon": "🥬"
+  },
+  {
+    "name": "Nigella Seeds",
+    "icon": "🧂"
+  },
+  {
+    "name": "No-Boil Lasagna Sheets",
+    "icon": "🍝"
+  },
+  {
+    "name": "Non-Fat Greek Yogurt",
+    "icon": "🥛"
+  },
+  {
+    "name": "Nori Sheet",
+    "icon": "⬛"
+  },
+  {
+    "name": "Nori Sheets",
+    "icon": "⬛"
+  },
+  {
+    "name": "Nutmeg",
+    "icon": "🌰"
+  },
+  {
+    "name": "Olive Oil",
+    "icon": "🫗"
+  },
+  {
+    "name": "Onion",
+    "icon": "🧅"
+  },
+  {
+    "name": "Oxtail Pieces",
+    "icon": "🥩"
+  },
+  {
+    "name": "Oyster Sauce",
+    "icon": "🍶"
+  },
+  {
+    "name": "Oyster Sauce (or Vegan alternative)",
+    "icon": "🍶"
+  },
+  {
+    "name": "Palm Oil",
+    "icon": "🫗"
+  },
+  {
+    "name": "Palm Sugar",
+    "icon": "🧂"
+  },
+  {
+    "name": "Panko Breadcrumbs",
+    "icon": "🍞"
+  },
+  {
+    "name": "Parboiled Long-Grain Rice",
+    "icon": "🍚"
+  },
+  {
+    "name": "Parmesan Cheese",
+    "icon": "🧀"
+  },
+  {
+    "name": "Pearl Onions",
+    "icon": "🧅"
+  },
+  {
+    "name": "Peas and Carrots",
+    "icon": "🥕"
+  },
+  {
+    "name": "Pecorino Romano",
+    "icon": "🧀"
+  },
+  {
+    "name": "Penne or Rigatoni Pasta",
+    "icon": "🍝"
+  },
+  {
+    "name": "Penne Pasta",
+    "icon": "🍝"
+  },
+  {
+    "name": "Penne Rigate",
+    "icon": "🍝"
+  },
+  {
+    "name": "Pickled Cucumbers",
+    "icon": "🥒"
+  },
+  {
+    "name": "Pickled Ginger",
+    "icon": "🍠"
+  },
+  {
+    "name": "Pickled Jalapeños",
+    "icon": "🌶️"
+  },
+  {
+    "name": "Pickled Red Ginger (Beni Shoga)",
+    "icon": "🍠"
+  },
+  {
+    "name": "Pickled Turnips",
+    "icon": "🍠"
+  },
+  {
+    "name": "Pimento Berries (Allspice)",
+    "icon": "🧂"
+  },
+  {
+    "name": "Pimentón (Smoked Paprika)",
+    "icon": "🧂"
+  },
+  {
+    "name": "Pineapple Chunks",
+    "icon": "🍍"
+  },
+  {
+    "name": "Pita Chips",
+    "icon": "🥖"
+  },
+  {
+    "name": "Pizza Dough",
+    "icon": "🍞"
+  },
+  {
+    "name": "Plain Yogurt",
+    "icon": "🥛"
+  },
+  {
+    "name": "Pomegranate Seeds",
+    "icon": "🍎"
+  },
+  {
+    "name": "Pork Belly",
+    "icon": "🥓"
+  },
+  {
+    "name": "Pork Belly or Grilled Chicken",
+    "icon": "🥓"
+  },
+  {
+    "name": "Pre-cooked Italian Meatballs",
+    "icon": "🧆"
+  },
+  {
+    "name": "Puff Pastry Sheets",
+    "icon": "🥧"
+  },
+  {
+    "name": "Radish",
+    "icon": "🌱"
+  },
+  {
+    "name": "Ramen Noodles",
+    "icon": "🍝"
+  },
+  {
+    "name": "Red Bell Pepper",
+    "icon": "🫑"
+  },
+  {
+    "name": "Red Bell Peppers",
+    "icon": "🫑"
+  },
+  {
+    "name": "Red Chili Flakes",
+    "icon": "🌶️"
+  },
+  {
+    "name": "Red Curry Paste",
+    "icon": "🥫"
+  },
+  {
+    "name": "Red Enchilada Sauce",
+    "icon": "🥫"
+  },
+  {
+    "name": "Red Grapes",
+    "icon": "🍇"
+  },
+  {
+    "name": "Red Lentils (Masoor Dal)",
+    "icon": "🫘"
+  },
+  {
+    "name": "Red Onion",
+    "icon": "🧅"
+  },
+  {
+    "name": "Red Pepper Flakes",
+    "icon": "🌶️"
+  },
+  {
+    "name": "Red Wine",
+    "icon": "🍷"
+  },
+  {
+    "name": "Red Wine (optional)",
+    "icon": "🍷"
+  },
+  {
+    "name": "Red Wine Vinegar",
+    "icon": "🍶"
+  },
+  {
+    "name": "Ribeye Steak",
+    "icon": "🥩"
+  },
+  {
+    "name": "Rice Vinegar",
+    "icon": "🍶"
+  },
+  {
+    "name": "Rich Bolognese Sauce",
+    "icon": "🥫"
+  },
+  {
+    "name": "Ripe Avocado",
+    "icon": "🥑"
+  },
+  {
+    "name": "Ripe Banana",
+    "icon": "🍌"
+  },
+  {
+    "name": "Ripe Hass Avocados",
+    "icon": "🥑"
+  },
+  {
+    "name": "Ripe Heirloom Tomatoes",
+    "icon": "🍅"
+  },
+  {
+    "name": "Ripe Mango",
+    "icon": "🥭"
+  },
+  {
+    "name": "Ripe Plantains",
+    "icon": "🍌"
+  },
+  {
+    "name": "Ripe Roma Tomatoes",
+    "icon": "🍅"
+  },
+  {
+    "name": "Ripe Tomatoes",
+    "icon": "🍅"
+  },
+  {
+    "name": "Roasted Chickpeas",
+    "icon": "🫘"
+  },
+  {
+    "name": "Roasted Peanuts",
+    "icon": "🥜"
+  },
+  {
+    "name": "Roasted Red Peppers",
+    "icon": "🫑"
+  },
+  {
+    "name": "Roasted Seaweed (Gim)",
+    "icon": "⬛"
+  },
+  {
+    "name": "Roasted Sweet Potato",
+    "icon": "🥔"
+  },
+  {
+    "name": "Roasted Zucchini",
+    "icon": "🥒"
+  },
+  {
+    "name": "Rolled Oats",
+    "icon": "🌾"
+  },
+  {
+    "name": "Roma Tomatoes",
+    "icon": "🍅"
+  },
+  {
+    "name": "Romaine Lettuce",
+    "icon": "🥬"
+  },
+  {
+    "name": "Russet Potatoes",
+    "icon": "🥔"
+  },
+  {
+    "name": "Rustic Italian Bread or Baguette",
+    "icon": "🥖"
+  },
+  {
+    "name": "Saffron Strands",
+    "icon": "🪷"
+  },
+  {
+    "name": "Saffron Threads",
+    "icon": "🪷"
+  },
+  {
+    "name": "Sake",
+    "icon": "🍶"
+  },
+  {
+    "name": "Salmon Fillet",
+    "icon": "🐟"
+  },
+  {
+    "name": "Salmon Fillets",
+    "icon": "🐟"
+  },
+  {
+    "name": "Salsa Roja",
+    "icon": "🥫"
+  },
+  {
+    "name": "Salt",
+    "icon": "🧂"
+  },
+  {
+    "name": "Salt and White Pepper",
+    "icon": "🧂"
+  },
+  {
+    "name": "Samosa Pastry/Wrappers",
+    "icon": "🥟"
+  },
+  {
+    "name": "San Marzano Canned Tomatoes",
+    "icon": "🍅"
+  },
+  {
+    "name": "Sashimi-Grade Salmon",
+    "icon": "🐟"
+  },
+  {
+    "name": "Scallions",
+    "icon": "🧅"
+  },
+  {
+    "name": "Scotch Bonnet",
+    "icon": "🌶️"
+  },
+  {
+    "name": "Scotch Bonnet Pepper",
+    "icon": "🌶️"
+  },
+  {
+    "name": "Sea Salt",
+    "icon": "🧂"
+  },
+  {
+    "name": "Seasoned Sushi Rice",
+    "icon": "🍚"
+  },
+  {
+    "name": "Semi-Sweet Chocolate Chips",
+    "icon": "🍫"
+  },
+  {
+    "name": "Semolina or Flour",
+    "icon": "🌾"
+  },
+  {
+    "name": "Serrano or Jalapeño Pepper",
+    "icon": "🌶️"
+  },
+  {
+    "name": "Sesame Oil",
+    "icon": "🫗"
+  },
+  {
+    "name": "Sesame Seeds",
+    "icon": "🧂"
+  },
+  {
+    "name": "Shallots",
+    "icon": "🧅"
+  },
+  {
+    "name": "Shaoxing Rice Wine",
+    "icon": "🍶"
+  },
+  {
+    "name": "Sharp Cheddar Cheese",
+    "icon": "🧀"
+  },
+  {
+    "name": "Shawarma Spice Blend",
+    "icon": "🧂"
+  },
+  {
+    "name": "Shiitake Mushrooms",
+    "icon": "🍄"
+  },
+  {
+    "name": "Shortcrust Pastry",
+    "icon": "🥧"
+  },
+  {
+    "name": "Shredded Cabbage",
+    "icon": "🥬"
+  },
+  {
+    "name": "Shredded Cheddar Cheese",
+    "icon": "🧀"
+  },
+  {
+    "name": "Shredded Cooked Chicken",
+    "icon": "🍗"
+  },
+  {
+    "name": "Shredded Gruyère or Swiss Cheese",
+    "icon": "🧀"
+  },
+  {
+    "name": "Shredded Iceberg Lettuce",
+    "icon": "🥬"
+  },
+  {
+    "name": "Shredded Mexican Blend Cheese",
+    "icon": "🧀"
+  },
+  {
+    "name": "Shredded Mozzarella",
+    "icon": "🧀"
+  },
+  {
+    "name": "Shredded Romaine Lettuce",
+    "icon": "🥬"
+  },
+  {
+    "name": "Shredded Sharp Cheddar",
+    "icon": "🧀"
+  },
+  {
+    "name": "Sichuan Peppercorns",
+    "icon": "🧂"
+  },
+  {
+    "name": "Silken Tofu",
+    "icon": "🧊"
+  },
+  {
+    "name": "Sliced Roast Turkey",
+    "icon": "🥩"
+  },
+  {
+    "name": "Small Corn Tortillas",
+    "icon": "🌮"
+  },
+  {
+    "name": "Smoked Bacon Lardons",
+    "icon": "🥓"
+  },
+  {
+    "name": "Smoked Paprika",
+    "icon": "🌶️"
+  },
+  {
+    "name": "Smoked Paprika (Pimentón)",
+    "icon": "🧂"
+  },
+  {
+    "name": "Smooth Hummus",
+    "icon": "🥣"
+  },
+  {
+    "name": "Snow Peas",
+    "icon": "🫛"
+  },
+  {
+    "name": "Soft-boiled Egg (Ajitsuke Tamago)",
+    "icon": "🥚"
+  },
+  {
+    "name": "Sour Cream",
+    "icon": "🥛"
+  },
+  {
+    "name": "Sour Cream (for serving)",
+    "icon": "🥛"
+  },
+  {
+    "name": "Sourdough Bread",
+    "icon": "🍞"
+  },
+  {
+    "name": "Sourdough Croutons",
+    "icon": "🍞"
+  },
+  {
+    "name": "Soy Sauce",
+    "icon": "🍶"
+  },
+  {
+    "name": "Soy Sauce (Low Sodium)",
+    "icon": "🍶"
+  },
+  {
+    "name": "Spaghetti",
+    "icon": "🍝"
+  },
+  {
+    "name": "Spanish Chorizo",
+    "icon": "🥓"
+  },
+  {
+    "name": "Spinach",
+    "icon": "🥬"
+  },
+  {
+    "name": "Steamed White Rice",
+    "icon": "🍚"
+  },
+  {
+    "name": "Straw Mushrooms",
+    "icon": "🍄"
+  },
+  {
+    "name": "Sugar",
+    "icon": "🧂"
+  },
+  {
+    "name": "Sweet and Sour Sauce",
+    "icon": "🥫"
+  },
+  {
+    "name": "Sweet Potato",
+    "icon": "🍠"
+  },
+  {
+    "name": "Sweet Potatoes",
+    "icon": "🥔"
+  },
+  {
+    "name": "Swiss Cheese",
+    "icon": "🧀"
+  },
+  {
+    "name": "Taco Seasoning",
+    "icon": "🧂"
+  },
+  {
+    "name": "Tahini (Sesame Paste)",
+    "icon": "🥣"
+  },
+  {
+    "name": "Tahini Dressing",
+    "icon": "🥣"
+  },
+  {
+    "name": "Tahini Paste",
+    "icon": "🥣"
+  },
+  {
+    "name": "Tahini Sauce",
+    "icon": "🍶"
+  },
+  {
+    "name": "Tamarind Paste (Concentrate)",
+    "icon": "🍯"
+  },
+  {
+    "name": "Tempura Flour",
+    "icon": "🌾"
+  },
+  {
+    "name": "Thai Basil Leaves",
+    "icon": "🍃"
+  },
+  {
+    "name": "Thai Chili Paste (Nam Prik Pao)",
+    "icon": "🥫"
+  },
+  {
+    "name": "Thai Eggplant (or Pea Eggplant)",
+    "icon": "🍆"
+  },
+  {
+    "name": "Thai Holy Basil (or Thai Basil)",
+    "icon": "🍃"
+  },
+  {
+    "name": "Thick Sliced Sourdough",
+    "icon": "🍞"
+  },
+  {
+    "name": "Toasted Mung Beans (optional)",
+    "icon": "🌾"
+  },
+  {
+    "name": "Toasted Pine Nuts",
+    "icon": "🥜"
+  },
+  {
+    "name": "Toasted Sesame Oil",
+    "icon": "🫗"
+  },
+  {
+    "name": "Toasted Walnuts",
+    "icon": "🥜"
+  },
+  {
+    "name": "Tomato",
+    "icon": "🍅"
+  },
+  {
+    "name": "Tomato Paste",
+    "icon": "🥫"
+  },
+  {
+    "name": "Tomato Puree",
+    "icon": "🥫"
+  },
+  {
+    "name": "Tomato Sauce",
+    "icon": "🥫"
+  },
+  {
+    "name": "Tonkatsu Sauce",
+    "icon": "🍶"
+  },
+  {
+    "name": "Turmeric Powder",
+    "icon": "🧂"
+  },
+  {
+    "name": "Tzatziki Sauce",
+    "icon": "🥣"
+  },
+  {
+    "name": "Unsalted Butter",
+    "icon": "🧈"
+  },
+  {
+    "name": "Unsweetened Almond Milk",
+    "icon": "🥛"
+  },
+  {
+    "name": "Unsweetened Cocoa Powder",
+    "icon": "🍫"
+  },
+  {
+    "name": "Vanilla Extract",
+    "icon": "🍶"
+  },
+  {
+    "name": "Vanilla Protein Powder",
+    "icon": "🧂"
+  },
+  {
+    "name": "Vegetable Broth",
+    "icon": "🥣"
+  },
+  {
+    "name": "Vegetable Oil",
+    "icon": "🫗"
+  },
+  {
+    "name": "Vermicelli Pasta",
+    "icon": "🍝"
+  },
+  {
+    "name": "Very Ripe Bananas",
+    "icon": "🍌"
+  },
+  {
+    "name": "Very Ripe Plantains",
+    "icon": "🍌"
+  },
+  {
+    "name": "Warm Milk",
+    "icon": "🥛"
+  },
+  {
+    "name": "Warm Water",
+    "icon": "🥛"
+  },
+  {
+    "name": "Wasabi",
+    "icon": "🥦"
+  },
+  {
+    "name": "Water",
+    "icon": "🥛"
+  },
+  {
+    "name": "Water Chestnuts",
+    "icon": "🌰"
+  },
+  {
+    "name": "Well-fermented Kimchi",
+    "icon": "🥬"
+  },
+  {
+    "name": "White Onion",
+    "icon": "🧅"
+  },
+  {
+    "name": "White Pepper",
+    "icon": "🧂"
+  },
+  {
+    "name": "Whole Chickpeas",
+    "icon": "🫘"
+  },
+  {
+    "name": "Whole Grain Crackers",
+    "icon": "🍞"
+  },
+  {
+    "name": "Whole Milk",
+    "icon": "🥛"
+  },
+  {
+    "name": "Whole Milk Ricotta",
+    "icon": "🧀"
+  },
+  {
+    "name": "Whole Tilapia",
+    "icon": "🐟"
+  },
+  {
+    "name": "Whole Wheat Bread",
+    "icon": "🍞"
+  },
+  {
+    "name": "Whole Wheat Tortilla",
+    "icon": "🫓"
+  },
+  {
+    "name": "Wooden Skewers",
+    "icon": "🍢"
+  },
+  {
+    "name": "Yaji (Suya Spice Mix)",
+    "icon": "🥜"
+  },
+  {
+    "name": "Yakisoba Noodles (Mushi-chukamen)",
+    "icon": "🍝"
+  },
+  {
+    "name": "Yakisoba Sauce",
+    "icon": "🍶"
+  },
+  {
+    "name": "Yellow Onion",
+    "icon": "🧅"
+  },
+  {
+    "name": "Yellow Onions",
+    "icon": "🧅"
+  },
+  {
+    "name": "Yellow Potatoes",
+    "icon": "🥔"
+  },
+  {
+    "name": "Yukon Gold Potatoes",
+    "icon": "🥔"
+  },
+  {
+    "name": "Zucchini",
+    "icon": "🥒"
+  }
+]
