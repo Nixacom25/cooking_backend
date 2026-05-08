@@ -325,8 +325,8 @@ public class AuthServiceImpl implements AuthService {
 
                                         log.info("Creating new user for social signup via login endpoint: {}", email);
                                         
-                                        String firstname = rawFirst != null ? rawFirst.trim() : "";
-                                        String lastname = rawLast != null ? rawLast.trim() : "";
+                                        String firstname = socialInfo.getFirstname() != null ? socialInfo.getFirstname().trim() : "";
+                                        String lastname = socialInfo.getLastname() != null ? socialInfo.getLastname().trim() : "";
 
                                         // Refined splitting logic: If firstname already contains lastname at the end, remove it from firstname
                                         if (!lastname.isEmpty() && firstname.toLowerCase().endsWith(lastname.toLowerCase())) {
