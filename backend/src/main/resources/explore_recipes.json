@@ -6360,7 +6360,7 @@
   {
     "name": "Chicken and Rice Bowl",
     "cuisine": "Chinese",
-    "category": "Meal Prep Favorites",
+    "category": "",
     "prepTime": 15,
     "cookTime": 30,
     "kcal": 520,
@@ -6415,7 +6415,7 @@
   {
     "name": "Ground Turkey Bowls",
     "cuisine": "Mediterranean",
-    "category": "Meal Prep Favorites",
+    "category": "",
     "prepTime": 15,
     "cookTime": 20,
     "kcal": 480,
@@ -6469,7 +6469,7 @@
   {
     "name": "Salmon with Veggies",
     "cuisine": "Mediterranean",
-    "category": "Meal Prep Favorites",
+    "category": "",
     "prepTime": 10,
     "cookTime": 20,
     "kcal": 450,
@@ -6528,7 +6528,7 @@
   {
     "name": "Egg Muffins",
     "cuisine": "French",
-    "category": "Meal Prep Favorites",
+    "category": "",
     "prepTime": 15,
     "cookTime": 25,
     "kcal": 180,
@@ -6582,7 +6582,7 @@
   {
     "name": "Pasta Meal Prep",
     "cuisine": "Italian",
-    "category": "Meal Prep Favorites",
+    "category": "",
     "prepTime": 15,
     "cookTime": 20,
     "kcal": 550,
@@ -6631,7 +6631,7 @@
   {
     "name": "Stir-Fry Boxes",
     "cuisine": "Chinese",
-    "category": "Meal Prep Favorites",
+    "category": "",
     "prepTime": 15,
     "cookTime": 15,
     "kcal": 480,
@@ -6684,7 +6684,7 @@
   {
     "name": "Mac and Cheese",
     "cuisine": "French",
-    "category": "Comfort Food",
+    "category": "",
     "prepTime": 15,
     "cookTime": 30,
     "kcal": 650,
@@ -6743,7 +6743,7 @@
   {
     "name": "Fried Chicken",
     "cuisine": "Mediterranean",
-    "category": "Comfort Food",
+    "category": "",
     "prepTime": 20,
     "cookTime": 30,
     "kcal": 750,
@@ -6802,7 +6802,7 @@
   {
     "name": "Mashed Potatoes",
     "cuisine": "French",
-    "category": "Comfort Food",
+    "category": "",
     "prepTime": 15,
     "cookTime": 20,
     "kcal": 300,
@@ -6850,7 +6850,7 @@
   {
     "name": "Chicken Pot Pie",
     "cuisine": "Mediterranean",
-    "category": "Comfort Food",
+    "category": "",
     "prepTime": 30,
     "cookTime": 40,
     "kcal": 580,
@@ -6903,7 +6903,7 @@
   {
     "name": "Beef Stew",
     "cuisine": "Mediterranean",
-    "category": "Comfort Food",
+    "category": "",
     "prepTime": 20,
     "cookTime": 90,
     "kcal": 520,
@@ -6961,7 +6961,7 @@
   {
     "name": "Grilled Cheese",
     "cuisine": "French",
-    "category": "Comfort Food",
+    "category": "",
     "prepTime": 5,
     "cookTime": 10,
     "kcal": 350,
@@ -7296,7 +7296,7 @@
   {
     "name": "Chicken Wrap",
     "cuisine": "Mediterranean",
-    "category": "Quick Lunches",
+    "category": "",
     "prepTime": 10,
     "cookTime": 5,
     "kcal": 420,
@@ -7342,7 +7342,7 @@
   {
     "name": "Turkey Sandwich",
     "cuisine": "Mediterranean",
-    "category": "Quick Lunches",
+    "category": "",
     "prepTime": 5,
     "cookTime": 0,
     "kcal": 350,
@@ -7392,7 +7392,7 @@
   {
     "name": "Caesar Salad",
     "cuisine": "Mediterranean",
-    "category": "Quick Lunches",
+    "category": "",
     "prepTime": 15,
     "cookTime": 0,
     "kcal": 450,
@@ -7438,7 +7438,7 @@
   {
     "name": "Rice Bowl",
     "cuisine": "Mediterranean",
-    "category": "Quick Lunches",
+    "category": "",
     "prepTime": 10,
     "cookTime": 10,
     "kcal": 430,
@@ -7484,7 +7484,7 @@
   {
     "name": "Tuna Salad",
     "cuisine": "Mediterranean",
-    "category": "Quick Lunches",
+    "category": "",
     "prepTime": 10,
     "cookTime": 0,
     "kcal": 320,
@@ -7536,7 +7536,7 @@
   {
     "name": "Vegan Stir-Fry",
     "cuisine": "Mediterranean",
-    "category": "Vegan Essentials",
+    "category": "Plant-Based Essentials",
     "prepTime": 15,
     "cookTime": 15,
     "kcal": 380,
@@ -7589,7 +7589,7 @@
   {
     "name": "Lentil Soup",
     "cuisine": "Mediterranean",
-    "category": "Vegan Essentials",
+    "category": "Plant-Based Essentials",
     "prepTime": 15,
     "cookTime": 40,
     "kcal": 320,
@@ -7642,7 +7642,7 @@
   {
     "name": "Chickpea Salad",
     "cuisine": "Mediterranean",
-    "category": "Vegan Essentials",
+    "category": "Plant-Based Essentials",
     "prepTime": 15,
     "cookTime": 0,
     "kcal": 310,
@@ -7689,7 +7689,7 @@
   {
     "name": "Vegan Tacos",
     "cuisine": "Mediterranean",
-    "category": "Vegan Essentials",
+    "category": "Plant-Based Essentials",
     "prepTime": 15,
     "cookTime": 15,
     "kcal": 420,
@@ -7736,7 +7736,7 @@
   {
     "name": "Buddha Bowl",
     "cuisine": "Mediterranean",
-    "category": "Vegan Essentials",
+    "category": "Plant-Based Essentials",
     "prepTime": 20,
     "cookTime": 20,
     "kcal": 450,
@@ -7783,7 +7783,7 @@
   {
     "name": "Vegan Curry",
     "cuisine": "Mediterranean",
-    "category": "Vegan Essentials",
+    "category": "Plant-Based Essentials",
     "prepTime": 15,
     "cookTime": 25,
     "kcal": 480,

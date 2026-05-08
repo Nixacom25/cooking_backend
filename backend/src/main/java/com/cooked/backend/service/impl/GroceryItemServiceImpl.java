@@ -42,6 +42,10 @@ public class GroceryItemServiceImpl implements GroceryItemService {
                                                 .name(request.getIngredientName().toLowerCase())
                                                 .icon(request.getIngredientIcon())
                                                 .build()));
+                
+                String quantity = (request.getQuantity() == null || request.getQuantity().trim().isEmpty()) 
+                                    ? "0" 
+                                    : request.getQuantity();
 
                 Recipe recipe = null;
                 if (request.getRecipeId() != null) {
@@ -58,7 +62,7 @@ public class GroceryItemServiceImpl implements GroceryItemService {
  
                 if (existing.isPresent()) {
                         GroceryItem item = existing.get();
-                        String newQuantity = combineQuantities(item.getQuantity(), request.getQuantity());
+                        String newQuantity = combineQuantities(item.getQuantity(), quantity);
                         item.setQuantity(newQuantity);
                         // Optional: update recipeId if it was null?
                         if (item.getRecipe() == null && recipe != null) {
@@ -71,7 +75,7 @@ public class GroceryItemServiceImpl implements GroceryItemService {
                                 .user(user)
                                 .ingredient(ingredient)
                                 .recipe(recipe)
-                                .quantity(request.getQuantity())
+                                .quantity(quantity)
                                 .isBought(false)
                                 .plannedDate(request.getPlannedDate())
                                 .build();

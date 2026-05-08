@@ -13,7 +13,6 @@ public class CreateGroceryItemRequest {
 
     private String ingredientIcon;
 
-    @NotBlank(message = "Quantity is required")
     private String quantity;
 
     // Optional fields
