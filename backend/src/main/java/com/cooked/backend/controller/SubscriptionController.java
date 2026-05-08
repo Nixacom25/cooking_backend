@@ -64,10 +64,18 @@ public class SubscriptionController {
     }
 
     @Operation(summary = "Get Dynamic Paywall Config (A/B Testing)")
-    @GetMapping("/paywall-config")
+    @GetMapping({"/paywall-config", "/api/subscription/paywall-config"})
     public ResponseEntity<?> getPaywallConfig(Authentication auth) {
+        if (auth == null || auth.getName() == null) {
+            // Fallback for anonymous or failed auth - return variant A
+            return ResponseEntity.ok(paywallService.getDefaultConfiguration());
+        }
         User user = userRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElse(null);
+        
+        if (user == null) {
+             return ResponseEntity.ok(paywallService.getDefaultConfiguration());
+        }
         return ResponseEntity.ok(paywallService.getConfigurationForUser(user));
     }
 

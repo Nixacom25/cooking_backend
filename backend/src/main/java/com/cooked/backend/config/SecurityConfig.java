@@ -57,6 +57,9 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/subscriptions/plan",
+                                "/subscriptions/paywall-config",
+                                "/api/subscription/paywall-config",
+                                "/api/analytics/track",
                                 "/api/recipe-data/**",
                                 "/actuator/**")
                         .permitAll()

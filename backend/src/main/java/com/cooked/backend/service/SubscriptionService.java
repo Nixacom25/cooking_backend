@@ -24,4 +24,5 @@ public interface SubscriptionService {
     // Legacy support methods if needed
     void activatePremium(User user, SubscriptionType type, String transactionId);
     boolean isPremium(User user);
+    boolean hasAiAccess(User user);
 }

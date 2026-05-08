@@ -175,8 +175,8 @@ public class RecipeController {
 
     @Operation(summary = "Search recipes on the web")
     @GetMapping("/web-search")
-    public ResponseEntity<List<Map<String, String>>> searchWeb(@RequestParam String query) {
-        return ResponseEntity.ok(aiService.searchWeb(query));
+    public ResponseEntity<List<Map<String, String>>> searchWeb(@RequestParam String query, Authentication auth) {
+        return ResponseEntity.ok(aiService.searchWeb(query, auth.getName()));
     }
 
     @Operation(summary = "Get daily AI trending dishes")

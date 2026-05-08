@@ -22,7 +22,7 @@ public interface AiService {
 
     ScanResponse scanTyped(List<String> ingredients, String email);
 
-    List<Map<String, String>> searchWeb(String query);
+    List<Map<String, String>> searchWeb(String query, String email);
 
     List<String> generateTrendingDishes();
 }

@@ -280,6 +280,19 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         return user.getSubscriptionStatus() == SubscriptionStatus.ACTIVE;
     }
 
+    @Override
+    public boolean hasAiAccess(User user) {
+        if (isPremium(user)) {
+            return true;
+        }
+        // Free trial: 3 days after creation
+        if (user.getCreatedAt() == null) {
+            return true; // Safe fallback for legacy users if any
+        }
+        LocalDateTime trialEndDate = user.getCreatedAt().plusDays(3);
+        return LocalDateTime.now().isBefore(trialEndDate);
+    }
+
     private boolean verifyAppleReceipt(String receiptData) {
         log.info("Verifying Apple Receipt");
         String url = "https://buy.itunes.apple.com/verifyReceipt";

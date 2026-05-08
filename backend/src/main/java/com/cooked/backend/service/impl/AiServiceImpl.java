@@ -11,6 +11,8 @@ import com.cooked.backend.exception.ResourceNotFoundException;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.service.AiService;
 import com.cooked.backend.service.CloudinaryService;
+import com.cooked.backend.service.SubscriptionService;
+import com.cooked.backend.exception.PaymentRequiredException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -47,11 +49,19 @@ public class AiServiceImpl implements AiService {
 
     private final CloudinaryService cloudinaryService;
     private final UserRepository userRepository;
+    private final SubscriptionService subscriptionService;
+
+    private void verifyAiAccess(User user) {
+        if (!subscriptionService.hasAiAccess(user)) {
+            throw new PaymentRequiredException("AI access requires a premium subscription or active trial period.");
+        }
+    }
 
     @Override
     public CreateRecipeRequest extractRecipeFromLink(String url, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        verifyAiAccess(user);
 
         try {
             String lowerUrl = url.toLowerCase();
@@ -128,6 +138,7 @@ public class AiServiceImpl implements AiService {
     public AiIngredientDetectionResponse detectIngredients(MultipartFile file, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        verifyAiAccess(user);
 
         try {
             String imageUrl = cloudinaryService.upload(file);
@@ -155,6 +166,7 @@ public class AiServiceImpl implements AiService {
     public List<CreateRecipeRequest> generateRecipes(AiRecipeGenerationRequest request, String email, String model) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        verifyAiAccess(user);
 
         try {
             String allowedNames = String.join(", ", request.getIngredients());
@@ -244,6 +256,7 @@ public class AiServiceImpl implements AiService {
     public ScanResponse scanTyped(List<String> ingredients, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        verifyAiAccess(user);
 
         try {
             String categorizationPrompt = String.format(
@@ -357,7 +370,11 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
-    public List<Map<String, String>> searchWeb(String query) {
+    public List<Map<String, String>> searchWeb(String query, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        verifyAiAccess(user);
+        
         try {
             String searchUrl = "https://html.duckduckgo.com/html/?q="
                     + java.net.URLEncoder.encode(query + " recipe", "UTF-8");

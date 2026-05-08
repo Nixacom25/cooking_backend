@@ -8,6 +8,9 @@ import com.cooked.backend.entity.User;
 import com.cooked.backend.exception.BadRequestException;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.service.AiService;
+import com.cooked.backend.service.SubscriptionService;
+import com.cooked.backend.exception.PaymentRequiredException;
+import com.cooked.backend.exception.ResourceNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +44,7 @@ public class MarkhorAiServiceImpl implements AiService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final UserRepository userRepository;
+    private final SubscriptionService subscriptionService;
 
     private final com.cooked.backend.repository.RecipeDataRepository recipeDataRepository;
 
@@ -48,7 +52,11 @@ public class MarkhorAiServiceImpl implements AiService {
     private String baseUrl;
 
     @Override
-    public List<Map<String, String>> searchWeb(String query) {
+    public List<Map<String, String>> searchWeb(String query, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        verifyAiAccess(user);
+
         try {
             log.info("Native Search for: {}", query);
             String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
@@ -145,6 +153,9 @@ public class MarkhorAiServiceImpl implements AiService {
 
     @Override
     public CreateRecipeRequest extractRecipeFromLink(String url, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        verifyAiAccess(user);
         try {
             Map<String, String> body = Map.of("url", url);
             ResponseEntity<Map<String, Object>> response = restTemplate.postForEntity(baseUrl + "/api/extract", body, (Class<Map<String, Object>>)(Class<?>)Map.class);
@@ -199,6 +210,7 @@ public class MarkhorAiServiceImpl implements AiService {
     public List<CreateRecipeRequest> generateRecipes(AiRecipeGenerationRequest request, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("Utilisateur non trouvé"));
+        verifyAiAccess(user);
 
         try {
             Map<String, Object> prefs = new HashMap<>();
@@ -229,6 +241,7 @@ public class MarkhorAiServiceImpl implements AiService {
     public ScanResponse scan(MultipartFile file, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("Utilisateur non trouvé"));
+        verifyAiAccess(user);
 
         try {
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -270,6 +283,7 @@ public class MarkhorAiServiceImpl implements AiService {
     public ScanResponse scanTyped(List<String> ingredients, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("Utilisateur non trouvé"));
+        verifyAiAccess(user);
 
         try {
             Map<String, Object> prefs = new HashMap<>();
@@ -320,6 +334,7 @@ public class MarkhorAiServiceImpl implements AiService {
     public AiIngredientDetectionResponse detectIngredients(MultipartFile file, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("Utilisateur non trouvé"));
+        verifyAiAccess(user);
 
         try {
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -359,5 +374,11 @@ public class MarkhorAiServiceImpl implements AiService {
         if (s.equalsIgnoreCase("Confident Cook")) return "ConfidentCook";
         if (s.equalsIgnoreCase("Advanced / Semi-Pro")) return "Advanced Semi Pro";
         return "HomeCook"; // Fallback
+    }
+
+    private void verifyAiAccess(User user) {
+        if (!subscriptionService.hasAiAccess(user)) {
+            throw new PaymentRequiredException("AI access requires a premium subscription or trial.");
+        }
     }
 }

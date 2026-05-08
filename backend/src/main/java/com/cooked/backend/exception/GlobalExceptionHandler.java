@@ -30,6 +30,11 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), "BACKEND", "BAD_REQUEST");
     }
 
+    @ExceptionHandler(PaymentRequiredException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentRequired(PaymentRequiredException ex) {
+        return buildErrorResponse(HttpStatus.PAYMENT_REQUIRED, ex.getMessage(), "BACKEND", "PAYMENT_REQUIRED");
+    }
+
     @ExceptionHandler(AiServiceException.class)
     public ResponseEntity<ErrorResponse> handleAiService(AiServiceException ex) {
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), "IA", ex.getErrorCode());
