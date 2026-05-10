@@ -341,6 +341,14 @@ public class AuthServiceImpl implements AuthService {
                                             lastname = firstname.substring(lastSpaceIndex + 1).trim();
                                             firstname = firstname.substring(0, lastSpaceIndex).trim();
                                         }
+                                        
+                                        // Final fallback if Apple didn't provide a name at all
+                                        if (lastname == null || lastname.trim().isEmpty()) {
+                                            lastname = "-";
+                                        }
+                                        if (firstname == null || firstname.trim().isEmpty()) {
+                                            firstname = "User";
+                                        }
 
                                         String phone = request.getPhone();
 

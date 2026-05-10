@@ -45,7 +45,8 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors()
                 .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Validation failed: " + errors.toString(), "VALIDATION", "INVALID_INPUT");
+        System.err.println("Validation Error Details: " + errors.toString());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Please ensure all required fields are filled correctly.", "VALIDATION", "INVALID_INPUT");
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -89,12 +90,18 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(org.springframework.transaction.TransactionSystemException.class)
     public ResponseEntity<ErrorResponse> handleTransaction(org.springframework.transaction.TransactionSystemException ex) {
+        System.err.println("Transaction Error Details: " + ex.getMessage());
+        if (ex.getRootCause() instanceof jakarta.validation.ConstraintViolationException) {
+             System.err.println("Constraint Violation inside Transaction: " + ex.getRootCause().getMessage());
+             return buildErrorResponse(HttpStatus.BAD_REQUEST, "Some of the provided information is invalid or missing.", "VALIDATION", "CONSTRAINT_VIOLATION");
+        }
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "A transaction error occurred. Please try again.", "BACKEND", "TRANSACTION_ERROR");
     }
 
     @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolation(jakarta.validation.ConstraintViolationException ex) {
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Validation error: " + ex.getMessage(), "VALIDATION", "CONSTRAINT_VIOLATION");
+        System.err.println("Constraint Violation Error Details: " + ex.getMessage());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Some of the provided information is invalid or missing.", "VALIDATION", "CONSTRAINT_VIOLATION");
     }
 
     @ExceptionHandler(Exception.class)
