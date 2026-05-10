@@ -30,7 +30,7 @@ public class EmailServiceImpl implements EmailService {
             <style>
                 body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F9FAFB; color: #1F2937; margin: 0; padding: 0; }
                 .container { max-width: 600px; margin: 40px auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB; }
-                .header { background-color: #C83A2D; padding: 30px; text-align: center; }
+                .header { background-color: #FFFFFF; padding: 30px; text-align: center; border-bottom: 1px solid #E5E7EB; }
                 .content { padding: 40px; text-align: center; }
                 .otp-code { font-size: 32px; font-weight: 800; color: #C83A2D; letter-spacing: 4px; background: #FEE2E2; padding: 15px 30px; border-radius: 12px; display: inline-block; margin: 20px 0; border: 1px solid #FECACA; }
                 .footer { padding: 30px; text-align: center; font-size: 13px; color: #6B7280; background-color: #F9FAFB; border-top: 1px solid #F3F4F6; }
@@ -73,7 +73,7 @@ public class EmailServiceImpl implements EmailService {
             <style>
                 body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F9FAFB; color: #1F2937; margin: 0; padding: 0; }
                 .container { max-width: 600px; margin: 40px auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB; }
-                .header { background-color: #C83A2D; padding: 30px; text-align: center; }
+                .header { background-color: #FFFFFF; padding: 30px; text-align: center; border-bottom: 1px solid #E5E7EB; }
                 .content { padding: 40px; text-align: center; }
                 .footer { padding: 30px; text-align: center; font-size: 13px; color: #6B7280; background-color: #F9FAFB; border-top: 1px solid #F3F4F6; }
                 h1 { font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #111827; }

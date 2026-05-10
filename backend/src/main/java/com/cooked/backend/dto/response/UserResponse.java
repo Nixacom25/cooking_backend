@@ -3,21 +3,21 @@ package com.cooked.backend.dto.response;
 import com.cooked.backend.entity.Role;
 import com.cooked.backend.entity.Status;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import java.util.List;
 import java.util.Map;
 
 public class UserResponse {
-    private UUID id;
+    private String id;
+    private String email;
     private String firstname;
     private String lastname;
     private String phone;
-    private String email;
     private String profilePictureUrl;
     private String discoverySource;
     private String otherDiscoverySource;
     private String language;
     private String country;
+    private String measurementSystem;
     private List<String> dietaryPreferences;
     private List<String> allergies;
     private List<String> foodDislikes;
@@ -36,21 +36,24 @@ public class UserResponse {
     private Status status;
     private Integer onboardingRating;
     private String onboardingFeedback;
+    private String subscriptionStatus;
+    private String subscriptionType;
+    private LocalDateTime subscriptionExpiresAt;
     private LocalDateTime createdAt;
 
     public UserResponse() {}
 
-    // Getters & Setters
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    // Getters and Setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
     public String getFirstname() { return firstname; }
     public void setFirstname(String firstname) { this.firstname = firstname; }
     public String getLastname() { return lastname; }
     public void setLastname(String lastname) { this.lastname = lastname; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
     public String getProfilePictureUrl() { return profilePictureUrl; }
     public void setProfilePictureUrl(String profilePictureUrl) { this.profilePictureUrl = profilePictureUrl; }
     public String getDiscoverySource() { return discoverySource; }
@@ -61,6 +64,8 @@ public class UserResponse {
     public void setLanguage(String language) { this.language = language; }
     public String getCountry() { return country; }
     public void setCountry(String country) { this.country = country; }
+    public String getMeasurementSystem() { return measurementSystem; }
+    public void setMeasurementSystem(String measurementSystem) { this.measurementSystem = measurementSystem; }
     public List<String> getDietaryPreferences() { return dietaryPreferences; }
     public void setDietaryPreferences(List<String> dietaryPreferences) { this.dietaryPreferences = dietaryPreferences; }
     public List<String> getAllergies() { return allergies; }
@@ -97,6 +102,12 @@ public class UserResponse {
     public void setOnboardingRating(Integer onboardingRating) { this.onboardingRating = onboardingRating; }
     public String getOnboardingFeedback() { return onboardingFeedback; }
     public void setOnboardingFeedback(String onboardingFeedback) { this.onboardingFeedback = onboardingFeedback; }
+    public String getSubscriptionStatus() { return subscriptionStatus; }
+    public void setSubscriptionStatus(String subscriptionStatus) { this.subscriptionStatus = subscriptionStatus; }
+    public String getSubscriptionType() { return subscriptionType; }
+    public void setSubscriptionType(String subscriptionType) { this.subscriptionType = subscriptionType; }
+    public LocalDateTime getSubscriptionExpiresAt() { return subscriptionExpiresAt; }
+    public void setSubscriptionExpiresAt(LocalDateTime subscriptionExpiresAt) { this.subscriptionExpiresAt = subscriptionExpiresAt; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

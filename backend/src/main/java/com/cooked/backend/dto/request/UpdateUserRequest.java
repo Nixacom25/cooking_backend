@@ -20,7 +20,6 @@ public class UpdateUserRequest {
     private String otherDiscoverySource;
     private String language;
     private String country;
-    private String alternativeRegion;
     private String measurementSystem;
 
     // Getters et Setters explicites pour garantir la compilation sans Lombok si besoin
@@ -38,8 +37,6 @@ public class UpdateUserRequest {
     public void setLanguage(String language) { this.language = language; }
     public String getCountry() { return country; }
     public void setCountry(String country) { this.country = country; }
-    public String getAlternativeRegion() { return alternativeRegion; }
-    public void setAlternativeRegion(String alternativeRegion) { this.alternativeRegion = alternativeRegion; }
     public String getMeasurementSystem() { return measurementSystem; }
     public void setMeasurementSystem(String measurementSystem) { this.measurementSystem = measurementSystem; }
 }

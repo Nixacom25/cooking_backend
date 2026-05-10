@@ -10,5 +10,5 @@ public interface UserInitializationService {
      * 
      * @param user The user to initialize
      */
-    void initializeAccount(User user);
+    void initializeAccount(java.util.UUID userId);
 }

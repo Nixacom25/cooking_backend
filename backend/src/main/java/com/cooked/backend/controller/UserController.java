@@ -61,6 +61,11 @@ public class UserController {
         return ResponseEntity.ok(userService.uploadProfilePhoto(authentication.getName(), file));
     }
 
+    @DeleteMapping("/me")
+    public ResponseEntity<MessageResponse> deleteCurrentUser(Authentication authentication) {
+        return ResponseEntity.ok(userService.deleteCurrentUser(authentication.getName()));
+    }
+
     // --- Client Routes (ADMIN) ---
 
     @Operation(summary = "Get clients")

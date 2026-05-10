@@ -23,8 +23,6 @@ import java.util.UUID;
 @Builder
 @Entity
 @Table(name = "users")
-@SQLDelete(sql = "UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
-@SQLRestriction("deleted_at IS NULL")
 public class User implements UserDetails {
 
     @Id
@@ -39,7 +37,7 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String lastname;
 
-    @Column(unique = false, nullable = true)
+    @Column(unique = false, nullable = true, columnDefinition = "TEXT")
     private String phone;
 
     @NotBlank
@@ -68,6 +66,7 @@ public class User implements UserDetails {
     private SubscriptionType subscriptionType = SubscriptionType.NONE;
 
     private LocalDateTime subscriptionExpiresAt;
+    @Column(columnDefinition = "TEXT")
     private String originalTransactionId;
 
     @ElementCollection
@@ -88,12 +87,17 @@ public class User implements UserDetails {
     @Builder.Default
     private List<String> foodDislikes = new ArrayList<>();
 
+    @Column(columnDefinition = "TEXT")
     private String photo;
+    @Column(columnDefinition = "TEXT")
     private String discoverySource;
+    @Column(columnDefinition = "TEXT")
     private String otherDiscoverySource;
+    @Column(columnDefinition = "TEXT")
     private String language;
+    @Column(columnDefinition = "TEXT")
     private String country;
-    private String alternativeRegion;
+    @Column(columnDefinition = "TEXT")
     private String measurementSystem;
 
     @ElementCollection
@@ -103,10 +107,15 @@ public class User implements UserDetails {
     @Builder.Default
     private java.util.Map<String, Integer> flavorDna = new java.util.HashMap<>();
 
+    @Column(columnDefinition = "TEXT")
     private String spiceLevel;
+    @Column(columnDefinition = "TEXT")
     private String cookingSkill;
+    @Column(columnDefinition = "TEXT")
     private String cookingTimePreference;
+    @Column(columnDefinition = "TEXT")
     private String cookingFrequency;
+    @Column(columnDefinition = "TEXT")
     private String cookingTarget;
 
     @ElementCollection
@@ -121,6 +130,7 @@ public class User implements UserDetails {
     @Builder.Default
     private List<String> kitchenAppliances = new ArrayList<>();
 
+    @Column(columnDefinition = "TEXT")
     private String mealPlanningStyle;
 
     @ElementCollection
@@ -139,6 +149,45 @@ public class User implements UserDetails {
     @Column(nullable = false)
     @Builder.Default
     private Provider provider = Provider.LOCAL;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private UserSubscription subscription;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Recipe> recipes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Cookbook> cookbooks = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<FavoriteRecipe> favoriteRecipes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<GroceryItem> groceryItems = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<MealPlan> mealPlans = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ActivityLog> activityLogs = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<DeviceSession> sessions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<SubscriptionPayment> payments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<UserSavedIngredient> savedIngredients = new ArrayList<>();
 
     private String providerId;
     private String otpCode;
@@ -160,7 +209,6 @@ public class User implements UserDetails {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
 
     // --- Getters & Setters Manuels ---
     public UUID getId() { return id; }
@@ -189,8 +237,7 @@ public class User implements UserDetails {
     public void setLanguage(String language) { this.language = language; }
     public String getCountry() { return country; }
     public void setCountry(String country) { this.country = country; }
-    public String getAlternativeRegion() { return alternativeRegion; }
-    public void setAlternativeRegion(String alternativeRegion) { this.alternativeRegion = alternativeRegion; }
+
     public String getMeasurementSystem() { return measurementSystem; }
     public void setMeasurementSystem(String measurementSystem) { this.measurementSystem = measurementSystem; }
     
@@ -254,8 +301,6 @@ public class User implements UserDetails {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-    public LocalDateTime getDeletedAt() { return deletedAt; }
-    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

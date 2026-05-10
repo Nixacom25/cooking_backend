@@ -13,8 +13,9 @@ import java.util.UUID;
 @Repository
 public interface RecipeIngredientRepository extends JpaRepository<RecipeIngredient, UUID> {
     
-    @Query("SELECT DISTINCT ri.ingredient FROM RecipeIngredient ri " +
+    @Query("SELECT ri.ingredient FROM RecipeIngredient ri " +
            "WHERE ri.recipe.user.id = :userId " +
-           "ORDER BY ri.createdAt DESC")
+           "GROUP BY ri.ingredient " +
+           "ORDER BY MAX(ri.createdAt) DESC")
     List<Ingredient> findRecentIngredientsByUserId(@Param("userId") UUID userId, org.springframework.data.domain.Pageable pageable);
 }

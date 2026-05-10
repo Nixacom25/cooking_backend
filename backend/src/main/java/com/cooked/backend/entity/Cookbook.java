@@ -29,7 +29,7 @@ public class Cookbook {
     @EqualsAndHashCode.Exclude
     private User user;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String name;
 
     @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })

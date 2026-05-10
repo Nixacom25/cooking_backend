@@ -29,7 +29,7 @@ public class SubscriptionPayment {
     @Column(nullable = false)
     private String status; // SUCCESS or FAILED
 
-    @Column(name = "stripe_payment_id")
+    @Column(name = "stripe_payment_id", columnDefinition = "TEXT")
     private String stripePaymentId;
 
     @CreationTimestamp

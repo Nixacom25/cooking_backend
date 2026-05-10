@@ -29,19 +29,19 @@ public class KeepAliveTask {
     @Scheduled(fixedRate = 60000) // Check every minute
     public void keepServicesAlive() {
         long now = System.currentTimeMillis();
-        long tenMinutesMillis = 600000;
+        long inactivityThreshold = 780000; // 13 minutes
 
-        // Condition 1: Must be inactive for at least 10 minutes
-        if (!activityTracker.hasBeenInactiveFor(tenMinutesMillis)) {
+        // Condition 1: Must be inactive for at least threshold
+        if (!activityTracker.hasBeenInactiveFor(inactivityThreshold)) {
             return; // Still active, wait for inactivity
         }
 
-        // Condition 2: Don't ping more than once every 10 minutes
-        if (now - lastPingTime < tenMinutesMillis) {
+        // Condition 2: Don't ping more than once every threshold
+        if (now - lastPingTime < inactivityThreshold) {
             return;
         }
 
-        log.info("App has been inactive for 10 minutes. Running Keep-Alive task to prevent Render spin-down...");
+        log.info("App has been inactive for 13 minutes. Running Keep-Alive task...");
         lastPingTime = now;
         
         try {
@@ -49,7 +49,8 @@ public class KeepAliveTask {
             restTemplate.getForObject(aiHealthUrl, String.class);
             log.info("AI Service pinged successfully at: {}", aiHealthUrl);
         } catch (Exception e) {
-            log.warn("Could not ping AI Service: {}", e.getMessage());
+            // Reduced to INFO as 429/502 on health checks is common during keep-alive and not critical
+            log.info("Note: AI Service keep-alive ping failed (expected if rate limited): {}", e.getMessage());
         }
 
         try {

@@ -36,6 +36,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final CloudinaryService cloudinaryService;
     private final EmailService emailService;
+    private final com.cooked.backend.service.UserInitializationService userInitializationService;
 
     @Override
     public UserResponse getCurrentUser(String email) {
@@ -56,7 +57,7 @@ public class UserServiceImpl implements UserService {
         user.setOtherDiscoverySource(request.getOtherDiscoverySource());
         user.setLanguage(request.getLanguage());
         user.setCountry(request.getCountry());
-        user.setAlternativeRegion(request.getAlternativeRegion());
+
         user.setMeasurementSystem(request.getMeasurementSystem());
         userRepository.save(user);
 
@@ -76,7 +77,7 @@ public class UserServiceImpl implements UserService {
         user.setFoodDislikes(request.getFoodDislikes());
         user.setLanguage(request.getLanguage());
         user.setCountry(request.getCountry());
-        user.setAlternativeRegion(request.getAlternativeRegion());
+
         user.setMeasurementSystem(request.getMeasurementSystem());
         user.setFlavorDna(request.getFlavorDna());
         user.setSpiceLevel(request.getSpiceLevel());
@@ -91,7 +92,11 @@ public class UserServiceImpl implements UserService {
         user.setOnboardingGoals(request.getOnboardingGoals());
         user.setOnboardingRating(request.getOnboardingRating());
         user.setOnboardingFeedback(request.getOnboardingFeedback());
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // Trigger initialization asynchronously if not already done
+        // This handles cases where preferences are set AFTER registration
+        userInitializationService.initializeAccount(savedUser.getId());
 
         return new MessageResponse("Preferences updated successfully");
     }
@@ -227,5 +232,16 @@ public class UserServiceImpl implements UserService {
         } catch (IOException e) {
             throw new RuntimeException("Could not store file to Cloudinary", e);
         }
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public MessageResponse deleteCurrentUser(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        userRepository.delete(user);
+        
+        return new MessageResponse("Your account and all associated data have been permanently deleted.");
     }
 }

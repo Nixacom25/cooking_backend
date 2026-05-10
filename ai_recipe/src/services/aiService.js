@@ -401,11 +401,9 @@ function buildRecipeSystemPrompt(allergies = [], preferences = [], dislikes = []
     }
   }
 
-  const poolClause = (DNA.recipe_pool && Array.isArray(DNA.recipe_pool) && DNA.recipe_pool.length > 0)
-    ? `You MUST select exactly 10 recipes from this provided list of dish names: [${DNA.recipe_pool.join(', ')}]. Choose the ones that best match the user's taste DNA and preferences. For each selected dish, use your culinary expertise to generate the complete list of ingredients, professional instructions, and all other details. DO NOT invent dishes outside of this list.`
-    : `Generate between 6 and 10 recipes — at least 6, no more than 10.`;
+  const poolClause = `Generate exactly 4 recipes.`;
 
-  return `You will receive a list of available ingredients (from a user's fridge, pantry, or kitchen) and must generate between 6 and 10 distinct, practical, and highly detailed recipes the user can cook with those ingredients.
+  return `You will receive a list of available ingredients (from a user's fridge, pantry, or kitchen) and must generate exactly 4 distinct, practical, and highly detailed recipes the user can cook with those ingredients.
 Each recipe must be a professional-grade culinary entry with precise steps and exhaustive equipment lists.
 
 ${allergyClause}
@@ -508,8 +506,8 @@ async function generateRecipesFromIngredients(ingredients, userPreferences = {})
               {
                 role: 'user',
                 content: ingredients.length > 0 
-                  ? `Generate between 6 and 10 recipes I can cook using these available ingredients: ${ingredientList}`
-                  : `Generate 10 trending and seasonal recipe suggestions that perfectly match my taste DNA, cuisine preferences, and cooking goals.`,
+                  ? `Generate exactly 4 recipes I can cook using these available ingredients: ${ingredientList}`
+                  : `Generate exactly 4 trending and seasonal recipe suggestions that perfectly match my taste DNA, cuisine preferences, and cooking goals.`,
               },
             ],
             max_completion_tokens: 4096,
@@ -581,11 +579,11 @@ function validateRecipesSchema(parsed) {
     );
   }
 
-  if (parsed.recipes.length < 6 || parsed.recipes.length > 10) {
+  if (parsed.recipes.length < 2 || parsed.recipes.length > 15) {
     throw new AppError(
       422,
       'SCHEMA_VALIDATION_FAILED',
-      `Expected between 6 and 10 recipes but got ${parsed.recipes.length}`
+      `Expected between 2 and 15 recipes but got ${parsed.recipes.length}`
     );
   }
 

@@ -119,8 +119,13 @@ public class RecipeServiceImpl implements RecipeService {
         // Pre-save to generate ID for relations
         Recipe savedRecipe = recipeRepository.save(recipe);
 
-        // Handle Ingredients
-        Set<RecipeIngredient> recipeIngredients = new HashSet<>();
+        // Handle Ingredients - Fix: Clear existing collection instead of replacing instance
+        if (savedRecipe.getRecipeIngredients() == null) {
+            savedRecipe.setRecipeIngredients(new java.util.HashSet<>());
+        } else {
+            savedRecipe.getRecipeIngredients().clear();
+        }
+        
         if (request.getIngredients() != null) {
             for (IngredientPayload payload : request.getIngredients()) {
                 String ingName = payload.getName().toLowerCase().trim();
@@ -129,16 +134,15 @@ public class RecipeServiceImpl implements RecipeService {
                                 .name(ingName)
                                 .icon(payload.getIcon())
                                 .build()));
-
+    
                 RecipeIngredient ri = RecipeIngredient.builder()
                         .recipe(savedRecipe)
                         .ingredient(ingredient)
                         .quantity((payload.getQuantity() == null || payload.getQuantity().isBlank()) ? "1" : payload.getQuantity())
                         .build();
-                recipeIngredients.add(ri);
+                savedRecipe.getRecipeIngredients().add(ri);
             }
         }
-        savedRecipe.setRecipeIngredients(recipeIngredients);
         savedRecipe = recipeRepository.save(savedRecipe);
 
         // Ensure inverse relationship is saved in cookbooks
@@ -159,7 +163,7 @@ public class RecipeServiceImpl implements RecipeService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        return recipeRepository.findAllByUserId(user.getId()).stream()
+        return recipeRepository.findAllByUserIdAndOriginNot(user.getId(), RecipeOrigin.SUGGESTED).stream()
                 .map(recipe -> mapToResponse(recipe, user))
                 .collect(Collectors.toList());
     }
@@ -216,7 +220,9 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     public Page<RecipeResponse> getExploreRecipes(String cuisine, String category, Pageable pageable) {
-        return recipeRepository.findExploreRecipes(RecipeOrigin.EXPLORE, cuisine, category, pageable)
+        // We now include both public EXPLORE recipes AND the user's own SUGGESTED recipes if they exist
+        // This ensures new users see their AI-generated content in the feed.
+        return recipeRepository.findExploreRecipes(RecipeOrigin.EXPLORE, RecipeOrigin.SUGGESTED, cuisine, category, pageable)
                 .map(recipe -> mapToResponse(recipe, null));
     }
 
@@ -279,8 +285,17 @@ public class RecipeServiceImpl implements RecipeService {
             preferredCuisines = user.getFavoriteCuisines();
         }
 
-        return recipeRepository.findPopularRecipes(category, preferredCuisines, pageable)
-                .map(r -> mapToResponse((Recipe) r[0], user));
+        // Enforce 10 items limit for "Popular Now" as requested
+        org.springframework.data.domain.Pageable limitedPageable = org.springframework.data.domain.PageRequest.of(0, 10);
+
+        try {
+            return recipeRepository.findRandomPopularRecipes(category, preferredCuisines, limitedPageable)
+                    .map(r -> mapToResponse((Recipe) r[0], user));
+        } catch (Exception e) {
+            System.err.println("Error fetching popular recipes: " + e.getMessage());
+            return recipeRepository.findExploreRecipes(com.cooked.backend.entity.RecipeOrigin.EXPLORE, com.cooked.backend.entity.RecipeOrigin.SUGGESTED, null, category, limitedPageable)
+                    .map(recipe -> mapToResponse(recipe, user));
+        }
     }
 
     @Override

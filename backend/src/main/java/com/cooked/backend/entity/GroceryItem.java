@@ -37,7 +37,7 @@ public class GroceryItem {
     @JoinColumn(name = "recipe_id", nullable = true)
     private Recipe recipe;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String quantity;
 
     @Column(nullable = false)

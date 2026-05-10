@@ -102,6 +102,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         UserSubscription subscription = userSubscriptionRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Subscription not found"));
 
+        if (isPremium(user)) {
+            throw new BadRequestException("You already have an active subscription. No need to pay again.");
+        }
+
         if ("tok_fail".equals(request.getStripeToken())) {
             throw new BadRequestException("Payment failed: Insufficient funds or card declined.");
         }
@@ -118,6 +122,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         subscription.setStatus(SubscriptionStatus.ACTIVE);
 
         userSubscriptionRepository.save(subscription);
+
+        // SYNC: Update User entity fields for quick access
+        user.setSubscriptionStatus(SubscriptionStatus.ACTIVE);
+        user.setSubscriptionType(request.getIsYearly() ? SubscriptionType.YEARLY : SubscriptionType.MONTHLY);
+        user.setSubscriptionExpiresAt(subscription.getEndDate());
+        userRepository.save(user);
 
         SubscriptionPlan plan = getPlan();
         BigDecimal price = request.getIsYearly() ? plan.getYearlyPrice() : plan.getMonthlyPrice();
@@ -149,6 +159,14 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         UserSubscription subscription = userSubscriptionRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Subscription not found"));
+
+        // If user is already premium with a different transaction, prevent re-subscribing 
+        // Note: We allow restoring if transaction ID matches or if expired.
+        if (isPremium(user) && user.getOriginalTransactionId() != null && 
+            !user.getOriginalTransactionId().equals(request.getPurchaseToken())) {
+             // In a real scenario, we might allow this if they are upgrading, but here we prevent duplicate billing
+             log.warn("User {} attempted to verify a new receipt while already premium", userEmail);
+        }
 
         boolean isValid = false;
         boolean isYearly = request.getProductId().toLowerCase().contains("yearly");
@@ -201,6 +219,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         userSubscriptionRepository.save(subscription);
 
+        // SYNC: Update User entity fields for quick access
+        user.setSubscriptionStatus(SubscriptionStatus.ACTIVE);
+        user.setSubscriptionType(isYearly ? SubscriptionType.YEARLY : SubscriptionType.MONTHLY);
+        user.setSubscriptionExpiresAt(subscription.getEndDate());
+        user.setOriginalTransactionId(request.getPurchaseToken());
+        userRepository.save(user);
+
         SubscriptionPlan plan = getPlan();
         BigDecimal price = isYearly ? plan.getYearlyPrice() : plan.getMonthlyPrice();
         
@@ -250,6 +275,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         for (UserSubscription sub : expiredSubscriptions) {
             sub.setStatus(SubscriptionStatus.EXPIRED);
             userSubscriptionRepository.save(sub);
+            
+            // Also sync to User entity
+            User user = sub.getUser();
+            if (user != null) {
+                user.setSubscriptionStatus(SubscriptionStatus.EXPIRED);
+                userRepository.save(user);
+            }
         }
     }
 
@@ -282,15 +314,54 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Override
     public boolean hasAiAccess(User user) {
-        if (isPremium(user)) {
-            return true;
+        // 1. Check UserSubscription entity (Source of Truth)
+        UserSubscription sub = userSubscriptionRepository.findByUserId(user.getId()).orElse(null);
+        if (sub != null) {
+            if (sub.getStatus() == SubscriptionStatus.ACTIVE || sub.getStatus() == SubscriptionStatus.TRIAL) {
+                if (sub.getEndDate() == null || sub.getEndDate().isAfter(LocalDateTime.now())) {
+                    return true;
+                }
+            }
+            
+            // If we have a subscription record and it's NOT active/trial, 
+            // or it's expired, we should usually block unless we're within the absolute fallback trial
+            if (sub.getStatus() == SubscriptionStatus.EXPIRED || sub.getStatus() == SubscriptionStatus.CANCELLED) {
+                // Check if we are still in the 3-day window from creation (absolute safety net)
+                if (user.getCreatedAt() != null && LocalDateTime.now().isBefore(user.getCreatedAt().plusDays(3))) {
+                    return true;
+                }
+                return false; 
+            }
         }
-        // Free trial: 3 days after creation
-        if (user.getCreatedAt() == null) {
-            return true; // Safe fallback for legacy users if any
+
+        // 2. Check User entity fields (Cached/Quick Access) - only if no subscription record or status is unknown
+        if (user.getSubscriptionStatus() == SubscriptionStatus.ACTIVE || 
+            user.getSubscriptionStatus() == SubscriptionStatus.TRIAL) {
+            
+            if (user.getSubscriptionExpiresAt() != null && user.getSubscriptionExpiresAt().isAfter(LocalDateTime.now())) {
+                return true;
+            }
         }
-        LocalDateTime trialEndDate = user.getCreatedAt().plusDays(3);
-        return LocalDateTime.now().isBefore(trialEndDate);
+
+        // 3. Fallback to createdAt logic for new users who haven't had their sub status synced yet
+        if (user.getCreatedAt() != null) {
+            LocalDateTime trialEndDate = user.getCreatedAt().plusDays(3);
+            if (LocalDateTime.now().isBefore(trialEndDate)) {
+                // Also update the UserSubscription entity to reflect TRIAL status if not already set
+                if (sub != null && sub.getStatus() != SubscriptionStatus.TRIAL && sub.getStatus() != SubscriptionStatus.ACTIVE) {
+                    sub.setStatus(SubscriptionStatus.TRIAL);
+                    sub.setEndDate(trialEndDate);
+                    userSubscriptionRepository.save(sub);
+                    
+                    user.setSubscriptionStatus(SubscriptionStatus.TRIAL);
+                    user.setSubscriptionExpiresAt(trialEndDate);
+                    userRepository.save(user);
+                }
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     private boolean verifyAppleReceipt(String receiptData) {

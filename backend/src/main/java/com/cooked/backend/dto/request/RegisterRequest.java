@@ -46,7 +46,6 @@ public class RegisterRequest {
 
     private String language;
     private String country;
-    private String alternativeRegion;
     private String measurementSystem;
 
     private java.util.List<String> dietaryPreferences;

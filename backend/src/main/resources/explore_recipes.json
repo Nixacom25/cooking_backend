@@ -5387,7 +5387,7 @@
   {
     "name": "Turkey Lettuce Wraps",
     "cuisine": "Chinese",
-    "category": "High Protein, Low Calorie",
+    "category": "High Protein Picks",
     "prepTime": 15,
     "cookTime": 15,
     "kcal": 320,
@@ -5451,7 +5451,7 @@
   {
     "name": "Garlic Shrimp with Vegetables",
     "cuisine": "Mediterranean",
-    "category": "High Protein, Low Calorie",
+    "category": "High Protein Picks",
     "prepTime": 10,
     "cookTime": 10,
     "kcal": 280,
@@ -5509,7 +5509,7 @@
   {
     "name": "Baked Salmon with Asparagus",
     "cuisine": "Mediterranean",
-    "category": "High Protein, Low Calorie",
+    "category": "High Protein Picks",
     "prepTime": 10,
     "cookTime": 15,
     "kcal": 380,
@@ -5562,7 +5562,7 @@
   {
     "name": "Chicken Stir-Fry",
     "cuisine": "Chinese",
-    "category": "High Protein, Low Calorie",
+    "category": "High Protein Picks",
     "prepTime": 15,
     "cookTime": 12,
     "kcal": 420,
@@ -5619,7 +5619,7 @@
   {
     "name": "Greek Yogurt Chicken Salad",
     "cuisine": "Greek",
-    "category": "High Protein, Low Calorie",
+    "category": "High Protein Picks",
     "prepTime": 15,
     "cookTime": 0,
     "kcal": 310,
@@ -5671,7 +5671,7 @@
   {
     "name": "Egg White Omelet",
     "cuisine": "French",
-    "category": "High Protein, Low Calorie",
+    "category": "High Protein Picks",
     "prepTime": 5,
     "cookTime": 10,
     "kcal": 180,

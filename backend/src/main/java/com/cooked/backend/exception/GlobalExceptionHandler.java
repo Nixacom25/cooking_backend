@@ -60,20 +60,31 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrity(org.springframework.dao.DataIntegrityViolationException ex) {
-        String msg = "This recipe is already in this cookbook";
-        if (ex.getMessage() != null && ex.getMessage().contains("duplicate key")) {
+        String msg = "A database error occurred. Please try again.";
+        String errorCode = "DATABASE_ERROR";
+        
+        if (ex.getMessage() != null) {
             String lowerMsg = ex.getMessage().toLowerCase();
-            if (lowerMsg.contains("cookbooks") && lowerMsg.contains("name")) {
-                msg = "A cookbook with this name already exists.";
-            } else if (lowerMsg.contains("phone") || lowerMsg.contains("téléphone")) {
-                msg = "This phone number is already associated with an account.";
-            } else if (lowerMsg.contains("email") || lowerMsg.contains("users")) {
-                msg = "This account already exists. Please log in.";
-            } else {
-                msg = "An item with this name already exists.";
+            if (lowerMsg.contains("duplicate key")) {
+                errorCode = "DUPLICATE_ENTRY";
+                if (lowerMsg.contains("cookbooks") && lowerMsg.contains("name")) {
+                    msg = "A cookbook with this name already exists.";
+                } else if (lowerMsg.contains("phone") || lowerMsg.contains("téléphone")) {
+                    msg = "This phone number is already associated with an account.";
+                } else if (lowerMsg.contains("email") || lowerMsg.contains("users")) {
+                    msg = "This account already exists. Please log in.";
+                } else if (lowerMsg.contains("recipe_ingredients") || lowerMsg.contains("cookbook_recipes")) {
+                    msg = "This recipe is already in this cookbook.";
+                } else {
+                    msg = "An item with this name already exists.";
+                }
+            } else if (lowerMsg.contains("value too long") || lowerMsg.contains("too long")) {
+                msg = "One of the fields is too long. Please shorten your input.";
+                errorCode = "DATA_TOO_LONG";
             }
         }
-        return buildErrorResponse(HttpStatus.CONFLICT, msg, "DATABASE", "DUPLICATE_ENTRY");
+        
+        return buildErrorResponse(HttpStatus.CONFLICT, msg, "DATABASE", errorCode);
     }
 
     @ExceptionHandler(org.springframework.transaction.TransactionSystemException.class)

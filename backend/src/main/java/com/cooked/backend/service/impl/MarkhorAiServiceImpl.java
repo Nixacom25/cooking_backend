@@ -92,24 +92,24 @@ public class MarkhorAiServiceImpl implements AiService {
     @Override
     public List<CreateRecipeRequest> generateInitialRecipes(User user, int count) {
         try {
-            List<com.cooked.backend.entity.RecipeData> pool = recipeDataRepository.findRandomRecipes(20);
-            List<String> poolNames = pool.stream().map(com.cooked.backend.entity.RecipeData::getName).toList();
-
             Map<String, Object> body = Map.of(
-                "recipe_pool", poolNames,
                 "user_preferences", Map.of(
                     "allergies", user.getAllergies() != null ? user.getAllergies() : "",
                     "preferences", user.getDietaryPreferences() != null ? user.getDietaryPreferences() : "",
-                    "cuisines", user.getFavoriteCuisines() != null ? user.getFavoriteCuisines() : ""
+                    "cuisines", user.getFavoriteCuisines() != null ? user.getFavoriteCuisines() : "",
+                    "flavorDna", user.getFlavorDna() != null ? user.getFlavorDna() : "",
+                    "skill", user.getCookingSkill() != null ? user.getCookingSkill() : ""
                 )
             );
 
             ResponseEntity<ScanResponse> response = restTemplate.postForEntity(baseUrl + "/api/recipes/suggest", body, ScanResponse.class);
+            log.info("AI Service called for {}. Status: {}, Recipes found: {}", 
+                user.getEmail(), response.getStatusCode(), 
+                response.getBody() != null && response.getBody().getRecipes() != null ? response.getBody().getRecipes().size() : 0);
+            
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 List<CreateRecipeRequest> recipes = response.getBody().getRecipes();
                 for (CreateRecipeRequest r : recipes) {
-                    pool.stream().filter(p -> p.getName().equalsIgnoreCase(r.getName()))
-                        .findFirst().ifPresent(p -> r.setImage(p.getImageUrl()));
                     r.setOrigin("ONBOARDING");
                 }
                 return recipes;
@@ -148,7 +148,7 @@ public class MarkhorAiServiceImpl implements AiService {
         } catch (Exception e) {
             log.warn("Trending call failed, using defaults");
         }
-        return List.of("Tacos au poulet", "Pasta Carbonara", "Salade César", "Sushi Roll");
+        return List.of("Chicken Tacos", "Pasta Carbonara", "Caesar Salad", "Sushi Roll");
     }
 
     @Override
@@ -200,16 +200,19 @@ public class MarkhorAiServiceImpl implements AiService {
                 
                 return request;
             }
+            throw new BadRequestException("Unable to extract recipe from this link");
+        } catch (BadRequestException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Extraction failed: {}", e.getMessage());
+            throw new BadRequestException("Extraction failed: " + e.getMessage());
         }
-        throw new BadRequestException("Échec de l'extraction");
     }
 
     @Override
     public List<CreateRecipeRequest> generateRecipes(AiRecipeGenerationRequest request, String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BadRequestException("Utilisateur non trouvé"));
+                .orElseThrow(() -> new BadRequestException("User not found"));
         verifyAiAccess(user);
 
         try {
@@ -219,7 +222,7 @@ public class MarkhorAiServiceImpl implements AiService {
             prefs.put("cuisines_love", user.getFavoriteCuisines());
             prefs.put("kitchen_tools", user.getKitchenAppliances());
             prefs.put("skill_level", normalizeSkillLevel(user.getCookingSkill()));
-            prefs.put("system_instructions", "Soyez extrêmement précis et généreux dans la section 'tips' (notes et conseils) pour chaque recette. Incluez des conseils sur la texture, les variantes de saveurs, et la conservation.");
+            prefs.put("system_instructions", "Be extremely precise and generous in the 'tips' (notes and advice) section for each recipe. Include advice on texture, flavor variations, and storage.");
 
             Map<String, Object> body = new HashMap<>();
             body.put("ingredients", request.getIngredients());
@@ -240,7 +243,7 @@ public class MarkhorAiServiceImpl implements AiService {
     @Override
     public ScanResponse scan(MultipartFile file, String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BadRequestException("Utilisateur non trouvé"));
+                .orElseThrow(() -> new BadRequestException("User not found"));
         verifyAiAccess(user);
 
         try {
@@ -253,7 +256,7 @@ public class MarkhorAiServiceImpl implements AiService {
             prefs.put("cuisines_love", user.getFavoriteCuisines());
             prefs.put("kitchen_tools", user.getKitchenAppliances());
             prefs.put("skill_level", normalizeSkillLevel(user.getCookingSkill()));
-            prefs.put("system_instructions", "Soyez extrêmement précis et généreux dans la section 'tips' (notes et conseils) pour chaque recette. Incluez des conseils sur la texture, les variantes de saveurs, et la conservation.");
+            prefs.put("system_instructions", "Be extremely precise and generous in the 'tips' (notes and advice) section for each recipe. Include advice on texture, flavor variations, and storage.");
             
             body.add("user_preferences", objectMapper.writeValueAsString(prefs));
 
@@ -273,16 +276,19 @@ public class MarkhorAiServiceImpl implements AiService {
                 }
                 return res;
             }
+            throw new BadRequestException("Image analysis failed: Invalid response from AI service");
+        } catch (BadRequestException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Scan failed: {}", e.getMessage());
+            throw new BadRequestException("Image analysis failed: " + e.getMessage());
         }
-        throw new BadRequestException("Échec de l'analyse de l'image");
     }
 
     @Override
     public ScanResponse scanTyped(List<String> ingredients, String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BadRequestException("Utilisateur non trouvé"));
+                .orElseThrow(() -> new BadRequestException("User not found"));
         verifyAiAccess(user);
 
         try {
@@ -292,7 +298,7 @@ public class MarkhorAiServiceImpl implements AiService {
             prefs.put("cuisines_love", user.getFavoriteCuisines());
             prefs.put("kitchen_tools", user.getKitchenAppliances());
             prefs.put("skill_level", normalizeSkillLevel(user.getCookingSkill()));
-            prefs.put("system_instructions", "Soyez extrêmement précis et généreux dans la section 'tips' (notes et conseils) pour chaque recette. Incluez des conseils sur la texture, les variantes de saveurs, et la conservation.");
+            prefs.put("system_instructions", "Be extremely precise and generous in the 'tips' (notes and advice) section for each recipe. Include advice on texture, flavor variations, and storage.");
 
             Map<String, Object> body = new HashMap<>();
             body.put("ingredients", ingredients);
@@ -324,16 +330,19 @@ public class MarkhorAiServiceImpl implements AiService {
                 
                 return res;
             }
+            throw new BadRequestException("Failed to generate recipes: Invalid response from AI service");
+        } catch (BadRequestException e) {
+            throw e;
         } catch (Exception e) {
             log.error("ScanTyped failed: {}", e.getMessage());
+            throw new BadRequestException("Failed to generate recipes from ingredients: " + e.getMessage());
         }
-        throw new BadRequestException("Échec de la génération des recettes par ingrédients");
     }
 
     @Override
     public AiIngredientDetectionResponse detectIngredients(MultipartFile file, String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BadRequestException("Utilisateur non trouvé"));
+                .orElseThrow(() -> new BadRequestException("User not found"));
         verifyAiAccess(user);
 
         try {
@@ -360,10 +369,13 @@ public class MarkhorAiServiceImpl implements AiService {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 return response.getBody();
             }
+            throw new BadRequestException("Ingredient detection failed: Invalid response from AI service");
+        } catch (BadRequestException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Detection failed: {}", e.getMessage());
+            throw new BadRequestException("Ingredient detection failed: " + e.getMessage());
         }
-        throw new BadRequestException("Échec de la détection des ingrédients");
     }
 
     private String normalizeSkillLevel(String skill) {

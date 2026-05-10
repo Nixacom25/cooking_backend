@@ -63,9 +63,16 @@ public class SubscriptionController {
         return ResponseEntity.ok(subscriptionService.getPlan());
     }
 
-    @Operation(summary = "Get Dynamic Paywall Config (A/B Testing)")
+    @Operation(summary = "Get Dynamic Paywall Config (A/B Testing or Specific Flow)")
     @GetMapping({"/paywall-config", "/api/subscription/paywall-config"})
-    public ResponseEntity<?> getPaywallConfig(Authentication auth) {
+    public ResponseEntity<?> getPaywallConfig(
+            Authentication auth,
+            @RequestParam(required = false) String flow) {
+        
+        if ("OFFER".equalsIgnoreCase(flow)) {
+             return ResponseEntity.ok(paywallService.getOfferConfiguration());
+        }
+
         if (auth == null || auth.getName() == null) {
             // Fallback for anonymous or failed auth - return variant A
             return ResponseEntity.ok(paywallService.getDefaultConfiguration());

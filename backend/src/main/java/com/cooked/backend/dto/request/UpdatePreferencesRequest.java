@@ -20,7 +20,6 @@ public class UpdatePreferencesRequest {
     private List<String> foodDislikes;
     private String language;
     private String country;
-    private String alternativeRegion;
     private String measurementSystem;
     private java.util.Map<String, Integer> flavorDna;
     private String spiceLevel;
@@ -42,7 +41,6 @@ public class UpdatePreferencesRequest {
     public List<String> getFoodDislikes() { return foodDislikes; }
     public String getLanguage() { return language; }
     public String getCountry() { return country; }
-    public String getAlternativeRegion() { return alternativeRegion; }
     public String getMeasurementSystem() { return measurementSystem; }
     public java.util.Map<String, Integer> getFlavorDna() { return flavorDna; }
     public String getSpiceLevel() { return spiceLevel; }

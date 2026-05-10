@@ -87,8 +87,9 @@ public class AuthServiceImpl implements AuthService {
         @Transactional
         public Object register(RegisterRequest request) {
                 if (userRepository.existsByEmail(request.getEmail())) {
-                        throw new BadRequestException("This account already exists with this email. Please log in.");
+                        throw new BadRequestException("This email is already associated with an account. Please log in instead or use a different email address.");
                 }
+
                 String phone = (request.getPhone() != null && !request.getPhone().trim().isEmpty())
                                 ? request.getPhone().trim()
                                 : null;
@@ -146,7 +147,7 @@ public class AuthServiceImpl implements AuthService {
 
                 String otp = generateOtp();
 
-                var user = User.builder()
+                User user = User.builder()
                                 .firstname(firstname)
                                 .lastname(lastname)
                                 .phone(request.getPhone())
@@ -163,7 +164,6 @@ public class AuthServiceImpl implements AuthService {
                                 .otherDiscoverySource(request.getOtherDiscoverySource())
                                 .language(request.getLanguage())
                                 .country(request.getCountry())
-                                .alternativeRegion(request.getAlternativeRegion())
                                 .measurementSystem(request.getMeasurementSystem())
                                 .dietaryPreferences(request.getDietaryPreferences() != null
                                                 ? request.getDietaryPreferences()
@@ -210,7 +210,7 @@ public class AuthServiceImpl implements AuthService {
                                             "Welcome to Cooked! Your account has been successfully created.");
 
                             // Initialize Account Content (Cookbooks, Recipes)
-                            userInitializationService.initializeAccount(savedUser);
+                            userInitializationService.initializeAccount(savedUser.getId());
                         }
                     }
                 );
@@ -363,7 +363,7 @@ public class AuthServiceImpl implements AuthService {
                                             new org.springframework.transaction.support.TransactionSynchronization() {
                                                 @Override
                                                 public void afterCommit() {
-                                                    userInitializationService.initializeAccount(savedUser);
+                                                    userInitializationService.initializeAccount(savedUser.getId());
                                                 }
                                             }
                                         );
@@ -545,15 +545,25 @@ public class AuthServiceImpl implements AuthService {
         }
 
         private void assignTrial(User user) {
-                com.cooked.backend.entity.UserSubscription trialSubscription = com.cooked.backend.entity.UserSubscription
-                                .builder()
-                                .user(user)
-                                .startDate(LocalDateTime.now())
-                                .endDate(LocalDateTime.now().plusDays(3))
-                                .status(com.cooked.backend.entity.SubscriptionStatus.TRIAL)
-                                .isYearly(false)
-                                .build();
-                userSubscriptionRepository.save(trialSubscription);
+                LocalDateTime trialEnd = LocalDateTime.now().plusDays(3);
+                
+                // 1. Update User entity fields for quick access checks
+                user.setSubscriptionStatus(com.cooked.backend.entity.SubscriptionStatus.TRIAL);
+                user.setSubscriptionType(com.cooked.backend.entity.SubscriptionType.NONE);
+                user.setSubscriptionExpiresAt(trialEnd);
+                userRepository.save(user);
+
+                // 2. Create/Update UserSubscription record for standard access
+                com.cooked.backend.entity.UserSubscription subscription = userSubscriptionRepository.findByUserId(user.getId())
+                                .orElseGet(() -> com.cooked.backend.entity.UserSubscription.builder()
+                                                .user(user)
+                                                .build());
+                
+                subscription.setStartDate(LocalDateTime.now());
+                subscription.setEndDate(trialEnd);
+                subscription.setStatus(com.cooked.backend.entity.SubscriptionStatus.TRIAL);
+                subscription.setIsYearly(false);
+                userSubscriptionRepository.save(subscription);
         }
 
         private void recordSession(User user, String token) {

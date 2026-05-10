@@ -39,4 +39,6 @@ public interface UserService {
     MessageResponse deleteAdmin(UUID id);
 
     MessageResponse updateUserStatus(UUID id, UpdateUserStatusRequest request);
+    
+    MessageResponse deleteCurrentUser(String email);
 }

@@ -61,6 +61,9 @@ public class SecurityConfig {
                                 "/api/subscription/paywall-config",
                                 "/api/analytics/track",
                                 "/api/recipe-data/**",
+                                "/recipes/popular",
+                                "/recipes/explore/**",
+                                "/recipes/top-creators",
                                 "/actuator/**")
                         .permitAll()
                         .anyRequest().authenticated())

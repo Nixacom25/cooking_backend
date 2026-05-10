@@ -27,7 +27,7 @@ public class RecipeCleanupService {
     public void cleanupExpiredSuggestions() {
         log.info("Starting cleanup of expired suggested recipes...");
         try {
-            int deletedCount = recipeRepository.deleteByOriginAndExpiresAtBefore(com.cooked.backend.entity.RecipeOrigin.SUGGESTED, LocalDateTime.now());
+            int deletedCount = recipeRepository.deleteExpiredSuggestedRecipes(com.cooked.backend.entity.RecipeOrigin.SUGGESTED, LocalDateTime.now());
             log.info("Finished cleanup. Deleted {} expired suggestions.", deletedCount);
         } catch (Exception e) {
             log.error("Error during recipe cleanup", e);

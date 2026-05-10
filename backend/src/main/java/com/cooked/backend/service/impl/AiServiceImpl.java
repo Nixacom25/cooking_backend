@@ -73,7 +73,8 @@ public class AiServiceImpl implements AiService {
                                 "Dietary restrictions: Allergies: %s, Preferences: %s. " +
                                 "Include prepTime and cookTime in minutes. " +
                                 "Provide a deep preparation flow from prep to finish. " +
-                                "IMPORTANT: Return ONLY raw JSON. " +
+                                "IMPORTANT: Keep the recipe 'name' concise (max 60 characters). If the original name is too long, rename it to something short and catchy. " +
+                                "Return ONLY raw JSON. " +
                                 "Return JSON in this format: %s",
                         url,
                         String.join(", ", user.getAllergies()),
@@ -103,7 +104,8 @@ public class AiServiceImpl implements AiService {
                             "IMAGE EXTRACTION: If you cannot find a direct image URL for the dish in the text, use a high-quality relevant image URL from Unsplash (e.g., https://images.unsplash.com/photo-...) specifically for this dish: %s. " +
                             "If the text is insufficient, you may infer missing details to ensure a complete recipe, but DO NOT invent a different dish. " +
                             "Include prepTime and cookTime in minutes. " +
-                            "IMPORTANT: Return ONLY raw JSON. " +
+                            "IMPORTANT: Keep the recipe 'name' concise (max 60 characters). If the original name is too long, rename it to something short and catchy. " +
+                            "Return ONLY raw JSON. " +
                             "Return JSON in this format: %s",
                     url,
                     pageText,
@@ -177,6 +179,7 @@ public class AiServiceImpl implements AiService {
                             "The recipes must be practical and achievable with ONLY the provided items. " +
                             "User Allergies: %s, Dietary Preferences: %s. " +
                             "Generate between 6 and 10 distinct recipes. Provide high-quality Unsplash images for each. " +
+                            "IMPORTANT: Keep the recipe 'name' concise (max 60 characters). " +
                             "IMPORTANT: Return ONLY raw JSON. " +
                             "Format: {\"recipes\": [%s]}",
                     allowedNames,
@@ -202,6 +205,7 @@ public class AiServiceImpl implements AiService {
                             "Flavor DNA: %s. " +
                             "Cooking Skill: %s. " +
                             "Generate distinct, high-quality recipes. Provide beautiful Unsplash images for each. " +
+                            "IMPORTANT: Keep the recipe 'name' concise (max 60 characters). " +
                             "IMPORTANT: Return ONLY raw JSON. " +
                             "Format: {\"recipes\": [%s]}",
                     count,
@@ -301,7 +305,7 @@ public class AiServiceImpl implements AiService {
 
     private static final String RECIPE_JSON_FORMAT = """
             {
-              "name": "Recipe Name",
+              "name": "Recipe Name (Max 60 chars)",
               "prepTime": 15,
               "cookTime": 30,
               "kcal": 500,
