@@ -131,8 +131,8 @@ public class MarkhorAiServiceImpl implements AiService {
             
             try {
                 // Fallback: Fetch 4 random EXPLORE recipes matching user cuisines if possible
-                List<String> preferredCuisines = user.getFavoriteCuisines() != null 
-                    ? Arrays.asList(user.getFavoriteCuisines().split(",\\s*"))
+                List<String> preferredCuisines = (user.getFavoriteCuisines() != null && !user.getFavoriteCuisines().isEmpty()) 
+                    ? user.getFavoriteCuisines() 
                     : null;
                 
                 org.springframework.data.domain.Page<com.cooked.backend.entity.Recipe> exploreRecipes = 
