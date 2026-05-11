@@ -64,7 +64,7 @@ public class SubscriptionController {
     }
 
     @Operation(summary = "Get Dynamic Paywall Config (A/B Testing or Specific Flow)")
-    @GetMapping({"/paywall-config", "/api/subscription/paywall-config"})
+    @GetMapping("/paywall-config")
     public ResponseEntity<?> getPaywallConfig(
             Authentication auth,
             @RequestParam(required = false) String flow) {

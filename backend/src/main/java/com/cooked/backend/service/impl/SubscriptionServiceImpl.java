@@ -314,12 +314,18 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Override
     public boolean hasAiAccess(User user) {
+        log.info("[hasAiAccess] Checking access for user: {} (ID: {})", user.getEmail(), user.getId());
+        
         // 1. Check UserSubscription entity (Source of Truth)
         UserSubscription sub = userSubscriptionRepository.findByUserId(user.getId()).orElse(null);
         if (sub != null) {
+            log.info("[hasAiAccess] Found UserSubscription: status={}, endDate={}", sub.getStatus(), sub.getEndDate());
             if (sub.getStatus() == SubscriptionStatus.ACTIVE || sub.getStatus() == SubscriptionStatus.TRIAL || sub.getStatus() == SubscriptionStatus.PREMIUM) {
                 if (sub.getEndDate() == null || sub.getEndDate().isAfter(LocalDateTime.now())) {
+                    log.info("[hasAiAccess] Access GRANTED via UserSubscription");
                     return true;
+                } else {
+                    log.warn("[hasAiAccess] UserSubscription exists but is EXPIRED (endDate: {})", sub.getEndDate());
                 }
             }
             
@@ -328,18 +334,24 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             if (sub.getStatus() == SubscriptionStatus.EXPIRED || sub.getStatus() == SubscriptionStatus.CANCELLED) {
                 // Check if we are still in the 3-day window from creation (absolute safety net)
                 if (user.getCreatedAt() != null && LocalDateTime.now().isBefore(user.getCreatedAt().plusDays(3))) {
+                    log.info("[hasAiAccess] Access GRANTED via 3-day safety net (UserSubscription was EXPIRED/CANCELLED)");
                     return true;
                 }
+                log.warn("[hasAiAccess] Access DENIED (UserSubscription status: {})", sub.getStatus());
                 return false; 
             }
+        } else {
+            log.info("[hasAiAccess] No UserSubscription found for user");
         }
 
         // 2. Check User entity fields (Cached/Quick Access) - only if no subscription record or status is unknown
+        log.info("[hasAiAccess] Checking User entity fields: status={}, expiresAt={}", user.getSubscriptionStatus(), user.getSubscriptionExpiresAt());
         if (user.getSubscriptionStatus() == SubscriptionStatus.ACTIVE || 
             user.getSubscriptionStatus() == SubscriptionStatus.TRIAL ||
             user.getSubscriptionStatus() == SubscriptionStatus.PREMIUM) {
             
             if (user.getSubscriptionExpiresAt() == null || user.getSubscriptionExpiresAt().isAfter(LocalDateTime.now())) {
+                log.info("[hasAiAccess] Access GRANTED via User entity fields");
                 return true;
             }
         }
@@ -347,7 +359,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         // 3. Fallback to createdAt logic for new users who haven't had their sub status synced yet
         if (user.getCreatedAt() != null) {
             LocalDateTime trialEndDate = user.getCreatedAt().plusDays(3);
+            log.info("[hasAiAccess] Checking 3-day trial fallback: createdAt={}, trialEndDate={}, now={}", user.getCreatedAt(), trialEndDate, LocalDateTime.now());
             if (LocalDateTime.now().isBefore(trialEndDate)) {
+                log.info("[hasAiAccess] Access GRANTED via 3-day trial fallback");
                 // Also update the UserSubscription entity to reflect TRIAL status if not already set
                 if (sub != null && sub.getStatus() != SubscriptionStatus.TRIAL && sub.getStatus() != SubscriptionStatus.ACTIVE) {
                     sub.setStatus(SubscriptionStatus.TRIAL);

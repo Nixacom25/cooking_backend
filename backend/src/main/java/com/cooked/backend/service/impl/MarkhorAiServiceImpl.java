@@ -83,6 +83,8 @@ public class MarkhorAiServiceImpl implements AiService {
                 }
             }
             return results;
+        } catch (PaymentRequiredException | ResourceNotFoundException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Search failed: {}", e.getMessage());
             return Collections.emptyList();
@@ -201,11 +203,11 @@ public class MarkhorAiServiceImpl implements AiService {
                 return request;
             }
             throw new BadRequestException("Unable to extract recipe from this link");
-        } catch (BadRequestException e) {
+        } catch (BadRequestException | PaymentRequiredException e) {
             throw e;
         } catch (Exception e) {
             log.error("Extraction failed: {}", e.getMessage());
-            throw new BadRequestException("Extraction failed: " + e.getMessage());
+            throw new BadRequestException("We couldn't extract the recipe from this link. Please try another one.");
         }
     }
 
@@ -234,10 +236,12 @@ public class MarkhorAiServiceImpl implements AiService {
                 for (CreateRecipeRequest r : recipes) r.setOrigin("MANUAL");
                 return recipes;
             }
+        } catch (PaymentRequiredException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Generation failed: {}", e.getMessage());
+            return Collections.emptyList();
         }
-        return Collections.emptyList();
     }
 
     @Override
@@ -277,11 +281,11 @@ public class MarkhorAiServiceImpl implements AiService {
                 return res;
             }
             throw new BadRequestException("Image analysis failed: Invalid response from AI service");
-        } catch (BadRequestException e) {
+        } catch (BadRequestException | PaymentRequiredException e) {
             throw e;
         } catch (Exception e) {
             log.error("Scan failed: {}", e.getMessage());
-            throw new BadRequestException("Image analysis failed: " + e.getMessage());
+            throw new BadRequestException("The recipe scan service is currently busy or unavailable. Please try again in a few moments.");
         }
     }
 
@@ -370,11 +374,11 @@ public class MarkhorAiServiceImpl implements AiService {
                 return response.getBody();
             }
             throw new BadRequestException("Ingredient detection failed: Invalid response from AI service");
-        } catch (BadRequestException e) {
+        } catch (BadRequestException | PaymentRequiredException e) {
             throw e;
         } catch (Exception e) {
             log.error("Detection failed: {}", e.getMessage());
-            throw new BadRequestException("Ingredient detection failed: " + e.getMessage());
+            throw new BadRequestException("We encountered an issue while detecting your ingredients. Please try again.");
         }
     }
 
