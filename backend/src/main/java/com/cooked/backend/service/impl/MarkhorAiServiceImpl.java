@@ -344,15 +344,15 @@ public class MarkhorAiServiceImpl implements AiService {
         } catch (org.springframework.web.client.HttpStatusCodeException e) {
             log.error("ScanTyped failed with status {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
             if (e.getStatusCode().value() == 429) {
-                throw new BadRequestException("Trop de requêtes. Veuillez patienter quelques instants avant de réessayer.");
+                throw new BadRequestException("Too many requests. Please wait a few moments before trying again.");
             }
             if (e.getStatusCode().is5xxServerError()) {
-                throw new BadRequestException("Le service d'IA est temporairement indisponible. Veuillez réessayer plus tard.");
+                throw new BadRequestException("The AI service is temporarily unavailable. Please try again later.");
             }
-            throw new BadRequestException("Nous avons rencontré un problème lors de la génération de votre recette. Veuillez réessayer.");
+            throw new BadRequestException("We encountered an issue while generating your recipe. Please try again.");
         } catch (Exception e) {
             log.error("ScanTyped failed: {}", e.getMessage(), e);
-            throw new BadRequestException("Nous avons rencontré un problème lors de la génération de votre recette. Veuillez réessayer.");
+            throw new BadRequestException("We encountered an issue while generating your recipe. Please try again.");
         }
     }
 

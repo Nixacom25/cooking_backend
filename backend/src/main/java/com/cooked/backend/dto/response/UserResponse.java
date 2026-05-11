@@ -40,6 +40,7 @@ public class UserResponse {
     private String subscriptionType;
     private LocalDateTime subscriptionExpiresAt;
     private LocalDateTime createdAt;
+    private boolean suggestionsReady;
 
     public UserResponse() {}
 
@@ -110,4 +111,6 @@ public class UserResponse {
     public void setSubscriptionExpiresAt(LocalDateTime subscriptionExpiresAt) { this.subscriptionExpiresAt = subscriptionExpiresAt; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public boolean isSuggestionsReady() { return suggestionsReady; }
+    public void setSuggestionsReady(boolean suggestionsReady) { this.suggestionsReady = suggestionsReady; }
 }

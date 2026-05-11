@@ -51,14 +51,12 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         org.springframework.data.domain.Page<Object[]> findTopCreators(
                         org.springframework.data.domain.Pageable pageable);
 
-        @org.springframework.data.jpa.repository.Query("SELECT r, " +
-                        "(SELECT COUNT(f) FROM FavoriteRecipe f WHERE f.recipe = r) as usageCount " +
-                        "FROM Recipe r " +
+        @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r " +
                         "WHERE r.isPublic = true " +
                         "AND (:category IS NULL OR r.category = :category) " +
                         "AND (:cuisines IS NULL OR r.cuisine IN :cuisines) " +
                         "ORDER BY RANDOM()")
-        org.springframework.data.domain.Page<Object[]> findRandomPopularRecipes(
+        org.springframework.data.domain.Page<Recipe> findRandomPopularRecipes(
                         @org.springframework.data.repository.query.Param("category") String category,
                         @org.springframework.data.repository.query.Param("cuisines") List<String> cuisines,
                         org.springframework.data.domain.Pageable pageable);

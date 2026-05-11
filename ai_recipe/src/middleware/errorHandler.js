@@ -75,7 +75,7 @@ function errorHandler(err, req, res, _next) {
       code,
       message: isOperational
         ? err.message
-        : 'Une erreur inattendue est survenue. Veuillez réessayer plus tard.',
+        : 'An unexpected error occurred. Please try again later.',
     },
   });
 }

@@ -14,12 +14,10 @@ const parseTikTokMetaFromHtml = (html) => {
         const universalData = JSON.parse(universalMatch[1]);
         const scope = universalData?.__DEFAULT_SCOPE__;
         
-        // Check standard paths
         let item = scope?.["webapp.video-detail"]?.itemInfo?.itemStruct || 
                    scope?.["webapp.video-detail"]?.videoInfo?.video ||
                    scope?.["webapp.video-detail"]?.shareMeta;
                    
-        // Search all keys for itemStruct if not found
         if (!item && scope) {
             for (const key in scope) {
                 if (scope[key]?.itemInfo?.itemStruct) {
@@ -33,6 +31,21 @@ const parseTikTokMetaFromHtml = (html) => {
             return {
                 description: item.desc || item.title || "",
                 cover: item.video?.cover || item.thumbnailUrl || null,
+            };
+        }
+    } catch (e) {}
+  }
+
+  // Try __INITIAL_STATE__ (Newer TikTok layout)
+  const initialMatch = html.match(/<script id="__INITIAL_STATE__"[^>]*>([\s\S]*?)<\/script>/);
+  if (initialMatch?.[1]) {
+    try {
+        const initialData = JSON.parse(initialMatch[1]);
+        const item = initialData?.sharingMeta?.video || initialData?.seoProps?.metaParams;
+        if (item) {
+            return {
+                description: item.title || item.description || "",
+                cover: item.poster || null,
             };
         }
     } catch (e) {}
@@ -58,11 +71,12 @@ const parseTikTokMetaFromHtml = (html) => {
 
   // Final fallback: OG Tags
   const ogDescMatch = html.match(/<meta property="og:description" content="([^"]*)"/);
+  const ogTitleMatch = html.match(/<meta property="og:title" content="([^"]*)"/);
   const ogImageMatch = html.match(/<meta property="og:image" content="([^"]*)"/);
   
-  if (ogDescMatch) {
+  if (ogDescMatch || ogTitleMatch) {
       return {
-          description: ogDescMatch[1] || "",
+          description: (ogDescMatch ? ogDescMatch[1] : ogTitleMatch[1]) || "",
           cover: ogImageMatch ? ogImageMatch[1] : null,
       };
   }
@@ -77,6 +91,7 @@ const tiktokService = async (url) => {
 
   // Attempt 1: Fast extraction with axios (as in Recipie App)
   try {
+    console.log(`[TikTok] Attempting fast extraction for: ${url}`);
     const response = await axios.get(url, {
       headers: {
         "user-agent": TIKTOK_USER_AGENT,
@@ -88,17 +103,21 @@ const tiktokService = async (url) => {
     
     const meta = parseTikTokMetaFromHtml(response.data);
     if (meta && meta.description) {
+      console.log(`[TikTok] Fast extraction successful: ${meta.description.substring(0, 50)}...`);
       return {
         platform: "tiktok",
         description: meta.description,
         thumbnail: meta.cover,
       };
     }
+    console.log(`[TikTok] Fast extraction failed to find metadata.`);
   } catch (error) {
+    console.log(`[TikTok] Fast extraction error: ${error.message}`);
     // Silent fail, proceed to Playwright
   }
 
   // Attempt 2: Robust extraction with Playwright (Fallback)
+  console.log(`[TikTok] Attempting browser extraction for: ${url}`);
   let browser;
   try {
     browser = await chromium.launch({ 

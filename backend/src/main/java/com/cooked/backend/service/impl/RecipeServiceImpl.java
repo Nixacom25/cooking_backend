@@ -310,8 +310,8 @@ public class RecipeServiceImpl implements RecipeService {
         org.springframework.data.domain.Pageable limitedPageable = org.springframework.data.domain.PageRequest.of(0, 10);
 
         try {
-            return recipeRepository.findRandomPopularRecipes(category, preferredCuisines, limitedPageable)
-                    .map(r -> mapToResponse((Recipe) r[0], user));
+            return recipeRepository.findRandomPopularRecipes(category, (preferredCuisines != null && preferredCuisines.isEmpty()) ? null : preferredCuisines, limitedPageable)
+                    .map(recipe -> mapToResponse(recipe, user));
         } catch (Exception e) {
             System.err.println("Error fetching popular recipes: " + e.getMessage());
             return recipeRepository.findExploreRecipes(com.cooked.backend.entity.RecipeOrigin.EXPLORE, com.cooked.backend.entity.RecipeOrigin.SUGGESTED, null, category, limitedPageable)

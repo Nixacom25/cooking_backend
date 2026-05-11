@@ -81,13 +81,16 @@ public class UserInitializationServiceImpl implements UserInitializationService 
             activityLogService.logActivity(user, "Onboarding Complete", 
                 "Your account is ready! We've added some personalized suggestions and cookbooks for you to explore.");
 
+            user.setSuggestionsReady(true);
+            userRepository.save(user);
+
         } catch (Exception e) {
             log.error("Critical error during account initialization for ID {}: {}", userId, e.getMessage(), e);
         }
     }
 
     private void createDefaultCookbooks(User user) {
-        String[] defaultNames = {"Mes Créations", "À Tester"};
+        String[] defaultNames = {"My Creations", "To Try"};
         for (String name : defaultNames) {
             if (!cookbookRepository.existsByUserIdAndName(user.getId(), name)) {
                 Cookbook cb = Cookbook.builder()

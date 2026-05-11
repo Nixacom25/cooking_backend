@@ -205,6 +205,9 @@ public class User implements UserDetails {
     @Column(columnDefinition = "TEXT")
     private String onboardingFeedback;
 
+    @Builder.Default
+    private boolean suggestionsReady = false;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -275,6 +278,9 @@ public class User implements UserDetails {
     public void setOnboardingRating(Integer onboardingRating) { this.onboardingRating = onboardingRating; }
     public String getOnboardingFeedback() { return onboardingFeedback; }
     public void setOnboardingFeedback(String onboardingFeedback) { this.onboardingFeedback = onboardingFeedback; }
+
+    public boolean isSuggestionsReady() { return suggestionsReady; }
+    public void setSuggestionsReady(boolean suggestionsReady) { this.suggestionsReady = suggestionsReady; }
 
     public String getOtpCode() { return otpCode; }
     public void setOtpCode(String otpCode) { this.otpCode = otpCode; }
