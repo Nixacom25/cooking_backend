@@ -46,6 +46,7 @@ public class MarkhorAiServiceImpl implements AiService {
     private final ObjectMapper objectMapper;
     private final UserRepository userRepository;
     private final SubscriptionService subscriptionService;
+    private final com.cooked.backend.repository.RecipeRepository recipeRepository;
 
     private final com.cooked.backend.repository.RecipeDataRepository recipeDataRepository;
 
@@ -125,9 +126,59 @@ public class MarkhorAiServiceImpl implements AiService {
                 }
             }
         } catch (Exception e) {
-            log.error("Initial suggestions failed for user {}: {}. AI Base URL: {}", 
-                user.getEmail(), e.getMessage(), baseUrl);
-            log.info("Suggestions failure stack trace for debugging:", e);
+            log.error("Initial suggestions AI call failed for user {}: {}. Falling back to curated EXPLORE recipes.", 
+                user.getEmail(), e.getMessage());
+            
+            try {
+                // Fallback: Fetch 4 random EXPLORE recipes matching user cuisines if possible
+                List<String> preferredCuisines = user.getFavoriteCuisines() != null 
+                    ? Arrays.asList(user.getFavoriteCuisines().split(",\\s*"))
+                    : null;
+                
+                org.springframework.data.domain.Page<com.cooked.backend.entity.Recipe> exploreRecipes = 
+                    recipeRepository.findRandomPopularRecipes(null, preferredCuisines, org.springframework.data.domain.PageRequest.of(0, 4));
+                
+                if (exploreRecipes.isEmpty() && preferredCuisines != null) {
+                    // If no match for specific cuisines, get any popular recipes
+                    exploreRecipes = recipeRepository.findRandomPopularRecipes(null, null, org.springframework.data.domain.PageRequest.of(0, 4));
+                }
+
+                List<CreateRecipeRequest> fallbackRecipes = new ArrayList<>();
+                for (com.cooked.backend.entity.Recipe r : exploreRecipes.getContent()) {
+                    CreateRecipeRequest req = new CreateRecipeRequest();
+                    req.setName(r.getName());
+                    req.setImage(r.getImage());
+                    req.setCookTime(r.getCookTime());
+                    req.setPrepTime(r.getPrepTime());
+                    req.setKcal(r.getKcal());
+                    req.setServings(r.getServings());
+                    req.setCuisine(r.getCuisine());
+                    req.setCategory(r.getCategory());
+                    req.setTips(r.getTips());
+                    req.setOrigin("ONBOARDING");
+                    req.setSourceUrl(r.getSourceUrl());
+                    
+                    List<com.cooked.backend.dto.request.IngredientPayload> ingredients = new ArrayList<>();
+                    if (r.getRecipeIngredients() != null) {
+                        for (com.cooked.backend.entity.RecipeIngredient ri : r.getRecipeIngredients()) {
+                            com.cooked.backend.dto.request.IngredientPayload ip = new com.cooked.backend.dto.request.IngredientPayload();
+                            ip.setName(ri.getIngredient().getName());
+                            ip.setQuantity(ri.getQuantity());
+                            ip.setIcon(ri.getIngredient().getIcon());
+                            ingredients.add(ip);
+                        }
+                    }
+                    req.setIngredients(ingredients);
+                    req.setSteps(r.getSteps());
+                    req.setEquipment(r.getEquipment());
+                    fallbackRecipes.add(req);
+                }
+                
+                log.info("Returning {} fallback EXPLORE recipes for user {}", fallbackRecipes.size(), user.getEmail());
+                return fallbackRecipes;
+            } catch (Exception fallbackEx) {
+                log.error("Emergency fallback also failed for {}: {}", user.getEmail(), fallbackEx.getMessage());
+            }
         }
         return Collections.emptyList();
     }

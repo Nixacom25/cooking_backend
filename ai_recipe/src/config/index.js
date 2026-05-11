@@ -47,7 +47,7 @@ const config = {
      *  Returns base64 (response_format:'b64_json'), uploaded to Cloudinary for permanent URLs. */
     imageModel: process.env.OPENAI_IMAGE_MODEL || 'dall-e-3',
     /** Request timeout in milliseconds */
-    timeout: parseInt(process.env.OPENAI_TIMEOUT_MS || '45000', 10),
+    timeout: parseInt(process.env.OPENAI_TIMEOUT_MS || '90000', 10),
   },
 
   mongodb: {

@@ -419,6 +419,7 @@ ${servingsClause}
 
 IMPORTANT RULES:
 - ${poolClause}
+- If no ingredients are provided, generate the 4 most popular and appealing "crowd-pleaser" recipes that fit the user's cuisine preferences and dietary goals.
 - Be extremely precise and detailed in the "steps" and "equipment" lists.
 - Each step should be descriptive and professional.
 - List ALL necessary kitchen tools, no matter how basic.
@@ -506,8 +507,8 @@ async function generateRecipesFromIngredients(ingredients, userPreferences = {})
               {
                 role: 'user',
                 content: ingredients.length > 0 
-                  ? `Generate exactly 4 recipes I can cook using these available ingredients: ${ingredientList}`
-                  : `Generate exactly 4 trending and seasonal recipe suggestions that perfectly match my taste DNA, cuisine preferences, and cooking goals.`,
+                  ? `Generate exactly 4 distinct and creative recipes I can cook using these available ingredients: ${ingredientList}. Focus on maximizing the use of what I have while suggesting minimal pantry staples if needed.`
+                  : `Generate exactly 4 popular, mouth-watering, and seasonal recipe suggestions (1 Main, 1 Healthy, 1 Quick, 1 Chef's Special) that perfectly match my taste DNA, cuisine preferences, and cooking goals. Ensure variety in techniques and flavors.`,
               },
             ],
             max_completion_tokens: 4096,
