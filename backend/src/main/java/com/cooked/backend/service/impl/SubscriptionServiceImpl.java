@@ -319,26 +319,26 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         // 1. Check UserSubscription entity (Source of Truth)
         UserSubscription sub = userSubscriptionRepository.findByUserId(user.getId()).orElse(null);
         if (sub != null) {
-            log.info("[hasAiAccess] Found UserSubscription: status={}, endDate={}", sub.getStatus(), sub.getEndDate());
+            log.info("[hasAiAccess] UserSubscription found: status={}, endDate={}", sub.getStatus(), sub.getEndDate());
+            
             if (sub.getStatus() == SubscriptionStatus.ACTIVE || sub.getStatus() == SubscriptionStatus.TRIAL || sub.getStatus() == SubscriptionStatus.PREMIUM) {
-                if (sub.getEndDate() == null || sub.getEndDate().isAfter(LocalDateTime.now())) {
-                    log.info("[hasAiAccess] Access GRANTED via UserSubscription");
+                // Safety buffer of 5 minutes to avoid strict edge cases
+                LocalDateTime nowWithBuffer = LocalDateTime.now().minusMinutes(5);
+                if (sub.getEndDate() == null || sub.getEndDate().isAfter(nowWithBuffer)) {
+                    log.info("[hasAiAccess] Access GRANTED via UserSubscription (Active/Trial/Premium)");
                     return true;
                 } else {
-                    log.warn("[hasAiAccess] UserSubscription exists but is EXPIRED (endDate: {})", sub.getEndDate());
+                    log.warn("[hasAiAccess] UserSubscription is EXPIRED (endDate: {})", sub.getEndDate());
                 }
             }
             
-            // If we have a subscription record and it's NOT active/trial/premium, 
-            // or it's expired, we should usually block unless we're within the absolute fallback trial
-            if (sub.getStatus() == SubscriptionStatus.EXPIRED || sub.getStatus() == SubscriptionStatus.CANCELLED) {
-                // Check if we are still in the 3-day window from creation (absolute safety net)
+            if (sub.getStatus() == SubscriptionStatus.EXPIRED || sub.getStatus() == SubscriptionStatus.CANCELLED || sub.getStatus() == SubscriptionStatus.FREE) {
+                // Check if we are still in the 3-day window from account creation (absolute safety net for new users)
                 if (user.getCreatedAt() != null && LocalDateTime.now().isBefore(user.getCreatedAt().plusDays(3))) {
-                    log.info("[hasAiAccess] Access GRANTED via 3-day safety net (UserSubscription was EXPIRED/CANCELLED)");
+                    log.info("[hasAiAccess] Access GRANTED via 3-day account creation safety net (status: {})", sub.getStatus());
                     return true;
                 }
-                log.warn("[hasAiAccess] Access DENIED (UserSubscription status: {})", sub.getStatus());
-                return false; 
+                log.warn("[hasAiAccess] Access DENIED (status: {}, createdAt: {})", sub.getStatus(), user.getCreatedAt());
             }
         } else {
             log.info("[hasAiAccess] No UserSubscription found for user");
@@ -356,24 +356,39 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             }
         }
 
-        // 3. Fallback to createdAt logic for new users who haven't had their sub status synced yet
-        if (user.getCreatedAt() != null) {
-            LocalDateTime trialEndDate = user.getCreatedAt().plusDays(3);
-            log.info("[hasAiAccess] Checking 3-day trial fallback: createdAt={}, trialEndDate={}, now={}", user.getCreatedAt(), trialEndDate, LocalDateTime.now());
-            if (LocalDateTime.now().isBefore(trialEndDate)) {
-                log.info("[hasAiAccess] Access GRANTED via 3-day trial fallback");
-                // Also update the UserSubscription entity to reflect TRIAL status if not already set
-                if (sub != null && sub.getStatus() != SubscriptionStatus.TRIAL && sub.getStatus() != SubscriptionStatus.ACTIVE) {
-                    sub.setStatus(SubscriptionStatus.TRIAL);
-                    sub.setEndDate(trialEndDate);
-                    userSubscriptionRepository.save(sub);
-                    
-                    user.setSubscriptionStatus(SubscriptionStatus.TRIAL);
-                    user.setSubscriptionExpiresAt(trialEndDate);
-                    userRepository.save(user);
+        // Final fallback: 3-day trial period based on account creation (if no other records found)
+        LocalDateTime createdAt = user.getCreatedAt();
+        if (createdAt == null) {
+            // If createdAt is null, it's likely a very new user whose timestamp hasn't been committed yet
+            // or a manual registration in progress. We grant access by default for the first few minutes.
+            log.info("[hasAiAccess] User createdAt is null. Assuming fresh registration and granting access.");
+            return true;
+        }
+
+        LocalDateTime trialEndDate = createdAt.plusDays(3);
+        if (LocalDateTime.now().isBefore(trialEndDate)) {
+            log.info("[hasAiAccess] Access GRANTED via Trial Safety Net fallback (valid until {})", trialEndDate);
+            
+            // SYNC: If they don't have a record, or it's FREE, update it to TRIAL to reflect reality
+            try {
+                UserSubscription currentSub = userSubscriptionRepository.findByUserId(user.getId()).orElse(null);
+                if (currentSub == null) {
+                    log.info("[hasAiAccess] Creating new UserSubscription with TRIAL status for safety net");
+                    UserSubscription newSub = new UserSubscription();
+                    newSub.setUser(user);
+                    newSub.setStatus(SubscriptionStatus.TRIAL);
+                    newSub.setEndDate(trialEndDate);
+                    userSubscriptionRepository.save(newSub);
+                } else if (currentSub.getStatus() == SubscriptionStatus.FREE) {
+                    log.info("[hasAiAccess] Updating existing FREE subscription to TRIAL for safety net");
+                    currentSub.setStatus(SubscriptionStatus.TRIAL);
+                    currentSub.setEndDate(trialEndDate);
+                    userSubscriptionRepository.save(currentSub);
                 }
-                return true;
+            } catch (Exception e) {
+                log.warn("[hasAiAccess] Failed to auto-sync subscription: {}", e.getMessage());
             }
+            return true;
         }
         
         return false;

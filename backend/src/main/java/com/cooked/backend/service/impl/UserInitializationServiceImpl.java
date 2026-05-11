@@ -64,7 +64,7 @@ public class UserInitializationServiceImpl implements UserInitializationService 
                 List<CreateRecipeRequest> initialRecipes = aiService.generateInitialRecipes(user, recipesToGenerate);
 
                 if (initialRecipes != null && !initialRecipes.isEmpty()) {
-                    LocalDateTime expiration = LocalDateTime.now().plusDays(7); 
+                    LocalDateTime expiration = LocalDateTime.now().plusDays(3); 
                     for (CreateRecipeRequest req : initialRecipes) {
                         try {
                             saveSuggestedRecipeForUser(user, req, expiration);

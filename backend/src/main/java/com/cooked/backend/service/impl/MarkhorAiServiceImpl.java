@@ -11,6 +11,7 @@ import com.cooked.backend.service.AiService;
 import com.cooked.backend.service.SubscriptionService;
 import com.cooked.backend.exception.PaymentRequiredException;
 import com.cooked.backend.exception.ResourceNotFoundException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -104,38 +105,29 @@ public class MarkhorAiServiceImpl implements AiService {
                 )
             );
 
-            ResponseEntity<ScanResponse> response = restTemplate.postForEntity(baseUrl + "/api/recipes/suggest", body, ScanResponse.class);
-            log.info("AI Service called for {}. Status: {}, Recipes found: {}", 
-                user.getEmail(), response.getStatusCode(), 
-                response.getBody() != null && response.getBody().getRecipes() != null ? response.getBody().getRecipes().size() : 0);
+            ResponseEntity<String> response = restTemplate.postForEntity(baseUrl + "/api/recipes/suggest", body, String.class);
+            log.info("AI Service suggest call for {}. Status: {}", user.getEmail(), response.getStatusCode());
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                List<CreateRecipeRequest> recipes = response.getBody().getRecipes();
-                for (CreateRecipeRequest r : recipes) {
-                    r.setOrigin("ONBOARDING");
+                JsonNode root = objectMapper.readTree(response.getBody());
+                JsonNode recipesNode = root.path("recipes");
+                
+                if (recipesNode.isArray()) {
+                    List<CreateRecipeRequest> recipes = objectMapper.convertValue(
+                        recipesNode, 
+                        new com.fasterxml.jackson.core.type.TypeReference<List<CreateRecipeRequest>>() {}
+                    );
+                    for (CreateRecipeRequest r : recipes) {
+                        r.setOrigin("ONBOARDING");
+                    }
+                    log.info("Found {} initial suggestions for {}", recipes.size(), user.getEmail());
+                    return recipes;
                 }
-                return recipes;
             }
         } catch (Exception e) {
-            log.error("Initial suggestions failed: {}. Falling back to local data pool.", e.getMessage());
-            
-            // Fallback: return a subset of the pool as suggested recipes
-            try {
-                List<com.cooked.backend.entity.RecipeData> pool = recipeDataRepository.findRandomRecipes(count);
-                List<CreateRecipeRequest> fallbackRecipes = new ArrayList<>();
-                for (com.cooked.backend.entity.RecipeData data : pool) {
-                    CreateRecipeRequest req = new CreateRecipeRequest();
-                    req.setName(data.getName());
-                    req.setImage(data.getImageUrl());
-                    req.setOrigin("ONBOARDING_FALLBACK");
-                    req.setCookTime(15 + new Random().nextInt(15)); // Random reasonable cook time
-                    req.setKcal(300 + new Random().nextInt(300)); // Random reasonable kcal
-                    fallbackRecipes.add(req);
-                }
-                return fallbackRecipes;
-            } catch (Exception fallbackEx) {
-                log.error("Fallback also failed: {}", fallbackEx.getMessage());
-            }
+            log.error("Initial suggestions failed for user {}: {}. AI Base URL: {}", 
+                user.getEmail(), e.getMessage(), baseUrl);
+            log.info("Suggestions failure stack trace for debugging:", e);
         }
         return Collections.emptyList();
     }
@@ -205,6 +197,12 @@ public class MarkhorAiServiceImpl implements AiService {
             throw new BadRequestException("Unable to extract recipe from this link");
         } catch (BadRequestException | PaymentRequiredException e) {
             throw e;
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            log.error("Extraction failed with status {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            if (e.getStatusCode().value() == 429) {
+                throw new BadRequestException("The AI extraction service is currently busy. Please try again in a few seconds or scan a screenshot instead.");
+            }
+            throw new BadRequestException("We couldn't extract the recipe from this link. Please try another one.");
         } catch (Exception e) {
             log.error("Extraction failed: {}", e.getMessage());
             throw new BadRequestException("We couldn't extract the recipe from this link. Please try another one.");
@@ -345,10 +343,16 @@ public class MarkhorAiServiceImpl implements AiService {
             throw e;
         } catch (org.springframework.web.client.HttpStatusCodeException e) {
             log.error("ScanTyped failed with status {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new BadRequestException("We encountered an issue while generating your recipe. Please try again.");
+            if (e.getStatusCode().value() == 429) {
+                throw new BadRequestException("Trop de requêtes. Veuillez patienter quelques instants avant de réessayer.");
+            }
+            if (e.getStatusCode().is5xxServerError()) {
+                throw new BadRequestException("Le service d'IA est temporairement indisponible. Veuillez réessayer plus tard.");
+            }
+            throw new BadRequestException("Nous avons rencontré un problème lors de la génération de votre recette. Veuillez réessayer.");
         } catch (Exception e) {
-            log.error("ScanTyped failed: {}", e.getMessage());
-            throw new BadRequestException("We encountered an issue while generating your recipe. Please try again.");
+            log.error("ScanTyped failed: {}", e.getMessage(), e);
+            throw new BadRequestException("Nous avons rencontré un problème lors de la génération de votre recette. Veuillez réessayer.");
         }
     }
 
