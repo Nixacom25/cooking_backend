@@ -205,6 +205,7 @@ public class User implements UserDetails {
     @Column(columnDefinition = "TEXT")
     private String onboardingFeedback;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
     private boolean suggestionsReady = false;
 

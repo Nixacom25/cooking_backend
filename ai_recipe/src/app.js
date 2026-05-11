@@ -82,7 +82,7 @@ function createApp() {
   // ------------------------------------------------------------------
   // Health check (unauthenticated, for load balancers / uptime monitors)
   // ------------------------------------------------------------------
-  app.get('/health', apiRateLimiter, (_req, res) => {
+  app.get('/health', (_req, res) => {
     res.status(200).json({
       status: 'ok',
       env: config.env,
@@ -93,7 +93,7 @@ function createApp() {
   // ------------------------------------------------------------------
   // Root health check (for Render default ping)
   // ------------------------------------------------------------------
-  app.get('/', apiRateLimiter, (_req, res) => {
+  app.get('/', (_req, res) => {
     res.status(200).json({ status: 'ok', service: 'ai-recipe-service' });
   });
 

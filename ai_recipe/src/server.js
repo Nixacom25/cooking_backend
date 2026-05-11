@@ -4,67 +4,9 @@
 // Force reliable public DNS before any network calls are made.
 require('dns').setServers(['8.8.8.8', '8.8.4.4']);
 
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-
 const { createApp } = require('./app');
 const config = require('./config/index');
 const logger = require('./utils/logger');
-
-const PID_FILE = path.join(os.tmpdir(), 'ai-recipe-api.pid');
-
-function isProcessAlive(pid) {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (_err) {
-    return false;
-  }
-}
-
-function terminatePreviousInstance() {
-  try {
-    if (!fs.existsSync(PID_FILE)) return;
-
-    const previousPid = Number.parseInt(fs.readFileSync(PID_FILE, 'utf8').trim(), 10);
-    if (!Number.isInteger(previousPid) || previousPid <= 0 || previousPid === process.pid) return;
-    if (!isProcessAlive(previousPid)) return;
-
-    try {
-      if (process.platform === 'win32') {
-        require('child_process').execFileSync('taskkill', ['/PID', String(previousPid), '/T', '/F'], {
-          stdio: 'ignore',
-        });
-      } else {
-        process.kill(previousPid, 'SIGTERM');
-      }
-      logger.warn(`Stopped previous app instance on port ${config.port} (pid ${previousPid})`);
-    } catch (err) {
-      logger.warn(`Could not stop previous app instance (pid ${previousPid}): ${err.message}`);
-    }
-  } catch (err) {
-    logger.warn(`PID handoff check failed: ${err.message}`);
-  }
-}
-
-function writeCurrentPid() {
-  try {
-    fs.writeFileSync(PID_FILE, String(process.pid), 'utf8');
-  } catch (err) {
-    logger.warn(`Could not write PID file: ${err.message}`);
-  }
-}
-
-function removePidFile() {
-  try {
-    if (fs.existsSync(PID_FILE)) {
-      fs.unlinkSync(PID_FILE);
-    }
-  } catch (err) {
-    logger.warn(`Could not remove PID file: ${err.message}`);
-  }
-}
 
 /**
  * Application entry point.
@@ -82,14 +24,11 @@ function removePidFile() {
  */
 async function start() {
   try {
-    terminatePreviousInstance();
-
     // 1. Create and configure Express app
     const app = createApp();
 
     // 4. Start HTTP server
     const server = app.listen(config.port, () => {
-      writeCurrentPid();
       logger.info(
         `🚀 AI Recipe API server running on port ${config.port} [${config.env}]`
       );
@@ -125,7 +64,6 @@ async function start() {
       server.close(async () => {
         logger.info('HTTP server closed');
         try {
-          removePidFile();
           logger.info('Exiting');
           process.exit(0);
         } catch (err) {
@@ -153,7 +91,6 @@ async function start() {
 
     process.on('uncaughtException', (err) => {
       logger.error('Uncaught exception:', err);
-      removePidFile();
       process.exit(1);
     });
 
