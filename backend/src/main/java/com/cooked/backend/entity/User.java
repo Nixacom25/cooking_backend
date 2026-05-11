@@ -205,7 +205,8 @@ public class User implements UserDetails {
     @Column(columnDefinition = "TEXT")
     private String onboardingFeedback;
 
-    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Column(nullable = false)
+    @org.hibernate.annotations.ColumnDefault("false")
     @Builder.Default
     private boolean suggestionsReady = false;
 
