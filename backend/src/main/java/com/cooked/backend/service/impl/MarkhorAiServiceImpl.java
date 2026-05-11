@@ -240,8 +240,8 @@ public class MarkhorAiServiceImpl implements AiService {
             throw e;
         } catch (Exception e) {
             log.error("Generation failed: {}", e.getMessage());
-            return Collections.emptyList();
         }
+        return Collections.emptyList();
     }
 
     @Override
@@ -335,11 +335,11 @@ public class MarkhorAiServiceImpl implements AiService {
                 return res;
             }
             throw new BadRequestException("Failed to generate recipes: Invalid response from AI service");
-        } catch (BadRequestException e) {
+        } catch (BadRequestException | PaymentRequiredException e) {
             throw e;
         } catch (Exception e) {
             log.error("ScanTyped failed: {}", e.getMessage());
-            throw new BadRequestException("Failed to generate recipes from ingredients: " + e.getMessage());
+            throw new BadRequestException("We encountered an issue while generating your recipe. Please try again.");
         }
     }
 
