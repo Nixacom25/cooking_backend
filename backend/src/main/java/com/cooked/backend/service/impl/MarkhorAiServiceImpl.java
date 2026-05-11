@@ -283,9 +283,15 @@ public class MarkhorAiServiceImpl implements AiService {
             throw new BadRequestException("Image analysis failed: Invalid response from AI service");
         } catch (BadRequestException | PaymentRequiredException e) {
             throw e;
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            log.error("Scan failed with status {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            if (e.getStatusCode().value() == 422) {
+                throw new BadRequestException("We couldn't detect any ingredients in your photo. Try taking a clearer picture with better lighting.");
+            }
+            throw new BadRequestException("The recipe scan service is currently busy or unavailable. Please try again later.");
         } catch (Exception e) {
             log.error("Scan failed: {}", e.getMessage());
-            throw new BadRequestException("The recipe scan service is currently busy or unavailable. Please try again in a few moments.");
+            throw new BadRequestException("The recipe scan service is currently unavailable. Please try again in a few moments.");
         }
     }
 
@@ -337,6 +343,9 @@ public class MarkhorAiServiceImpl implements AiService {
             throw new BadRequestException("Failed to generate recipes: Invalid response from AI service");
         } catch (BadRequestException | PaymentRequiredException e) {
             throw e;
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            log.error("ScanTyped failed with status {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new BadRequestException("We encountered an issue while generating your recipe. Please try again.");
         } catch (Exception e) {
             log.error("ScanTyped failed: {}", e.getMessage());
             throw new BadRequestException("We encountered an issue while generating your recipe. Please try again.");
@@ -376,6 +385,12 @@ public class MarkhorAiServiceImpl implements AiService {
             throw new BadRequestException("Ingredient detection failed: Invalid response from AI service");
         } catch (BadRequestException | PaymentRequiredException e) {
             throw e;
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            log.error("Detection failed with status {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            if (e.getStatusCode().value() == 422) {
+                throw new BadRequestException("We couldn't identify ingredients in this photo. Please try a clearer shot.");
+            }
+            throw new BadRequestException("Ingredient detection is currently unavailable. Please try again.");
         } catch (Exception e) {
             log.error("Detection failed: {}", e.getMessage());
             throw new BadRequestException("We encountered an issue while detecting your ingredients. Please try again.");

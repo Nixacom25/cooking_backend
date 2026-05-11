@@ -59,10 +59,12 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = true)
+    @Builder.Default
     private SubscriptionStatus subscriptionStatus = SubscriptionStatus.FREE;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = true)
+    @Builder.Default
     private SubscriptionType subscriptionType = SubscriptionType.NONE;
 
     private LocalDateTime subscriptionExpiresAt;
