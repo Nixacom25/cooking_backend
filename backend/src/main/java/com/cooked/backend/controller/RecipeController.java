@@ -106,6 +106,12 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.delete(id, auth.getName()));
     }
 
+    @Operation(summary = "Get personalized home suggestions")
+    @GetMapping("/suggested")
+    public ResponseEntity<List<RecipeResponse>> getSuggestedRecipes(Authentication auth) {
+        return ResponseEntity.ok(recipeService.getHomeSuggestions(auth.getName()));
+    }
+
     @Operation(summary = "Explore public recipes")
     @GetMapping("/explore")
     public ResponseEntity<org.springframework.data.domain.Page<RecipeResponse>> getExploreRecipes(

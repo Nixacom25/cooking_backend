@@ -91,6 +91,17 @@ function createApp() {
   });
 
   // ------------------------------------------------------------------
+  // Root health check (for Render default ping)
+  // ------------------------------------------------------------------
+  app.get('/', apiRateLimiter, (_req, res) => {
+    res.status(200).json({ status: 'ok', service: 'ai-recipe-service' });
+  });
+
+  app.head('/', (_req, res) => {
+    res.status(200).end();
+  });
+
+  // ------------------------------------------------------------------
   // API routes
   // (aiEndpointLimiter is securely applied directly inside these modules)
   // ------------------------------------------------------------------

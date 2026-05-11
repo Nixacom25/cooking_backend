@@ -220,10 +220,31 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     public Page<RecipeResponse> getExploreRecipes(String cuisine, String category, Pageable pageable) {
-        // We now include both public EXPLORE recipes AND the user's own SUGGESTED recipes if they exist
-        // This ensures new users see their AI-generated content in the feed.
-        return recipeRepository.findExploreRecipes(RecipeOrigin.EXPLORE, RecipeOrigin.SUGGESTED, cuisine, category, pageable)
+        return recipeRepository.findExploreRecipes(RecipeOrigin.EXPLORE, RecipeOrigin.EXPLORE, cuisine, category, pageable)
                 .map(recipe -> mapToResponse(recipe, null));
+    }
+
+    @Override
+    public List<RecipeResponse> getHomeSuggestions(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Optional<Recipe> oldestPersonalRecipe = recipeRepository.findFirstByUserIdAndOriginNotInOrderByCreatedAtAsc(
+                user.getId(), 
+                List.of(RecipeOrigin.SUGGESTED, RecipeOrigin.EXPLORE)
+        );
+
+        if (oldestPersonalRecipe.isPresent()) {
+            java.time.LocalDateTime createdAt = oldestPersonalRecipe.get().getCreatedAt();
+            if (createdAt.plusDays(3).isBefore(java.time.LocalDateTime.now())) {
+                return List.of();
+            }
+        }
+
+        return recipeRepository.findAllByUserIdAndOriginOrderByCreatedAtDesc(user.getId(), RecipeOrigin.SUGGESTED)
+                .stream()
+                .map(recipe -> mapToResponse(recipe, null))
+                .toList();
     }
 
     @Override

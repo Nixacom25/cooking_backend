@@ -317,13 +317,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         // 1. Check UserSubscription entity (Source of Truth)
         UserSubscription sub = userSubscriptionRepository.findByUserId(user.getId()).orElse(null);
         if (sub != null) {
-            if (sub.getStatus() == SubscriptionStatus.ACTIVE || sub.getStatus() == SubscriptionStatus.TRIAL) {
+            if (sub.getStatus() == SubscriptionStatus.ACTIVE || sub.getStatus() == SubscriptionStatus.TRIAL || sub.getStatus() == SubscriptionStatus.PREMIUM) {
                 if (sub.getEndDate() == null || sub.getEndDate().isAfter(LocalDateTime.now())) {
                     return true;
                 }
             }
             
-            // If we have a subscription record and it's NOT active/trial, 
+            // If we have a subscription record and it's NOT active/trial/premium, 
             // or it's expired, we should usually block unless we're within the absolute fallback trial
             if (sub.getStatus() == SubscriptionStatus.EXPIRED || sub.getStatus() == SubscriptionStatus.CANCELLED) {
                 // Check if we are still in the 3-day window from creation (absolute safety net)
@@ -336,9 +336,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         // 2. Check User entity fields (Cached/Quick Access) - only if no subscription record or status is unknown
         if (user.getSubscriptionStatus() == SubscriptionStatus.ACTIVE || 
-            user.getSubscriptionStatus() == SubscriptionStatus.TRIAL) {
+            user.getSubscriptionStatus() == SubscriptionStatus.TRIAL ||
+            user.getSubscriptionStatus() == SubscriptionStatus.PREMIUM) {
             
-            if (user.getSubscriptionExpiresAt() != null && user.getSubscriptionExpiresAt().isAfter(LocalDateTime.now())) {
+            if (user.getSubscriptionExpiresAt() == null || user.getSubscriptionExpiresAt().isAfter(LocalDateTime.now())) {
                 return true;
             }
         }

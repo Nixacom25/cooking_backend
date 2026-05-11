@@ -42,6 +42,8 @@ public interface RecipeService {
 
         String getShareLink(UUID id, String userEmail);
         
+        List<RecipeResponse> getHomeSuggestions(String userEmail);
+        
         Map<String, Long> getExploreCuisines();
         
         Map<String, Long> getExploreCategories();

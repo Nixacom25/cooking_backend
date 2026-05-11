@@ -19,6 +19,9 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
 
         List<Recipe> findAllByUserId(UUID userId);
         List<Recipe> findAllByUserIdAndOriginNot(UUID userId, com.cooked.backend.entity.RecipeOrigin origin);
+        
+        Optional<Recipe> findFirstByUserIdAndOriginNotInOrderByCreatedAtAsc(UUID userId, List<com.cooked.backend.entity.RecipeOrigin> origins);
+        List<Recipe> findAllByUserIdAndOriginOrderByCreatedAtDesc(UUID userId, com.cooked.backend.entity.RecipeOrigin origin);
 
         @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.isPublic = true " +
                         "AND (r.origin = :origin1 OR r.origin = :origin2) " +
