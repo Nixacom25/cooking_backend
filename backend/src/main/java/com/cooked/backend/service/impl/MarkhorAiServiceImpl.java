@@ -50,8 +50,18 @@ public class MarkhorAiServiceImpl implements AiService {
 
     private final com.cooked.backend.repository.RecipeDataRepository recipeDataRepository;
 
-    @Value("${AI_API_BASE_URL:https://recipe.markhorsystems.com}")
+    @Value("${ai.api.base-url:https://recipe.markhorsystems.com}")
     private String baseUrl;
+
+    @Value("${ai.internal.secret:cooked_internal_bypass_secret_2024}")
+    private String internalSecret;
+
+    private HttpHeaders getInternalHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Internal-Secret", internalSecret);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
+    }
 
     @Override
     public List<Map<String, String>> searchWeb(String query, String email) {
@@ -106,7 +116,8 @@ public class MarkhorAiServiceImpl implements AiService {
                 )
             );
 
-            ResponseEntity<String> response = restTemplate.postForEntity(baseUrl + "/api/recipes/suggest", body, String.class);
+            HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, getInternalHeaders());
+            ResponseEntity<String> response = restTemplate.postForEntity(baseUrl + "/api/recipes/suggest", requestEntity, String.class);
             log.info("AI Service suggest call for {}. Status: {}", user.getEmail(), response.getStatusCode());
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
@@ -186,7 +197,8 @@ public class MarkhorAiServiceImpl implements AiService {
     @Override
     public List<String> generateTrendingDishes() {
         try {
-            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(baseUrl + "/api/recipes/trending", HttpMethod.GET, null, new ParameterizedTypeReference<Map<String, Object>>() {});
+            HttpEntity<Void> requestEntity = new HttpEntity<>(getInternalHeaders());
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(baseUrl + "/api/recipes/trending", HttpMethod.GET, requestEntity, new ParameterizedTypeReference<Map<String, Object>>() {});
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 return (List<String>) response.getBody().get("trending");
             }
@@ -203,7 +215,8 @@ public class MarkhorAiServiceImpl implements AiService {
         verifyAiAccess(user);
         try {
             Map<String, String> body = Map.of("url", url);
-            ResponseEntity<Map<String, Object>> response = restTemplate.postForEntity(baseUrl + "/api/extract", body, (Class<Map<String, Object>>)(Class<?>)Map.class);
+            HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(body, getInternalHeaders());
+            ResponseEntity<Map<String, Object>> response = restTemplate.postForEntity(baseUrl + "/api/extract", requestEntity, (Class<Map<String, Object>>)(Class<?>)Map.class);
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> data = (Map<String, Object>) response.getBody().get("data");
@@ -279,7 +292,8 @@ public class MarkhorAiServiceImpl implements AiService {
             body.put("ingredients", request.getIngredients());
             body.put("user_preferences", prefs);
 
-            ResponseEntity<ScanResponse> response = restTemplate.postForEntity(baseUrl + "/api/recipes/generate", body, ScanResponse.class);
+            HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, getInternalHeaders());
+            ResponseEntity<ScanResponse> response = restTemplate.postForEntity(baseUrl + "/api/recipes/generate", requestEntity, ScanResponse.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 List<CreateRecipeRequest> recipes = response.getBody().getRecipes();
                 for (CreateRecipeRequest r : recipes) r.setOrigin("MANUAL");
@@ -313,7 +327,7 @@ public class MarkhorAiServiceImpl implements AiService {
             
             body.add("user_preferences", objectMapper.writeValueAsString(prefs));
 
-            HttpHeaders headers = new HttpHeaders();
+            HttpHeaders headers = getInternalHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
@@ -363,7 +377,8 @@ public class MarkhorAiServiceImpl implements AiService {
             body.put("ingredients", ingredients);
             body.put("user_preferences", prefs);
 
-            ResponseEntity<ScanResponse> response = restTemplate.postForEntity(baseUrl + "/api/recipes/generate", body, ScanResponse.class);
+            HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, getInternalHeaders());
+            ResponseEntity<ScanResponse> response = restTemplate.postForEntity(baseUrl + "/api/recipes/generate", requestEntity, ScanResponse.class);
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 ScanResponse res = response.getBody();
@@ -423,7 +438,7 @@ public class MarkhorAiServiceImpl implements AiService {
             
             body.add("user_preferences", objectMapper.writeValueAsString(prefs));
 
-            HttpHeaders headers = new HttpHeaders();
+            HttpHeaders headers = getInternalHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);

@@ -35,6 +35,7 @@ if (process.env.NODE_ENV !== 'test') {
 const config = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT, 10) || 3000,
+  internalSecret: process.env.INTERNAL_API_SECRET || 'cooked_internal_bypass_secret_2024',
   httpTimeoutMs: parseInt(process.env.HTTP_TIMEOUT_MS || '90000', 10),
 
   openai: {

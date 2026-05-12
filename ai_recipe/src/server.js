@@ -1,12 +1,18 @@
 'use strict';
 
-// Node.js v24 on Windows can incorrectly resolve DNS via 127.0.0.1 (c-ares bug).
 // Force reliable public DNS before any network calls are made.
-require('dns').setServers(['8.8.8.8', '8.8.4.4']);
+// Wrapped in try-catch to prevent startup crashes in restrictive environments.
+try {
+  require('dns').setServers(['8.8.8.8', '8.8.4.4']);
+} catch (err) {
+  console.warn('DNS server configuration failed, using system defaults:', err.message);
+}
 
 const { createApp } = require('./app');
 const config = require('./config/index');
 const logger = require('./utils/logger');
+
+console.log('--- AI Recipe API Starting ---');
 
 /**
  * Application entry point.

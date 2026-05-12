@@ -23,6 +23,10 @@ const apiRateLimiter = rateLimit({
       },
     });
   },
+  skip(req) {
+    // Bypass rate limiting for internal calls from the backend
+    return req.headers['x-internal-secret'] === config.internalSecret;
+  },
 });
 
 /**
@@ -44,6 +48,10 @@ const aiEndpointLimiter = rateLimit({
         message: 'AI endpoint rate limit exceeded. Please wait before making more requests.',
       },
     });
+  },
+  skip(req) {
+    // Bypass rate limiting for internal calls from the backend
+    return req.headers['x-internal-secret'] === config.internalSecret;
   },
 });
 
