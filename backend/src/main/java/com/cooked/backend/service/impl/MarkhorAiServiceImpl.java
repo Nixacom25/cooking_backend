@@ -77,34 +77,57 @@ public class MarkhorAiServiceImpl implements AiService {
             try {
                 return performDuckDuckGoSearch(query);
             } catch (Exception e2) {
-                log.warn("DuckDuckGo search failed, trying Bing: {}", e2.getMessage());
+                log.warn("DuckDuckGo search failed, trying Qwant Lite: {}", e2.getMessage());
                 try {
-                    return performBingSearch(query);
+                    return performQwantLiteSearch(query);
                 } catch (Exception e3) {
-                    log.error("All search engines failed on Render: {}", e3.getMessage());
-                    return Collections.emptyList();
+                    log.warn("Qwant search failed, trying Mojeek: {}", e3.getMessage());
+                    try {
+                        return performMojeekSearch(query);
+                    } catch (Exception e4) {
+                        log.warn("Mojeek search failed, trying Bing: {}", e4.getMessage());
+                        try {
+                            return performBingSearch(query);
+                        } catch (Exception e5) {
+                            log.error("All search engines failed on Render: {}", e5.getMessage());
+                            return Collections.emptyList();
+                        }
+                    }
                 }
             }
         }
     }
 
+    private Map<String, String> getHumanHeaders() {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
+        headers.put("Accept-Language", "en-US,en;q=0.9,fr;q=0.8");
+        headers.put("Cache-Control", "max-age=0");
+        headers.put("Sec-Ch-Ua", "\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\"");
+        headers.put("Sec-Ch-Ua-Mobile", "?0");
+        headers.put("Sec-Ch-Ua-Platform", "\"Windows\"");
+        headers.put("Sec-Fetch-Dest", "document");
+        headers.put("Sec-Fetch-Mode", "navigate");
+        headers.put("Sec-Fetch-Site", "none");
+        headers.put("Sec-Fetch-User", "?1");
+        headers.put("Upgrade-Insecure-Requests", "1");
+        return headers;
+    }
+
     private List<Map<String, String>> performGoogleSearch(String query) throws Exception {
         log.info("Google Search for: {}", query);
         String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
-        // gbv=1 (no JS), hl=en (force English to avoid region-specific redirects)
         String url = "https://www.google.com/search?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8) + "&gbv=1&hl=en";
 
         Document doc = Jsoup.connect(url)
                 .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-                .header("Accept-Language", "en-US,en;q=0.9")
-                // SOCS cookie bypasses the "Before you continue" consent page
+                .headers(getHumanHeaders())
                 .cookie("SOCS", "CAESHAgBEhJnd3NfMjAyNDA1MDgtMF9SQzEaAmVuIAEaBgiA_LmwBg")
                 .timeout(10000)
                 .get();
 
-        // Check if we still hit a consent page (title would contain "Before you continue")
         if (doc.title().contains("Before you continue") || !doc.select("form[action*='consent']").isEmpty()) {
-            log.warn("Google consent page detected even with cookie, attempting form bypass...");
+            log.warn("Google consent page detected, attempting bypass...");
             Element form = doc.select("form").first();
             if (form != null) {
                 String action = form.absUrl("action");
@@ -112,63 +135,39 @@ public class MarkhorAiServiceImpl implements AiService {
                 for (Element input : form.select("input[type=hidden]")) {
                     data.put(input.attr("name"), input.attr("value"));
                 }
-                // The 'Accept all' button often has this name/value
                 data.put("set_eom", "true"); 
-                
-                doc = Jsoup.connect(action)
-                        .data(data)
-                        .method(org.jsoup.Connection.Method.POST)
+                doc = Jsoup.connect(action).data(data).method(org.jsoup.Connection.Method.POST)
                         .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-                        .header("Accept-Language", "en-US,en;q=0.9")
-                        .timeout(10000)
-                        .execute()
-                        .parse();
+                        .headers(getHumanHeaders()).timeout(10000).execute().parse();
             }
         }
 
         List<Map<String, String>> results = new ArrayList<>();
-        // In gbv=1, results are in div.ZINbbc
         Elements items = doc.select("div.ZINbbc");
-
         for (Element item : items) {
             if (results.size() >= 10) break;
-            
-            // Link is usually inside an <a> that contains an <h3>
             Element a = item.selectFirst("a:has(h3)");
-            if (a == null) a = item.selectFirst("a"); // Fallback
-            
+            if (a == null) a = item.selectFirst("a");
             Element h3 = item.selectFirst("h3");
-            
             if (h3 != null && a != null) {
                 String rawUrl = a.attr("href");
                 String cleanUrl = rawUrl;
-                
-                // Google Lite links look like /url?q=https://...
                 if (rawUrl.startsWith("/url?q=")) {
                     try {
                         cleanUrl = java.net.URLDecoder.decode(rawUrl.split("url\\?q=")[1].split("&")[0], StandardCharsets.UTF_8);
-                    } catch (Exception e) {
-                        continue;
-                    }
+                    } catch (Exception e) { continue; }
                 }
-                
                 if (cleanUrl.startsWith("http") && !cleanUrl.contains("google.com/")) {
                     Map<String, String> res = new HashMap<>();
                     res.put("title", h3.text());
                     res.put("url", cleanUrl);
-                    
-                    // Snippet is usually the last div.BNeawe in the result block
                     Element snippet = item.select("div.BNeawe").last();
                     res.put("snippet", snippet != null ? snippet.text() : "");
                     results.add(res);
                 }
             }
         }
-        
-        if (results.isEmpty()) {
-            log.error("Google search returned no results. Page Title: {}", doc.title());
-            throw new Exception("Google returned no results");
-        }
+        if (results.isEmpty()) throw new Exception("Google returned no results");
         return results;
     }
 
@@ -179,51 +178,95 @@ public class MarkhorAiServiceImpl implements AiService {
 
         Document doc = Jsoup.connect(url)
                 .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-                .timeout(10000)
+                .headers(getHumanHeaders())
+                .timeout(8000)
                 .get();
 
         List<Map<String, String>> results = new ArrayList<>();
         Elements rows = doc.select("tr");
-
         for (int i = 0; i < rows.size(); i++) {
             if (results.size() >= 10) break;
             Element row = rows.get(i);
-            
-            // Link is usually in a.result-link
             Element a = row.selectFirst("a.result-link");
-            if (a == null) a = row.selectFirst("a[href^='http'], a[href^='//']"); // Fallback
-            
+            if (a == null) a = row.selectFirst("a[href^='http'], a[href^='//']");
             if (a != null) {
                 Map<String, String> res = new HashMap<>();
                 res.put("title", a.text());
                 String href = a.attr("href");
-                
                 if (href.contains("uddg=")) {
                     try {
-                        String decoded = java.net.URLDecoder.decode(href.split("uddg=")[1].split("&")[0], StandardCharsets.UTF_8);
-                        res.put("url", decoded);
-                    } catch (Exception e) {
-                        res.put("url", href);
-                    }
+                        res.put("url", java.net.URLDecoder.decode(href.split("uddg=")[1].split("&")[0], StandardCharsets.UTF_8));
+                    } catch (Exception e) { res.put("url", href); }
                 } else {
                     res.put("url", href.startsWith("//") ? "https:" + href : href);
                 }
-                
-                // Snippet is usually in the next row with class .result-snippet
                 if (i + 1 < rows.size()) {
                     Element snippet = rows.get(i + 1).selectFirst(".result-snippet");
-                    if (snippet == null) snippet = rows.get(i + 1).selectFirst("td"); // Fallback
+                    if (snippet == null) snippet = rows.get(i + 1).selectFirst("td");
                     res.put("snippet", snippet != null ? snippet.text() : "");
-                } else {
-                    res.put("snippet", "");
                 }
-                
-                if (!res.get("url").contains("duckduckgo.com/")) {
-                    results.add(res);
-                }
+                if (!res.get("url").contains("duckduckgo.com/")) results.add(res);
             }
         }
         if (results.isEmpty()) throw new Exception("DDG returned no results");
+        return results;
+    }
+
+    private List<Map<String, String>> performQwantLiteSearch(String query) throws Exception {
+        log.info("Qwant Search for: {}", query);
+        String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
+        String url = "https://lite.qwant.com/?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
+
+        Document doc = Jsoup.connect(url)
+                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                .headers(getHumanHeaders())
+                .timeout(8000)
+                .get();
+
+        List<Map<String, String>> results = new ArrayList<>();
+        Elements items = doc.select("section article");
+        for (Element item : items) {
+            if (results.size() >= 10) break;
+            Element a = item.selectFirst("h2 a");
+            if (a != null) {
+                Map<String, String> res = new HashMap<>();
+                res.put("title", a.text());
+                res.put("url", a.attr("href"));
+                Element snippet = item.selectFirst("p");
+                res.put("snippet", snippet != null ? snippet.text() : "");
+                results.add(res);
+            }
+        }
+        if (results.isEmpty()) throw new Exception("Qwant returned no results");
+        return results;
+    }
+
+    private List<Map<String, String>> performMojeekSearch(String query) throws Exception {
+        log.info("Mojeek Search for: {}", query);
+        String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
+        String url = "https://www.mojeek.com/search?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
+
+        Document doc = Jsoup.connect(url)
+                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                .headers(getHumanHeaders())
+                .timeout(8000)
+                .get();
+
+        List<Map<String, String>> results = new ArrayList<>();
+        Elements items = doc.select("ul.results-standard > li");
+        for (Element item : items) {
+            if (results.size() >= 10) break;
+            Element a = item.selectFirst("h2 a, a.ob");
+            if (a != null) {
+                Map<String, String> res = new HashMap<>();
+                res.put("title", a.text());
+                res.put("url", a.attr("href"));
+                Element snippet = item.selectFirst("p.s");
+                res.put("snippet", snippet != null ? snippet.text() : "");
+                results.add(res);
+            }
+        }
+        if (results.isEmpty()) throw new Exception("Mojeek returned no results");
         return results;
     }
 
@@ -234,12 +277,12 @@ public class MarkhorAiServiceImpl implements AiService {
 
         Document doc = Jsoup.connect(url)
                 .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-                .timeout(10000)
+                .headers(getHumanHeaders())
+                .timeout(8000)
                 .get();
 
         List<Map<String, String>> results = new ArrayList<>();
         Elements items = doc.select("li.b_algo");
-
         for (Element item : items) {
             if (results.size() >= 10) break;
             Element a = item.selectFirst("h2 a");
