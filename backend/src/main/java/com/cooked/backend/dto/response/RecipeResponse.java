@@ -28,6 +28,7 @@ public class RecipeResponse {
     private boolean isSuggested;
     private LocalDateTime expiresAt;
     private String origin;
+    private boolean isInCookbook;
 
     // Constructeur vide
     public RecipeResponse() {}
@@ -79,6 +80,8 @@ public class RecipeResponse {
     public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
     public String getOrigin() { return origin; }
     public void setOrigin(String origin) { this.origin = origin; }
+    public boolean isInCookbook() { return isInCookbook; }
+    public void setInCookbook(boolean isInCookbook) { this.isInCookbook = isInCookbook; }
 
     // Builder manuel
     public static RecipeResponseBuilder builder() {
@@ -111,6 +114,7 @@ public class RecipeResponse {
         public RecipeResponseBuilder isSuggested(boolean isSuggested) { response.setSuggested(isSuggested); return this; }
         public RecipeResponseBuilder expiresAt(LocalDateTime expiresAt) { response.setExpiresAt(expiresAt); return this; }
         public RecipeResponseBuilder origin(String origin) { response.setOrigin(origin); return this; }
+        public RecipeResponseBuilder isInCookbook(boolean isInCookbook) { response.setInCookbook(isInCookbook); return this; }
 
         public RecipeResponse build() {
             return response;

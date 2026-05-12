@@ -14,6 +14,7 @@ import com.cooked.backend.repository.FavoriteRecipeRepository;
 import com.cooked.backend.service.CookbookService;
 import com.cooked.backend.service.ActivityLogService;
 import com.cooked.backend.dto.response.RecipeIngredientResponse;
+import com.cooked.backend.dto.response.RecipeResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -102,7 +103,7 @@ public class CookbookServiceImpl implements CookbookService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return cookbookRepository.findAllByUserId(user.getId()).stream()
-                .map(this::mapToResponse)
+                .map(cb -> mapToResponse(cb))
                 .collect(Collectors.toList());
     }
 
@@ -148,7 +149,7 @@ public class CookbookServiceImpl implements CookbookService {
                                             .quantity(ri.getQuantity())
                                             .build()).collect(Collectors.toList());
 
-                            return com.cooked.backend.dto.response.RecipeResponse.builder()
+                            return RecipeResponse.builder()
                                     .id(r.getId())
                                     .name(r.getName())
                                     .image(r.getImage())
@@ -158,6 +159,7 @@ public class CookbookServiceImpl implements CookbookService {
                                     .steps(r.getSteps())
                                     .isPublic(r.isPublic())
                                     .isFavorite(isFavorite)
+                                    .isInCookbook(true)
                                     .createdAt(r.getCreatedAt())
                                     .updatedAt(r.getUpdatedAt())
                                     .build();

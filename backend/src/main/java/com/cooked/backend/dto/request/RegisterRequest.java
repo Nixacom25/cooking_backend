@@ -15,7 +15,6 @@ import lombok.NoArgsConstructor;
 public class RegisterRequest {
 
     @Parameter(description = "User's first name")
-    @NotBlank
     private String firstname;
 
     @Parameter(description = "User's last name")

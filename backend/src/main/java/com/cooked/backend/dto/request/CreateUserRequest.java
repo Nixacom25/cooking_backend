@@ -6,10 +6,8 @@ import lombok.Data;
 
 @Data
 public class CreateUserRequest {
-    @NotBlank
     private String firstname;
 
-    @NotBlank
     private String lastname;
 
     @NotBlank

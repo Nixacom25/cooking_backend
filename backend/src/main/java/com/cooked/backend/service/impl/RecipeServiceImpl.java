@@ -454,8 +454,10 @@ public class RecipeServiceImpl implements RecipeService {
 
     private RecipeResponse mapToResponse(Recipe recipe, User user) {
         boolean isFavorite = false;
+        boolean isInCookbook = false;
         if (user != null) {
             isFavorite = favoriteRecipeRepository.existsByUserAndRecipe(user, recipe);
+            isInCookbook = recipe.getCookbooks() != null && !recipe.getCookbooks().isEmpty();
         }
 
         List<RecipeIngredientResponse> ingResponses = recipe.getRecipeIngredients() == null ? Collections.emptyList()
@@ -494,6 +496,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .isSuggested(recipe.getOrigin() == RecipeOrigin.SUGGESTED)
                 .expiresAt(recipe.getExpiresAt())
                 .origin(recipe.getOrigin() != null ? recipe.getOrigin().name() : null)
+                .isInCookbook(isInCookbook)
                 .shareUrl("https://cooked.nixacom.com/recipes/" + recipe.getId())
                 .build();
     }

@@ -29,12 +29,10 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NotBlank
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String firstname;
 
-    @NotBlank
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String lastname;
 
     @Column(unique = false, nullable = true, columnDefinition = "TEXT")

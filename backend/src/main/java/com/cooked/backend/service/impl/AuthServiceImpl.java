@@ -134,13 +134,7 @@ public class AuthServiceImpl implements AuthService {
                                 if (firstname == null || firstname.isEmpty()) firstname = socialInfo.getFirstname();
                                 if (lastname == null || lastname.isEmpty()) lastname = socialInfo.getLastname();
                                 
-                                // Final fallback for social registration if names are missing
-                                if (lastname == null || lastname.trim().isEmpty()) {
-                                    lastname = "-";
-                                }
-                                if (firstname == null || firstname.trim().isEmpty()) {
-                                    firstname = "User";
-                                }
+                                // verified names are already assigned to firstname/lastname if null
                         } catch (BadRequestException e) {
                                 throw e;
                         } catch (Exception e) {
@@ -350,13 +344,7 @@ public class AuthServiceImpl implements AuthService {
                                             firstname = firstname.substring(0, lastSpaceIndex).trim();
                                         }
                                         
-                                        // Final fallback if Apple didn't provide a name at all
-                                        if (lastname == null || lastname.trim().isEmpty()) {
-                                            lastname = "-";
-                                        }
-                                        if (firstname == null || firstname.trim().isEmpty()) {
-                                            firstname = "User";
-                                        }
+                                        // No fallback needed, allowing null
 
                                         String phone = request.getPhone();
 
