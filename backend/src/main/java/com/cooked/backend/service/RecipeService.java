@@ -40,6 +40,8 @@ public interface RecipeService {
                         
         RecipeResponse validateSuggestedRecipe(UUID id, String userEmail);
 
+        RecipeResponse importAndSaveAsSuggestion(String url, String userEmail);
+
         String getShareLink(UUID id, String userEmail);
         
         List<RecipeResponse> getHomeSuggestions(String userEmail);

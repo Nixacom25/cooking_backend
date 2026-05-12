@@ -35,13 +35,13 @@ public class RecipeController {
 
     @Operation(summary = "Import Recipe via Link (AI)")
     @PostMapping("/import")
-    public ResponseEntity<CreateRecipeRequest> importRecipeViaLink(@RequestBody Map<String, String> payload,
+    public ResponseEntity<RecipeResponse> importRecipeViaLink(@RequestBody Map<String, String> payload,
             Authentication auth) {
         String url = payload.get("url");
         if (url == null || url.isBlank()) {
             throw new com.cooked.backend.exception.BadRequestException("URL is required");
         }
-        return ResponseEntity.ok(aiService.extractRecipeFromLink(url, auth.getName()));
+        return ResponseEntity.ok(recipeService.importAndSaveAsSuggestion(url, auth.getName()));
     }
 
     @Operation(summary = "Detect Ingredients from Image (AI)")

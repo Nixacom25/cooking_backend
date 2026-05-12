@@ -31,6 +31,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final CookbookRepository cookbookRepository;
     private final ActivityLogService activityLogService;
     private final FavoriteRecipeRepository favoriteRecipeRepository;
+    private final com.cooked.backend.service.AiService aiService;
 
     @jakarta.annotation.PostConstruct
     public void migrateOrigins() {
@@ -324,8 +325,63 @@ public class RecipeServiceImpl implements RecipeService {
             org.springframework.data.domain.Pageable pageable) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        // Return all recipes with origin IMPORT, whether validated or not
         return recipeRepository.findByUserIdAndOriginOrderByCreatedAtDesc(user.getId(), RecipeOrigin.IMPORT, pageable)
                 .map(recipe -> mapToResponse(recipe, user));
+    }
+
+    @Override
+    @Transactional
+    public RecipeResponse importAndSaveAsSuggestion(String url, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // 1. Extract from AI
+        CreateRecipeRequest request = aiService.extractRecipeFromLink(url, userEmail);
+
+        // 2. Map to Entity as a Suggestion
+        Recipe recipe = Recipe.builder()
+                .user(user)
+                .name(request.getName())
+                .image(request.getImage())
+                .cookTime(request.getCookTime())
+                .prepTime(request.getPrepTime())
+                .kcal(request.getKcal())
+                .servings(request.getServings())
+                .tips(request.getTips())
+                .cuisine(request.getCuisine())
+                .category(request.getCategory())
+                .sourceUrl(url)
+                .steps(request.getSteps() != null ? request.getSteps() : new ArrayList<>())
+                .equipment(request.getEquipment() != null ? request.getEquipment() : new ArrayList<>())
+                .origin(RecipeOrigin.IMPORT)
+                .expiresAt(java.time.LocalDateTime.now().plusDays(3)) // Suggested for 3 days
+                .build();
+
+        Recipe saved = recipeRepository.save(recipe);
+
+        // 3. Save ingredients
+        if (request.getIngredients() != null) {
+            Set<RecipeIngredient> ingredients = new HashSet<>();
+            for (com.cooked.backend.dto.request.IngredientPayload payload : request.getIngredients()) {
+                String ingName = payload.getName().toLowerCase().trim();
+                Ingredient ingredient = ingredientRepository.findByName(ingName)
+                        .orElseGet(() -> ingredientRepository.save(Ingredient.builder()
+                                .name(ingName)
+                                .icon(payload.getIcon())
+                                .build()));
+
+                ingredients.add(RecipeIngredient.builder()
+                        .recipe(saved)
+                        .ingredient(ingredient)
+                        .quantity((payload.getQuantity() == null || payload.getQuantity().isBlank()) ? "1" : payload.getQuantity())
+                        .build());
+            }
+            saved.setRecipeIngredients(ingredients);
+            saved = recipeRepository.save(saved);
+        }
+
+        return mapToResponse(saved, user);
     }
 
     @Override
