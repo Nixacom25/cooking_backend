@@ -69,38 +69,129 @@ public class MarkhorAiServiceImpl implements AiService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         verifyAiAccess(user);
 
+        // Sequential multi-engine search for maximum reliability on Render
         try {
-            log.info("Native Search for: {}", query);
-            String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
-            String url = "https://html.duckduckgo.com/html/?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
+            return performGoogleSearch(query);
+        } catch (Exception e1) {
+            log.warn("Google search failed, trying DuckDuckGo: {}", e1.getMessage());
+            try {
+                return performDuckDuckGoSearch(query);
+            } catch (Exception e2) {
+                log.warn("DuckDuckGo search failed, trying Bing: {}", e2.getMessage());
+                try {
+                    return performBingSearch(query);
+                } catch (Exception e3) {
+                    log.error("All search engines failed on Render: {}", e3.getMessage());
+                    return Collections.emptyList();
+                }
+            }
+        }
+    }
 
-            Document doc = Jsoup.connect(url)
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-                    .timeout(10000)
-                    .get();
+    private List<Map<String, String>> performGoogleSearch(String query) throws Exception {
+        log.info("Google Search for: {}", query);
+        String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
+        String url = "https://www.google.com/search?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8) + "&gbv=1";
 
-            List<Map<String, String>> results = new ArrayList<>();
-            Elements items = doc.select(".result__body");
+        Document doc = Jsoup.connect(url)
+                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                .header("Accept-Language", "en-US,en;q=0.9")
+                .timeout(10000)
+                .get();
 
-            for (Element item : items) {
-                if (results.size() >= 10) break;
-                Element a = item.selectFirst(".result__title a");
-                if (a != null) {
+        List<Map<String, String>> results = new ArrayList<>();
+        Elements items = doc.select("div.ZINbbc");
+
+        for (Element item : items) {
+            if (results.size() >= 10) break;
+            Element h3 = item.selectFirst("h3");
+            Element a = item.selectFirst("a");
+            
+            if (h3 != null && a != null) {
+                String rawUrl = a.attr("href");
+                String cleanUrl = rawUrl;
+                if (rawUrl.startsWith("/url?q=")) {
+                    cleanUrl = java.net.URLDecoder.decode(rawUrl.split("url\\?q=")[1].split("&")[0], StandardCharsets.UTF_8);
+                }
+                
+                if (cleanUrl.startsWith("http")) {
                     Map<String, String> res = new HashMap<>();
-                    res.put("title", a.text());
-                    res.put("url", a.attr("href").startsWith("//") ? "https:" + a.attr("href") : a.attr("href"));
-                    Element snip = item.selectFirst(".result__snippet");
-                    res.put("snippet", snip != null ? snip.text() : "");
+                    res.put("title", h3.text());
+                    res.put("url", cleanUrl);
+                    Element snippet = item.selectFirst("div.BNeawe.s3707824558, div.BNeawe");
+                    res.put("snippet", snippet != null ? snippet.text() : "");
                     results.add(res);
                 }
             }
-            return results;
-        } catch (PaymentRequiredException | ResourceNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("Search failed: {}", e.getMessage());
-            return Collections.emptyList();
         }
+        if (results.isEmpty()) throw new Exception("Google returned no results");
+        return results;
+    }
+
+    private List<Map<String, String>> performDuckDuckGoSearch(String query) throws Exception {
+        log.info("DDG Search for: {}", query);
+        String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
+        String url = "https://lite.duckduckgo.com/lite/?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
+
+        Document doc = Jsoup.connect(url)
+                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                .timeout(10000)
+                .get();
+
+        List<Map<String, String>> results = new ArrayList<>();
+        Elements rows = doc.select("tr");
+
+        for (int i = 0; i < rows.size(); i++) {
+            if (results.size() >= 10) break;
+            Element row = rows.get(i);
+            Element a = row.selectFirst("a.result-link");
+            if (a != null) {
+                Map<String, String> res = new HashMap<>();
+                res.put("title", a.text());
+                String href = a.attr("href");
+                if (href.contains("uddg=")) {
+                    res.put("url", java.net.URLDecoder.decode(href.split("uddg=")[1].split("&")[0], StandardCharsets.UTF_8));
+                } else {
+                    res.put("url", href.startsWith("//") ? "https:" + href : href);
+                }
+                if (i + 1 < rows.size()) {
+                    Element snippet = rows.get(i + 1).selectFirst(".result-snippet");
+                    res.put("snippet", snippet != null ? snippet.text() : "");
+                }
+                results.add(res);
+            }
+        }
+        if (results.isEmpty()) throw new Exception("DDG returned no results");
+        return results;
+    }
+
+    private List<Map<String, String>> performBingSearch(String query) throws Exception {
+        log.info("Bing Search for: {}", query);
+        String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
+        String url = "https://www.bing.com/search?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
+
+        Document doc = Jsoup.connect(url)
+                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                .timeout(10000)
+                .get();
+
+        List<Map<String, String>> results = new ArrayList<>();
+        Elements items = doc.select("li.b_algo");
+
+        for (Element item : items) {
+            if (results.size() >= 10) break;
+            Element a = item.selectFirst("h2 a");
+            if (a != null) {
+                Map<String, String> res = new HashMap<>();
+                res.put("title", a.text());
+                res.put("url", a.attr("href"));
+                Element snippet = item.selectFirst(".b_caption p, .b_lineclamp");
+                res.put("snippet", snippet != null ? snippet.text() : "");
+                results.add(res);
+            }
+        }
+        if (results.isEmpty()) throw new Exception("Bing returned no results");
+        return results;
     }
 
     @Override
