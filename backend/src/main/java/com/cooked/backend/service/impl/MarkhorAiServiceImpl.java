@@ -103,7 +103,7 @@ public class MarkhorAiServiceImpl implements AiService {
                 .get();
 
         // Check if we still hit a consent page (title would contain "Before you continue")
-        if (doc.title().contains("Before you continue") || doc.select("form[action*='consent']").isNotEmpty()) {
+        if (doc.title().contains("Before you continue") || !doc.select("form[action*='consent']").isEmpty()) {
             log.warn("Google consent page detected even with cookie, attempting form bypass...");
             Element form = doc.select("form").first();
             if (form != null) {
