@@ -130,11 +130,18 @@ public class RecipeServiceImpl implements RecipeService {
         if (request.getIngredients() != null) {
             for (IngredientPayload payload : request.getIngredients()) {
                 String ingName = payload.getName().toLowerCase().trim();
-                Ingredient ingredient = ingredientRepository.findByName(ingName)
-                        .orElseGet(() -> ingredientRepository.save(Ingredient.builder()
-                                .name(ingName)
-                                .icon(payload.getIcon())
-                                .build()));
+                Ingredient ingredient;
+                try {
+                    ingredient = ingredientRepository.findByName(ingName)
+                            .orElseGet(() -> ingredientRepository.save(Ingredient.builder()
+                                    .name(ingName)
+                                    .icon(payload.getIcon())
+                                    .build()));
+                } catch (Exception e) {
+                    // Handle race condition: if another thread saved it just now
+                    ingredient = ingredientRepository.findByName(ingName)
+                            .orElseThrow(() -> new RuntimeException("Failed to save or find ingredient: " + ingName));
+                }
     
                 RecipeIngredient ri = RecipeIngredient.builder()
                         .recipe(savedRecipe)
@@ -395,11 +402,18 @@ public class RecipeServiceImpl implements RecipeService {
 
             for (com.cooked.backend.dto.request.IngredientPayload payload : request.getIngredients()) {
                 String ingName = payload.getName().toLowerCase().trim();
-                Ingredient ingredient = ingredientRepository.findByName(ingName)
-                        .orElseGet(() -> ingredientRepository.save(Ingredient.builder()
-                                .name(ingName)
-                                .icon(payload.getIcon())
-                                .build()));
+                Ingredient ingredient;
+                try {
+                    ingredient = ingredientRepository.findByName(ingName)
+                            .orElseGet(() -> ingredientRepository.save(Ingredient.builder()
+                                    .name(ingName)
+                                    .icon(payload.getIcon())
+                                    .build()));
+                } catch (Exception e) {
+                    // Handle race condition: if another thread saved it just now
+                    ingredient = ingredientRepository.findByName(ingName)
+                            .orElseThrow(() -> new RuntimeException("Failed to save or find ingredient: " + ingName));
+                }
 
                 saved.getRecipeIngredients().add(RecipeIngredient.builder()
                         .recipe(saved)
