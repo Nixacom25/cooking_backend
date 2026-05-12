@@ -12,7 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class AppConfig {
     @Bean
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        org.springframework.http.client.SimpleClientHttpRequestFactory factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(10000); // 10s
+        factory.setReadTimeout(120000);   // 120s for AI
+        return new RestTemplate(factory);
     }
 
     @Bean
@@ -21,24 +24,24 @@ public class AppConfig {
             com.cooked.backend.service.ExploreDataSeederService exploreDataSeederService,
             jakarta.persistence.EntityManager entityManager) {
         return args -> {
-            // Drop ALL unique constraints on recipes table to allow recipes with same name
+            // Drop ALL unique constraints on recipes and cookbooks table to allow duplicates as requested
             try {
                 String sql = "DO $$ " +
                             "DECLARE r RECORD; " +
                             "BEGIN " +
-                            "  -- Supprimer les contraintes d'unicité\n" +
-                            "  FOR r IN (SELECT conname FROM pg_constraint WHERE conrelid = 'recipes'::regclass AND contype = 'u') " +
+                            "  -- Supprimer les contraintes d'unicité sur recipes et cookbooks\n" +
+                            "  FOR r IN (SELECT conname, relname FROM pg_constraint c JOIN pg_class cl ON c.conrelid = cl.oid WHERE cl.relname IN ('recipes', 'cookbooks') AND contype = 'u') " +
                             "  LOOP " +
-                            "    EXECUTE 'ALTER TABLE recipes DROP CONSTRAINT IF EXISTS ' || r.conname; " +
+                            "    EXECUTE 'ALTER TABLE ' || r.relname || ' DROP CONSTRAINT IF EXISTS ' || r.conname; " +
                             "  END LOOP; " +
-                            "  -- Supprimer les index uniques (parfois créés sans contrainte explicite)\n" +
-                            "  FOR r IN (SELECT indexname FROM pg_indexes WHERE tablename = 'recipes' AND indexdef LIKE '%UNIQUE INDEX%') " +
+                            "  -- Supprimer les index uniques\n" +
+                            "  FOR r IN (SELECT indexname, tablename FROM pg_indexes WHERE tablename IN ('recipes', 'cookbooks') AND indexdef LIKE '%UNIQUE INDEX%') " +
                             "  LOOP " +
                             "    EXECUTE 'DROP INDEX IF EXISTS ' || r.indexname; " +
                             "  END LOOP; " +
                             "END $$;";
                 entityManager.createNativeQuery(sql).executeUpdate();
-                log.info("Successfully dropped all unique constraints from recipes table");
+                log.info("Successfully dropped all unique constraints from recipes and cookbooks tables");
             } catch (Exception e) {
                 log.warn("Could not drop constraints: {}", e.getMessage());
             }

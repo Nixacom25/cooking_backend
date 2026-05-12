@@ -54,7 +54,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r " +
                         "WHERE r.isPublic = true " +
                         "AND (:category IS NULL OR r.category = :category) " +
-                        "AND (:cuisines IS NULL OR r.cuisine IN :cuisines) " +
+                        "AND (:cuisines IS NULL OR (SELECT COUNT(r2) FROM Recipe r2 WHERE r2.id = r.id AND r2.cuisine IN :cuisines) > 0) " +
                         "ORDER BY RANDOM()")
         org.springframework.data.domain.Page<Recipe> findRandomPopularRecipes(
                         @org.springframework.data.repository.query.Param("category") String category,

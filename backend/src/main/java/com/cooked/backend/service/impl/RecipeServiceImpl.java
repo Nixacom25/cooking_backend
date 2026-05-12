@@ -339,30 +339,60 @@ public class RecipeServiceImpl implements RecipeService {
         // 1. Extract from AI
         CreateRecipeRequest request = aiService.extractRecipeFromLink(url, userEmail);
 
-        // 2. Map to Entity as a Suggestion
-        Recipe recipe = Recipe.builder()
-                .user(user)
-                .name(request.getName())
-                .image(request.getImage())
-                .cookTime(request.getCookTime())
-                .prepTime(request.getPrepTime())
-                .kcal(request.getKcal())
-                .servings(request.getServings())
-                .tips(request.getTips())
-                .cuisine(request.getCuisine())
-                .category(request.getCategory())
-                .sourceUrl(url)
-                .steps(request.getSteps() != null ? request.getSteps() : new ArrayList<>())
-                .equipment(request.getEquipment() != null ? request.getEquipment() : new ArrayList<>())
-                .origin(RecipeOrigin.IMPORT)
-                .expiresAt(java.time.LocalDateTime.now().plusDays(3)) // Suggested for 3 days
-                .build();
+        // 2. Map to Entity as a Suggestion with Duplicate Handling
+        String recipeName = request.getName().trim();
+        Optional<Recipe> existingRecipe = recipeRepository.findByUserIdAndName(user.getId(), recipeName);
+        Recipe recipe;
+
+        if (existingRecipe.isPresent()) {
+            recipe = existingRecipe.get();
+            // Update fields if it's already an IMPORT or SUGGESTED or SCAN
+            recipe.setImage(request.getImage());
+            recipe.setCookTime(request.getCookTime());
+            recipe.setPrepTime(request.getPrepTime());
+            recipe.setKcal(request.getKcal());
+            recipe.setServings(request.getServings());
+            recipe.setTips(request.getTips());
+            recipe.setCuisine(request.getCuisine());
+            recipe.setCategory(request.getCategory());
+            recipe.setSourceUrl(url);
+            recipe.setSteps(request.getSteps() != null ? request.getSteps() : new ArrayList<>());
+            recipe.setEquipment(request.getEquipment() != null ? request.getEquipment() : new ArrayList<>());
+            
+            // If it was already permanent, keep it permanent. If not, refresh expiry.
+            if (recipe.getExpiresAt() != null) {
+                recipe.setExpiresAt(java.time.LocalDateTime.now().plusDays(3));
+            }
+        } else {
+            recipe = Recipe.builder()
+                    .user(user)
+                    .name(recipeName)
+                    .image(request.getImage())
+                    .cookTime(request.getCookTime())
+                    .prepTime(request.getPrepTime())
+                    .kcal(request.getKcal())
+                    .servings(request.getServings())
+                    .tips(request.getTips())
+                    .cuisine(request.getCuisine())
+                    .category(request.getCategory())
+                    .sourceUrl(url)
+                    .steps(request.getSteps() != null ? request.getSteps() : new ArrayList<>())
+                    .equipment(request.getEquipment() != null ? request.getEquipment() : new ArrayList<>())
+                    .origin(RecipeOrigin.IMPORT)
+                    .expiresAt(java.time.LocalDateTime.now().plusDays(3)) // Suggested for 3 days
+                    .build();
+        }
 
         Recipe saved = recipeRepository.save(recipe);
 
         // 3. Save ingredients
         if (request.getIngredients() != null) {
-            Set<RecipeIngredient> ingredients = new HashSet<>();
+            if (saved.getRecipeIngredients() == null) {
+                saved.setRecipeIngredients(new HashSet<>());
+            } else {
+                saved.getRecipeIngredients().clear();
+            }
+
             for (com.cooked.backend.dto.request.IngredientPayload payload : request.getIngredients()) {
                 String ingName = payload.getName().toLowerCase().trim();
                 Ingredient ingredient = ingredientRepository.findByName(ingName)
@@ -371,13 +401,12 @@ public class RecipeServiceImpl implements RecipeService {
                                 .icon(payload.getIcon())
                                 .build()));
 
-                ingredients.add(RecipeIngredient.builder()
+                saved.getRecipeIngredients().add(RecipeIngredient.builder()
                         .recipe(saved)
                         .ingredient(ingredient)
                         .quantity((payload.getQuantity() == null || payload.getQuantity().isBlank()) ? "1" : payload.getQuantity())
                         .build());
             }
-            saved.setRecipeIngredients(ingredients);
             saved = recipeRepository.save(saved);
         }
 

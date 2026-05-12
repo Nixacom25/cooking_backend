@@ -14,9 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "cookbooks", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "user_id", "name" })
-})
+@Table(name = "cookbooks")
 public class Cookbook {
 
     @Id
