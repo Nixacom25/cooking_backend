@@ -91,40 +91,84 @@ public class MarkhorAiServiceImpl implements AiService {
     private List<Map<String, String>> performGoogleSearch(String query) throws Exception {
         log.info("Google Search for: {}", query);
         String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
-        String url = "https://www.google.com/search?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8) + "&gbv=1";
+        // gbv=1 (no JS), hl=en (force English to avoid region-specific redirects)
+        String url = "https://www.google.com/search?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8) + "&gbv=1&hl=en";
 
         Document doc = Jsoup.connect(url)
                 .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
                 .header("Accept-Language", "en-US,en;q=0.9")
+                // SOCS cookie bypasses the "Before you continue" consent page
+                .cookie("SOCS", "CAESHAgBEhJnd3NfMjAyNDA1MDgtMF9SQzEaAmVuIAEaBgiA_LmwBg")
                 .timeout(10000)
                 .get();
 
+        // Check if we still hit a consent page (title would contain "Before you continue")
+        if (doc.title().contains("Before you continue") || doc.select("form[action*='consent']").isNotEmpty()) {
+            log.warn("Google consent page detected even with cookie, attempting form bypass...");
+            Element form = doc.select("form").first();
+            if (form != null) {
+                String action = form.absUrl("action");
+                Map<String, String> data = new HashMap<>();
+                for (Element input : form.select("input[type=hidden]")) {
+                    data.put(input.attr("name"), input.attr("value"));
+                }
+                // The 'Accept all' button often has this name/value
+                data.put("set_eom", "true"); 
+                
+                doc = Jsoup.connect(action)
+                        .data(data)
+                        .method(org.jsoup.Connection.Method.POST)
+                        .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                        .header("Accept-Language", "en-US,en;q=0.9")
+                        .timeout(10000)
+                        .execute()
+                        .parse();
+            }
+        }
+
         List<Map<String, String>> results = new ArrayList<>();
+        // In gbv=1, results are in div.ZINbbc
         Elements items = doc.select("div.ZINbbc");
 
         for (Element item : items) {
             if (results.size() >= 10) break;
+            
+            // Link is usually inside an <a> that contains an <h3>
+            Element a = item.selectFirst("a:has(h3)");
+            if (a == null) a = item.selectFirst("a"); // Fallback
+            
             Element h3 = item.selectFirst("h3");
-            Element a = item.selectFirst("a");
             
             if (h3 != null && a != null) {
                 String rawUrl = a.attr("href");
                 String cleanUrl = rawUrl;
+                
+                // Google Lite links look like /url?q=https://...
                 if (rawUrl.startsWith("/url?q=")) {
-                    cleanUrl = java.net.URLDecoder.decode(rawUrl.split("url\\?q=")[1].split("&")[0], StandardCharsets.UTF_8);
+                    try {
+                        cleanUrl = java.net.URLDecoder.decode(rawUrl.split("url\\?q=")[1].split("&")[0], StandardCharsets.UTF_8);
+                    } catch (Exception e) {
+                        continue;
+                    }
                 }
                 
-                if (cleanUrl.startsWith("http")) {
+                if (cleanUrl.startsWith("http") && !cleanUrl.contains("google.com/")) {
                     Map<String, String> res = new HashMap<>();
                     res.put("title", h3.text());
                     res.put("url", cleanUrl);
-                    Element snippet = item.selectFirst("div.BNeawe.s3707824558, div.BNeawe");
+                    
+                    // Snippet is usually the last div.BNeawe in the result block
+                    Element snippet = item.select("div.BNeawe").last();
                     res.put("snippet", snippet != null ? snippet.text() : "");
                     results.add(res);
                 }
             }
         }
-        if (results.isEmpty()) throw new Exception("Google returned no results");
+        
+        if (results.isEmpty()) {
+            log.error("Google search returned no results. Page Title: {}", doc.title());
+            throw new Exception("Google returned no results");
+        }
         return results;
     }
 
@@ -144,21 +188,39 @@ public class MarkhorAiServiceImpl implements AiService {
         for (int i = 0; i < rows.size(); i++) {
             if (results.size() >= 10) break;
             Element row = rows.get(i);
+            
+            // Link is usually in a.result-link
             Element a = row.selectFirst("a.result-link");
+            if (a == null) a = row.selectFirst("a[href^='http'], a[href^='//']"); // Fallback
+            
             if (a != null) {
                 Map<String, String> res = new HashMap<>();
                 res.put("title", a.text());
                 String href = a.attr("href");
+                
                 if (href.contains("uddg=")) {
-                    res.put("url", java.net.URLDecoder.decode(href.split("uddg=")[1].split("&")[0], StandardCharsets.UTF_8));
+                    try {
+                        String decoded = java.net.URLDecoder.decode(href.split("uddg=")[1].split("&")[0], StandardCharsets.UTF_8);
+                        res.put("url", decoded);
+                    } catch (Exception e) {
+                        res.put("url", href);
+                    }
                 } else {
                     res.put("url", href.startsWith("//") ? "https:" + href : href);
                 }
+                
+                // Snippet is usually in the next row with class .result-snippet
                 if (i + 1 < rows.size()) {
                     Element snippet = rows.get(i + 1).selectFirst(".result-snippet");
+                    if (snippet == null) snippet = rows.get(i + 1).selectFirst("td"); // Fallback
                     res.put("snippet", snippet != null ? snippet.text() : "");
+                } else {
+                    res.put("snippet", "");
                 }
-                results.add(res);
+                
+                if (!res.get("url").contains("duckduckgo.com/")) {
+                    results.add(res);
+                }
             }
         }
         if (results.isEmpty()) throw new Exception("DDG returned no results");
