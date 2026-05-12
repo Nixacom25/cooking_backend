@@ -119,56 +119,64 @@ public class MarkhorAiServiceImpl implements AiService {
         String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
         String url = "https://www.google.com/search?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8) + "&gbv=1&hl=en";
 
-        Document doc = Jsoup.connect(url)
-                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-                .headers(getHumanHeaders())
-                .cookie("SOCS", "CAESHAgBEhJnd3NfMjAyNDA1MDgtMF9SQzEaAmVuIAEaBgiA_LmwBg")
-                .timeout(10000)
-                .get();
+        try {
+            Document doc = Jsoup.connect(url)
+                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                    .headers(getHumanHeaders())
+                    .cookie("SOCS", "CAESHAgBEhJnd3NfMjAyNDA1MDgtMF9SQzEaAmVuIAEaBgiA_LmwBg")
+                    .timeout(10000)
+                    .get();
 
-        if (doc.title().contains("Before you continue") || !doc.select("form[action*='consent']").isEmpty()) {
-            log.warn("Google consent page detected, attempting bypass...");
-            Element form = doc.select("form").first();
-            if (form != null) {
-                String action = form.absUrl("action");
-                Map<String, String> data = new HashMap<>();
-                for (Element input : form.select("input[type=hidden]")) {
-                    data.put(input.attr("name"), input.attr("value"));
-                }
-                data.put("set_eom", "true"); 
-                doc = Jsoup.connect(action).data(data).method(org.jsoup.Connection.Method.POST)
-                        .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-                        .headers(getHumanHeaders()).timeout(10000).execute().parse();
-            }
-        }
-
-        List<Map<String, String>> results = new ArrayList<>();
-        Elements items = doc.select("div.ZINbbc");
-        for (Element item : items) {
-            if (results.size() >= 10) break;
-            Element a = item.selectFirst("a:has(h3)");
-            if (a == null) a = item.selectFirst("a");
-            Element h3 = item.selectFirst("h3");
-            if (h3 != null && a != null) {
-                String rawUrl = a.attr("href");
-                String cleanUrl = rawUrl;
-                if (rawUrl.startsWith("/url?q=")) {
-                    try {
-                        cleanUrl = java.net.URLDecoder.decode(rawUrl.split("url\\?q=")[1].split("&")[0], StandardCharsets.UTF_8);
-                    } catch (Exception e) { continue; }
-                }
-                if (cleanUrl.startsWith("http") && !cleanUrl.contains("google.com/")) {
-                    Map<String, String> res = new HashMap<>();
-                    res.put("title", h3.text());
-                    res.put("url", cleanUrl);
-                    Element snippet = item.select("div.BNeawe").last();
-                    res.put("snippet", snippet != null ? snippet.text() : "");
-                    results.add(res);
+            if (doc.title().contains("Before you continue") || !doc.select("form[action*='consent']").isEmpty()) {
+                log.warn("Google consent page detected, attempting bypass...");
+                Element form = doc.select("form").first();
+                if (form != null) {
+                    String action = form.absUrl("action");
+                    Map<String, String> data = new HashMap<>();
+                    for (Element input : form.select("input[type=hidden]")) {
+                        data.put(input.attr("name"), input.attr("value"));
+                    }
+                    data.put("set_eom", "true"); 
+                    doc = Jsoup.connect(action).data(data).method(org.jsoup.Connection.Method.POST)
+                            .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                            .headers(getHumanHeaders()).timeout(10000).execute().parse();
                 }
             }
+
+            List<Map<String, String>> results = new ArrayList<>();
+            Elements items = doc.select("div.ZINbbc");
+            for (Element item : items) {
+                if (results.size() >= 10) break;
+                Element a = item.selectFirst("a:has(h3)");
+                if (a == null) a = item.selectFirst("a");
+                Element h3 = item.selectFirst("h3");
+                if (h3 != null && a != null) {
+                    String rawUrl = a.attr("href");
+                    String cleanUrl = rawUrl;
+                    if (rawUrl.startsWith("/url?q=")) {
+                        try {
+                            cleanUrl = java.net.URLDecoder.decode(rawUrl.split("url\\?q=")[1].split("&")[0], StandardCharsets.UTF_8);
+                        } catch (Exception e) { continue; }
+                    }
+                    if (cleanUrl.startsWith("http") && !cleanUrl.contains("google.com/")) {
+                        Map<String, String> res = new HashMap<>();
+                        res.put("title", h3.text());
+                        res.put("url", cleanUrl);
+                        Element snippet = item.select("div.BNeawe").last();
+                        res.put("snippet", snippet != null ? snippet.text() : "");
+                        results.add(res);
+                    }
+                }
+            }
+            if (results.isEmpty()) throw new Exception("Google returned no results. Title: " + doc.title());
+            return results;
+        } catch (org.jsoup.HttpStatusException e) {
+            log.error("Google search HTTP error: Status={}, URL={}", e.getStatusCode(), e.getUrl());
+            throw e;
+        } catch (Exception e) {
+            log.error("Google search failed: {}", e.getMessage());
+            throw e;
         }
-        if (results.isEmpty()) throw new Exception("Google returned no results");
-        return results;
     }
 
     private List<Map<String, String>> performDuckDuckGoSearch(String query) throws Exception {
@@ -176,40 +184,57 @@ public class MarkhorAiServiceImpl implements AiService {
         String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
         String url = "https://lite.duckduckgo.com/lite/?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
 
-        Document doc = Jsoup.connect(url)
-                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-                .headers(getHumanHeaders())
-                .timeout(8000)
-                .get();
+        try {
+            Document doc = Jsoup.connect(url)
+                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                    .headers(getHumanHeaders())
+                    .timeout(8000)
+                    .get();
 
-        List<Map<String, String>> results = new ArrayList<>();
-        Elements rows = doc.select("tr");
-        for (int i = 0; i < rows.size(); i++) {
-            if (results.size() >= 10) break;
-            Element row = rows.get(i);
-            Element a = row.selectFirst("a.result-link");
-            if (a == null) a = row.selectFirst("a[href^='http'], a[href^='//']");
-            if (a != null) {
-                Map<String, String> res = new HashMap<>();
-                res.put("title", a.text());
-                String href = a.attr("href");
-                if (href.contains("uddg=")) {
-                    try {
-                        res.put("url", java.net.URLDecoder.decode(href.split("uddg=")[1].split("&")[0], StandardCharsets.UTF_8));
-                    } catch (Exception e) { res.put("url", href); }
-                } else {
-                    res.put("url", href.startsWith("//") ? "https:" + href : href);
+            List<Map<String, String>> results = new ArrayList<>();
+            Elements rows = doc.select("tr");
+            for (int i = 0; i < rows.size(); i++) {
+                if (results.size() >= 10) break;
+                Element row = rows.get(i);
+                
+                Element a = row.selectFirst("a.result-link");
+                if (a == null) a = row.selectFirst("a[href^='http'], a[href^='//']");
+                
+                if (a != null) {
+                    Map<String, String> res = new HashMap<>();
+                    res.put("title", a.text());
+                    String href = a.attr("href");
+                    
+                    if (href.contains("uddg=")) {
+                        try {
+                            res.put("url", java.net.URLDecoder.decode(href.split("uddg=")[1].split("&")[0], StandardCharsets.UTF_8));
+                        } catch (Exception e) { res.put("url", href); }
+                    } else {
+                        res.put("url", href.startsWith("//") ? "https:" + href : href);
+                    }
+                    
+                    if (i + 1 < rows.size()) {
+                        Element snippet = rows.get(i + 1).selectFirst(".result-snippet");
+                        if (snippet == null) snippet = rows.get(i + 1).selectFirst("td");
+                        res.put("snippet", snippet != null ? snippet.text() : "");
+                    } else {
+                        res.put("snippet", "");
+                    }
+                    
+                    if (!res.get("url").contains("duckduckgo.com/")) {
+                        results.add(res);
+                    }
                 }
-                if (i + 1 < rows.size()) {
-                    Element snippet = rows.get(i + 1).selectFirst(".result-snippet");
-                    if (snippet == null) snippet = rows.get(i + 1).selectFirst("td");
-                    res.put("snippet", snippet != null ? snippet.text() : "");
-                }
-                if (!res.get("url").contains("duckduckgo.com/")) results.add(res);
             }
+            if (results.isEmpty()) throw new Exception("DDG returned no results. Title: " + doc.title());
+            return results;
+        } catch (org.jsoup.HttpStatusException e) {
+            log.error("DuckDuckGo HTTP error: Status={}, URL={}", e.getStatusCode(), e.getUrl());
+            throw e;
+        } catch (Exception e) {
+            log.error("DuckDuckGo search failed: {}", e.getMessage());
+            throw e;
         }
-        if (results.isEmpty()) throw new Exception("DDG returned no results");
-        return results;
     }
 
     private List<Map<String, String>> performQwantLiteSearch(String query) throws Exception {

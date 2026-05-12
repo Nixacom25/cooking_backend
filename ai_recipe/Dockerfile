@@ -1,6 +1,6 @@
 # Use the official Microsoft Playwright image as base
 # This image contains all necessary system dependencies for browsers
-FROM mcr.microsoft.com/playwright:v1.43.1-jammy
+FROM mcr.microsoft.com/playwright:v1.59.1-jammy
 
 # Set working directory
 WORKDIR /app
