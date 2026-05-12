@@ -493,7 +493,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .sourceUrl(recipe.getSourceUrl())
                 .createdAt(recipe.getCreatedAt())
                 .updatedAt(recipe.getUpdatedAt())
-                .isSuggested(recipe.getOrigin() == RecipeOrigin.SUGGESTED)
+                .isSuggested(recipe.getExpiresAt() != null)
                 .expiresAt(recipe.getExpiresAt())
                 .origin(recipe.getOrigin() != null ? recipe.getOrigin().name() : null)
                 .isInCookbook(isInCookbook)
