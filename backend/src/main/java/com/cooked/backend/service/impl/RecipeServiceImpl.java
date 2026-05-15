@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class RecipeServiceImpl implements RecipeService {
 
     private final RecipeRepository recipeRepository;
@@ -31,11 +32,15 @@ public class RecipeServiceImpl implements RecipeService {
     private final CookbookRepository cookbookRepository;
     private final ActivityLogService activityLogService;
     private final com.cooked.backend.service.AiService aiService;
-    private final RecipeCategoryRepository recipeCategoryRepository;
+    private final com.cooked.backend.service.TaxonomyService taxonomyService;
 
     @jakarta.annotation.PostConstruct
+    public void onStartup() {
+        migrateOrigins();
+        taxonomyService.migrateExistingRecipes();
+    }
     public void migrateOrigins() {
-        System.out.println("Starting recipes origin migration...");
+        log.info("Starting recipes origin migration...");
         List<Recipe> recipes = recipeRepository.findAll();
         long count = 0;
         for (Recipe r : recipes) {
@@ -46,9 +51,9 @@ public class RecipeServiceImpl implements RecipeService {
         }
         if (count > 0) {
             recipeRepository.saveAll(recipes);
-            System.out.println("Successfully migrated " + count + " recipes to SCAN origin.");
+            log.info("Successfully migrated {} recipes to SCAN origin.", count);
         } else {
-            System.out.println("No recipes needed migration.");
+            log.info("No recipes needed migration.");
         }
     }
 
@@ -73,8 +78,8 @@ public class RecipeServiceImpl implements RecipeService {
             if (request.getKcal() != null) recipe.setKcal(request.getKcal());
             if (request.getServings() != null) recipe.setServings(request.getServings());
             if (request.getTips() != null) recipe.setTips(request.getTips());
-            if (request.getCuisine() != null) recipe.setCuisine(getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE));
-            if (request.getCategory() != null) recipe.setCategory(getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY));
+            if (request.getCuisine() != null) recipe.setCuisine(taxonomyService.getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE));
+            if (request.getCategory() != null) recipe.setCategory(taxonomyService.getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY));
             if (request.getSourceUrl() != null) recipe.setSourceUrl(request.getSourceUrl());
             if (request.getSteps() != null) recipe.setSteps(request.getSteps());
             if (request.getEquipment() != null) recipe.setEquipment(request.getEquipment());
@@ -88,8 +93,8 @@ public class RecipeServiceImpl implements RecipeService {
                     .kcal(request.getKcal())
                     .servings(request.getServings())
                     .tips(request.getTips())
-                    .cuisine(getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE))
-                    .category(getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY))
+                    .cuisine(taxonomyService.getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE))
+                    .category(taxonomyService.getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY))
                     .sourceUrl(request.getSourceUrl())
                     .steps(request.getSteps() != null ? request.getSteps() : new java.util.ArrayList<>())
                     .equipment(request.getEquipment() != null ? request.getEquipment() : new java.util.ArrayList<>())
@@ -326,8 +331,8 @@ public class RecipeServiceImpl implements RecipeService {
             recipe.setKcal(request.getKcal());
             recipe.setServings(request.getServings());
             recipe.setTips(request.getTips());
-            recipe.setCuisine(getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE));
-            recipe.setCategory(getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY));
+            recipe.setCuisine(taxonomyService.getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE));
+            recipe.setCategory(taxonomyService.getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY));
             recipe.setSourceUrl(url);
             recipe.setSteps(request.getSteps() != null ? request.getSteps() : new ArrayList<>());
             recipe.setEquipment(request.getEquipment() != null ? request.getEquipment() : new ArrayList<>());
@@ -346,8 +351,8 @@ public class RecipeServiceImpl implements RecipeService {
                     .kcal(request.getKcal())
                     .servings(request.getServings())
                     .tips(request.getTips())
-                    .cuisine(getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE))
-                    .category(getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY))
+                    .cuisine(taxonomyService.getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE))
+                    .category(taxonomyService.getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY))
                     .sourceUrl(url)
                     .steps(request.getSteps() != null ? request.getSteps() : new ArrayList<>())
                     .equipment(request.getEquipment() != null ? request.getEquipment() : new ArrayList<>())
@@ -521,12 +526,5 @@ public class RecipeServiceImpl implements RecipeService {
         return mapToResponse(saved, user);
     }
 
-    private RecipeCategory getOrCreateCategory(String name, CategoryType type) {
-        if (name == null || name.isBlank()) return null;
-        return recipeCategoryRepository.findByNameAndType(name, type)
-                .orElseGet(() -> recipeCategoryRepository.save(RecipeCategory.builder()
-                        .name(name)
-                        .type(type)
-                        .build()));
-    }
+    // Removed private getOrCreateCategory, now using taxonomyService
 }
