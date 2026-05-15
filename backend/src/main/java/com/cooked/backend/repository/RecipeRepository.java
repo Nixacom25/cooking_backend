@@ -16,6 +16,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         long countByOrigin(com.cooked.backend.entity.RecipeOrigin origin);
 
         boolean existsByUserIdAndName(UUID userId, String name);
+        boolean existsByNameAndOrigin(String name, com.cooked.backend.entity.RecipeOrigin origin);
 
         List<Recipe> findAllByUserId(UUID userId);
         List<Recipe> findAllByUserIdAndOriginNot(UUID userId, com.cooked.backend.entity.RecipeOrigin origin);
@@ -25,8 +26,8 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
 
         @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.isPublic = true " +
                         "AND (r.origin = :origin1 OR r.origin = :origin2) " +
-                        "AND (:cuisine IS NULL OR r.cuisine = :cuisine) " +
-                        "AND (:category IS NULL OR r.category = :category) " +
+                        "AND (:cuisine IS NULL OR r.cuisine.name = :cuisine) " +
+                        "AND (:category IS NULL OR r.category.name = :category) " +
                         "ORDER BY r.createdAt DESC")
         org.springframework.data.domain.Page<Recipe> findExploreRecipes(
                         @org.springframework.data.repository.query.Param("origin1") com.cooked.backend.entity.RecipeOrigin origin1,
@@ -51,8 +52,8 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
 
         @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r " +
                         "WHERE r.isPublic = true " +
-                        "AND (:category IS NULL OR r.category = :category) " +
-                        "AND (:cuisines IS NULL OR (SELECT COUNT(r2) FROM Recipe r2 WHERE r2.id = r.id AND r2.cuisine IN :cuisines) > 0) " +
+                        "AND (:category IS NULL OR r.category.name = :category) " +
+                        "AND (:cuisines IS NULL OR (SELECT COUNT(r2) FROM Recipe r2 WHERE r2.id = r.id AND r2.cuisine.name IN :cuisines) > 0) " +
                         "ORDER BY RANDOM()")
         org.springframework.data.domain.Page<Recipe> findRandomPopularRecipes(
                         @org.springframework.data.repository.query.Param("category") String category,
@@ -84,13 +85,13 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         @org.springframework.transaction.annotation.Transactional
         void deleteByUserId(UUID userId);
 
-        @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r.cuisine FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.cuisine IS NOT NULL")
+        @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r.cuisine.name FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.cuisine IS NOT NULL")
         List<String> findDistinctCuisines();
 
-    @org.springframework.data.jpa.repository.Query("SELECT r.category, COUNT(r) FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.category IS NOT NULL GROUP BY r.category")
+    @org.springframework.data.jpa.repository.Query("SELECT r.category.name, r.category.image, COUNT(r) FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.category IS NOT NULL GROUP BY r.category.name, r.category.image")
     List<Object[]> findCategoriesWithCount();
 
-    @org.springframework.data.jpa.repository.Query("SELECT r.cuisine, COUNT(r) FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.cuisine IS NOT NULL GROUP BY r.cuisine")
+    @org.springframework.data.jpa.repository.Query("SELECT r.cuisine.name, r.cuisine.image, COUNT(r) FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.cuisine IS NOT NULL GROUP BY r.cuisine.name, r.cuisine.image")
     List<Object[]> findCuisinesWithCount();
 
     List<Recipe> findByNameContainingIgnoreCase(String name);

@@ -41,9 +41,9 @@ public interface RecipeService {
         
         List<RecipeResponse> getHomeSuggestions(String userEmail);
         
-        Map<String, Long> getExploreCuisines();
+        List<com.cooked.backend.dto.response.ExploreTaxonomyResponse> getExploreCuisines();
         
-        Map<String, Long> getExploreCategories();
+        List<com.cooked.backend.dto.response.ExploreTaxonomyResponse> getExploreCategories();
         
         RecipeResponse togglePin(UUID id, String userEmail);
 }

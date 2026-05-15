@@ -31,6 +31,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final CookbookRepository cookbookRepository;
     private final ActivityLogService activityLogService;
     private final com.cooked.backend.service.AiService aiService;
+    private final RecipeCategoryRepository recipeCategoryRepository;
 
     @jakarta.annotation.PostConstruct
     public void migrateOrigins() {
@@ -72,8 +73,8 @@ public class RecipeServiceImpl implements RecipeService {
             if (request.getKcal() != null) recipe.setKcal(request.getKcal());
             if (request.getServings() != null) recipe.setServings(request.getServings());
             if (request.getTips() != null) recipe.setTips(request.getTips());
-            if (request.getCuisine() != null) recipe.setCuisine(request.getCuisine());
-            if (request.getCategory() != null) recipe.setCategory(request.getCategory());
+            if (request.getCuisine() != null) recipe.setCuisine(getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE));
+            if (request.getCategory() != null) recipe.setCategory(getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY));
             if (request.getSourceUrl() != null) recipe.setSourceUrl(request.getSourceUrl());
             if (request.getSteps() != null) recipe.setSteps(request.getSteps());
             if (request.getEquipment() != null) recipe.setEquipment(request.getEquipment());
@@ -87,8 +88,8 @@ public class RecipeServiceImpl implements RecipeService {
                     .kcal(request.getKcal())
                     .servings(request.getServings())
                     .tips(request.getTips())
-                    .cuisine(request.getCuisine())
-                    .category(request.getCategory())
+                    .cuisine(getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE))
+                    .category(getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY))
                     .sourceUrl(request.getSourceUrl())
                     .steps(request.getSteps() != null ? request.getSteps() : new java.util.ArrayList<>())
                     .equipment(request.getEquipment() != null ? request.getEquipment() : new java.util.ArrayList<>())
@@ -325,8 +326,8 @@ public class RecipeServiceImpl implements RecipeService {
             recipe.setKcal(request.getKcal());
             recipe.setServings(request.getServings());
             recipe.setTips(request.getTips());
-            recipe.setCuisine(request.getCuisine());
-            recipe.setCategory(request.getCategory());
+            recipe.setCuisine(getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE));
+            recipe.setCategory(getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY));
             recipe.setSourceUrl(url);
             recipe.setSteps(request.getSteps() != null ? request.getSteps() : new ArrayList<>());
             recipe.setEquipment(request.getEquipment() != null ? request.getEquipment() : new ArrayList<>());
@@ -345,8 +346,8 @@ public class RecipeServiceImpl implements RecipeService {
                     .kcal(request.getKcal())
                     .servings(request.getServings())
                     .tips(request.getTips())
-                    .cuisine(request.getCuisine())
-                    .category(request.getCategory())
+                    .cuisine(getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE))
+                    .category(getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY))
                     .sourceUrl(url)
                     .steps(request.getSteps() != null ? request.getSteps() : new ArrayList<>())
                     .equipment(request.getEquipment() != null ? request.getEquipment() : new ArrayList<>())
@@ -441,8 +442,8 @@ public class RecipeServiceImpl implements RecipeService {
                 .cookTime(recipe.getCookTime())
                 .prepTime(recipe.getPrepTime())
                 .kcal(recipe.getKcal())
-                .category(recipe.getCategory())
-                .cuisine(recipe.getCuisine())
+                .category(recipe.getCategory() != null ? recipe.getCategory().getName() : null)
+                .cuisine(recipe.getCuisine() != null ? recipe.getCuisine().getName() : null)
                 .creator(recipe.getUser() != null ? RecipeCreatorResponse.builder()
                         .id(recipe.getUser().getId())
                         .firstname(recipe.getUser().getFirstname())
@@ -482,19 +483,25 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public Map<String, Long> getExploreCuisines() {
+    public List<com.cooked.backend.dto.response.ExploreTaxonomyResponse> getExploreCuisines() {
         return recipeRepository.findCuisinesWithCount().stream()
-                .collect(Collectors.toMap(
-                        obj -> (String) obj[0],
-                        obj -> (Long) obj[1]));
+                .map(obj -> com.cooked.backend.dto.response.ExploreTaxonomyResponse.builder()
+                        .name((String) obj[0])
+                        .image((String) obj[1])
+                        .recipeCount((Long) obj[2])
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Map<String, Long> getExploreCategories() {
+    public List<com.cooked.backend.dto.response.ExploreTaxonomyResponse> getExploreCategories() {
         return recipeRepository.findCategoriesWithCount().stream()
-                .collect(Collectors.toMap(
-                        obj -> (String) obj[0],
-                        obj -> (Long) obj[1]));
+                .map(obj -> com.cooked.backend.dto.response.ExploreTaxonomyResponse.builder()
+                        .name((String) obj[0])
+                        .image((String) obj[1])
+                        .recipeCount((Long) obj[2])
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -512,5 +519,14 @@ public class RecipeServiceImpl implements RecipeService {
 
         User user = userRepository.findByEmail(userEmail).orElse(null);
         return mapToResponse(saved, user);
+    }
+
+    private RecipeCategory getOrCreateCategory(String name, CategoryType type) {
+        if (name == null || name.isBlank()) return null;
+        return recipeCategoryRepository.findByNameAndType(name, type)
+                .orElseGet(() -> recipeCategoryRepository.save(RecipeCategory.builder()
+                        .name(name)
+                        .type(type)
+                        .build()));
     }
 }

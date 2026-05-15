@@ -126,13 +126,13 @@ public class RecipeController {
 
     @Operation(summary = "Get all distinct explore cuisines")
     @GetMapping("/explore/cuisines")
-    public ResponseEntity<Map<String, Long>> getExploreCuisines() {
+    public ResponseEntity<List<com.cooked.backend.dto.response.ExploreTaxonomyResponse>> getExploreCuisines() {
         return ResponseEntity.ok(recipeService.getExploreCuisines());
     }
 
     @Operation(summary = "Get all distinct explore categories")
     @GetMapping("/explore/categories")
-    public ResponseEntity<Map<String, Long>> getExploreCategories() {
+    public ResponseEntity<List<com.cooked.backend.dto.response.ExploreTaxonomyResponse>> getExploreCategories() {
         return ResponseEntity.ok(recipeService.getExploreCategories());
     }
 

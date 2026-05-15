@@ -384,8 +384,8 @@ public class MarkhorAiServiceImpl implements AiService {
                     req.setPrepTime(r.getPrepTime());
                     req.setKcal(r.getKcal());
                     req.setServings(r.getServings());
-                    req.setCuisine(r.getCuisine());
-                    req.setCategory(r.getCategory());
+                    req.setCuisine(r.getCuisine() != null ? r.getCuisine().getName() : null);
+                    req.setCategory(r.getCategory() != null ? r.getCategory().getName() : null);
                     req.setTips(r.getTips());
                     req.setOrigin("ONBOARDING");
                     req.setSourceUrl(r.getSourceUrl());

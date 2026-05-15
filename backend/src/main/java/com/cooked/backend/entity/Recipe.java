@@ -41,11 +41,13 @@ public class Recipe {
     @Column(nullable = true)
     private Integer kcal;
 
-    @Column(nullable = true, columnDefinition = "TEXT")
-    private String category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = true)
+    private RecipeCategory category;
 
-    @Column(nullable = true, columnDefinition = "TEXT")
-    private String cuisine;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cuisine_id", nullable = true)
+    private RecipeCategory cuisine;
 
     @Column(nullable = true)
     private Integer servings;
@@ -111,10 +113,10 @@ public class Recipe {
     public void setPrepTime(Integer prepTime) { this.prepTime = prepTime; }
     public Integer getKcal() { return kcal; }
     public void setKcal(Integer kcal) { this.kcal = kcal; }
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
-    public String getCuisine() { return cuisine; }
-    public void setCuisine(String cuisine) { this.cuisine = cuisine; }
+    public RecipeCategory getCategory() { return category; }
+    public void setCategory(RecipeCategory category) { this.category = category; }
+    public RecipeCategory getCuisine() { return cuisine; }
+    public void setCuisine(RecipeCategory cuisine) { this.cuisine = cuisine; }
     public Integer getServings() { return servings; }
     public void setServings(Integer servings) { this.servings = servings; }
     public String getTips() { return tips; }
