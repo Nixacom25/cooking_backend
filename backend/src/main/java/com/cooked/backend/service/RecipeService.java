@@ -24,11 +24,6 @@ public interface RecipeService {
                         String category,
                         org.springframework.data.domain.Pageable pageable);
 
-        MessageResponse toggleFavorite(UUID id, String userEmail);
-
-        org.springframework.data.domain.Page<RecipeResponse> getFavoriteRecipes(String userEmail,
-                        org.springframework.data.domain.Pageable pageable);
-
         org.springframework.data.domain.Page<com.cooked.backend.dto.response.CreatorResponse> getTopCreators(
                         org.springframework.data.domain.Pageable pageable);
 
@@ -49,4 +44,6 @@ public interface RecipeService {
         Map<String, Long> getExploreCuisines();
         
         Map<String, Long> getExploreCategories();
+        
+        RecipeResponse togglePin(UUID id, String userEmail);
 }

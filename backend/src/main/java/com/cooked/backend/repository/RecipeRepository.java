@@ -40,9 +40,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
                         org.springframework.data.domain.Pageable pageable);
 
         @org.springframework.data.jpa.repository.Query("SELECT u, COUNT(DISTINCT r), " +
-                        "((SELECT COUNT(f) FROM FavoriteRecipe f WHERE f.recipe.user.id = u.id AND f.recipe.isPublic = true) + "
-                        +
-                        "(SELECT COUNT(gi) FROM GroceryItem gi WHERE gi.recipe.user.id = u.id AND gi.recipe.isPublic = true)) as usageCount "
+                        "(SELECT COUNT(gi) FROM GroceryItem gi WHERE gi.recipe.user.id = u.id AND gi.recipe.isPublic = true) as usageCount "
                         +
                         "FROM Recipe r JOIN r.user u " +
                         "WHERE r.isPublic = true " +
@@ -73,7 +71,6 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
 
         @org.springframework.data.jpa.repository.Modifying
         @org.springframework.data.jpa.repository.Query("DELETE FROM Recipe r WHERE r.origin = :origin AND r.expiresAt < :now " +
-                        "AND NOT EXISTS (SELECT 1 FROM FavoriteRecipe fr WHERE fr.recipe = r) " +
                         "AND NOT EXISTS (SELECT 1 FROM GroceryItem gi WHERE gi.recipe = r)")
         int deleteExpiredSuggestedRecipes(
                         @org.springframework.data.repository.query.Param("origin") com.cooked.backend.entity.RecipeOrigin origin,

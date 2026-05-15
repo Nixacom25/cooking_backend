@@ -56,4 +56,10 @@ public class CookbookController {
     public ResponseEntity<MessageResponse> delete(@PathVariable UUID id, Authentication auth) {
         return ResponseEntity.ok(cookbookService.delete(id, auth.getName()));
     }
+
+    @Operation(summary = "Toggle pin a Cookbook")
+    @PatchMapping("/{id}/pin")
+    public ResponseEntity<CookbookResponse> togglePin(@PathVariable UUID id, Authentication auth) {
+        return ResponseEntity.ok(cookbookService.togglePin(id, auth.getName()));
+    }
 }

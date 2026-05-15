@@ -142,22 +142,6 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.togglePublicVisibility(id, auth.getName()));
     }
 
-    @Operation(summary = "Toggle recipe favorite status")
-    @PutMapping("/{id}/favorite")
-    public ResponseEntity<MessageResponse> toggleFavorite(@PathVariable UUID id, Authentication auth) {
-        return ResponseEntity.ok(recipeService.toggleFavorite(id, auth.getName()));
-    }
-
-    @Operation(summary = "Get user's favorite recipes")
-    @GetMapping("/favorites")
-    public ResponseEntity<org.springframework.data.domain.Page<RecipeResponse>> getFavorites(
-            Authentication auth,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
-        return ResponseEntity.ok(recipeService.getFavoriteRecipes(auth.getName(), pageable));
-    }
-
     @Operation(summary = "Get top creators based on recipe usage")
     @GetMapping("/top-creators")
     public ResponseEntity<org.springframework.data.domain.Page<com.cooked.backend.dto.response.CreatorResponse>> getTopCreators(
@@ -212,5 +196,11 @@ public class RecipeController {
     public ResponseEntity<Map<String, String>> getShareLink(@PathVariable UUID id, Authentication auth) {
         String link = recipeService.getShareLink(id, auth.getName());
         return ResponseEntity.ok(Map.of("link", link));
+    }
+
+    @Operation(summary = "Toggle pin a Recipe")
+    @PatchMapping("/{id}/pin")
+    public ResponseEntity<RecipeResponse> togglePin(@PathVariable UUID id, Authentication auth) {
+        return ResponseEntity.ok(recipeService.togglePin(id, auth.getName()));
     }
 }

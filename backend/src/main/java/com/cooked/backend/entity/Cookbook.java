@@ -41,4 +41,8 @@ public class Cookbook {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isPinned = false;
 }

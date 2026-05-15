@@ -10,13 +10,14 @@ import com.cooked.backend.exception.ResourceNotFoundException;
 import com.cooked.backend.repository.CookbookRepository;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.repository.RecipeRepository;
-import com.cooked.backend.repository.FavoriteRecipeRepository;
 import com.cooked.backend.service.CookbookService;
 import com.cooked.backend.service.ActivityLogService;
 import com.cooked.backend.dto.response.RecipeIngredientResponse;
+import com.cooked.backend.dto.response.RecipeCreatorResponse;
 import com.cooked.backend.dto.response.RecipeResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,7 +32,6 @@ public class CookbookServiceImpl implements CookbookService {
     private final CookbookRepository cookbookRepository;
     private final UserRepository userRepository;
     private final RecipeRepository recipeRepository;
-    private final FavoriteRecipeRepository favoriteRecipeRepository;
     private final ActivityLogService activityLogService;
 
     @Override
@@ -132,36 +132,71 @@ public class CookbookServiceImpl implements CookbookService {
         return new MessageResponse("Cookbook deleted successfully.");
     }
 
+    @Override
+    public CookbookResponse togglePin(UUID id, String userEmail) {
+        Cookbook cookbook = cookbookRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cookbook not found"));
+
+        if (!cookbook.getUser().getEmail().equals(userEmail)) {
+            throw new BadRequestException("You do not have permission to pin this cookbook.");
+        }
+
+        cookbook.setPinned(!cookbook.isPinned());
+        Cookbook saved = cookbookRepository.save(cookbook);
+        return mapToResponse(saved);
+    }
+
     private CookbookResponse mapToResponse(Cookbook cookbook) {
-        User user = cookbook.getUser();
         return CookbookResponse.builder()
                 .id(cookbook.getId())
                 .name(cookbook.getName())
+                .isPinned(cookbook.isPinned())
                 .recipes(cookbook.getRecipes() != null ? cookbook.getRecipes().stream()
                         .map(r -> {
-                            boolean isFavorite = favoriteRecipeRepository.existsByUserAndRecipe(user, r);
+                            boolean isInCookbook = true;
                             List<RecipeIngredientResponse> ingResponses = r.getRecipeIngredients() == null
                                     ? Collections.emptyList()
-                                    : r.getRecipeIngredients().stream().map(ri -> RecipeIngredientResponse.builder()
-                                            .id(ri.getIngredient().getId())
-                                            .name(ri.getIngredient().getName())
-                                            .icon(ri.getIngredient().getIcon())
-                                            .quantity(ri.getQuantity())
-                                            .build()).collect(Collectors.toList());
+                                    : r.getRecipeIngredients().stream()
+                                            .filter(ri -> ri.getIngredient() != null)
+                                            .map(ri -> RecipeIngredientResponse.builder()
+                                                    .id(ri.getIngredient().getId())
+                                                    .name(ri.getIngredient().getName())
+                                                    .icon(ri.getIngredient().getIcon())
+                                                    .quantity(ri.getQuantity())
+                                                    .build())
+                                            .collect(Collectors.toList());
 
                             return RecipeResponse.builder()
                                     .id(r.getId())
                                     .name(r.getName())
                                     .image(r.getImage())
                                     .cookTime(r.getCookTime())
+                                    .prepTime(r.getPrepTime())
                                     .kcal(r.getKcal())
+                                    .category(r.getCategory())
+                                    .cuisine(r.getCuisine())
+                                    .creator(r.getUser() != null ? RecipeCreatorResponse.builder()
+                                            .id(r.getUser().getId())
+                                            .firstname(r.getUser().getFirstname())
+                                            .lastname(r.getUser().getLastname())
+                                            .photo(r.getUser().getPhoto())
+                                            .build() : null)
                                     .ingredients(ingResponses)
                                     .steps(r.getSteps())
+                                    .equipment(new java.util.ArrayList<>(r.getEquipment()))
+                                    .servings(r.getServings())
+                                    .tips(r.getTips())
                                     .isPublic(r.isPublic())
-                                    .isFavorite(isFavorite)
-                                    .isInCookbook(true)
+                                    .isFavorite(false)
+                                    .sourceUrl(r.getSourceUrl())
                                     .createdAt(r.getCreatedAt())
                                     .updatedAt(r.getUpdatedAt())
+                                    .isSuggested(r.getExpiresAt() != null)
+                                    .expiresAt(r.getExpiresAt())
+                                    .origin(r.getOrigin() != null ? r.getOrigin().name() : null)
+                                    .isInCookbook(isInCookbook)
+                                    .isPinned(r.isPinned())
+                                    .shareUrl("https://cooked.nixacom.com/recipes/" + r.getId())
                                     .build();
                         })
                         .collect(Collectors.toList()) : Collections.emptyList())

@@ -153,17 +153,13 @@ public class User implements UserDetails {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private UserSubscription subscription;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = false)
     @Builder.Default
     private List<Recipe> recipes = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Cookbook> cookbooks = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<FavoriteRecipe> favoriteRecipes = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -278,6 +274,21 @@ public class User implements UserDetails {
     public void setOnboardingRating(Integer onboardingRating) { this.onboardingRating = onboardingRating; }
     public String getOnboardingFeedback() { return onboardingFeedback; }
     public void setOnboardingFeedback(String onboardingFeedback) { this.onboardingFeedback = onboardingFeedback; }
+
+    public List<Recipe> getRecipes() { return recipes; }
+    public void setRecipes(List<Recipe> recipes) { this.recipes = recipes; }
+
+    public List<Cookbook> getCookbooks() { return cookbooks; }
+    public void setCookbooks(List<Cookbook> cookbooks) { this.cookbooks = cookbooks; }
+
+    public List<GroceryItem> getGroceryItems() { return groceryItems; }
+    public void setGroceryItems(List<GroceryItem> groceryItems) { this.groceryItems = groceryItems; }
+
+    public List<MealPlan> getMealPlans() { return mealPlans; }
+    public void setMealPlans(List<MealPlan> mealPlans) { this.mealPlans = mealPlans; }
+
+    public List<ActivityLog> getActivityLogs() { return activityLogs; }
+    public void setActivityLogs(List<ActivityLog> activityLogs) { this.activityLogs = activityLogs; }
 
     public boolean isSuggestionsReady() { return suggestionsReady; }
     public void setSuggestionsReady(boolean suggestionsReady) { this.suggestionsReady = suggestionsReady; }

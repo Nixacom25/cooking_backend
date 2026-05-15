@@ -23,7 +23,7 @@ public class Recipe {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -92,6 +92,10 @@ public class Recipe {
     @Builder.Default
     private RecipeOrigin origin = RecipeOrigin.MANUAL;
 
+    @Column(name = "is_pinned", nullable = false)
+    @Builder.Default
+    private boolean isPinned = false;
+
     // --- Getters & Setters Manuels ---
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -135,4 +139,6 @@ public class Recipe {
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public RecipeOrigin getOrigin() { return origin; }
     public void setOrigin(RecipeOrigin origin) { this.origin = origin; }
+    public boolean isPinned() { return isPinned; }
+    public void setPinned(boolean pinned) { isPinned = pinned; }
 }

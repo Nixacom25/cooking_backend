@@ -17,4 +17,6 @@ public interface CookbookService {
     CookbookResponse getCookbook(UUID id, String userEmail);
 
     MessageResponse delete(UUID id, String userEmail);
+
+    CookbookResponse togglePin(UUID id, String userEmail);
 }

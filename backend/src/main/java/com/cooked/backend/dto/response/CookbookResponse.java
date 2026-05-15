@@ -15,4 +15,5 @@ public class CookbookResponse {
     private List<RecipeResponse> recipes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private boolean isPinned;
 }

@@ -240,6 +240,19 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
+        // Handle recipes: unlink and change origin if needed
+        if (user.getRecipes() != null) {
+            for (com.cooked.backend.entity.Recipe recipe : user.getRecipes()) {
+                recipe.setUser(null);
+                if (recipe.getOrigin() == com.cooked.backend.entity.RecipeOrigin.SCAN || 
+                    recipe.getOrigin() == com.cooked.backend.entity.RecipeOrigin.IMPORT) {
+                    recipe.setOrigin(com.cooked.backend.entity.RecipeOrigin.SUGGESTED);
+                }
+            }
+            // Clear the list to ensure they are not part of the user object anymore
+            user.getRecipes().clear();
+        }
+
         userRepository.delete(user);
         
         return new MessageResponse("Your account and all associated data have been permanently deleted.");

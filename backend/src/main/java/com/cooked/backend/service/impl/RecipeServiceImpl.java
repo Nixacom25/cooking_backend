@@ -30,7 +30,6 @@ public class RecipeServiceImpl implements RecipeService {
     private final IngredientRepository ingredientRepository;
     private final CookbookRepository cookbookRepository;
     private final ActivityLogService activityLogService;
-    private final FavoriteRecipeRepository favoriteRecipeRepository;
     private final com.cooked.backend.service.AiService aiService;
 
     @jakarta.annotation.PostConstruct
@@ -255,40 +254,6 @@ public class RecipeServiceImpl implements RecipeService {
                 .toList();
     }
 
-    @Override
-    @Transactional
-    public MessageResponse toggleFavorite(UUID id, String userEmail) {
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Recipe recipe = recipeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
-
-        if (!recipe.isPublic() && !recipe.getUser().getId().equals(user.getId())) {
-            throw new BadRequestException("You cannot favorite a private recipe that is not yours.");
-        }
-
-        Optional<FavoriteRecipe> existing = favoriteRecipeRepository.findByUserAndRecipe(user, recipe);
-        if (existing.isPresent()) {
-            favoriteRecipeRepository.delete(existing.get());
-            return new MessageResponse("Recipe removed from favorites");
-        } else {
-            FavoriteRecipe favorite = FavoriteRecipe.builder()
-                    .user(user)
-                    .recipe(recipe)
-                    .build();
-            favoriteRecipeRepository.save(favorite);
-            return new MessageResponse("Recipe added to favorites");
-        }
-    }
-
-    @Override
-    public org.springframework.data.domain.Page<RecipeResponse> getFavoriteRecipes(String userEmail,
-            org.springframework.data.domain.Pageable pageable) {
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        return favoriteRecipeRepository.findByUserOrderByCreatedAtDesc(user, pageable)
-                .map(fav -> mapToResponse(fav.getRecipe(), user));
-    }
 
     @Override
     public org.springframework.data.domain.Page<com.cooked.backend.dto.response.CreatorResponse> getTopCreators(
@@ -453,43 +418,44 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     private RecipeResponse mapToResponse(Recipe recipe, User user) {
-        boolean isFavorite = false;
         boolean isInCookbook = false;
         if (user != null) {
-            isFavorite = favoriteRecipeRepository.existsByUserAndRecipe(user, recipe);
             isInCookbook = recipe.getCookbooks() != null && !recipe.getCookbooks().isEmpty();
         }
 
         List<RecipeIngredientResponse> ingResponses = recipe.getRecipeIngredients() == null ? Collections.emptyList()
-                : recipe.getRecipeIngredients().stream().map(ri -> RecipeIngredientResponse.builder()
-                        .id(ri.getIngredient().getId())
-                        .name(ri.getIngredient().getName())
-                        .icon(ri.getIngredient().getIcon())
-                        .quantity(ri.getQuantity())
-                        .build()).collect(Collectors.toList());
+                : recipe.getRecipeIngredients().stream()
+                        .filter(ri -> ri.getIngredient() != null)
+                        .map(ri -> RecipeIngredientResponse.builder()
+                                .id(ri.getIngredient().getId())
+                                .name(ri.getIngredient().getName())
+                                .icon(ri.getIngredient().getIcon())
+                                .quantity(ri.getQuantity())
+                                .build()).collect(Collectors.toList());
 
         return RecipeResponse.builder()
                 .id(recipe.getId())
                 .name(recipe.getName())
+                .isPinned(recipe.isPinned())
                 .image(recipe.getImage())
                 .cookTime(recipe.getCookTime())
                 .prepTime(recipe.getPrepTime())
                 .kcal(recipe.getKcal())
                 .category(recipe.getCategory())
                 .cuisine(recipe.getCuisine())
-                .creator(RecipeCreatorResponse.builder()
+                .creator(recipe.getUser() != null ? RecipeCreatorResponse.builder()
                         .id(recipe.getUser().getId())
                         .firstname(recipe.getUser().getFirstname())
                         .lastname(recipe.getUser().getLastname())
                         .photo(recipe.getUser().getPhoto())
-                        .build())
+                        .build() : null)
                 .ingredients(ingResponses)
                 .steps(recipe.getSteps())
                 .equipment(new java.util.ArrayList<>(recipe.getEquipment()))
                 .servings(recipe.getServings())
                 .tips(recipe.getTips())
                 .isPublic(recipe.isPublic())
-                .isFavorite(isFavorite)
+                .isFavorite(false)
                 .sourceUrl(recipe.getSourceUrl())
                 .createdAt(recipe.getCreatedAt())
                 .updatedAt(recipe.getUpdatedAt())
@@ -529,5 +495,22 @@ public class RecipeServiceImpl implements RecipeService {
                 .collect(Collectors.toMap(
                         obj -> (String) obj[0],
                         obj -> (Long) obj[1]));
+    }
+
+    @Override
+    @Transactional
+    public RecipeResponse togglePin(UUID id, String userEmail) {
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
+
+        if (!recipe.getUser().getEmail().equals(userEmail)) {
+            throw new BadRequestException("You do not have permission to pin this recipe.");
+        }
+
+        recipe.setPinned(!recipe.isPinned());
+        Recipe saved = recipeRepository.save(recipe);
+
+        User user = userRepository.findByEmail(userEmail).orElse(null);
+        return mapToResponse(saved, user);
     }
 }
