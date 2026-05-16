@@ -24,6 +24,7 @@ public class Recipe {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private User user;
 
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -69,6 +70,7 @@ public class Recipe {
     private Set<RecipeIngredient> recipeIngredients;
 
     @ManyToMany(mappedBy = "recipes")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Set<Cookbook> cookbooks;
 
     @Column(name = "source_url", nullable = true, columnDefinition = "TEXT")

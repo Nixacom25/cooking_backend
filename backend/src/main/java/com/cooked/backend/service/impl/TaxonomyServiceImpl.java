@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,19 +41,19 @@ public class TaxonomyServiceImpl implements TaxonomyService {
     );
 
     private static final Map<String, String> CUISINE_IMAGES = Map.ofEntries(
-        Map.entry("Italy", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825879/ai-recipe-app/taxonomy/fgke47uvihcznhh26xyw.png"),
-        Map.entry("Mexico", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825881/ai-recipe-app/taxonomy/v8ompn1xfg2xerin57ea.png"),
-        Map.entry("China", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825883/ai-recipe-app/taxonomy/t0dzizwahawi5lrdqnrx.png"),
-        Map.entry("Japan", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825885/ai-recipe-app/taxonomy/rkaaoetvlogvojyrbbal.png"),
-        Map.entry("Thailand", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825887/ai-recipe-app/taxonomy/kpf7vnohqamnafqlj9xn.png"),
-        Map.entry("India", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825896/ai-recipe-app/taxonomy/fhzwu5howhuiui6mdxl9.jpg"),
-        Map.entry("South Korea", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825899/ai-recipe-app/taxonomy/az5qhmzv8ktvmybrgodx.jpg"),
+        Map.entry("Italian", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825879/ai-recipe-app/taxonomy/fgke47uvihcznhh26xyw.png"),
+        Map.entry("Mexican", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825881/ai-recipe-app/taxonomy/v8ompn1xfg2xerin57ea.png"),
+        Map.entry("Chinese", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825883/ai-recipe-app/taxonomy/t0dzizwahawi5lrdqnrx.png"),
+        Map.entry("Japanese", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825885/ai-recipe-app/taxonomy/rkaaoetvlogvojyrbbal.png"),
+        Map.entry("Thai", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825887/ai-recipe-app/taxonomy/kpf7vnohqamnafqlj9xn.png"),
+        Map.entry("Indian", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825896/ai-recipe-app/taxonomy/fhzwu5howhuiui6mdxl9.jpg"),
+        Map.entry("Korean", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825899/ai-recipe-app/taxonomy/az5qhmzv8ktvmybrgodx.jpg"),
         Map.entry("Mediterranean", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825909/ai-recipe-app/taxonomy/tv6ffhbuwenbqjycdf2m.png"),
-        Map.entry("Middle East", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825913/ai-recipe-app/taxonomy/kjclia9clnpalj5hmrr8.png"),
-        Map.entry("France", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825928/ai-recipe-app/taxonomy/sqhgsctwb0ywicd4sivq.png"),
-        Map.entry("Greece", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825941/ai-recipe-app/taxonomy/gtbhwfmco1mqo7j5n10q.png"),
+        Map.entry("Middle Eastern", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825913/ai-recipe-app/taxonomy/kjclia9clnpalj5hmrr8.png"),
+        Map.entry("French", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825928/ai-recipe-app/taxonomy/sqhgsctwb0ywicd4sivq.png"),
+        Map.entry("Greek", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825941/ai-recipe-app/taxonomy/gtbhwfmco1mqo7j5n10q.png"),
         Map.entry("Caribbean", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825954/ai-recipe-app/taxonomy/mvkpcxrsmpt7rtjxkzrw.png"),
-        Map.entry("West Africa", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825961/ai-recipe-app/taxonomy/pvqffpmrz1l2bjuoaabh.png"),
+        Map.entry("West African", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825961/ai-recipe-app/taxonomy/pvqffpmrz1l2bjuoaabh.png"),
         Map.entry("American", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825964/ai-recipe-app/taxonomy/edm1eoulgyyj6ajo9sfx.jpg"),
         Map.entry("Senegalese", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825968/ai-recipe-app/taxonomy/qtghqgyehufyrqvohxcy.jpg"),
         Map.entry("Vietnamese", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825974/ai-recipe-app/taxonomy/ea3iepmpd92dykzekamg.jpg"),
@@ -82,25 +83,35 @@ public class TaxonomyServiceImpl implements TaxonomyService {
             if (normalizedName.equalsIgnoreCase("Comfort Food")) normalizedName = "Pizza & Flatbreads";
             if (normalizedName.equalsIgnoreCase("Meal Prep Favorites")) normalizedName = "Healthy Breakfasts";
         } else if (type == CategoryType.CUISINE) {
-            if (normalizedName.equalsIgnoreCase("Italian")) normalizedName = "Italy";
-            if (normalizedName.equalsIgnoreCase("Mexican")) normalizedName = "Mexico";
-            if (normalizedName.equalsIgnoreCase("Japanese")) normalizedName = "Japan";
-            if (normalizedName.equalsIgnoreCase("French")) normalizedName = "France";
-            if (normalizedName.equalsIgnoreCase("Thai")) normalizedName = "Thailand";
-            if (normalizedName.equalsIgnoreCase("Chinese")) normalizedName = "China";
-            if (normalizedName.equalsIgnoreCase("Indian")) normalizedName = "India";
-            if (normalizedName.equalsIgnoreCase("Korean")) normalizedName = "South Korea";
-            if (normalizedName.equalsIgnoreCase("Middle Eastern")) normalizedName = "Middle East";
-            if (normalizedName.equalsIgnoreCase("West African")) normalizedName = "West Africa";
+            if (normalizedName.equalsIgnoreCase("Italy")) normalizedName = "Italian";
+            if (normalizedName.equalsIgnoreCase("Mexico")) normalizedName = "Mexican";
+            if (normalizedName.equalsIgnoreCase("Japan")) normalizedName = "Japanese";
+            if (normalizedName.equalsIgnoreCase("France")) normalizedName = "French";
+            if (normalizedName.equalsIgnoreCase("Thailand")) normalizedName = "Thai";
+            if (normalizedName.equalsIgnoreCase("China")) normalizedName = "Chinese";
+            if (normalizedName.equalsIgnoreCase("India")) normalizedName = "Indian";
+            if (normalizedName.equalsIgnoreCase("South Korea")) normalizedName = "Korean";
+            if (normalizedName.equalsIgnoreCase("Middle East")) normalizedName = "Middle Eastern";
+            if (normalizedName.equalsIgnoreCase("West Africa")) normalizedName = "West African";
             if (normalizedName.equalsIgnoreCase("North American")) normalizedName = "American";
-            if (normalizedName.equalsIgnoreCase("Japanese Fusion")) normalizedName = "Japan";
-            if (normalizedName.equalsIgnoreCase("Thai/Chinese")) normalizedName = "Thailand";
-            if (normalizedName.equalsIgnoreCase("South East Asian")) normalizedName = "Thailand";
-            if (normalizedName.equalsIgnoreCase("Taiwanese")) normalizedName = "China";
+            if (normalizedName.equalsIgnoreCase("Japan")) normalizedName = "Japanese";
+            if (normalizedName.equalsIgnoreCase("Japan Fusion")) normalizedName = "Japanese";
+            if (normalizedName.equalsIgnoreCase("Thai/Chinese")) normalizedName = "Thai";
+            if (normalizedName.equalsIgnoreCase("South East Asian")) normalizedName = "Thai";
+            if (normalizedName.equalsIgnoreCase("Taiwanese")) normalizedName = "Chinese";
             if (normalizedName.equalsIgnoreCase("Argentine")) normalizedName = "Brazilian";
-            if (normalizedName.equalsIgnoreCase("Belgian")) normalizedName = "France";
-            if (normalizedName.equalsIgnoreCase("European")) normalizedName = "France";
+            if (normalizedName.equalsIgnoreCase("Belgian")) normalizedName = "French";
+            if (normalizedName.equalsIgnoreCase("European")) normalizedName = "French";
             if (normalizedName.equalsIgnoreCase("Hawaiian")) normalizedName = "American";
+            if (normalizedName.equalsIgnoreCase("Greece")) normalizedName = "Greek";
+            if (normalizedName.equalsIgnoreCase("Spain")) normalizedName = "Spanish";
+            if (normalizedName.equalsIgnoreCase("Brazil")) normalizedName = "Brazilian";
+            if (normalizedName.equalsIgnoreCase("Turkey")) normalizedName = "Turkish";
+            if (normalizedName.equalsIgnoreCase("Lebanon")) normalizedName = "Lebanese";
+            if (normalizedName.equalsIgnoreCase("Vietnam")) normalizedName = "Vietnamese";
+            if (normalizedName.equalsIgnoreCase("Morocco")) normalizedName = "Moroccan";
+            if (normalizedName.equalsIgnoreCase("Japanese Fusion")) normalizedName = "Japanese";
+            if (normalizedName.equalsIgnoreCase("Wast African")) normalizedName = "West African";
         }
         
         final String finalName = normalizedName;
@@ -186,6 +197,70 @@ public class TaxonomyServiceImpl implements TaxonomyService {
         } catch (Exception e) {
             log.error("Migration check/process failed: {}", e.getMessage(), e);
         }
+    }
+
+    @Override
+    @Transactional
+    public void mergeDuplicateTaxonomies() {
+        log.info("Starting taxonomy cleanup and merging...");
+        
+        Map<String, String> merges = Map.ofEntries(
+            Map.entry("China", "Chinese"),
+            Map.entry("Thailand", "Thai"),
+            Map.entry("France", "French"),
+            Map.entry("Italy", "Italian"),
+            Map.entry("Mexico", "Mexican"),
+            Map.entry("Japan", "Japanese"),
+            Map.entry("India", "Indian"),
+            Map.entry("South Korea", "Korean"),
+            Map.entry("Middle East", "Middle Eastern"),
+            Map.entry("Greece", "Greek"),
+            Map.entry("Brazil", "Brazilian"),
+            Map.entry("Vietnam", "Vietnamese"),
+            Map.entry("Morocco", "Moroccan"),
+            Map.entry("Spain", "Spanish"),
+            Map.entry("Senegal", "Senegalese"),
+            Map.entry("Sénégal", "Senegalese"),
+            Map.entry("USA", "American"),
+            Map.entry("America", "American"),
+            Map.entry("United Kingdom", "British"),
+            Map.entry("UK", "British"),
+            Map.entry("Lebanon", "Lebanese"),
+            Map.entry("Turkey", "Turkish"),
+            Map.entry("West Africa", "West African"),
+            Map.entry("Wast African", "West African"),
+            Map.entry("Japanese Fusion", "Japanese"),
+            Map.entry("Japan Fusion", "Japanese")
+        );
+
+        for (Map.Entry<String, String> entry : merges.entrySet()) {
+            String oldName = entry.getKey();
+            String newName = entry.getValue();
+
+            // Find existing categories
+            Map<String, UUID> map = jdbcTemplate.query("SELECT id, name FROM recipe_categories WHERE type = 'CUISINE' AND (name = ? OR name = ?)", (rs, rowNum) -> {
+                UUID id = (UUID) rs.getObject("id");
+                String name = rs.getString("name");
+                return Map.entry(name, id);
+            }, oldName, newName).stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a));
+
+            if (!map.isEmpty()) {
+                UUID oldId = map.get(oldName);
+                UUID newId = map.get(newName);
+
+                if (oldId != null && newId != null) {
+                    log.info("Merging '{}' into '{}'...", oldName, newName);
+                    // Update recipes
+                    jdbcTemplate.update("UPDATE recipes SET cuisine_id = ? WHERE cuisine_id = ?", newId, oldId);
+                    // Delete old category
+                    jdbcTemplate.update("DELETE FROM recipe_categories WHERE id = ?", oldId);
+                } else if (oldId != null) {
+                    log.info("Renaming '{}' to '{}'...", oldName, newName);
+                    jdbcTemplate.update("UPDATE recipe_categories SET name = ? WHERE id = ?", newName, oldId);
+                }
+            }
+        }
+        log.info("Taxonomy cleanup completed.");
     }
 
     @Override

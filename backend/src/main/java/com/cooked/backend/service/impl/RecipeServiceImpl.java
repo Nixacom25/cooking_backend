@@ -38,6 +38,7 @@ public class RecipeServiceImpl implements RecipeService {
     public void onStartup() {
         migrateOrigins();
         taxonomyService.migrateExistingRecipes();
+        taxonomyService.mergeDuplicateTaxonomies();
     }
     public void migrateOrigins() {
         log.info("Starting recipes origin migration...");
@@ -407,13 +408,25 @@ public class RecipeServiceImpl implements RecipeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
 
         if (!recipe.getUser().getId().equals(user.getId())) {
+            if (recipe.isPublic()) {
+                // Check for duplicate by name for this user to avoid multiple clones
+                Optional<Recipe> existing = recipeRepository.findByUserIdAndName(user.getId(), recipe.getName());
+                if (existing.isPresent()) {
+                    return mapToResponse(existing.get(), user);
+                }
+                
+                Recipe clone = cloneRecipeForUser(recipe, user);
+                activityLogService.logActivity(user, "Recipe Saved", "You saved '" + clone.getName() + "' from Explore.");
+                return mapToResponse(clone, user);
+            }
             throw new BadRequestException("You do not have permission to validate this recipe.");
         }
 
         // When validating a suggestion, it becomes a "MANUAL" or "SCAN" recipe but not a suggestion anymore
-        // Actually, we'll keep it as SCAN if it was suggested? 
-        // User says "marque toutes les recipes deja creer par default a scan"
-        recipe.setOrigin(RecipeOrigin.SCAN);
+        // BUT we must keep IMPORT as IMPORT so it stays in Recent Imports list
+        if (recipe.getOrigin() != RecipeOrigin.IMPORT) {
+            recipe.setOrigin(RecipeOrigin.SCAN);
+        }
         recipe.setExpiresAt(null);
 
         Recipe saved = recipeRepository.save(recipe);
@@ -421,6 +434,42 @@ public class RecipeServiceImpl implements RecipeService {
         activityLogService.logActivity(user, "Recipe Validated", "You saved the suggestion '" + saved.getName() + "'.");
 
         return mapToResponse(saved, user);
+    }
+
+    private Recipe cloneRecipeForUser(Recipe original, User user) {
+        Recipe clone = Recipe.builder()
+                .user(user)
+                .name(original.getName())
+                .image(original.getImage())
+                .cookTime(original.getCookTime())
+                .prepTime(original.getPrepTime())
+                .kcal(original.getKcal())
+                .category(original.getCategory())
+                .cuisine(original.getCuisine())
+                .servings(original.getServings())
+                .tips(original.getTips())
+                .steps(new ArrayList<>(original.getSteps()))
+                .equipment(new ArrayList<>(original.getEquipment()))
+                .isPublic(false) // Cloned recipes are private for the user
+                .origin(RecipeOrigin.SCAN)
+                .sourceUrl(original.getSourceUrl())
+                .build();
+
+        Recipe savedClone = recipeRepository.save(clone);
+
+        if (original.getRecipeIngredients() != null) {
+            Set<RecipeIngredient> clonedIngredients = original.getRecipeIngredients().stream()
+                    .map(ri -> RecipeIngredient.builder()
+                            .recipe(savedClone)
+                            .ingredient(ri.getIngredient())
+                            .quantity(ri.getQuantity())
+                            .build())
+                    .collect(Collectors.toSet());
+            savedClone.setRecipeIngredients(clonedIngredients);
+            return recipeRepository.save(savedClone);
+        }
+
+        return savedClone;
     }
 
     private RecipeResponse mapToResponse(Recipe recipe, User user) {

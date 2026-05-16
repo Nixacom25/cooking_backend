@@ -25,6 +25,7 @@ public class Cookbook {
     @JoinColumn(name = "user_id", nullable = false)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private User user;
 
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -34,6 +35,7 @@ public class Cookbook {
     @JoinTable(name = "cookbook_recipes", joinColumns = @JoinColumn(name = "cookbook_id"), inverseJoinColumns = @JoinColumn(name = "recipe_id"))
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Set<Recipe> recipes;
 
     @CreationTimestamp

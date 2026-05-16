@@ -1,5 +1,6 @@
 package com.cooked.backend.controller;
 
+import com.cooked.backend.dto.response.SavedIngredientResponse;
 import com.cooked.backend.entity.User;
 import com.cooked.backend.entity.UserSavedIngredient;
 import com.cooked.backend.exception.BadRequestException;
@@ -49,15 +50,25 @@ public class SavedIngredientController {
 
     @Operation(summary = "Get all my saved ingredients")
     @GetMapping("/saved")
-    public ResponseEntity<List<UserSavedIngredient>> getMySavedIngredients(Authentication auth) {
+    public ResponseEntity<List<SavedIngredientResponse>> getMySavedIngredients(Authentication auth) {
         User user = userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new BadRequestException("User not found"));
-        return ResponseEntity.ok(savedIngredientRepository.findAllByUserOrderByCreatedAtDesc(user));
+        
+        List<SavedIngredientResponse> responses = savedIngredientRepository.findAllByUserOrderByCreatedAtDesc(user).stream()
+                .map(i -> SavedIngredientResponse.builder()
+                        .id(i.getId())
+                        .name(i.getName())
+                        .icon(i.getIcon())
+                        .createdAt(i.getCreatedAt())
+                        .build())
+                .collect(java.util.stream.Collectors.toList());
+        
+        return ResponseEntity.ok(responses);
     }
 
     @Operation(summary = "Save an ingredient")
     @PostMapping("/saved")
-    public ResponseEntity<UserSavedIngredient> saveIngredient(@RequestBody Map<String, String> payload, Authentication auth) {
+    public ResponseEntity<SavedIngredientResponse> saveIngredient(@RequestBody Map<String, String> payload, Authentication auth) {
         String name = payload.get("name");
         String icon = payload.getOrDefault("icon", "🥕");
 
@@ -74,17 +85,24 @@ public class SavedIngredientController {
                 .filter(i -> i.getName().equalsIgnoreCase(name))
                 .findFirst();
 
+        UserSavedIngredient savedIngredient;
         if (existing.isPresent()) {
-            return ResponseEntity.ok(existing.get());
-        }
-
-        UserSavedIngredient savedIngredient = UserSavedIngredient.builder()
+            savedIngredient = existing.get();
+        } else {
+            savedIngredient = UserSavedIngredient.builder()
                 .user(user)
                 .name(name)
                 .icon(icon)
                 .build();
+            savedIngredient = savedIngredientRepository.save(savedIngredient);
+        }
 
-        return ResponseEntity.ok(savedIngredientRepository.save(savedIngredient));
+        return ResponseEntity.ok(SavedIngredientResponse.builder()
+                .id(savedIngredient.getId())
+                .name(savedIngredient.getName())
+                .icon(savedIngredient.getIcon())
+                .createdAt(savedIngredient.getCreatedAt())
+                .build());
     }
 
     @Operation(summary = "Unsave an ingredient (by ID)")

@@ -10,4 +10,5 @@ public interface TaxonomyService {
     
     Map<String, String> getCategoryImages();
     Map<String, String> getCuisineImages();
+    void mergeDuplicateTaxonomies();
 }

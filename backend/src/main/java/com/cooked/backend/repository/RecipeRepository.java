@@ -88,10 +88,10 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r.cuisine.name FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.cuisine IS NOT NULL")
         List<String> findDistinctCuisines();
 
-    @org.springframework.data.jpa.repository.Query("SELECT r.category.name, r.category.image, COUNT(r) FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.category IS NOT NULL GROUP BY r.category.name, r.category.image")
+    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, (SELECT COUNT(r) FROM Recipe r WHERE r.category = c) FROM RecipeCategory c WHERE c.type = 'CATEGORY'")
     List<Object[]> findCategoriesWithCount();
 
-    @org.springframework.data.jpa.repository.Query("SELECT r.cuisine.name, r.cuisine.image, COUNT(r) FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.cuisine IS NOT NULL GROUP BY r.cuisine.name, r.cuisine.image")
+    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, (SELECT COUNT(r) FROM Recipe r WHERE r.cuisine = c) FROM RecipeCategory c WHERE c.type = 'CUISINE'")
     List<Object[]> findCuisinesWithCount();
 
     List<Recipe> findByNameContainingIgnoreCase(String name);

@@ -24,6 +24,7 @@ public class RecipeIngredient {
     @JoinColumn(name = "recipe_id", nullable = false)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Recipe recipe;
 
     @ManyToOne(fetch = FetchType.LAZY)
