@@ -104,9 +104,9 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
     @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE LOWER(r.name) IN (SELECT LOWER(rd.name) FROM RecipeData rd)")
     List<Recipe> findRecipesExistingInData();
 
-    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE LOWER(r.cuisine.name) = LOWER(:cuisine) AND r.image IS NOT NULL AND r.image != '' AND r.image NOT LIKE '%unsplash%' AND r.image NOT LIKE '%splash%' ORDER BY RANDOM()")
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.origin = 'EXPLORE' AND LOWER(r.cuisine.name) = LOWER(:cuisine) AND r.image IS NOT NULL AND r.image != '' AND r.image NOT LIKE '%unsplash%' AND r.image NOT LIKE '%splash%' ORDER BY RANDOM()")
     org.springframework.data.domain.Page<Recipe> findByCuisineWithImage(@org.springframework.data.repository.query.Param("cuisine") String cuisine, org.springframework.data.domain.Pageable pageable);
 
-    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE LOWER(r.category.name) = LOWER(:category) AND r.image IS NOT NULL AND r.image != '' AND r.image NOT LIKE '%unsplash%' AND r.image NOT LIKE '%splash%' ORDER BY RANDOM()")
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.origin = 'EXPLORE' AND LOWER(r.category.name) = LOWER(:category) AND r.image IS NOT NULL AND r.image != '' AND r.image NOT LIKE '%unsplash%' AND r.image NOT LIKE '%splash%' ORDER BY RANDOM()")
     org.springframework.data.domain.Page<Recipe> findByCategoryWithImage(@org.springframework.data.repository.query.Param("category") String category, org.springframework.data.domain.Pageable pageable);
 }

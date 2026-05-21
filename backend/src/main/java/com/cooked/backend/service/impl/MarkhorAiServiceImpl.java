@@ -734,7 +734,7 @@ public class MarkhorAiServiceImpl implements AiService {
             for (String keyword : keywords) {
                 List<com.cooked.backend.entity.Recipe> matches = recipeRepository.findByNameContainingIgnoreCase(keyword);
                 for (com.cooked.backend.entity.Recipe match : matches) {
-                    if (match.getImage() != null && !match.getImage().isEmpty() && !match.getImage().contains("unsplash") && !match.getImage().contains("splash")) {
+                    if (match.getOrigin() == com.cooked.backend.entity.RecipeOrigin.EXPLORE && match.getImage() != null && !match.getImage().isEmpty() && !match.getImage().contains("unsplash") && !match.getImage().contains("splash")) {
                         request.setImage(match.getImage());
                         log.info("Assigned image for '{}' based on keyword '{}'", name, keyword);
                         found = true;
