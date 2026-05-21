@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ExploreSeederController {
 
     private final ExploreDataSeederService exploreDataSeederService;
+    private final com.cooked.backend.repository.RecipeRepository recipeRepository;
 
     @Operation(summary = "Seed Explore Recipes")
     @PostMapping("/explore")
@@ -24,6 +25,19 @@ public class ExploreSeederController {
         try {
             exploreDataSeederService.seedExploreData();
             return ResponseEntity.ok(new MessageResponse("Seeding process triggered successfully."));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new MessageResponse("Error: " + e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "Clear and Seed Explore Recipes")
+    @PostMapping("/explore/reset")
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<?> resetAndSeedExplore() {
+        try {
+            recipeRepository.deleteByOrigin(com.cooked.backend.entity.RecipeOrigin.EXPLORE);
+            exploreDataSeederService.seedExploreData();
+            return ResponseEntity.ok(new MessageResponse("Cleared and seeded successfully."));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new MessageResponse("Error: " + e.getMessage()));
         }

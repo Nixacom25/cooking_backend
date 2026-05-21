@@ -17354,5 +17354,22 @@
       "Extra-fine Sifter",
       "Stand Mixer"
     ]
+  },
+  {
+    "name": "",
+    "cuisine": "French",
+    "category": "Desserts",
+    "prepTime": 60,
+    "cookTime": 15,
+    "kcal": 90,
+    "ingredients": [
+      { "name": "Almond Flour", "quantity": "1 cup, extra fine", "icon": "🥜" }
+    ],
+    "steps": [
+      "Sift almond flour and powdered sugar three times to ensure zero lumps."
+    ],
+    "equipment": [
+      "Piping Bag with Round Tip"
+    ]
   }
 ]

@@ -37,6 +37,10 @@ public class UserServiceImpl implements UserService {
     private final CloudinaryService cloudinaryService;
     private final EmailService emailService;
     private final com.cooked.backend.service.UserInitializationService userInitializationService;
+    private final com.cooked.backend.repository.RecipeRepository recipeRepository;
+    private final com.cooked.backend.repository.MealPlanRepository mealPlanRepository;
+    private final com.cooked.backend.repository.GroceryItemRepository groceryItemRepository;
+    private final jakarta.persistence.EntityManager entityManager;
 
     @Override
     public UserResponse getCurrentUser(String email) {
@@ -240,13 +244,70 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
-        // Handle recipes: unlink and change origin if needed
-        if (user.getRecipes() != null) {
-            for (com.cooked.backend.entity.Recipe recipe : user.getRecipes()) {
-                recipe.setUser(null);
-                if (recipe.getOrigin() == com.cooked.backend.entity.RecipeOrigin.SCAN || 
-                    recipe.getOrigin() == com.cooked.backend.entity.RecipeOrigin.IMPORT) {
-                    recipe.setOrigin(com.cooked.backend.entity.RecipeOrigin.SUGGESTED);
+        // Handle recipes: delete duplicates, keep unique ones (nullify userId)
+        if (user.getRecipes() != null && !user.getRecipes().isEmpty()) {
+            // Create a copy of the list to avoid ConcurrentModificationException while modifying user.getRecipes()
+            java.util.List<com.cooked.backend.entity.Recipe> userRecipes = new java.util.ArrayList<>(user.getRecipes());
+            
+            for (com.cooked.backend.entity.Recipe recipe : userRecipes) {
+                // Check if this recipe has a duplicate (twin) in the database
+                java.util.List<com.cooked.backend.entity.Recipe> sameNameRecipes = recipeRepository.findAllByNameIgnoreCase(recipe.getName());
+                boolean hasTwin = false;
+                com.cooked.backend.entity.Recipe twinRecipe = null;
+                
+                for (com.cooked.backend.entity.Recipe other : sameNameRecipes) {
+                    if (!other.getId().equals(recipe.getId())) {
+                        // Check if the other recipe does not belong to the user being deleted
+                        if (other.getUser() == null || !other.getUser().getId().equals(user.getId())) {
+                            hasTwin = true;
+                            twinRecipe = other;
+                            break;
+                        }
+                    }
+                }
+                
+                if (hasTwin) {
+                    // This recipe has a twin in the database.
+                    // We delete it completely, but first repoint references from other users to the twin.
+                    
+                    // Repoint other users' Meal Plans to the twin
+                    mealPlanRepository.repointRecipe(recipe, twinRecipe);
+                    
+                    // Repoint other users' Grocery Items to the twin
+                    groceryItemRepository.repointRecipe(recipe, twinRecipe);
+                    
+                    // Repoint/delete from favorite_recipes (native query to handle DB-level constraint safely)
+                    try {
+                        entityManager.createNativeQuery("UPDATE favorite_recipes SET recipe_id = :twinId WHERE recipe_id = :oldId")
+                                .setParameter("twinId", twinRecipe.getId())
+                                .setParameter("oldId", recipe.getId())
+                                .executeUpdate();
+                    } catch (Exception e) {
+                        // Ignore if table or columns don't exist
+                    }
+                    
+                    // Remove recipe from cookbooks it belongs to
+                    if (recipe.getCookbooks() != null) {
+                        for (com.cooked.backend.entity.Cookbook cb : recipe.getCookbooks()) {
+                            cb.getRecipes().remove(recipe);
+                        }
+                        recipe.getCookbooks().clear();
+                    }
+                    
+                    // Remove recipe from the user's collection to avoid Hibernate issues
+                    user.getRecipes().remove(recipe);
+                    
+                    // Delete the recipe
+                    recipeRepository.delete(recipe);
+                } else {
+                    // This recipe is unique (no duplicate in the database).
+                    // We keep it, just set user to null
+                    recipe.setUser(null);
+                    if (recipe.getOrigin() == com.cooked.backend.entity.RecipeOrigin.SCAN || 
+                        recipe.getOrigin() == com.cooked.backend.entity.RecipeOrigin.IMPORT) {
+                        recipe.setOrigin(com.cooked.backend.entity.RecipeOrigin.SUGGESTED);
+                    }
+                    recipeRepository.save(recipe);
                 }
             }
             // Clear the list to ensure they are not part of the user object anymore

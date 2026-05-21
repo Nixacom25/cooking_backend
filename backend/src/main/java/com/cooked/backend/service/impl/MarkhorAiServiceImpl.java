@@ -42,6 +42,13 @@ import org.slf4j.LoggerFactory;
 public class MarkhorAiServiceImpl implements AiService {
     private static final Logger log = LoggerFactory.getLogger(MarkhorAiServiceImpl.class);
 
+    private static final Set<String> STOP_WORDS = new HashSet<>(Arrays.asList(
+        "with", "and", "or", "in", "on", "at", "the", "a", "an", "of", "for", "to",
+        "de", "la", "le", "les", "des", "au", "aux", "un", "une", "et", "ou",
+        "recipe", "recette", "style", "dish", "plat", "sauce", "easy", "quick",
+        "facile", "rapide", "healthy", "sain"
+    ));
+
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final UserRepository userRepository;
@@ -353,6 +360,7 @@ public class MarkhorAiServiceImpl implements AiService {
                     for (CreateRecipeRequest r : recipes) {
                         r.setOrigin("ONBOARDING");
                     }
+                    assignBestMatchingImages(recipes);
                     log.info("Found {} initial suggestions for {}", recipes.size(), user.getEmail());
                     return recipes;
                 }
@@ -518,6 +526,7 @@ public class MarkhorAiServiceImpl implements AiService {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 List<CreateRecipeRequest> recipes = response.getBody().getRecipes();
                 for (CreateRecipeRequest r : recipes) r.setOrigin("MANUAL");
+                assignBestMatchingImages(recipes);
                 return recipes;
             }
         } catch (PaymentRequiredException e) {
@@ -561,6 +570,7 @@ public class MarkhorAiServiceImpl implements AiService {
                     for (CreateRecipeRequest r : res.getRecipes()) {
                         r.setOrigin("SCAN");
                     }
+                    assignBestMatchingImages(res.getRecipes());
                 }
                 return res;
             }
@@ -609,6 +619,7 @@ public class MarkhorAiServiceImpl implements AiService {
                     for (CreateRecipeRequest r : res.getRecipes()) {
                         r.setOrigin("SCAN");
                     }
+                    assignBestMatchingImages(res.getRecipes());
                 }
                 
                 // Ensure allowed_ingredients is populated if it was just a list of strings
@@ -696,6 +707,62 @@ public class MarkhorAiServiceImpl implements AiService {
         if (s.equalsIgnoreCase("Confident Cook")) return "ConfidentCook";
         if (s.equalsIgnoreCase("Advanced / Semi-Pro")) return "Advanced Semi Pro";
         return "HomeCook"; // Fallback
+    }
+
+    private void assignBestMatchingImages(List<CreateRecipeRequest> recipes) {
+        if (recipes == null) return;
+        
+        for (CreateRecipeRequest request : recipes) {
+            if (request.getImage() != null && !request.getImage().isEmpty() && !request.getImage().contains("unsplash")) {
+                continue;
+            }
+
+            String name = request.getName();
+            if (name == null || name.isEmpty()) continue;
+
+            String[] words = name.split("\\W+");
+            List<String> keywords = new ArrayList<>();
+            for (String w : words) {
+                if (w.length() > 3 && !STOP_WORDS.contains(w.toLowerCase())) {
+                    keywords.add(w.toLowerCase());
+                }
+            }
+
+            keywords.sort((a, b) -> Integer.compare(b.length(), a.length()));
+
+            boolean found = false;
+            for (String keyword : keywords) {
+                List<com.cooked.backend.entity.Recipe> matches = recipeRepository.findByNameContainingIgnoreCase(keyword);
+                for (com.cooked.backend.entity.Recipe match : matches) {
+                    if (match.getImage() != null && !match.getImage().isEmpty() && !match.getImage().contains("unsplash") && !match.getImage().contains("splash")) {
+                        request.setImage(match.getImage());
+                        log.info("Assigned image for '{}' based on keyword '{}'", name, keyword);
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+
+            if (!found && request.getCuisine() != null && !request.getCuisine().isEmpty()) {
+                org.springframework.data.domain.Page<com.cooked.backend.entity.Recipe> cuisineMatches = 
+                    recipeRepository.findByCuisineWithImage(request.getCuisine(), org.springframework.data.domain.PageRequest.of(0, 1));
+                if (cuisineMatches.hasContent()) {
+                    request.setImage(cuisineMatches.getContent().get(0).getImage());
+                    log.info("Assigned image for '{}' based on Cuisine '{}'", name, request.getCuisine());
+                    found = true;
+                }
+            }
+
+            if (!found && request.getCategory() != null && !request.getCategory().isEmpty()) {
+                org.springframework.data.domain.Page<com.cooked.backend.entity.Recipe> categoryMatches = 
+                    recipeRepository.findByCategoryWithImage(request.getCategory(), org.springframework.data.domain.PageRequest.of(0, 1));
+                if (categoryMatches.hasContent()) {
+                    request.setImage(categoryMatches.getContent().get(0).getImage());
+                    log.info("Assigned image for '{}' based on Category '{}'", name, request.getCategory());
+                }
+            }
+        }
     }
 
     private void verifyAiAccess(User user) {

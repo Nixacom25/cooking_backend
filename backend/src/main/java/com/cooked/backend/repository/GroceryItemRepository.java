@@ -19,4 +19,10 @@ public interface GroceryItemRepository extends JpaRepository<GroceryItem, UUID> 
 
     java.util.Optional<GroceryItem> findByUserIdAndIngredientIdAndPlannedDate(
             UUID userId, UUID ingredientId, LocalDate plannedDate);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.data.jpa.repository.Query("UPDATE GroceryItem gi SET gi.recipe = :twin WHERE gi.recipe = :oldRecipe")
+    void repointRecipe(@org.springframework.data.repository.query.Param("oldRecipe") com.cooked.backend.entity.Recipe oldRecipe, 
+                       @org.springframework.data.repository.query.Param("twin") com.cooked.backend.entity.Recipe twin);
 }

@@ -56,7 +56,7 @@ public class Recipe {
     @Column(nullable = true, columnDefinition = "TEXT")
     private String tips;
 
-    @ElementCollection
+    @ElementCollection(fetch = jakarta.persistence.FetchType.EAGER)
     @CollectionTable(name = "recipe_steps", joinColumns = @JoinColumn(name = "recipe_id"))
     @Column(name = "step", columnDefinition = "TEXT")
     @Builder.Default
@@ -82,7 +82,7 @@ public class Recipe {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @ElementCollection
+    @ElementCollection(fetch = jakarta.persistence.FetchType.EAGER)
     @CollectionTable(name = "recipe_equipment", joinColumns = @JoinColumn(name = "recipe_id"))
     @Column(name = "item", columnDefinition = "TEXT")
     @Builder.Default
