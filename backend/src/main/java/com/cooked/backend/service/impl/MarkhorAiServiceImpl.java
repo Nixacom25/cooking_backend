@@ -611,37 +611,54 @@ public class MarkhorAiServiceImpl implements AiService {
             prefs.put("cuisines_love", user.getFavoriteCuisines());
             prefs.put("kitchen_tools", user.getKitchenAppliances());
             prefs.put("skill_level", normalizeSkillLevel(user.getCookingSkill()));
-            String systemInstructions = "Be extremely precise and generous in the 'tips' (notes and advice) section for each recipe. Include advice on texture, flavor variations, and storage. "
-                    + "STRICT REQUIREMENT: You MUST ONLY generate recipes using the provided list of ingredients. "
-                    + "DO NOT add or suggest other main ingredients or extra ingredients in the recipe creation. "
-                    + "Respect the list of ingredients strictly. If the provided ingredients are not sufficient or suitable "
-                    + "to make at least one realistic recipe, do not invent or add other ingredients; instead, generate "
-                    + "absolutely zero recipes (an empty recipes array).";
+
+            // Build an ultra-strict prompt that names the exact allowed ingredients
+            String ingredientList = String.join(", ", ingredients);
+            String systemInstructions =
+                "Be extremely precise and generous in the 'tips' (notes and advice) section for each recipe. "
+                + "Include advice on texture, flavor variations, and storage. "
+                + "=== ABSOLUTE STRICT RULE === "
+                + "The ONLY ingredients you are allowed to use are EXACTLY the ones the user provided: [" + ingredientList + "]. "
+                + "You MUST NOT add, suggest, or assume any other ingredient — including basic pantry staples like oil, salt, pepper, water, butter, garlic, onion, or spices — "
+                + "UNLESS they are explicitly listed by the user. "
+                + "Do NOT modify, expand, or supplement this ingredient list in any way. "
+                + "Every ingredient used in every recipe step MUST appear in the user's provided list. "
+                + "If the provided ingredients cannot form at least one realistic, complete recipe on their own, "
+                + "you MUST return an empty recipes array (zero recipes). Do NOT invent or add missing ingredients to compensate. "
+                + "Generate between 1 and 6 recipes maximum. Do not exceed 6 recipes under any circumstance.";
             prefs.put("system_instructions", systemInstructions);
 
             Map<String, Object> body = new HashMap<>();
             body.put("ingredients", ingredients);
             body.put("user_preferences", prefs);
 
+            log.info("ScanTyped: sending {} ingredients to AI: {}", ingredients.size(), ingredientList);
+
             HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, getInternalHeaders());
             ResponseEntity<ScanResponse> response = restTemplate.postForEntity(baseUrl + "/api/recipes/generate", requestEntity, ScanResponse.class);
-            
+
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 ScanResponse res = response.getBody();
-                
+
+                // Validate: must have at least 1 recipe
                 if (res.getRecipes() == null || res.getRecipes().isEmpty()) {
-                    throw new BadRequestException("The provided ingredients are not sufficient to generate any recipe. Please add more ingredients.");
+                    throw new BadRequestException(
+                        "The ingredients you provided are not sufficient to create any recipe. " +
+                        "Please add more ingredients to get recipe suggestions.");
                 }
 
-                // If the microservice didn't categorize, we can at least mark the recipes
-                if (res.getRecipes() != null) {
-                    for (CreateRecipeRequest r : res.getRecipes()) {
-                        r.setOrigin("SCAN");
-                    }
-                    assignBestMatchingImages(res.getRecipes());
+                // Enforce max 6 recipes
+                if (res.getRecipes().size() > 6) {
+                    res.setRecipes(res.getRecipes().subList(0, 6));
                 }
-                
-                // Ensure allowed_ingredients is populated if it was just a list of strings
+
+                // Tag all results as SCAN origin and assign images
+                for (CreateRecipeRequest r : res.getRecipes()) {
+                    r.setOrigin("SCAN");
+                }
+                assignBestMatchingImages(res.getRecipes());
+
+                // Populate allowed_ingredients if the microservice didn't return them
                 if (res.getAllowed_ingredients() == null || res.getAllowed_ingredients().isEmpty()) {
                     List<com.cooked.backend.dto.request.IngredientPayload> allowed = new ArrayList<>();
                     for (String ing : ingredients) {
@@ -652,7 +669,8 @@ public class MarkhorAiServiceImpl implements AiService {
                     }
                     res.setAllowed_ingredients(allowed);
                 }
-                
+
+                log.info("ScanTyped: returning {} recipe(s) for ingredients: {}", res.getRecipes().size(), ingredientList);
                 return res;
             }
             throw new BadRequestException("Failed to generate recipes: Invalid response from AI service");
@@ -730,15 +748,17 @@ public class MarkhorAiServiceImpl implements AiService {
 
     private void assignBestMatchingImages(List<CreateRecipeRequest> recipes) {
         if (recipes == null) return;
-        
+
         for (CreateRecipeRequest request : recipes) {
-            if (request.getImage() != null && !request.getImage().isEmpty() && !request.getImage().contains("unsplash")) {
+            if (request.getImage() != null && !request.getImage().isEmpty()
+                    && !request.getImage().contains("unsplash") && !request.getImage().contains("splash")) {
                 continue;
             }
 
             String name = request.getName();
             if (name == null || name.isEmpty()) continue;
 
+            // --- Build keyword list (meaningful words only, sorted longest first) ---
             String[] words = name.split("\\W+");
             List<String> keywords = new ArrayList<>();
             for (String w : words) {
@@ -746,43 +766,88 @@ public class MarkhorAiServiceImpl implements AiService {
                     keywords.add(w.toLowerCase());
                 }
             }
-
             keywords.sort((a, b) -> Integer.compare(b.length(), a.length()));
 
-            boolean found = false;
-            for (String keyword : keywords) {
-                List<com.cooked.backend.entity.Recipe> matches = recipeRepository.findByNameContainingIgnoreCase(keyword);
-                for (com.cooked.backend.entity.Recipe match : matches) {
-                    if (match.getOrigin() == com.cooked.backend.entity.RecipeOrigin.EXPLORE && match.getImage() != null && !match.getImage().isEmpty() && !match.getImage().contains("unsplash") && !match.getImage().contains("splash")) {
-                        request.setImage(match.getImage());
-                        log.info("Assigned image for '{}' based on keyword '{}'", name, keyword);
-                        found = true;
-                        break;
+            if (keywords.isEmpty()) {
+                // Nothing useful to search on — skip to cuisine/category fallbacks below
+            } else {
+                // --- Phase 1: multi-keyword scoring (one DB round-trip) ---
+                // Pad to exactly 5 slots (query requires 5 named params)
+                List<String> kws = new ArrayList<>(keywords.subList(0, Math.min(keywords.size(), 5)));
+                while (kws.size() < 5) kws.add("__NO_MATCH__");
+
+                List<com.cooked.backend.entity.Recipe> candidates = recipeRepository.findExploreRecipesByKeywords(
+                        kws.get(0), kws.get(1), kws.get(2), kws.get(3), kws.get(4));
+
+                // Score each candidate: count how many keywords appear in its name
+                com.cooked.backend.entity.Recipe bestMatch = null;
+                int bestScore = 0;
+
+                for (com.cooked.backend.entity.Recipe candidate : candidates) {
+                    if (candidate.getImage() == null || candidate.getImage().isEmpty()) continue;
+                    String candidateName = candidate.getName().toLowerCase();
+                    int score = 0;
+                    for (String kw : keywords) {
+                        if (candidateName.contains(kw)) score++;
+                    }
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMatch = candidate;
                     }
                 }
-                if (found) break;
+
+                if (bestMatch != null) {
+                    request.setImage(bestMatch.getImage());
+                    log.info("Assigned image for '{}' via multi-keyword match (score={}, matched='{}')",
+                            name, bestScore, bestMatch.getName());
+                    continue; // Move to the next recipe
+                }
+
+                // --- Phase 2: single-keyword fallback (try each keyword individually) ---
+                boolean found = false;
+                for (String keyword : keywords) {
+                    List<com.cooked.backend.entity.Recipe> matches = recipeRepository.findByNameContainingIgnoreCase(keyword);
+                    for (com.cooked.backend.entity.Recipe match : matches) {
+                        if (match.getOrigin() == com.cooked.backend.entity.RecipeOrigin.EXPLORE
+                                && match.getImage() != null && !match.getImage().isEmpty()
+                                && !match.getImage().contains("unsplash") && !match.getImage().contains("splash")) {
+                            request.setImage(match.getImage());
+                            log.info("Assigned image for '{}' via single-keyword fallback (keyword='{}')", name, keyword);
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found) break;
+                }
+                if (found) continue;
             }
 
-            if (!found && request.getCuisine() != null && !request.getCuisine().isEmpty()) {
-                org.springframework.data.domain.Page<com.cooked.backend.entity.Recipe> cuisineMatches = 
-                    recipeRepository.findByCuisineWithImage(request.getCuisine(), org.springframework.data.domain.PageRequest.of(0, 1));
+            // --- Phase 3: cuisine fallback ---
+            boolean found = false;
+            if (request.getCuisine() != null && !request.getCuisine().isEmpty()) {
+                org.springframework.data.domain.Page<com.cooked.backend.entity.Recipe> cuisineMatches =
+                        recipeRepository.findByCuisineWithImage(request.getCuisine(),
+                                org.springframework.data.domain.PageRequest.of(0, 1));
                 if (cuisineMatches.hasContent()) {
                     request.setImage(cuisineMatches.getContent().get(0).getImage());
-                    log.info("Assigned image for '{}' based on Cuisine '{}'", name, request.getCuisine());
+                    log.info("Assigned image for '{}' via cuisine fallback (cuisine='{}')", name, request.getCuisine());
                     found = true;
                 }
             }
 
+            // --- Phase 4: category fallback ---
             if (!found && request.getCategory() != null && !request.getCategory().isEmpty()) {
-                org.springframework.data.domain.Page<com.cooked.backend.entity.Recipe> categoryMatches = 
-                    recipeRepository.findByCategoryWithImage(request.getCategory(), org.springframework.data.domain.PageRequest.of(0, 1));
+                org.springframework.data.domain.Page<com.cooked.backend.entity.Recipe> categoryMatches =
+                        recipeRepository.findByCategoryWithImage(request.getCategory(),
+                                org.springframework.data.domain.PageRequest.of(0, 1));
                 if (categoryMatches.hasContent()) {
                     request.setImage(categoryMatches.getContent().get(0).getImage());
-                    log.info("Assigned image for '{}' based on Category '{}'", name, request.getCategory());
+                    log.info("Assigned image for '{}' via category fallback (category='{}')", name, request.getCategory());
                 }
             }
         }
     }
+
 
     private void verifyAiAccess(User user) {
         if (!subscriptionService.hasAiAccess(user)) {

@@ -330,7 +330,7 @@ Return ONLY valid JSON.`;
  * @param {null|object} servings - Preferred servings range
  * @returns {string}
  */
-function buildRecipeSystemPrompt(allergies = [], preferences = [], dislikes = [], DNA = {}, skill_level = {}, cuisines_love = [], kitchen_tools = [], cooking_goals = [], time_minutes = null, servings = null) {
+function buildRecipeSystemPrompt(allergies = [], preferences = [], dislikes = [], DNA = {}, skill_level = {}, cuisines_love = [], kitchen_tools = [], cooking_goals = [], time_minutes = null, servings = null, system_instructions = null) {
   const allergyClause =
     allergies.length > 0
       ? `CRITICAL — the user is allergic to: ${allergies.join(', ')}. Do NOT include these ingredients in ANY recipe.`
@@ -401,9 +401,9 @@ function buildRecipeSystemPrompt(allergies = [], preferences = [], dislikes = []
     }
   }
 
-  const poolClause = `Generate exactly 4 recipes.`;
+  const poolClause = `Generate between 1 and 6 recipes.`;
 
-  return `You will receive a list of available ingredients (from a user's fridge, pantry, or kitchen) and must generate exactly 4 distinct, practical, and highly detailed recipes the user can cook with those ingredients.
+  return `You will receive a list of available ingredients and must generate between 1 and 6 distinct, practical, and highly detailed recipes the user can cook using ONLY those ingredients.
 Each recipe must be a professional-grade culinary entry with precise steps and exhaustive equipment lists.
 
 ${allergyClause}
@@ -417,13 +417,17 @@ ${skillLevelClause}
 ${timeClause}
 ${servingsClause}
 
-IMPORTANT RULES:
+ABSOLUTE INGREDIENT RULE:
+- You MUST use ONLY the ingredients provided in the user's list. Do NOT add any other ingredient whatsoever — not oil, not salt, not water, not butter, not garlic, not onion, not spices — unless they are in the provided list.
+- Every ingredient in every recipe step MUST come exclusively from the user's provided list.
+- If the provided ingredients cannot form at least one realistic, complete recipe on their own, return an empty "recipes" array (zero recipes). Do NOT invent or add missing ingredients to compensate.
+- Do NOT include an "additional_ingredients_optional" field. It does not exist.
+
+OTHER IMPORTANT RULES:
 - ${poolClause}
-- If no ingredients are provided, generate the 4 most popular and appealing "crowd-pleaser" recipes that fit the user's cuisine preferences and dietary goals.
 - Be extremely precise and detailed in the "steps" and "equipment" lists.
 - Each step should be descriptive and professional.
 - List ALL necessary kitchen tools, no matter how basic.
-- You may list optional extra ingredients but must clearly label them as optional
 - Provide realistic cook times and ALWAYS estimate calories per serving (do not leave calories null)
 - All required fields MUST be present and non-empty
 
@@ -443,13 +447,13 @@ You MUST return ONLY valid JSON in EXACTLY this format (no prose, no markdown, n
         { "name": "<ingredient>", "quantity": "<quantity with unit>", "icon": "<emoji>" }
       ],
       "equipment": ["<tool 1>", "<tool 2>"],
-      "steps": ["Step 1: ...", "Step 2: ..."],
-      "additional_ingredients_optional": ["<optional ingredient 1>"]
+      "steps": ["Step 1: ...", "Step 2: ..."]
     }
   ]
 }
 
-Return ONLY the JSON object — nothing else.`;
+Return ONLY the JSON object — nothing else.${system_instructions ? `\n\n=== ADDITIONAL INSTRUCTIONS FROM SYSTEM ===\n${system_instructions}` : ''}`;
+
 }
 
 /**
@@ -479,7 +483,7 @@ Return ONLY the corrected JSON object.`;
  * @throws {AppError} 422 SCHEMA_VALIDATION_FAILED | 500 AI_SERVICE_ERROR
  */
 async function generateRecipesFromIngredients(ingredients, userPreferences = {}) {
-  const { allergies = [], preferences = [], dislikes = [], DNA = {}, skill_level = {}, cuisines_love = [], kitchen_tools = [], cooking_goals = [], time_minutes = null, servings = null } = userPreferences;
+  const { allergies = [], preferences = [], dislikes = [], DNA = {}, skill_level = {}, cuisines_love = [], kitchen_tools = [], cooking_goals = [], time_minutes = null, servings = null, system_instructions = null } = userPreferences;
   const ingredientList = ingredients.join(', ');
 
   let schemaFailures = 0;
@@ -491,8 +495,8 @@ async function generateRecipesFromIngredients(ingredients, userPreferences = {})
     try {
       const systemPrompt =
         schemaFailures > 0
-          ? buildRecipeSystemPrompt(allergies, preferences, dislikes, DNA, skill_level, cuisines_love, kitchen_tools, cooking_goals, time_minutes, servings) + SCHEMA_RETRY_SUFFIX
-          : buildRecipeSystemPrompt(allergies, preferences, dislikes, DNA, skill_level, cuisines_love, kitchen_tools, cooking_goals, time_minutes, servings);
+          ? buildRecipeSystemPrompt(allergies, preferences, dislikes, DNA, skill_level, cuisines_love, kitchen_tools, cooking_goals, time_minutes, servings, system_instructions) + SCHEMA_RETRY_SUFFIX
+          : buildRecipeSystemPrompt(allergies, preferences, dislikes, DNA, skill_level, cuisines_love, kitchen_tools, cooking_goals, time_minutes, servings, system_instructions);
 
       const response = await timedAiCall(
         'ai.recipe.generate',
@@ -507,8 +511,8 @@ async function generateRecipesFromIngredients(ingredients, userPreferences = {})
               {
                 role: 'user',
                 content: ingredients.length > 0 
-                  ? `Generate exactly 4 distinct and creative recipes I can cook using these available ingredients: ${ingredientList}. Focus on maximizing the use of what I have while suggesting minimal pantry staples if needed.`
-                  : `Generate exactly 4 popular, mouth-watering, and seasonal recipe suggestions (1 Main, 1 Healthy, 1 Quick, 1 Chef's Special) that perfectly match my taste DNA, cuisine preferences, and cooking goals. Ensure variety in techniques and flavors.`,
+                  ? `Generate between 1 and 6 distinct and creative recipes I can cook using ONLY these available ingredients — do NOT add any other ingredient: ${ingredientList}. If these ingredients cannot make at least one realistic recipe on their own, return an empty recipes array.`
+                  : `Generate between 1 and 6 popular, mouth-watering, and seasonal recipe suggestions (Main, Healthy, Quick, Chef's Special) that perfectly match my taste DNA, cuisine preferences, and cooking goals. Ensure variety in techniques and flavors.`,
               },
             ],
             max_completion_tokens: 4096,
@@ -572,20 +576,23 @@ async function generateRecipesFromIngredients(ingredients, userPreferences = {})
  * @throws {AppError} 422 SCHEMA_VALIDATION_FAILED
  */
 function validateRecipesSchema(parsed) {
-  if (!parsed || !Array.isArray(parsed.recipes) || parsed.recipes.length === 0) {
+  if (!parsed || !Array.isArray(parsed.recipes)) {
     throw new AppError(
       422,
       'SCHEMA_VALIDATION_FAILED',
-      'AI response missing "recipes" array or returned 0 recipes'
+      'AI response missing "recipes" array'
     );
   }
 
-  if (parsed.recipes.length < 2 || parsed.recipes.length > 15) {
-    throw new AppError(
-      422,
-      'SCHEMA_VALIDATION_FAILED',
-      `Expected between 2 and 15 recipes but got ${parsed.recipes.length}`
-    );
+  // Empty array is valid — means the AI judged the ingredients insufficient
+  if (parsed.recipes.length === 0) {
+    return [];
+  }
+
+  // Allow 0 recipes (means ingredients were insufficient — caller handles this case)
+  if (parsed.recipes.length > 6) {
+    // Truncate silently to enforce the 6-recipe maximum
+    parsed.recipes = parsed.recipes.slice(0, 6);
   }
 
   return parsed.recipes.map((recipe, idx) => {

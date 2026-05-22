@@ -96,6 +96,25 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
 
     List<Recipe> findByNameContainingIgnoreCase(String name);
 
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT r FROM Recipe r WHERE r.origin = 'EXPLORE' " +
+        "AND r.image IS NOT NULL AND r.image != '' " +
+        "AND r.image NOT LIKE '%unsplash%' AND r.image NOT LIKE '%splash%' " +
+        "AND (" +
+            "LOWER(r.name) LIKE LOWER(CONCAT('%', :kw1, '%')) OR " +
+            "LOWER(r.name) LIKE LOWER(CONCAT('%', :kw2, '%')) OR " +
+            "LOWER(r.name) LIKE LOWER(CONCAT('%', :kw3, '%')) OR " +
+            "LOWER(r.name) LIKE LOWER(CONCAT('%', :kw4, '%')) OR " +
+            "LOWER(r.name) LIKE LOWER(CONCAT('%', :kw5, '%'))" +
+        ")")
+    List<Recipe> findExploreRecipesByKeywords(
+        @org.springframework.data.repository.query.Param("kw1") String kw1,
+        @org.springframework.data.repository.query.Param("kw2") String kw2,
+        @org.springframework.data.repository.query.Param("kw3") String kw3,
+        @org.springframework.data.repository.query.Param("kw4") String kw4,
+        @org.springframework.data.repository.query.Param("kw5") String kw5);
+
+
     java.util.List<Recipe> findAllByNameIgnoreCase(String name);
 
     @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.image IS NULL OR r.image = '' OR r.image LIKE '%unsplash%' OR r.image LIKE '%splash%'")

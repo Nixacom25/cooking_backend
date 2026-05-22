@@ -402,7 +402,7 @@
     "cuisine": "Italian",
     "category": null,
     "prepTime": 15,
-    "cookTime": 0,
+    "cookTime": 45,
     "kcal": 280,
     "ingredients": [
       {
@@ -774,7 +774,7 @@
     "cuisine": "Mexican",
     "category": null,
     "prepTime": 10,
-    "cookTime": 0,
+    "cookTime": 20,
     "kcal": 280,
     "ingredients": [
       {
@@ -1569,7 +1569,7 @@
     "cuisine": "Japanese",
     "category": null,
     "prepTime": 45,
-    "cookTime": 0,
+    "cookTime": 25,
     "kcal": 300,
     "ingredients": [
       {
@@ -3620,7 +3620,7 @@
     "cuisine": "Mediterranean",
     "category": null,
     "prepTime": 15,
-    "cookTime": 0,
+    "cookTime": 45,
     "kcal": 180,
     "ingredients": [
       {
@@ -3679,7 +3679,7 @@
     "cuisine": "Mediterranean",
     "category": null,
     "prepTime": 15,
-    "cookTime": 0,
+    "cookTime": 45,
     "kcal": 220,
     "ingredients": [
       {
@@ -4108,7 +4108,7 @@
     "cuisine": "Middle Eastern",
     "category": null,
     "prepTime": 25,
-    "cookTime": 0,
+    "cookTime": 25,
     "kcal": 150,
     "ingredients": [
       {
@@ -4805,7 +4805,7 @@
     "cuisine": "Greek",
     "category": null,
     "prepTime": 15,
-    "cookTime": 0,
+    "cookTime": 45,
     "kcal": 120,
     "ingredients": [
       {
@@ -5715,7 +5715,7 @@
     "cuisine": "Greek",
     "category": "High Protein Picks",
     "prepTime": 15,
-    "cookTime": 0,
+    "cookTime": 35,
     "kcal": 310,
     "ingredients": [
       {
@@ -5934,7 +5934,7 @@
     "cuisine": "French",
     "category": "Easy Desserts",
     "prepTime": 20,
-    "cookTime": 0,
+    "cookTime": 20,
     "kcal": 250,
     "ingredients": [
       {
@@ -6153,7 +6153,7 @@
     "cuisine": "French",
     "category": "Easy Desserts",
     "prepTime": 10,
-    "cookTime": 0,
+    "cookTime": 35,
     "kcal": 220,
     "ingredients": [
       {
@@ -7233,7 +7233,7 @@
     "cuisine": "Mediterranean",
     "category": "Healthy Breakfasts",
     "prepTime": 10,
-    "cookTime": 0,
+    "cookTime": 45,
     "kcal": 320,
     "ingredients": [
       {
@@ -7329,7 +7329,7 @@
     "cuisine": "Mediterranean",
     "category": "Healthy Breakfasts",
     "prepTime": 5,
-    "cookTime": 0,
+    "cookTime": 45,
     "kcal": 300,
     "ingredients": [
       {
@@ -7471,7 +7471,7 @@
     "cuisine": "Mediterranean",
     "category": "",
     "prepTime": 5,
-    "cookTime": 0,
+    "cookTime": 15,
     "kcal": 350,
     "ingredients": [
       {
@@ -7522,7 +7522,7 @@
     "cuisine": "Mediterranean",
     "category": "",
     "prepTime": 15,
-    "cookTime": 0,
+    "cookTime": 20,
     "kcal": 450,
     "ingredients": [
       {
@@ -7616,7 +7616,7 @@
     "cuisine": "Mediterranean",
     "category": "",
     "prepTime": 10,
-    "cookTime": 0,
+    "cookTime": 45,
     "kcal": 320,
     "ingredients": [
       {
@@ -7777,7 +7777,7 @@
     "cuisine": "Mediterranean",
     "category": "Plant-Based Essentials",
     "prepTime": 15,
-    "cookTime": 0,
+    "cookTime": 15,
     "kcal": 310,
     "ingredients": [
       {
@@ -12450,7 +12450,7 @@
     "cuisine": "Middle Eastern",
     "category": "Protein Plates",
     "prepTime": 25,
-    "cookTime": 0,
+    "cookTime": 45,
     "kcal": 280,
     "ingredients": [
       {
@@ -17696,7 +17696,7 @@
     "cuisine": "International",
     "category": "Bowls & Salads",
     "prepTime": 15,
-    "cookTime": 0,
+    "cookTime": 15,
     "kcal": 180,
     "ingredients": [
       {
@@ -17809,7 +17809,7 @@
     "cuisine": "French",
     "category": "Bowls & Salads",
     "prepTime": 10,
-    "cookTime": 0,
+    "cookTime": 30,
     "kcal": 120,
     "ingredients": [
       {
@@ -17857,7 +17857,7 @@
     "cuisine": "International",
     "category": "Bowls & Salads",
     "prepTime": 15,
-    "cookTime": 0,
+    "cookTime": 40,
     "kcal": 290,
     "ingredients": [
       {
@@ -17952,7 +17952,7 @@
     "cuisine": "Asian",
     "category": "Bowls & Salads",
     "prepTime": 20,
-    "cookTime": 0,
+    "cookTime": 15,
     "kcal": 260,
     "ingredients": [
       {
@@ -18058,7 +18058,7 @@
     "cuisine": "Italian",
     "category": "Bowls & Salads",
     "prepTime": 10,
-    "cookTime": 0,
+    "cookTime": 45,
     "kcal": 210,
     "ingredients": [
       {
@@ -18107,7 +18107,7 @@
     "cuisine": "Greek",
     "category": "Bowls & Salads",
     "prepTime": 15,
-    "cookTime": 0,
+    "cookTime": 30,
     "kcal": 310,
     "ingredients": [
       {
@@ -18316,7 +18316,7 @@
     "cuisine": "International",
     "category": "Bowls & Salads",
     "prepTime": 15,
-    "cookTime": 0,
+    "cookTime": 15,
     "kcal": 310,
     "ingredients": [
       {
@@ -18423,7 +18423,7 @@
     "cuisine": "International",
     "category": "Bowls & Salads",
     "prepTime": 20,
-    "cookTime": 0,
+    "cookTime": 20,
     "kcal": 160,
     "ingredients": [
       {
@@ -18850,7 +18850,7 @@
     "cuisine": "International",
     "category": "Bowls & Salads",
     "prepTime": 25,
-    "cookTime": 0,
+    "cookTime": 30,
     "kcal": 420,
     "ingredients": [
       {
@@ -18942,7 +18942,7 @@
     "cuisine": "International",
     "category": "Bowls & Salads",
     "prepTime": 10,
-    "cookTime": 0,
+    "cookTime": 15,
     "kcal": 150,
     "ingredients": [
       {
@@ -21224,7 +21224,7 @@
     "cuisine": "European",
     "category": "Breakfast",
     "prepTime": 15,
-    "cookTime": 0,
+    "cookTime": 35,
     "kcal": 550,
     "ingredients": [
       {
@@ -22599,7 +22599,7 @@
     "cuisine": "International",
     "category": "Sides & Snacks",
     "prepTime": 10,
-    "cookTime": 0,
+    "cookTime": 20,
     "kcal": 120,
     "ingredients": [
       {
@@ -22745,7 +22745,7 @@
     "cuisine": "Mediterranean",
     "category": "Sides & Snacks",
     "prepTime": 15,
-    "cookTime": 0,
+    "cookTime": 35,
     "kcal": 420,
     "ingredients": [
       {
@@ -22827,7 +22827,7 @@
     "cuisine": "International",
     "category": "Sides & Snacks",
     "prepTime": 5,
-    "cookTime": 0,
+    "cookTime": 40,
     "kcal": 180,
     "ingredients": [
       {
@@ -22869,7 +22869,7 @@
     "cuisine": "Mexican",
     "category": "Sides & Snacks",
     "prepTime": 10,
-    "cookTime": 0,
+    "cookTime": 40,
     "kcal": 120,
     "ingredients": [
       {
@@ -22910,7 +22910,7 @@
     "cuisine": "International",
     "category": "Sides & Snacks",
     "prepTime": 10,
-    "cookTime": 0,
+    "cookTime": 20,
     "kcal": 150,
     "ingredients": [
       {
@@ -22951,7 +22951,7 @@
     "cuisine": "Mediterranean",
     "category": "Sides & Snacks",
     "prepTime": 20,
-    "cookTime": 0,
+    "cookTime": 45,
     "kcal": 380,
     "ingredients": [
       {
@@ -23054,7 +23054,7 @@
     "cuisine": "International",
     "category": "Sides & Snacks",
     "prepTime": 10,
-    "cookTime": 0,
+    "cookTime": 30,
     "kcal": 210,
     "ingredients": [
       {
@@ -23836,7 +23836,7 @@
     "cuisine": "International",
     "category": "Desserts",
     "prepTime": 10,
-    "cookTime": 0,
+    "cookTime": 35,
     "kcal": 210,
     "ingredients": [
       {
@@ -23879,7 +23879,7 @@
     "cuisine": "International",
     "category": "Desserts",
     "prepTime": 15,
-    "cookTime": 0,
+    "cookTime": 40,
     "kcal": 290,
     "ingredients": [
       {
@@ -24548,7 +24548,7 @@
     "cuisine": "Italian",
     "category": "Desserts",
     "prepTime": 30,
-    "cookTime": 0,
+    "cookTime": 35,
     "kcal": 490,
     "ingredients": [
       {

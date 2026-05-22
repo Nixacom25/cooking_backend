@@ -520,7 +520,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .expiresAt(recipe.getExpiresAt())
                 .origin(recipe.getOrigin() != null ? recipe.getOrigin().name() : null)
                 .isInCookbook(isInCookbook)
-                .shareUrl("https://cooked.nixacom.com/recipes/" + recipe.getId())
+                .shareUrl("https://cookedapp.app/share/recipes/" + recipe.getId())
                 .build();
     }
     @Override
@@ -535,7 +535,7 @@ public class RecipeServiceImpl implements RecipeService {
             recipeRepository.save(recipe);
         }
 
-        return "https://cooked.nixacom.com/recipes/" + recipe.getId();
+        return "https://cookedapp.app/share/recipes/" + recipe.getId();
     }
 
     @Override
