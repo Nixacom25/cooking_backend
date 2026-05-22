@@ -11,8 +11,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
 import java.util.List;
 
+import org.springframework.cache.annotation.EnableCaching;
+
 @SpringBootApplication
 @EnableScheduling
+@EnableCaching
 public class BackendApplication {
 
 	public static void main(String[] args) {

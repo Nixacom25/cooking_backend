@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -233,6 +234,7 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    @Cacheable("explore_recipes")
     public Page<RecipeResponse> getExploreRecipes(String cuisine, String category, Pageable pageable) {
         return recipeRepository.findExploreRecipes(RecipeOrigin.EXPLORE, RecipeOrigin.EXPLORE, cuisine, category, pageable)
                 .map(recipe -> mapToResponse(recipe, null));
@@ -537,6 +539,7 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    @Cacheable("explore_cuisines")
     public List<com.cooked.backend.dto.response.ExploreTaxonomyResponse> getExploreCuisines() {
         return recipeRepository.findCuisinesWithCount().stream()
                 .map(obj -> com.cooked.backend.dto.response.ExploreTaxonomyResponse.builder()
@@ -548,6 +551,7 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    @Cacheable("explore_categories")
     public List<com.cooked.backend.dto.response.ExploreTaxonomyResponse> getExploreCategories() {
         return recipeRepository.findCategoriesWithCount().stream()
                 .map(obj -> com.cooked.backend.dto.response.ExploreTaxonomyResponse.builder()

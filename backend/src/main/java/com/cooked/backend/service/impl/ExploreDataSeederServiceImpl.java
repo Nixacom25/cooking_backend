@@ -39,12 +39,20 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
                         "  -- Supprimer les contraintes d'unicité sur les tables clés\n" +
                         "  FOR r IN (SELECT conname, relname FROM pg_constraint c JOIN pg_class cl ON c.conrelid = cl.oid WHERE cl.relname IN ('recipes', 'cookbooks', 'ingredients', 'recipe_data') AND contype = 'u') " +
                         "  LOOP " +
-                        "    EXECUTE 'ALTER TABLE ' || r.relname || ' DROP CONSTRAINT IF EXISTS ' || r.conname; " +
+                        "    BEGIN " +
+                        "      EXECUTE 'ALTER TABLE ' || r.relname || ' DROP CONSTRAINT IF EXISTS ' || r.conname; " +
+                        "    EXCEPTION WHEN OTHERS THEN " +
+                        "      NULL; " +
+                        "    END; " +
                         "  END LOOP; " +
                         "  -- Supprimer les index uniques\n" +
-                        "  FOR r IN (SELECT indexname, tablename FROM pg_indexes WHERE tablename IN ('recipes', 'cookbooks', 'ingredients', 'recipe_data') AND indexdef LIKE '%UNIQUE INDEX%') " +
+                        "  FOR r IN (SELECT indexname, tablename FROM pg_indexes WHERE tablename IN ('recipes', 'cookbooks', 'ingredients', 'recipe_data') AND indexdef LIKE '%UNIQUE INDEX%' AND indexname NOT LIKE '%_pkey') " +
                         "  LOOP " +
-                        "    EXECUTE 'DROP INDEX IF EXISTS ' || r.indexname; " +
+                        "    BEGIN " +
+                        "      EXECUTE 'DROP INDEX IF EXISTS ' || r.indexname; " +
+                        "    EXCEPTION WHEN OTHERS THEN " +
+                        "      NULL; " +
+                        "    END; " +
                         "  END LOOP; " +
                         "END $$;";
             jdbcTemplate.execute(sql);
