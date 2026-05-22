@@ -37,7 +37,12 @@ public class TaxonomyServiceImpl implements TaxonomyService {
         Map.entry("Handheld / Street Food", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825849/ai-recipe-app/taxonomy/dbnakseazqptrnppmxh4.jpg"),
         Map.entry("Soups", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825857/ai-recipe-app/taxonomy/lxx4ebaywhubtnt56s7f.jpg"),
         Map.entry("Rice & Grain", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825868/ai-recipe-app/taxonomy/cnbaetrmnteyizx4wt9g.jpg"),
-        Map.entry("Stir Fry", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825877/ai-recipe-app/taxonomy/uxszdotoyanj9raincra.jpg")
+        Map.entry("Stir Fry", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825877/ai-recipe-app/taxonomy/uxszdotoyanj9raincra.jpg"),
+        Map.entry("Dinner", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778830952/ai-recipe-app/taxonomy/ixxrzfdsu511skt49mfi.jpg"),
+        Map.entry("Appetizer", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825794/ai-recipe-app/taxonomy/gjndqlconjidynpzgljm.png"),
+        Map.entry("Bowls/Salads", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825794/ai-recipe-app/taxonomy/gjndqlconjidynpzgljm.png"),
+        Map.entry("Curries/Stews", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825794/ai-recipe-app/taxonomy/gjndqlconjidynpzgljm.png"),
+        Map.entry("Sides/Snacks", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825794/ai-recipe-app/taxonomy/gjndqlconjidynpzgljm.png")
     );
 
     private static final Map<String, String> CUISINE_IMAGES = Map.ofEntries(
@@ -60,7 +65,10 @@ public class TaxonomyServiceImpl implements TaxonomyService {
         Map.entry("Moroccan", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825987/ai-recipe-app/taxonomy/cfn9mjfjtxbz6c0l4vsi.jpg"),
         Map.entry("Asian", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825996/ai-recipe-app/taxonomy/fsfudpdnqvfqyqtwpwhj.jpg"),
         Map.entry("Brazilian", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778826007/ai-recipe-app/taxonomy/rfdrinxhadmq6lsaj6uw.jpg"),
-        Map.entry("British", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778826016/ai-recipe-app/taxonomy/mr6jkzdtemoulb4p436p.jpg")
+        Map.entry("British", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778826016/ai-recipe-app/taxonomy/mr6jkzdtemoulb4p436p.jpg"),
+        Map.entry("International", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778832305/ai-recipe-app/taxonomy/mobile/abkvjvsekd2f6zl2t5gn.png"),
+        Map.entry("Spanish", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825881/ai-recipe-app/taxonomy/v8ompn1xfg2xerin57ea.png"),
+        Map.entry("Malaysian", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825887/ai-recipe-app/taxonomy/kpf7vnohqamnafqlj9xn.png")
     );
 
     @Override
