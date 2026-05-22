@@ -515,7 +515,13 @@ public class MarkhorAiServiceImpl implements AiService {
             prefs.put("cuisines_love", user.getFavoriteCuisines());
             prefs.put("kitchen_tools", user.getKitchenAppliances());
             prefs.put("skill_level", normalizeSkillLevel(user.getCookingSkill()));
-            prefs.put("system_instructions", "Be extremely precise and generous in the 'tips' (notes and advice) section for each recipe. Include advice on texture, flavor variations, and storage.");
+            String systemInstructions = "Be extremely precise and generous in the 'tips' (notes and advice) section for each recipe. Include advice on texture, flavor variations, and storage. "
+                    + "STRICT REQUIREMENT: You MUST ONLY generate recipes using the provided list of ingredients. "
+                    + "DO NOT add or suggest other main ingredients or extra ingredients in the recipe creation. "
+                    + "Respect the list of ingredients strictly. If the provided ingredients are not sufficient or suitable "
+                    + "to make at least one realistic recipe, do not invent or add other ingredients; instead, generate "
+                    + "absolutely zero recipes (an empty recipes array).";
+            prefs.put("system_instructions", systemInstructions);
 
             Map<String, Object> body = new HashMap<>();
             body.put("ingredients", request.getIngredients());
@@ -525,6 +531,9 @@ public class MarkhorAiServiceImpl implements AiService {
             ResponseEntity<ScanResponse> response = restTemplate.postForEntity(baseUrl + "/api/recipes/generate", requestEntity, ScanResponse.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 List<CreateRecipeRequest> recipes = response.getBody().getRecipes();
+                if (recipes == null || recipes.isEmpty()) {
+                    throw new BadRequestException("The provided ingredients are not sufficient to generate any recipe. Please add more ingredients.");
+                }
                 for (CreateRecipeRequest r : recipes) r.setOrigin("MANUAL");
                 assignBestMatchingImages(recipes);
                 return recipes;
@@ -602,7 +611,13 @@ public class MarkhorAiServiceImpl implements AiService {
             prefs.put("cuisines_love", user.getFavoriteCuisines());
             prefs.put("kitchen_tools", user.getKitchenAppliances());
             prefs.put("skill_level", normalizeSkillLevel(user.getCookingSkill()));
-            prefs.put("system_instructions", "Be extremely precise and generous in the 'tips' (notes and advice) section for each recipe. Include advice on texture, flavor variations, and storage.");
+            String systemInstructions = "Be extremely precise and generous in the 'tips' (notes and advice) section for each recipe. Include advice on texture, flavor variations, and storage. "
+                    + "STRICT REQUIREMENT: You MUST ONLY generate recipes using the provided list of ingredients. "
+                    + "DO NOT add or suggest other main ingredients or extra ingredients in the recipe creation. "
+                    + "Respect the list of ingredients strictly. If the provided ingredients are not sufficient or suitable "
+                    + "to make at least one realistic recipe, do not invent or add other ingredients; instead, generate "
+                    + "absolutely zero recipes (an empty recipes array).";
+            prefs.put("system_instructions", systemInstructions);
 
             Map<String, Object> body = new HashMap<>();
             body.put("ingredients", ingredients);
@@ -614,6 +629,10 @@ public class MarkhorAiServiceImpl implements AiService {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 ScanResponse res = response.getBody();
                 
+                if (res.getRecipes() == null || res.getRecipes().isEmpty()) {
+                    throw new BadRequestException("The provided ingredients are not sufficient to generate any recipe. Please add more ingredients.");
+                }
+
                 // If the microservice didn't categorize, we can at least mark the recipes
                 if (res.getRecipes() != null) {
                     for (CreateRecipeRequest r : res.getRecipes()) {
