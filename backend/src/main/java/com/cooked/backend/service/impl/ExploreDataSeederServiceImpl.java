@@ -22,6 +22,7 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
     private final UserRepository userRepository;
     private final IngredientRepository ingredientRepository;
     private final com.cooked.backend.service.TaxonomyService taxonomyService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     // Maps moved to TaxonomyService
 
@@ -29,6 +30,28 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
     @Transactional
     public void seedExploreData() {
         log.info("Checking for Explore Data updates in explore_recipes.json...");
+
+        // Drop ALL unique constraints on recipes, cookbooks, ingredients, etc. to allow duplicates as requested
+        try {
+            String sql = "DO $$ " +
+                        "DECLARE r RECORD; " +
+                        "BEGIN " +
+                        "  -- Supprimer les contraintes d'unicité sur les tables clés\n" +
+                        "  FOR r IN (SELECT conname, relname FROM pg_constraint c JOIN pg_class cl ON c.conrelid = cl.oid WHERE cl.relname IN ('recipes', 'cookbooks', 'ingredients', 'recipe_data') AND contype = 'u') " +
+                        "  LOOP " +
+                        "    EXECUTE 'ALTER TABLE ' || r.relname || ' DROP CONSTRAINT IF EXISTS ' || r.conname; " +
+                        "  END LOOP; " +
+                        "  -- Supprimer les index uniques\n" +
+                        "  FOR r IN (SELECT indexname, tablename FROM pg_indexes WHERE tablename IN ('recipes', 'cookbooks', 'ingredients', 'recipe_data') AND indexdef LIKE '%UNIQUE INDEX%') " +
+                        "  LOOP " +
+                        "    EXECUTE 'DROP INDEX IF EXISTS ' || r.indexname; " +
+                        "  END LOOP; " +
+                        "END $$;";
+            jdbcTemplate.execute(sql);
+            log.info("Successfully dropped all unique constraints from recipes, cookbooks, ingredients and recipe_data tables");
+        } catch (Exception e) {
+            log.warn("Could not drop constraints: {}", e.getMessage());
+        }
 
         User systemUser = userRepository.findByEmail("explore@cooked.com")
                 .orElseGet(() -> {
@@ -47,6 +70,10 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
         try {
             ObjectMapper mapper = new ObjectMapper();
             InputStream is = getClass().getResourceAsStream("/explore_recipes.json");
+            if (is == null) {
+                is = getClass().getClassLoader().getResourceAsStream("explore_recipes.json");
+            }
+            
             if (is != null) {
                 List<Map<String, Object>> recipesData = mapper.readValue(is, new TypeReference<List<Map<String, Object>>>() {});
                 log.info("Found {} recipes in explore_recipes.json. Starting seed...", recipesData.size());
@@ -95,6 +122,8 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
                         log.error("Failed to create recipe: {}", data.get("name"), e);
                     }
                 }
+            } else {
+                log.error("CRITICAL ERROR: explore_recipes.json was NOT found in resources or classpath!");
             }
         } catch (Exception e) {
             log.error("Failed to seed explore data from explore.json", e);
