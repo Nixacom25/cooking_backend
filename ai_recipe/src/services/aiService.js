@@ -328,7 +328,9 @@ Return ONLY valid JSON.`;
  * @param {string[]} cooking_goals - User cooking goals ordered by priority
  * @param {null|number|object} time_minutes - Target cooking time in minutes or range
  * @param {null|object} servings - Preferred servings range
- function buildRecipeSystemPrompt(allergies = [], preferences = [], dislikes = [], DNA = {}, skill_level = {}, cuisines_love = [], kitchen_tools = [], cooking_goals = [], time_minutes = null, servings = null, system_instructions = null) {
+ * @returns {string}
+ */
+function buildRecipeSystemPrompt(allergies = [], preferences = [], dislikes = [], DNA = {}, skill_level = {}, cuisines_love = [], kitchen_tools = [], cooking_goals = [], time_minutes = null, servings = null, system_instructions = null) {
   const allergyClause =
     allergies.length > 0
       ? `CRITICAL — the user is allergic to: ${allergies.join(', ')}. Do NOT include these ingredients in ANY recipe.`
