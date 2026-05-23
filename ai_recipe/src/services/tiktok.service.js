@@ -2,7 +2,7 @@ const axios = require('axios');
 const { chromium } = require('playwright');
 const { AppError } = require('../middleware/errorHandler');
 
-const TIKTOK_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+const TIKTOK_USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
 
 const parseTikTokMetaFromHtml = (html) => {
   if (!html) return null;
@@ -16,7 +16,8 @@ const parseTikTokMetaFromHtml = (html) => {
         
         let item = scope?.["webapp.video-detail"]?.itemInfo?.itemStruct || 
                    scope?.["webapp.video-detail"]?.videoInfo?.video ||
-                   scope?.["webapp.video-detail"]?.shareMeta;
+                   scope?.["webapp.video-detail"]?.shareMeta ||
+                   scope?.["webapp.reflow.video.detail"]?.itemInfo?.itemStruct;
                    
         if (!item && scope) {
             for (const key in scope) {
@@ -131,10 +132,25 @@ const tiktokService = async (url) => {
     await page.waitForTimeout(2000);
     
     const html = await page.content();
-    const meta = parseTikTokMetaFromHtml(html);
+    let meta = parseTikTokMetaFromHtml(html);
+    
+    // Fallback: If metadata parsing fails, grab the visible text from the page
+    if (!meta || !meta.description) {
+        const bodyText = await page.evaluate(() => {
+            return (document.querySelector('main')?.innerText || document.body?.innerText || "").trim();
+        });
+        
+        if (bodyText && bodyText.length > 20) {
+            meta = {
+                description: bodyText.substring(0, 8000),
+                cover: null
+            };
+            console.log(`[TikTok] Fallback to raw page text successful.`);
+        }
+    }
     
     if (!meta || !meta.description) {
-        throw new AppError(502, 'BAD_GATEWAY', "Impossible d'extraire les métadonnées de TikTok");
+        throw new AppError(502, 'BAD_GATEWAY', "Failed to extract TikTok metadata.");
     }
 
     return {
@@ -144,7 +160,7 @@ const tiktokService = async (url) => {
     };
   } catch (error) {
     if (error instanceof AppError) throw error;
-    throw new AppError(502, 'BAD_GATEWAY', "Échec de l'extraction TikTok via navigateur");
+    throw new AppError(502, 'BAD_GATEWAY', "Failed to extract TikTok via browser.");
   } finally {
     if (browser) await browser.close();
   }

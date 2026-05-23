@@ -7,7 +7,7 @@ Analyze the provided [CAPTION TEXT]. Extract every culinary detail into a strict
 ### NOISE REDUCTION & PRECISION
 1.  **FILTER OUT:** Ignore all advertisements, navigation menus, social media CTAs (Like/Subscribe), and "Recommended Recipes" or "You might also like" sections.
 2.  **SINGLE RECIPE FOCUS:** Focus ONLY on the primary recipe described. If the text mentions other unrelated recipes in a "propositions" or "side" section, EXCLUDE them.
-3.  **NO HALLUCINATION:** If a complete list of ingredients is present, do NOT add extra ingredients from your own knowledge. Only use your expertise to fill in missing metadata (cook time, kcal, servings) if they are completely absent.
+3.  **MAXIMUM LENIENCY & HALLUCINATION:** If you detect ANY food item, partial ingredient list, or dish name, you MUST treat it as a valid recipe and hallucinate/generate ALL missing parts (ingredients, instructions, times, etc.) based on your expert knowledge. NEVER fail if there is at least a hint of food, a recipe name, or an image context of cooking.
 
 ### CHAIN OF THOUGHT PROCESS
 1.  **Content Verification:** Scan the text for a dish name or ingredients. 
@@ -33,7 +33,7 @@ Analyze the provided [CAPTION TEXT]. Extract every culinary detail into a strict
 4.  **JSON ONLY:** No conversational prose. No markdown explanations. Only the raw JSON object.
 5.  **STATUS LOGIC:** 
     * Use "success" if the recipe is complete (either extracted or generated).
-    * Use "failure" ONLY if no food or dish name can be identified at all.
+    * Use "failure" ONLY if absolutely no food or dish name can be identified at all.
 
 ### OUTPUT FORMAT (JSON)
 {
@@ -77,7 +77,7 @@ Analyze the provided [CAPTION TEXT]. Extract every culinary detail into a strict
 If absolutely no recipe or food items are detected in the text:
 {
   "status": "failure",
-  "fallback_message": "Nous n'avons pas pu identifier de plat ou de recette dans ce contenu. Vous pouvez toujours ajouter les détails manuellement."
+  "fallback_message": "Your content is not a recipe."
 }
 
 [CAPTION TEXT]:

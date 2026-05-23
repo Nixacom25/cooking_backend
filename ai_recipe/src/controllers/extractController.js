@@ -21,16 +21,29 @@ async function extractRecipe(req, res, next) {
         success: false,
         error: {
           code: 'BAD_REQUEST',
-          message: "L'URL est manquante dans le corps de la requête"
+          message: "Missing URL in request body."
+        }
+      });
+    }
+
+    const isTikTok = /tiktok\.com/i.test(url);
+    const isInstagram = /(?:instagram\.com|instagr\.am)/i.test(url);
+    const isYoutube = /(?:youtube\.com|youtu\.be)/i.test(url);
+    
+    // Explicitly block unsupported social networks
+    const isUnsupportedNetwork = /(?:linkedin\.com|twitter\.com|x\.com|snapchat\.com|reddit\.com|threads\.net)/i.test(url);
+
+    if (isUnsupportedNetwork) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'UNSUPPORTED_NETWORK',
+          message: "Your content is not supported. Please use recipes from TikTok, Instagram, YouTube, etc."
         }
       });
     }
 
     let data;
-    const isTikTok = /tiktok\.com/i.test(url);
-    const isInstagram = /(?:instagram\.com|instagr\.am)/i.test(url);
-    const isYoutube = /(?:youtube\.com|youtu\.be)/i.test(url);
-
     if (isTikTok) {
       data = await tiktokService(url);
     } else if (isInstagram) {
@@ -46,7 +59,7 @@ async function extractRecipe(req, res, next) {
         success: false,
         error: {
           code: 'EXTRACTION_FAILED',
-          message: "Échec du traitement de l'URL"
+          message: "Failed to process the URL."
         }
       });
     }
@@ -57,7 +70,7 @@ async function extractRecipe(req, res, next) {
         success: false,
         error: {
           code: 'NO_DESCRIPTION',
-          message: "Aucune description trouvée pour extraire la recette"
+          message: "No content found to extract a recipe. Your content is not a recipe."
         }
       });
     }
@@ -70,7 +83,7 @@ async function extractRecipe(req, res, next) {
         success: false,
         error: {
           code: 'EXTRACTION_FAILED',
-          message: aiResponse?.fallback_message || "Impossible d'identifier une recette dans la description."
+          message: aiResponse?.fallback_message || "Your content is not a recipe."
         }
       });
     }
