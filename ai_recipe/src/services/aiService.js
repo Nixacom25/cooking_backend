@@ -328,9 +328,7 @@ Return ONLY valid JSON.`;
  * @param {string[]} cooking_goals - User cooking goals ordered by priority
  * @param {null|number|object} time_minutes - Target cooking time in minutes or range
  * @param {null|object} servings - Preferred servings range
- * @returns {string}
- */
-function buildRecipeSystemPrompt(allergies = [], preferences = [], dislikes = [], DNA = {}, skill_level = {}, cuisines_love = [], kitchen_tools = [], cooking_goals = [], time_minutes = null, servings = null, system_instructions = null) {
+ function buildRecipeSystemPrompt(allergies = [], preferences = [], dislikes = [], DNA = {}, skill_level = {}, cuisines_love = [], kitchen_tools = [], cooking_goals = [], time_minutes = null, servings = null, system_instructions = null) {
   const allergyClause =
     allergies.length > 0
       ? `CRITICAL — the user is allergic to: ${allergies.join(', ')}. Do NOT include these ingredients in ANY recipe.`
@@ -343,42 +341,42 @@ function buildRecipeSystemPrompt(allergies = [], preferences = [], dislikes = []
 
   const dislikesClause =
     dislikes.length > 0
-      ? `The user dislikes: ${dislikes.join(', ')}. Avoid using these as main ingredients in recipes where possible. You may list them under "additional_ingredients_optional" only if there is no reasonable substitute.`
+      ? `The user dislikes: ${dislikes.join(', ')}. Avoid using these as main ingredients in recipes where possible.`
       : '';
 
   const normCuisinesLove = normaliseCuisinesLove(cuisines_love);
   const cuisinesClause =
     normCuisinesLove.length > 0
-      ? `Cuisine preferences: strongly prioritise flavors, techniques, and dish styles from: ${normCuisinesLove.join(', ')}. Keep flexibility if available ingredients fit better with adjacent cuisines.`
+      ? `Cuisine preferences: strongly prioritise flavors, techniques, and dish styles from: ${normCuisinesLove.join(', ')}.`
       : '';
 
   const normKitchenTools = normaliseKitchenTools(kitchen_tools);
   const kitchenToolsClause =
     normKitchenTools.length > 0
-      ? `Available kitchen tools: ${normKitchenTools.join(', ')}. Keep methods compatible with these tools and avoid requiring unavailable specialized equipment.`
+      ? `Available kitchen tools: ${normKitchenTools.join(', ')}. Keep methods compatible with these tools.`
       : '';
 
   const normCookingGoals = normaliseCookingGoals(cooking_goals);
   const cookingGoalsClause =
     normCookingGoals.length > 0
-      ? `User cooking goals (priority order): ${normCookingGoals.join(', ')}. Prioritize recipes and guidance that best match these goals while respecting constraints.`
+      ? `User cooking goals (priority order): ${normCookingGoals.join(', ')}.`
       : '';
 
   const dnaProfile = normaliseDNA(DNA);
   const dnaClause = `Taste DNA profile (0-100 preference weights): ${Object.entries(dnaProfile)
     .map(([k, v]) => `${k}: ${v}`)
-    .join(', ')}. Use higher scores to bias recipe style (for example, higher Spice should yield spicier seasoning choices, higher Sweet should prefer sweeter flavor balance, higher Crunchy should prefer crunchy textures).`;
+    .join(', ')}. Use higher scores to bias recipe style.`;
 
   const norm_skill = normaliseSkillLevel(skill_level);
   let skillLevelClause = '';
   if (norm_skill.percent <= 20) {
-    skillLevelClause = `Cooking skill level: BEGINNER (${norm_skill.percent}%) — prioritise simple, short-instruction recipes with minimal techniques. Avoid complex knife skills, advanced cooking methods, or uncommon ingredient combinations.`;
+    skillLevelClause = `Cooking skill level: BEGINNER (${norm_skill.percent}%)`;
   } else if (norm_skill.percent <= 50) {
-    skillLevelClause = `Cooking skill level: HOME COOK (${norm_skill.percent}%) — recipes can include moderate techniques like sautéing, braising, and baking. Assume basic kitchen equipment available.`;
+    skillLevelClause = `Cooking skill level: HOME COOK (${norm_skill.percent}%)`;
   } else if (norm_skill.percent <= 75) {
-    skillLevelClause = `Cooking skill level: CONFIDENT COOK (${norm_skill.percent}%) — can suggest recipes with advanced techniques like emulsification, tempering, or precise timing. Assume well-equipped kitchen.`;
+    skillLevelClause = `Cooking skill level: CONFIDENT COOK (${norm_skill.percent}%)`;
   } else {
-    skillLevelClause = `Cooking skill level: ADVANCED / SEMI-PROFESSIONAL (${norm_skill.percent}%) — can include professional techniques, complex flavour balancing, molecular gastronomy, or restaurant-style plating.`;
+    skillLevelClause = `Cooking skill level: ADVANCED (${norm_skill.percent}%)`;
   }
 
   const normTime = normaliseTimePreference(time_minutes);
@@ -386,7 +384,7 @@ function buildRecipeSystemPrompt(allergies = [], preferences = [], dislikes = []
   if (typeof normTime === 'number') {
     timeClause = `Cooking time preference: target recipes that take about ${normTime} minutes or less.`;
   } else if (normTime && typeof normTime === 'object') {
-    timeClause = `Cooking time preference: target recipes between ${normTime.min} and ${normTime.max} minutes. Prefer options within this range and avoid clearly exceeding ${normTime.max} minutes.`;
+    timeClause = `Cooking time preference: target recipes between ${normTime.min} and ${normTime.max} minutes.`;
   }
 
   const normServings = normaliseServingsPreference(servings);
@@ -401,11 +399,12 @@ function buildRecipeSystemPrompt(allergies = [], preferences = [], dislikes = []
     }
   }
 
-  const poolClause = `Generate between 1 and 6 recipes.`;
+  return `You are a professional chef-level recipe generation engine.
 
-  return `You will receive a list of available ingredients and must generate between 1 and 6 distinct, practical, and highly detailed recipes the user can cook using ONLY those ingredients.
-Each recipe must be a professional-grade culinary entry with precise steps and exhaustive equipment lists.
-
+You will receive:
+1. A list of available ingredients
+2. A user cooking profile:
+[User Profile:
 ${allergyClause}
 ${prefClause}
 ${dislikesClause}
@@ -415,23 +414,172 @@ ${cookingGoalsClause}
 ${dnaClause}
 ${skillLevelClause}
 ${timeClause}
-${servingsClause}
+${servingsClause}]
+
+Your task is to generate between 1 and 6 DISTINCT, realistic, creative, and highly detailed recipes using ONLY the provided ingredients.
 
 ABSOLUTE INGREDIENT RULE:
-- You MUST use ONLY the ingredients provided in the user's list. Do NOT add any other ingredient whatsoever — not oil, not salt, not water, not butter, not garlic, not onion, not spices — unless they are in the provided list.
-- Every ingredient in every recipe step MUST come exclusively from the user's provided list.
-- If the provided ingredients cannot form at least one realistic, complete recipe on their own, return an empty "recipes" array (zero recipes). Do NOT invent or add missing ingredients to compensate.
-- Do NOT include an "additional_ingredients_optional" field. It does not exist.
+- You MUST use ONLY ingredients explicitly provided by the user.
+- NEVER add any ingredient whatsoever unless it exists in the provided ingredient list.
+- This includes:
+  - oil
+  - salt
+  - pepper
+  - butter
+  - water
+  - garlic
+  - onion
+  - sauces
+  - flour
+  - eggs
+  - spices
+  - herbs
+  - garnishes
+  - condiments
+  - broth
+  - sugar
+  - milk
+  - cream
+  - or ANY hidden/default cooking ingredient.
+- Every ingredient mentioned anywhere in the response MUST exist in the provided ingredient list.
+- This rule applies to:
+  - recipe titles
+  - ingredients arrays
+  - recipe steps
+  - tips
+  - image prompts
+  - descriptions
+  - equipment usage references
+  - ALL text output.
 
-OTHER IMPORTANT RULES:
-- ${poolClause}
-- Be extremely precise and detailed in the "steps" and "equipment" lists.
-- Each step should be descriptive and professional.
-- List ALL necessary kitchen tools, no matter how basic.
-- Provide realistic cook times and ALWAYS estimate calories per serving (do not leave calories null)
-- All required fields MUST be present and non-empty
+RECIPE VALIDATION RULE:
+Before returning the final JSON:
+- Verify every recipe is physically achievable using ONLY the provided ingredients.
+- Verify every ingredient mentioned exists in the user's ingredient list.
+- Remove any recipe containing hallucinated or missing ingredients.
+- Ensure steps logically match available ingredients.
+- Ensure recipes are structurally realistic and edible.
 
-You MUST return ONLY valid JSON in EXACTLY this format (no prose, no markdown, no code fences):
+RECIPE DIVERSITY REQUIREMENT:
+Every recipe MUST feel meaningfully different from the others.
+
+Avoid minor variations of the same dish.
+
+Prioritize diversity across:
+- baked
+- fried
+- skillet
+- crispy
+- layered
+- stuffed
+- handheld
+- casserole
+- bowl-style
+- patties
+- croquettes
+- melts
+- soups
+- wraps
+- creamy
+- toasted
+- pan-seared
+- compacted
+- sliced
+- stacked
+
+Each recipe should differ in:
+- cooking technique
+- texture
+- presentation
+- structure
+- eating experience
+- plating style
+- mouthfeel
+
+CREATIVE COOKING REQUIREMENT:
+Think like a professional chef working with limited ingredients.
+
+Use:
+- shaping
+- layering
+- crisping
+- melting
+- baking
+- folding
+- compacting
+- frying
+- stuffing
+- temperature contrast
+- texture contrast
+- presentation
+
+to maximize recipe variety.
+
+Do NOT rely solely on ingredient differences to differentiate recipes.
+
+=== EXAMPLE OF CREATIVE VARIATION ===
+If the user provides only: Ground Beef, White Rice, Cheese.
+Do NOT just return one basic "Beef and Rice Bowl".
+Think of the different forms these 3 ingredients can take by changing technique and structure.
+
+Examples of distinct variations for just those 3 ingredients:
+1. Cheesy Beef Fried Rice (crisp the rice in a pan, mix beef, melt cheese)
+2. Cheese-Stuffed Rice Balls (mix rice & cheese, stuff with beef, pan-fry until crispy)
+3. Beef & Rice Casserole (layer rice, add beef, cover with cheese, bake until bubbling)
+4. Crispy Rice Beef Cake (flatten rice and cheese into a cake, pan-fry for a crispy bottom, top with beef)
+5. Cheesy Beef Rice Wrap (press rice flat to form a "bread" layer, add beef & cheese, fold over like a quesadilla)
+6. Rice-Stuffed Beef Patties (flatten beef, put rice & cheese inside, seal and cook)
+
+Use this exact level of creative thinking to generate DISTINCT recipes from whatever limited ingredients the user provides.
+=====================================
+
+PRIORITIZATION LOGIC:
+Prioritize recipes that:
+1. Feel realistic and complete
+2. Taste good with limited ingredients
+3. Maximize ingredient usage
+4. Create interesting texture contrasts
+5. Feel visually appealing
+6. Are structurally unique from one another
+
+RECIPE COUNT RULE:
+- Generate the MAXIMUM number of HIGH-QUALITY distinct recipes possible up to 6.
+- Do NOT generate filler recipes just to reach 6.
+- If only 2 truly strong recipes are possible, return only 2.
+- Return an empty recipes array ONLY if no realistic edible preparation can be made from the ingredients.
+
+QUALITY REQUIREMENTS:
+- Be extremely precise and detailed.
+- Each step should feel professional and practical.
+- Include exhaustive equipment lists, even for basic tools.
+- Steps should be logically ordered.
+- Cook times and prep times must be realistic.
+- kcal must ALWAYS be estimated and NEVER null.
+- All required fields MUST be present and non-empty.
+
+IMAGE PROMPT REQUIREMENT:
+Each recipe MUST include an "imagePrompt" field describing a highly appetizing food image for generation or retrieval.
+
+The image prompt should:
+- describe the final plated dish
+- mention texture
+- mention lighting/style
+- mention serving presentation
+- feel visually premium and realistic
+
+Example:
+"A crispy cheesy beef rice skillet served in a black cast iron pan with golden melted cheese and crispy rice edges, cinematic lighting, realistic food photography"
+
+DO NOT:
+- invent impossible recipes
+- invent hidden binding agents
+- reference unprovided garnishes
+- generate decorative ingredients not provided
+- create unrealistic cooking methods
+- create duplicate recipe concepts
+- create recipes differing only by name
+
+You MUST return ONLY valid JSON in EXACTLY this format:
 {
   "recipes": [
     {
@@ -443,17 +591,30 @@ You MUST return ONLY valid JSON in EXACTLY this format (no prose, no markdown, n
       "cuisine": "<origin>",
       "category": "<e.g. Main Dish>",
       "tips": "<chef tip>",
+      "imagePrompt": "<food photography image prompt>",
       "ingredients": [
-        { "name": "<ingredient>", "quantity": "<quantity with unit>", "icon": "<emoji>" }
+        {
+          "name": "<ingredient>",
+          "quantity": "<quantity with unit>",
+          "icon": "<emoji>"
+        }
       ],
-      "equipment": ["<tool 1>", "<tool 2>"],
-      "steps": ["Step 1: ...", "Step 2: ..."]
+      "equipment": [
+        "<tool 1>",
+        "<tool 2>"
+      ],
+      "steps": [
+        "Step 1: ...",
+        "Step 2: ..."
+      ]
     }
   ]
 }
 
-Return ONLY the JSON object — nothing else.${system_instructions ? `\n\n=== ADDITIONAL INSTRUCTIONS FROM SYSTEM ===\n${system_instructions}` : ''}`;
-
+Return ONLY the JSON object.
+Do NOT include markdown.
+Do NOT include explanations.
+Do NOT include prose outside the JSON.${system_instructions ? `\n\n=== ADDITIONAL INSTRUCTIONS FROM SYSTEM ===\n${system_instructions}` : ''}`;
 }
 
 /**

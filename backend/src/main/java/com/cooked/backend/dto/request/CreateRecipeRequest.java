@@ -32,9 +32,13 @@ public class CreateRecipeRequest {
 
     private String origin;
 
+    private String imagePrompt;
+
     // --- Getters & Setters Manuels ---
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+    public String getImagePrompt() { return imagePrompt; }
+    public void setImagePrompt(String imagePrompt) { this.imagePrompt = imagePrompt; }
     public String getImage() { return image; }
     public void setImage(String image) { this.image = image; }
     public Integer getCookTime() { return cookTime; }
