@@ -66,14 +66,14 @@ public class ShareController {
         String recipeName  = escapeHtml(recipe.getName());
         String recipeImage = (recipe.getImage() != null && !recipe.getImage().isBlank())
                 ? escapeHtml(recipe.getImage())
-                : "https://cookedapp.app/og-default.jpg";   // fallback OG image
+                : "https://api.cookedapp.com/og-default.jpg";   // fallback OG image
 
         String cuisine  = recipe.getCuisine()  != null ? recipe.getCuisine().getName()  : "";
         String category = recipe.getCategory() != null ? recipe.getCategory().getName() : "";
 
         String description = buildDescription(recipe, cuisine, category);
         String deepLink    = APP_SCHEME + id;
-        String shareUrl    = "https://cookedapp.app/share/recipes/" + id;
+        String shareUrl    = "https://api.cookedapp.com/share/recipes/" + id;
 
         String html = buildHtml(recipeName, recipeImage, description, deepLink, shareUrl);
 
