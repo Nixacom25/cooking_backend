@@ -65,6 +65,7 @@ public class SecurityConfig {
                                 "/recipes/explore/**",
                                 "/recipes/top-creators",
                                 "/share/**",
+                                "/.well-known/**",
                                 "/actuator/**")
                         .permitAll()
                         .anyRequest().authenticated())
