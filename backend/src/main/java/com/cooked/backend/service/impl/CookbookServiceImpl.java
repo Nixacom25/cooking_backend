@@ -196,7 +196,7 @@ public class CookbookServiceImpl implements CookbookService {
                                     .origin(r.getOrigin() != null ? r.getOrigin().name() : null)
                                     .isInCookbook(isInCookbook)
                                     .isPinned(r.isPinned())
-                                    .shareUrl("https://api.cookedapp.com/share/recipes/" + r.getId())
+                                    .shareUrl("https://link.cookedapp.com/share/recipes/" + r.getId())
                                     .build();
                         })
                         .collect(Collectors.toList()) : Collections.emptyList())

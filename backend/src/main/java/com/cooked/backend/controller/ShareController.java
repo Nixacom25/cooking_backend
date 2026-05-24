@@ -34,13 +34,13 @@ public class ShareController {
     private static final String APP_SCHEME = "cooked://recipe/";
 
     /** Fallback URL when the app is not installed */
-    private static final String STORE_URL = "https://api.cookedapp.com";
+    private static final String STORE_URL = "https://link.cookedapp.com";
 
     /** Public site name shown in the social preview */
     private static final String SITE_NAME = "Cooked";
 
     /** Site domain shown under the title in the preview */
-    private static final String SITE_DOMAIN = "api.cookedapp.com";
+    private static final String SITE_DOMAIN = "link.cookedapp.com";
 
     /**
      * GET /share/recipes/{id}
@@ -67,7 +67,7 @@ public class ShareController {
         String recipeName = escapeHtml(recipe.getName());
         String rawImage = (recipe.getImage() != null && !recipe.getImage().isBlank())
                 ? recipe.getImage()
-                : "https://api.cookedapp.com/og-default.jpg";
+                : "https://link.cookedapp.com/og-default.jpg";
 
         // WhatsApp requires images < 300KB. Optimize Cloudinary URLs for Open Graph
         // (1200x630, high compression, JPEG)
@@ -81,7 +81,7 @@ public class ShareController {
 
         String description = buildDescription(recipe, cuisine, category);
         String deepLink = APP_SCHEME + id;
-        String shareUrl = "https://api.cookedapp.com/share/recipes/" + id;
+        String shareUrl = "https://link.cookedapp.com/share/recipes/" + id;
 
         String html = buildHtml(recipeName, recipeImage, description, deepLink, shareUrl);
 
