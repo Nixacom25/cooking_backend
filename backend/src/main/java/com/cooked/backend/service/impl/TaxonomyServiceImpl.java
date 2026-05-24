@@ -264,7 +264,20 @@ public class TaxonomyServiceImpl implements TaxonomyService {
                     jdbcTemplate.update("DELETE FROM recipe_categories WHERE id = ?", oldId);
                 } else if (oldId != null) {
                     log.info("Renaming '{}' to '{}'...", oldName, newName);
-                    jdbcTemplate.update("UPDATE recipe_categories SET name = ? WHERE id = ?", newName, oldId);
+                    try {
+                        jdbcTemplate.update("UPDATE recipe_categories SET name = ? WHERE id = ?", newName, oldId);
+                    } catch (org.springframework.dao.DuplicateKeyException e) {
+                        log.warn("Cannot rename {} to {}, target already exists. Merging instead...", oldName, newName);
+                        java.util.List<UUID> targets = jdbcTemplate.queryForList(
+                            "SELECT id FROM recipe_categories WHERE type = 'CUISINE' AND LOWER(name) = LOWER(?)", 
+                            UUID.class, newName
+                        );
+                        if (!targets.isEmpty()) {
+                            UUID targetId = targets.get(0);
+                            jdbcTemplate.update("UPDATE recipes SET cuisine_id = ? WHERE cuisine_id = ?", targetId, oldId);
+                            jdbcTemplate.update("DELETE FROM recipe_categories WHERE id = ?", oldId);
+                        }
+                    }
                 }
             }
         }
