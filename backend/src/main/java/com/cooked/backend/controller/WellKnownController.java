@@ -25,10 +25,16 @@ public class WellKnownController {
 
     @GetMapping(value = "/assetlinks.json", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Map<String, Object>>> getAssetLinks() {
+        List<String> fingerprints = java.util.Arrays.stream(androidSha256.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(java.util.stream.Collectors.toList());
+
         Map<String, Object> target = Map.of(
                 "namespace", "android_app",
                 "package_name", androidPackageName,
-                "sha256_cert_fingerprints", List.of(androidSha256)
+                // "sha256_cert_fingerprints", List.of(androidSha256)
+                "sha256_cert_fingerprints", fingerprints
         );
 
         Map<String, Object> relation = Map.of(

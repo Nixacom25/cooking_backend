@@ -137,51 +137,19 @@ public class ShareController {
                 "  <meta name=\"apple-itunes-app\" content=\"app-id=YOURAPPID\" />\n" +
                 "\n" +
                 "  <style>\n" +
-                "    * { margin:0; padding:0; box-sizing:border-box; }\n" +
-                "    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;\n" +
-                "           background:#0f0f0f; color:#fff; min-height:100vh;\n" +
-                "           display:flex; align-items:center; justify-content:center; }\n" +
-                "    .card { max-width:420px; width:100%; background:#1a1a1a; border-radius:20px;\n" +
-                "            overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.6); }\n" +
-                "    .card img { width:100%; aspect-ratio:4/3; object-fit:cover; display:block; }\n" +
-                "    .card-body { padding:20px; }\n" +
-                "    .card-body h1 { font-size:1.3rem; font-weight:700; margin-bottom:6px; }\n" +
-                "    .card-body p  { font-size:.85rem; color:#aaa; margin-bottom:18px; }\n" +
-                "    .card-body .domain { font-size:.75rem; color:#666; }\n" +
-                "    .btn { display:block; width:100%; padding:14px;\n" +
-                "           background:linear-gradient(135deg,#ff6b35,#f7c59f);\n" +
-                "           color:#fff; font-size:1rem; font-weight:700;\n" +
-                "           border:none; border-radius:12px; cursor:pointer;\n" +
-                "           text-decoration:none; text-align:center; margin-bottom:10px; }\n" +
-                "    .btn-secondary { background:#2a2a2a; color:#ccc; }\n" +
+                "    body { background:#0f0f0f; margin:0; padding:0; }\n" +
                 "  </style>\n" +
                 "</head>\n" +
                 "<body>\n" +
-                "  <div class=\"card\">\n" +
-                "    <img src=\"" + image + "\" alt=\"" + name + "\" />\n" +
-                "    <div class=\"card-body\">\n" +
-                "      <h1>" + name + "</h1>\n" +
-                "      <p>" + escapeHtml(description) + "</p>\n" +
-                "      <span class=\"domain\">" + SITE_DOMAIN + "</span>\n" +
-                "      <br/><br/>\n" +
-                "      <a id=\"openBtn\" class=\"btn\" href=\"" + deepLink + "\">🍳 Open in Cooked</a>\n" +
-                "      <a class=\"btn btn-secondary\" href=\"" + STORE_URL + "\">Download Cooked</a>\n" +
-                "    </div>\n" +
-                "  </div>\n" +
-                "\n" +
                 "  <script>\n" +
-                "    // Attempt deep-link; if app isn't installed, fallback lands on store page\n" +
+                "    // Auto-redirect to deep link or fallback to store\n" +
                 "    var deepLink = '" + deepLink + "';\n" +
                 "    var storeUrl = '" + STORE_URL + "';\n" +
-                "    var btn = document.getElementById('openBtn');\n" +
-                "    btn.addEventListener('click', function(e) {\n" +
-                "      e.preventDefault();\n" +
-                "      var start = Date.now();\n" +
-                "      setTimeout(function() {\n" +
-                "        if (Date.now() - start < 2000) { window.location.href = storeUrl; }\n" +
-                "      }, 1500);\n" +
-                "      window.location.href = deepLink;\n" +
-                "    });\n" +
+                "    var start = Date.now();\n" +
+                "    setTimeout(function() {\n" +
+                "      if (Date.now() - start < 2000) { window.location.href = storeUrl; }\n" +
+                "    }, 1500);\n" +
+                "    window.location.href = deepLink;\n" +
                 "  </script>\n" +
                 "</body>\n" +
                 "</html>\n";
