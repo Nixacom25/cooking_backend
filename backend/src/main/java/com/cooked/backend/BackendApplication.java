@@ -129,21 +129,7 @@ public class BackendApplication {
 						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Plant-Based Essentials' WHERE UPPER(TRIM(name)) = 'VEGAN ESSENTIALS' AND type = 'CATEGORY'");
 						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Pizza & Flatbreads' WHERE UPPER(TRIM(name)) = 'COMFORT FOOD' AND type = 'CATEGORY'");
 						
-						// Comprehensive Standardization for Cuisines
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Italy' WHERE UPPER(TRIM(name)) = 'ITALIAN' AND type = 'CUISINE'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Mexico' WHERE UPPER(TRIM(name)) = 'MEXICAN' AND type = 'CUISINE'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'China' WHERE UPPER(TRIM(name)) IN ('CHINESE', 'TAIWANESE', 'THAI/CHINESE') AND type = 'CUISINE'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Japan' WHERE UPPER(TRIM(name)) IN ('JAPANESE', 'JAPANESE FUSION') AND type = 'CUISINE'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Thailand' WHERE UPPER(TRIM(name)) IN ('THAI', 'SOUTH EAST ASIAN', 'THAI/CHINESE') AND type = 'CUISINE'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'India' WHERE UPPER(TRIM(name)) = 'INDIAN' AND type = 'CUISINE'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'South Korea' WHERE UPPER(TRIM(name)) = 'KOREAN' AND type = 'CUISINE'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'France' WHERE UPPER(TRIM(name)) = 'FRENCH' AND type = 'CUISINE'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Greece' WHERE UPPER(TRIM(name)) = 'GREEK' AND type = 'CUISINE'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'West Africa' WHERE UPPER(TRIM(name)) = 'WEST AFRICAN' AND type = 'CUISINE'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Middle East' WHERE UPPER(TRIM(name)) = 'MIDDLE EASTERN' AND type = 'CUISINE'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'American' WHERE UPPER(TRIM(name)) IN ('NORTH AMERICAN', 'HAWAIIAN') AND type = 'CUISINE'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Spain' WHERE UPPER(TRIM(name)) = 'SPANISH' AND type = 'CUISINE'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Brazilian' WHERE UPPER(TRIM(name)) = 'BRAZIL' AND type = 'CUISINE'");
+						// Comprehensive Standardization for Cuisines - Removed incorrect raw SQL updates. TaxonomyServiceImpl handles merging safely.
 
 						// Diagnostic log
 						List<String> existing = jdbcTemplate.queryForList("SELECT name FROM recipe_categories LIMIT 50", String.class);
