@@ -241,6 +241,60 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    @Transactional
+    public List<RecipeResponse> generateAndSaveSuggestedRecipes(com.cooked.backend.dto.request.AiRecipeGenerationRequest request, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        List<CreateRecipeRequest> generated = aiService.generateRecipes(request, userEmail);
+        List<RecipeResponse> savedResponses = new ArrayList<>();
+        java.time.LocalDateTime expiration = java.time.LocalDateTime.now().plusDays(3);
+        
+        for (CreateRecipeRequest req : generated) {
+            Recipe recipe = Recipe.builder()
+                    .user(user)
+                    .name(req.getName())
+                    .image(req.getImage())
+                    .cookTime(req.getCookTime())
+                    .kcal(req.getKcal())
+                    .servings(req.getServings() != null ? req.getServings() : 2)
+                    .tips(req.getTips())
+                    .sourceUrl(req.getSourceUrl())
+                    .steps(req.getSteps() != null ? req.getSteps() : new ArrayList<>())
+                    .equipment(req.getEquipment() != null ? req.getEquipment() : new ArrayList<>())
+                    .expiresAt(expiration)
+                    .origin(RecipeOrigin.SUGGESTED)
+                    .isPublic(true)
+                    .build();
+
+            Recipe saved = recipeRepository.save(recipe);
+
+            Set<RecipeIngredient> recipeIngredients = new HashSet<>();
+            if (req.getIngredients() != null) {
+                for (com.cooked.backend.dto.request.IngredientPayload payload : req.getIngredients()) {
+                    Ingredient ingredient = ingredientRepository.findByName(payload.getName().toLowerCase())
+                            .orElseGet(() -> ingredientRepository.save(Ingredient.builder()
+                                    .name(payload.getName().toLowerCase())
+                                    .icon(payload.getIcon())
+                                    .build()));
+
+                    RecipeIngredient ri = RecipeIngredient.builder()
+                            .recipe(saved)
+                            .ingredient(ingredient)
+                            .quantity(payload.getQuantity())
+                            .build();
+                    recipeIngredients.add(ri);
+                }
+            }
+            saved.setRecipeIngredients(recipeIngredients);
+            Recipe finalSaved = recipeRepository.save(saved);
+            savedResponses.add(mapToResponse(finalSaved, null));
+        }
+        
+        return savedResponses;
+    }
+
+    @Override
     public List<RecipeResponse> getHomeSuggestions(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));

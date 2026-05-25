@@ -30,6 +30,10 @@ public class RecipeCategory {
     @Column(nullable = false, length = 50)
     private CategoryType type;
 
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean active = true;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

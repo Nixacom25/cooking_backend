@@ -39,6 +39,8 @@ public interface RecipeService {
 
         String getShareLink(UUID id, String userEmail);
         
+        List<RecipeResponse> generateAndSaveSuggestedRecipes(com.cooked.backend.dto.request.AiRecipeGenerationRequest request, String userEmail);
+        
         List<RecipeResponse> getHomeSuggestions(String userEmail);
         
         List<com.cooked.backend.dto.response.ExploreTaxonomyResponse> getExploreCuisines();

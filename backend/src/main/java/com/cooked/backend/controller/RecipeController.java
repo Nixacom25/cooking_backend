@@ -56,10 +56,10 @@ public class RecipeController {
 
     @Operation(summary = "Generate Recipes from Ingredients (AI)")
     @PostMapping("/generate-ai-recipes")
-    public ResponseEntity<List<CreateRecipeRequest>> generateAiRecipes(
+    public ResponseEntity<List<RecipeResponse>> generateAiRecipes(
             @Valid @RequestBody AiRecipeGenerationRequest request,
             Authentication auth) {
-        return ResponseEntity.ok(aiService.generateRecipes(request, auth.getName()));
+        return ResponseEntity.ok(recipeService.generateAndSaveSuggestedRecipes(request, auth.getName()));
     }
 
     @Operation(summary = "Scan Recipe via Image (Live)")

@@ -46,19 +46,6 @@ public class TaxonomyServiceImpl implements TaxonomyService {
     );
 
     private static final Map<String, String> CUISINE_IMAGES = Map.ofEntries(
-        Map.entry("Italian", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825879/ai-recipe-app/taxonomy/fgke47uvihcznhh26xyw.png"),
-        Map.entry("Mexican", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825881/ai-recipe-app/taxonomy/v8ompn1xfg2xerin57ea.png"),
-        Map.entry("Chinese", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825883/ai-recipe-app/taxonomy/t0dzizwahawi5lrdqnrx.png"),
-        Map.entry("Japanese", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825885/ai-recipe-app/taxonomy/rkaaoetvlogvojyrbbal.png"),
-        Map.entry("Thai", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825887/ai-recipe-app/taxonomy/kpf7vnohqamnafqlj9xn.png"),
-        Map.entry("Indian", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825896/ai-recipe-app/taxonomy/fhzwu5howhuiui6mdxl9.jpg"),
-        Map.entry("Korean", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825899/ai-recipe-app/taxonomy/az5qhmzv8ktvmybrgodx.jpg"),
-        Map.entry("Mediterranean", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825909/ai-recipe-app/taxonomy/tv6ffhbuwenbqjycdf2m.png"),
-        Map.entry("Middle Eastern", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825913/ai-recipe-app/taxonomy/kjclia9clnpalj5hmrr8.png"),
-        Map.entry("French", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825928/ai-recipe-app/taxonomy/sqhgsctwb0ywicd4sivq.png"),
-        Map.entry("Greek", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825941/ai-recipe-app/taxonomy/gtbhwfmco1mqo7j5n10q.png"),
-        Map.entry("Caribbean", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825954/ai-recipe-app/taxonomy/mvkpcxrsmpt7rtjxkzrw.png"),
-        Map.entry("West African", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825961/ai-recipe-app/taxonomy/pvqffpmrz1l2bjuoaabh.png"),
         Map.entry("American", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825964/ai-recipe-app/taxonomy/edm1eoulgyyj6ajo9sfx.jpg"),
         Map.entry("Senegalese", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825968/ai-recipe-app/taxonomy/qtghqgyehufyrqvohxcy.jpg"),
         Map.entry("Vietnamese", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825974/ai-recipe-app/taxonomy/ea3iepmpd92dykzekamg.jpg"),
@@ -66,9 +53,22 @@ public class TaxonomyServiceImpl implements TaxonomyService {
         Map.entry("Asian", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825996/ai-recipe-app/taxonomy/fsfudpdnqvfqyqtwpwhj.jpg"),
         Map.entry("Brazilian", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778826007/ai-recipe-app/taxonomy/rfdrinxhadmq6lsaj6uw.jpg"),
         Map.entry("British", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778826016/ai-recipe-app/taxonomy/mr6jkzdtemoulb4p436p.jpg"),
-        Map.entry("International", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778832305/ai-recipe-app/taxonomy/mobile/abkvjvsekd2f6zl2t5gn.png"),
-        Map.entry("Spanish", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825881/ai-recipe-app/taxonomy/v8ompn1xfg2xerin57ea.png"),
-        Map.entry("Malaysian", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825887/ai-recipe-app/taxonomy/kpf7vnohqamnafqlj9xn.png")
+        Map.entry("Malaysian", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825887/ai-recipe-app/taxonomy/kpf7vnohqamnafqlj9xn.png"),
+        Map.entry("Chinese", "https://res.cloudinary.com/davj7mdjj/image/upload/v1779689910/ai-recipe-app/taxonomy/mobile/slqx0yh4veydvqy2xfdo.png"),
+        Map.entry("Mediterranean", "https://res.cloudinary.com/davj7mdjj/image/upload/v1779689911/ai-recipe-app/taxonomy/mobile/g0llkzmyug42ujox3wly.png"),
+        Map.entry("Middle Eastern", "https://res.cloudinary.com/davj7mdjj/image/upload/v1779689911/ai-recipe-app/taxonomy/mobile/e9pbufcbgpa9b5rz5ii4.png"),
+        Map.entry("Caribbean", "https://res.cloudinary.com/davj7mdjj/image/upload/v1779689912/ai-recipe-app/taxonomy/mobile/amguuks3jhh1g7mu99gh.png"),
+        Map.entry("Korean", "https://res.cloudinary.com/davj7mdjj/image/upload/v1779689913/ai-recipe-app/taxonomy/mobile/fcsn6ayfvmhbngfyf6uo.png"),
+        Map.entry("Indian", "https://res.cloudinary.com/davj7mdjj/image/upload/v1779689920/ai-recipe-app/taxonomy/mobile/fb2ii6q2vyaaifws5q7l.png"),
+        Map.entry("Japanese", "https://res.cloudinary.com/davj7mdjj/image/upload/v1779689920/ai-recipe-app/taxonomy/mobile/ebblzrqj1jhztrgkaw8w.png"),
+        Map.entry("West African", "https://res.cloudinary.com/davj7mdjj/image/upload/v1779689921/ai-recipe-app/taxonomy/mobile/gbhcf9wrmoliutmbn9o8.png"),
+        Map.entry("Italian", "https://res.cloudinary.com/davj7mdjj/image/upload/v1779689914/ai-recipe-app/taxonomy/mobile/osb1m8xkkfa34bqr9iom.png"),
+        Map.entry("Greek", "https://res.cloudinary.com/davj7mdjj/image/upload/v1779689915/ai-recipe-app/taxonomy/mobile/a7z6ffnulh9j6oprzvbf.png"),
+        Map.entry("International", "https://res.cloudinary.com/davj7mdjj/image/upload/v1779689915/ai-recipe-app/taxonomy/mobile/y9smbi1wnkrizx8t1bzg.png"),
+        Map.entry("Mexican", "https://res.cloudinary.com/davj7mdjj/image/upload/v1779689916/ai-recipe-app/taxonomy/mobile/ougjnxvjdm7zzk7jzgxo.png"),
+        Map.entry("Thai", "https://res.cloudinary.com/davj7mdjj/image/upload/v1779689917/ai-recipe-app/taxonomy/mobile/obvmdxetm6t4nuvtbhti.png"),
+        Map.entry("Spanish", "https://res.cloudinary.com/davj7mdjj/image/upload/v1779689918/ai-recipe-app/taxonomy/mobile/mne0rmq7cdw8dwjvs49l.png"),
+        Map.entry("French", "https://res.cloudinary.com/davj7mdjj/image/upload/v1779689919/ai-recipe-app/taxonomy/mobile/ltdjrtqlre1kx5jikauf.png")
     );
 
     @Override
@@ -213,20 +213,9 @@ public class TaxonomyServiceImpl implements TaxonomyService {
         log.info("Starting taxonomy cleanup and merging...");
         
         Map<String, String> merges = Map.ofEntries(
-            Map.entry("China", "Chinese"),
-            Map.entry("Thailand", "Thai"),
-            Map.entry("France", "French"),
-            Map.entry("Italy", "Italian"),
-            Map.entry("Mexico", "Mexican"),
-            Map.entry("Japan", "Japanese"),
-            Map.entry("India", "Indian"),
-            Map.entry("South Korea", "Korean"),
-            Map.entry("Middle East", "Middle Eastern"),
-            Map.entry("Greece", "Greek"),
             Map.entry("Brazil", "Brazilian"),
             Map.entry("Vietnam", "Vietnamese"),
             Map.entry("Morocco", "Moroccan"),
-            Map.entry("Spain", "Spanish"),
             Map.entry("Senegal", "Senegalese"),
             Map.entry("Sénégal", "Senegalese"),
             Map.entry("USA", "American"),
@@ -235,7 +224,6 @@ public class TaxonomyServiceImpl implements TaxonomyService {
             Map.entry("UK", "British"),
             Map.entry("Lebanon", "Lebanese"),
             Map.entry("Turkey", "Turkish"),
-            Map.entry("West Africa", "West African"),
             Map.entry("Wast African", "West African"),
             Map.entry("Japanese Fusion", "Japanese"),
             Map.entry("Japan Fusion", "Japanese")
