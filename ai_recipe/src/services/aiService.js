@@ -598,7 +598,8 @@ You MUST return ONLY valid JSON in EXACTLY this format:
         {
           "name": "<ingredient>",
           "quantity": "<quantity with unit>",
-          "icon": "<emoji>"
+          "icon": "<emoji>",
+          "price": <estimated price in USD as a float>
         }
       ],
       "equipment": [
@@ -786,6 +787,7 @@ function validateRecipesSchema(parsed) {
       name: String(ing.name || '').trim(),
       quantity: String(ing.quantity || '').trim(),
       icon: String(ing.icon || '').trim(),
+      price: Number(ing.price) || null,
     }));
     const steps = recipe.steps.map(String).map((s) => s.trim());
 

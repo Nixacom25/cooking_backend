@@ -21,6 +21,7 @@ Analyze the provided [CAPTION TEXT]. Extract every culinary detail into a strict
     * `name`: The common name of the ingredient.
     * `quantity`: The numeric value and unit (e.g., "200 g", "2 cups"). NEVER leave this empty if a recipe is found.
     * `icon`: A relevant single EMOJI representing the ingredient (e.g., 🍅 for tomato, 🥩 for beef).
+    * `price_usd`: Provide an estimated accurate cost for the quantity requested based on current US supermarket prices (as a float, e.g., 2.50).
 6.  **Instruction Logic:** 
     * **IF INSTRUCTIONS EXIST:** Extract them exactly as written, but feel free to refine them for clarity.
     * **IF INSTRUCTIONS ARE MISSING/EMPTY:** You MUST use your professional expertise to generate a complete, logical, and high-quality set of instructions based on the ingredients provided and the nature of the dish.
@@ -53,7 +54,8 @@ Analyze the provided [CAPTION TEXT]. Extract every culinary detail into a strict
       {
         "name": "Ingredient name",
         "quantity": "Amount and unit",
-        "icon": "🍎"
+        "icon": "🍎",
+        "price_usd": 2.50
       }
     ],
     "instructions": [

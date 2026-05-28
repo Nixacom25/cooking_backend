@@ -311,7 +311,7 @@ public class AiServiceImpl implements AiService {
               "kcal": 500,
               "servings": 4,
               "image": "https://images.unsplash.com/photo-...",
-              "ingredients": [{"name": "name", "quantity": "2 cups", "icon": "🥕"}],
+              "ingredients": [{"name": "name", "quantity": "2 cups", "icon": "🥕", "price": 1.50}],
               "steps": [
                 "Detailed preparation: (Wash, peel, cut ingredients, marinate if needed)",
                 "Main cooking steps: (Heat, combine, timing, specific techniques)",
@@ -412,6 +412,28 @@ public class AiServiceImpl implements AiService {
         } catch (Exception e) {
             log.error("Failed to generate trending dishes: {}", e.getMessage());
             return java.util.Collections.emptyList();
+        }
+    }
+
+    @Override
+    public Map<String, Double> estimateIngredientPrices(List<String> ingredients) {
+        if (ingredients == null || ingredients.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+        
+        try {
+            String prompt = String.format(
+                    "Estimate the average USD price for the following ingredients in a typical US grocery store. " +
+                    "Return ONLY raw JSON in this format: {\"prices\": {\"ingredient1\": 1.50, \"ingredient2\": 3.00}}. " +
+                    "Ingredients: %s",
+                    String.join(", ", ingredients));
+            
+            String responseJson = sanitizeJson(callOpenAi("Estimate ingredient prices", prompt, "gpt-4o-mini"));
+            JsonNode root = objectMapper.readTree(responseJson);
+            return objectMapper.convertValue(root.path("prices"), new TypeReference<Map<String, Double>>() {});
+        } catch (Exception e) {
+            log.error("Failed to estimate ingredient prices: {}", e.getMessage());
+            return java.util.Collections.emptyMap();
         }
     }
 }

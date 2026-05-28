@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface IngredientRepository extends JpaRepository<Ingredient, UUID> {
     Optional<Ingredient> findByName(String name);
     java.util.List<com.cooked.backend.entity.Ingredient> findByNameContainingIgnoreCase(String query);
+    java.util.List<Ingredient> findByPriceIsNull();
 }

@@ -12,4 +12,5 @@ public class RecipeIngredientResponse {
     private String name;
     private String icon;
     private String quantity;
+    private Double price;
 }

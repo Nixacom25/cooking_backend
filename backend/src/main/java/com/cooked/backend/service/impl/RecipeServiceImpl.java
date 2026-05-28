@@ -135,6 +135,7 @@ public class RecipeServiceImpl implements RecipeService {
         }
         
         if (request.getIngredients() != null) {
+            double totalPrice = 0.0;
             for (IngredientPayload payload : request.getIngredients()) {
                 String ingName = payload.getName().toLowerCase().trim();
                 Ingredient ingredient;
@@ -143,6 +144,7 @@ public class RecipeServiceImpl implements RecipeService {
                             .orElseGet(() -> ingredientRepository.save(Ingredient.builder()
                                     .name(ingName)
                                     .icon(payload.getIcon())
+                                    .price(payload.getPrice())
                                     .build()));
                 } catch (Exception e) {
                     // Handle race condition: if another thread saved it just now
@@ -156,7 +158,12 @@ public class RecipeServiceImpl implements RecipeService {
                         .quantity((payload.getQuantity() == null || payload.getQuantity().isBlank()) ? "1" : payload.getQuantity())
                         .build();
                 savedRecipe.getRecipeIngredients().add(ri);
+                if (payload.getPrice() != null) {
+                    totalPrice += payload.getPrice();
+                }
             }
+            savedRecipe.setTotalPrice(totalPrice > 0 ? Math.round(totalPrice * 100.0) / 100.0 : null);
+            savedRecipe.setIngredientsCount(request.getIngredients().size());
         }
         savedRecipe = recipeRepository.save(savedRecipe);
 
@@ -271,11 +278,13 @@ public class RecipeServiceImpl implements RecipeService {
 
             Set<RecipeIngredient> recipeIngredients = new HashSet<>();
             if (req.getIngredients() != null) {
+                double totalPrice = 0.0;
                 for (com.cooked.backend.dto.request.IngredientPayload payload : req.getIngredients()) {
                     Ingredient ingredient = ingredientRepository.findByName(payload.getName().toLowerCase())
                             .orElseGet(() -> ingredientRepository.save(Ingredient.builder()
                                     .name(payload.getName().toLowerCase())
                                     .icon(payload.getIcon())
+                                    .price(payload.getPrice())
                                     .build()));
 
                     RecipeIngredient ri = RecipeIngredient.builder()
@@ -284,7 +293,12 @@ public class RecipeServiceImpl implements RecipeService {
                             .quantity(payload.getQuantity())
                             .build();
                     recipeIngredients.add(ri);
+                    if (payload.getPrice() != null) {
+                        totalPrice += payload.getPrice();
+                    }
                 }
+                saved.setTotalPrice(totalPrice > 0 ? Math.round(totalPrice * 100.0) / 100.0 : null);
+                saved.setIngredientsCount(req.getIngredients().size());
             }
             saved.setRecipeIngredients(recipeIngredients);
             Recipe finalSaved = recipeRepository.save(saved);
@@ -541,6 +555,7 @@ public class RecipeServiceImpl implements RecipeService {
                                 .id(ri.getIngredient().getId())
                                 .name(ri.getIngredient().getName())
                                 .icon(ri.getIngredient().getIcon())
+                                .price(ri.getIngredient().getPrice())
                                 .quantity(ri.getQuantity())
                                 .build()).collect(Collectors.toList());
 
@@ -574,6 +589,8 @@ public class RecipeServiceImpl implements RecipeService {
                 .expiresAt(recipe.getExpiresAt())
                 .origin(recipe.getOrigin() != null ? recipe.getOrigin().name() : null)
                 .isInCookbook(isInCookbook)
+                .totalPrice(recipe.getTotalPrice())
+                .ingredientsCount(recipe.getIngredientsCount())
                 .shareUrl("https://link.cookedapp.com/share/recipes/" + recipe.getId())
                 .build();
     }

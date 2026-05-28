@@ -30,6 +30,8 @@ public class RecipeResponse {
     private String origin;
     private boolean isInCookbook;
     private boolean isPinned;
+    private Double totalPrice;
+    private Integer ingredientsCount;
 
     // Constructeur vide
     public RecipeResponse() {}
@@ -85,6 +87,10 @@ public class RecipeResponse {
     public void setInCookbook(boolean isInCookbook) { this.isInCookbook = isInCookbook; }
     public boolean isPinned() { return isPinned; }
     public void setPinned(boolean pinned) { isPinned = pinned; }
+    public Double getTotalPrice() { return totalPrice; }
+    public void setTotalPrice(Double totalPrice) { this.totalPrice = totalPrice; }
+    public Integer getIngredientsCount() { return ingredientsCount; }
+    public void setIngredientsCount(Integer ingredientsCount) { this.ingredientsCount = ingredientsCount; }
 
     // Builder manuel
     public static RecipeResponseBuilder builder() {
@@ -119,6 +125,8 @@ public class RecipeResponse {
         public RecipeResponseBuilder origin(String origin) { response.setOrigin(origin); return this; }
         public RecipeResponseBuilder isInCookbook(boolean isInCookbook) { response.setInCookbook(isInCookbook); return this; }
         public RecipeResponseBuilder isPinned(boolean isPinned) { response.setPinned(isPinned); return this; }
+        public RecipeResponseBuilder totalPrice(Double totalPrice) { response.setTotalPrice(totalPrice); return this; }
+        public RecipeResponseBuilder ingredientsCount(Integer ingredientsCount) { response.setIngredientsCount(ingredientsCount); return this; }
 
         public RecipeResponse build() {
             return response;

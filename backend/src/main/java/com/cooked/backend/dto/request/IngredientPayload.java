@@ -8,6 +8,7 @@ public class IngredientPayload {
 
     private String icon;
     private String quantity;
+    private Double price;
 
     public IngredientPayload() {}
 
@@ -17,4 +18,6 @@ public class IngredientPayload {
     public void setIcon(String icon) { this.icon = icon; }
     public String getQuantity() { return quantity; }
     public void setQuantity(String quantity) { this.quantity = quantity; }
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
 }

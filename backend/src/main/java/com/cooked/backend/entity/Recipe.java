@@ -100,6 +100,12 @@ public class Recipe {
     @Builder.Default
     private boolean isPinned = false;
 
+    @Column(name = "total_price", nullable = true)
+    private Double totalPrice;
+
+    @Column(name = "ingredients_count", nullable = true)
+    private Integer ingredientsCount;
+
     // --- Getters & Setters Manuels ---
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -145,4 +151,8 @@ public class Recipe {
     public void setOrigin(RecipeOrigin origin) { this.origin = origin; }
     public boolean isPinned() { return isPinned; }
     public void setPinned(boolean pinned) { isPinned = pinned; }
+    public Double getTotalPrice() { return totalPrice; }
+    public void setTotalPrice(Double totalPrice) { this.totalPrice = totalPrice; }
+    public Integer getIngredientsCount() { return ingredientsCount; }
+    public void setIngredientsCount(Integer ingredientsCount) { this.ingredientsCount = ingredientsCount; }
 }

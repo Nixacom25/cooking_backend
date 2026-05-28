@@ -116,6 +116,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
 
 
     java.util.List<Recipe> findAllByNameIgnoreCase(String name);
+    java.util.List<Recipe> findByTotalPriceIsNull();
 
     @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.image IS NULL OR r.image = '' OR r.image LIKE '%unsplash%' OR r.image LIKE '%splash%'")
     List<Recipe> findRecipesMissingImages();

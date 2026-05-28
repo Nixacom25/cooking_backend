@@ -25,4 +25,6 @@ public interface AiService {
     List<Map<String, String>> searchWeb(String query, String email);
 
     List<String> generateTrendingDishes();
+
+    Map<String, Double> estimateIngredientPrices(List<String> ingredients);
 }

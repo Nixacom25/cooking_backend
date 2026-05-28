@@ -854,4 +854,9 @@ public class MarkhorAiServiceImpl implements AiService {
             throw new PaymentRequiredException("AI access requires a premium subscription or trial.");
         }
     }
+
+    @Override
+    public java.util.Map<String, Double> estimateIngredientPrices(List<String> ingredients) {
+        return java.util.Collections.emptyMap();
+    }
 }

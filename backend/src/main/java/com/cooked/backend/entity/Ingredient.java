@@ -29,6 +29,9 @@ public class Ingredient {
     @Column(nullable = true, columnDefinition = "TEXT")
     private String icon;
 
+    @Column(nullable = true)
+    private Double price;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
