@@ -9,7 +9,12 @@ import java.util.UUID;
 
 @Repository
 public interface IngredientRepository extends JpaRepository<Ingredient, UUID> {
-    Optional<Ingredient> findByName(String name);
+    Optional<Ingredient> findFirstByName(String name);
+    
+    default Optional<Ingredient> findByName(String name) {
+        return findFirstByName(name);
+    }
+    
     java.util.List<com.cooked.backend.entity.Ingredient> findByNameContainingIgnoreCase(String query);
     java.util.List<Ingredient> findByPriceIsNull();
 }

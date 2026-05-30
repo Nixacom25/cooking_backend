@@ -152,7 +152,7 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
             String quantity = ingData.get("quantity") != null ? ingData.get("quantity") : "1 unit";
             String icon = ingData.get("icon") != null ? ingData.get("icon") : "🍲";
 
-            Ingredient ingredient = ingredientRepository.findByName(ingName.toLowerCase().trim())
+            Ingredient ingredient = ingredientRepository.findFirstByName(ingName.toLowerCase().trim())
                     .orElseGet(() -> ingredientRepository.save(Ingredient.builder()
                             .name(ingName.toLowerCase().trim())
                             .icon(icon)

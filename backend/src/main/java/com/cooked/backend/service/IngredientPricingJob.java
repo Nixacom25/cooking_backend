@@ -48,19 +48,36 @@ public class IngredientPricingJob {
             if (!unpricedIngredients.isEmpty()) {
                 logger.info("Found {} unpriced ingredients. Fetching prices from AI...", unpricedIngredients.size());
                 
-                // Process in batches of 30 to avoid overwhelming the prompt
-                int batchSize = 30;
+                // Process in batches of 100 to avoid overwhelming the prompt and hitting rate limits
+                int batchSize = 100;
                 for (int i = 0; i < unpricedIngredients.size(); i += batchSize) {
                     List<Ingredient> batch = unpricedIngredients.subList(i, Math.min(i + batchSize, unpricedIngredients.size()));
                     List<String> names = batch.stream().map(Ingredient::getName).collect(Collectors.toList());
                     
                     Map<String, Double> prices = aiService.estimateIngredientPrices(names);
                     
-                    for (Ingredient ingredient : batch) {
-                        Double price = prices.getOrDefault(ingredient.getName(), 1.50); // fallback price
-                        ingredient.setPrice(price);
+                    if (prices == null || prices.isEmpty()) {
+                        logger.error("AI returned empty prices for this batch. Skipping to prevent false 0.0 fallbacks.");
+                    } else {
+                        // Normalize keys to lowercase for robust matching
+                        Map<String, Double> lowerCasePrices = new java.util.HashMap<>();
+                        prices.forEach((k, v) -> lowerCasePrices.put(k.toLowerCase().trim(), v));
+
+                        for (Ingredient ingredient : batch) {
+                            String lookupName = ingredient.getName().toLowerCase().trim();
+                            Double price = lowerCasePrices.get(lookupName);
+                            // Only fallback to 0.0 if API succeeded but missed this specific ingredient
+                            ingredient.setPrice(price != null ? price : 0.0);
+                        }
+                        ingredientRepository.saveAll(batch);
                     }
-                    ingredientRepository.saveAll(batch);
+                    
+                    // Sleep to avoid OpenAI rate limits (3 requests per minute for free tier)
+                    try {
+                        Thread.sleep(20000); // 20 seconds delay
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 }
                 logger.info("Successfully updated ingredient prices.");
             }
@@ -77,9 +94,12 @@ public class IngredientPricingJob {
                             if (ri.getIngredient() != null && ri.getIngredient().getPrice() != null) {
                                 total += ri.getIngredient().getPrice();
                             } else {
-                                total += 1.50; // fallback per ingredient
+                                total += 0.0; // fallback per ingredient
                             }
                         }
+                    }
+                    if (total == 0.0) {
+                        total = 5.0; // logical fallback for recipes without ingredients
                     }
                     recipe.setTotalPrice(total);
                 }
