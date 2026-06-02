@@ -178,6 +178,7 @@ public class AiServiceImpl implements AiService {
                             "DO NOT include any other ingredients (like spinach, butter, milk, flour, etc.) unless they are explicitly listed above. " +
                             "The recipes must be practical and achievable with ONLY the provided items. " +
                             "User Allergies: %s, Dietary Preferences: %s. " +
+                            "User Goals: %s, Grocery Budget: %s. " +
                             "Generate between 6 and 10 distinct recipes. Provide high-quality Unsplash images for each. " +
                             "IMPORTANT: Keep the recipe 'name' concise (max 60 characters). " +
                             "IMPORTANT: Return ONLY raw JSON. " +
@@ -185,6 +186,8 @@ public class AiServiceImpl implements AiService {
                     allowedNames,
                     String.join(", ", user.getAllergies()),
                     String.join(", ", user.getDietaryPreferences()),
+                    user.getOnboardingGoals() != null ? String.join(", ", user.getOnboardingGoals()) : "None",
+                    user.getGroceryBudget() != null ? user.getGroceryBudget() : "Any",
                     RECIPE_JSON_FORMAT);
 
             String recipesJson = sanitizeJson(callOpenAi("Generate recipes", generationPrompt, model));
@@ -204,6 +207,8 @@ public class AiServiceImpl implements AiService {
                             "Allergies to avoid: %s. " +
                             "Flavor DNA: %s. " +
                             "Cooking Skill: %s. " +
+                            "Goals: %s. " +
+                            "Budget: %s. " +
                             "Generate distinct, high-quality recipes. Provide beautiful Unsplash images for each. " +
                             "IMPORTANT: Keep the recipe 'name' concise (max 60 characters). " +
                             "IMPORTANT: Return ONLY raw JSON. " +
@@ -213,6 +218,8 @@ public class AiServiceImpl implements AiService {
                     String.join(", ", user.getAllergies()),
                     user.getFlavorDna() != null ? user.getFlavorDna().toString() : "Standard",
                     user.getCookingSkill() != null ? user.getCookingSkill() : "Intermediate",
+                    user.getOnboardingGoals() != null ? String.join(", ", user.getOnboardingGoals()) : "None",
+                    user.getGroceryBudget() != null ? user.getGroceryBudget() : "Any",
                     RECIPE_JSON_FORMAT);
 
             String recipesJson = sanitizeJson(callOpenAi("Generate initial recipes", generationPrompt));

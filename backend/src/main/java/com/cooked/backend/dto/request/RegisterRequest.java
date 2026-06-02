@@ -43,9 +43,10 @@ public class RegisterRequest {
     @Parameter(description = "Other discovery source details")
     private String otherDiscoverySource;
 
-    private String language;
-    private String country;
-    private String measurementSystem;
+    private String groceryFrequency;
+    private String groceryBudget;
+    private java.util.List<String> groceryStores;
+    private java.util.List<String> excitedFeatures;
 
     private java.util.List<String> dietaryPreferences;
     private java.util.List<String> allergies;
@@ -58,9 +59,6 @@ public class RegisterRequest {
     private String cookingTarget;
     private java.util.List<String> favoriteCuisines;
     private java.util.List<String> kitchenAppliances;
-    private String mealPlanningStyle;
     private java.util.List<String> notificationPreferences;
     private java.util.List<String> onboardingGoals;
-    private Integer onboardingRating;
-    private String onboardingFeedback;
 }

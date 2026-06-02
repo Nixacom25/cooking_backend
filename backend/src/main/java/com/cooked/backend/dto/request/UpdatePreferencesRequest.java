@@ -18,9 +18,10 @@ public class UpdatePreferencesRequest {
     private List<String> dietaryPreferences;
     private List<String> allergies;
     private List<String> foodDislikes;
-    private String language;
-    private String country;
-    private String measurementSystem;
+    private String groceryFrequency;
+    private String groceryBudget;
+    private List<String> groceryStores;
+    private List<String> excitedFeatures;
     private java.util.Map<String, Integer> flavorDna;
     private String spiceLevel;
     private String cookingSkill;
@@ -29,19 +30,16 @@ public class UpdatePreferencesRequest {
     private String cookingTarget;
     private List<String> favoriteCuisines;
     private List<String> kitchenAppliances;
-    private String mealPlanningStyle;
     private List<String> notificationPreferences;
     private List<String> onboardingGoals;
-    private Integer onboardingRating;
-    private String onboardingFeedback;
-
     // Getters manuels pour garantir la compilation
     public List<String> getDietaryPreferences() { return dietaryPreferences; }
     public List<String> getAllergies() { return allergies; }
     public List<String> getFoodDislikes() { return foodDislikes; }
-    public String getLanguage() { return language; }
-    public String getCountry() { return country; }
-    public String getMeasurementSystem() { return measurementSystem; }
+    public String getGroceryFrequency() { return groceryFrequency; }
+    public String getGroceryBudget() { return groceryBudget; }
+    public List<String> getGroceryStores() { return groceryStores; }
+    public List<String> getExcitedFeatures() { return excitedFeatures; }
     public java.util.Map<String, Integer> getFlavorDna() { return flavorDna; }
     public String getSpiceLevel() { return spiceLevel; }
     public String getCookingSkill() { return cookingSkill; }
@@ -50,9 +48,6 @@ public class UpdatePreferencesRequest {
     public String getCookingTarget() { return cookingTarget; }
     public List<String> getFavoriteCuisines() { return favoriteCuisines; }
     public List<String> getKitchenAppliances() { return kitchenAppliances; }
-    public String getMealPlanningStyle() { return mealPlanningStyle; }
     public List<String> getNotificationPreferences() { return notificationPreferences; }
     public List<String> getOnboardingGoals() { return onboardingGoals; }
-    public Integer getOnboardingRating() { return onboardingRating; }
-    public String getOnboardingFeedback() { return onboardingFeedback; }
 }

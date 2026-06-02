@@ -20,7 +20,7 @@ public class PaywallService {
      */
     public PaywallVariant getConfigurationForUser(User user) {
         String variantKey = (user.getId().hashCode() % 2 == 0) ? "A" : "B";
-        String lang = (user.getLanguage() != null) ? user.getLanguage().toLowerCase() : "en";
+        String lang = "en";
         
         PaywallVariant variant = paywallVariantRepository.findByVariantKey(variantKey)
                 .orElse(null);

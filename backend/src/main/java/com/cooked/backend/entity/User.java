@@ -94,11 +94,22 @@ public class User implements UserDetails {
     @Column(columnDefinition = "TEXT")
     private String otherDiscoverySource;
     @Column(columnDefinition = "TEXT")
-    private String language;
+    private String groceryFrequency;
+
     @Column(columnDefinition = "TEXT")
-    private String country;
-    @Column(columnDefinition = "TEXT")
-    private String measurementSystem;
+    private String groceryBudget;
+
+    @ElementCollection
+    @CollectionTable(name = "user_grocery_stores", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "store")
+    @Builder.Default
+    private List<String> groceryStores = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "user_excited_features", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "feature")
+    @Builder.Default
+    private List<String> excitedFeatures = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "user_flavor_dna", joinColumns = @JoinColumn(name = "user_id"))
@@ -130,8 +141,6 @@ public class User implements UserDetails {
     @Builder.Default
     private List<String> kitchenAppliances = new ArrayList<>();
 
-    @Column(columnDefinition = "TEXT")
-    private String mealPlanningStyle;
 
     @ElementCollection
     @CollectionTable(name = "user_notification_preferences", joinColumns = @JoinColumn(name = "user_id"))
@@ -203,10 +212,6 @@ public class User implements UserDetails {
     private Integer resendCount = 0;
 
     private LocalDateTime lockoutUntil;
-    private Integer onboardingRating;
-
-    @Column(columnDefinition = "TEXT")
-    private String onboardingFeedback;
 
     @Column(nullable = false)
     @org.hibernate.annotations.ColumnDefault("false")
@@ -243,13 +248,14 @@ public class User implements UserDetails {
     public void setDiscoverySource(String discoverySource) { this.discoverySource = discoverySource; }
     public String getOtherDiscoverySource() { return otherDiscoverySource; }
     public void setOtherDiscoverySource(String otherDiscoverySource) { this.otherDiscoverySource = otherDiscoverySource; }
-    public String getLanguage() { return language; }
-    public void setLanguage(String language) { this.language = language; }
-    public String getCountry() { return country; }
-    public void setCountry(String country) { this.country = country; }
-
-    public String getMeasurementSystem() { return measurementSystem; }
-    public void setMeasurementSystem(String measurementSystem) { this.measurementSystem = measurementSystem; }
+    public String getGroceryFrequency() { return groceryFrequency; }
+    public void setGroceryFrequency(String groceryFrequency) { this.groceryFrequency = groceryFrequency; }
+    public String getGroceryBudget() { return groceryBudget; }
+    public void setGroceryBudget(String groceryBudget) { this.groceryBudget = groceryBudget; }
+    public List<String> getGroceryStores() { return groceryStores; }
+    public void setGroceryStores(List<String> groceryStores) { this.groceryStores = groceryStores; }
+    public List<String> getExcitedFeatures() { return excitedFeatures; }
+    public void setExcitedFeatures(List<String> excitedFeatures) { this.excitedFeatures = excitedFeatures; }
     
     public List<String> getDietaryPreferences() { return dietaryPreferences; }
     public void setDietaryPreferences(List<String> dietaryPreferences) { this.dietaryPreferences = dietaryPreferences; }
@@ -273,16 +279,12 @@ public class User implements UserDetails {
     public void setFavoriteCuisines(List<String> favoriteCuisines) { this.favoriteCuisines = favoriteCuisines; }
     public List<String> getKitchenAppliances() { return kitchenAppliances; }
     public void setKitchenAppliances(List<String> kitchenAppliances) { this.kitchenAppliances = kitchenAppliances; }
-    public String getMealPlanningStyle() { return mealPlanningStyle; }
-    public void setMealPlanningStyle(String mealPlanningStyle) { this.mealPlanningStyle = mealPlanningStyle; }
+
     public List<String> getNotificationPreferences() { return notificationPreferences; }
     public void setNotificationPreferences(List<String> notificationPreferences) { this.notificationPreferences = notificationPreferences; }
     public List<String> getOnboardingGoals() { return onboardingGoals; }
     public void setOnboardingGoals(List<String> onboardingGoals) { this.onboardingGoals = onboardingGoals; }
-    public Integer getOnboardingRating() { return onboardingRating; }
-    public void setOnboardingRating(Integer onboardingRating) { this.onboardingRating = onboardingRating; }
-    public String getOnboardingFeedback() { return onboardingFeedback; }
-    public void setOnboardingFeedback(String onboardingFeedback) { this.onboardingFeedback = onboardingFeedback; }
+
 
     public List<Recipe> getRecipes() { return recipes; }
     public void setRecipes(List<Recipe> recipes) { this.recipes = recipes; }

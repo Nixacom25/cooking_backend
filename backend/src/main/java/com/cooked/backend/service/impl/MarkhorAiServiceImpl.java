@@ -340,7 +340,12 @@ public class MarkhorAiServiceImpl implements AiService {
                     "preferences", user.getDietaryPreferences() != null ? user.getDietaryPreferences() : "",
                     "cuisines", user.getFavoriteCuisines() != null ? user.getFavoriteCuisines() : "",
                     "flavorDna", user.getFlavorDna() != null ? user.getFlavorDna() : "",
-                    "skill", user.getCookingSkill() != null ? user.getCookingSkill() : ""
+                    "skill", user.getCookingSkill() != null ? user.getCookingSkill() : "",
+                    "budget", user.getGroceryBudget() != null ? user.getGroceryBudget() : "",
+                    "goals", user.getOnboardingGoals() != null ? user.getOnboardingGoals() : "",
+                    "groceryFrequency", user.getGroceryFrequency() != null ? user.getGroceryFrequency() : "",
+                    "groceryStores", user.getGroceryStores() != null ? user.getGroceryStores() : "",
+                    "excitedFeatures", user.getExcitedFeatures() != null ? user.getExcitedFeatures() : ""
                 )
             );
 
@@ -515,6 +520,11 @@ public class MarkhorAiServiceImpl implements AiService {
             prefs.put("cuisines_love", user.getFavoriteCuisines());
             prefs.put("kitchen_tools", user.getKitchenAppliances());
             prefs.put("skill_level", normalizeSkillLevel(user.getCookingSkill()));
+            prefs.put("budget", user.getGroceryBudget());
+            prefs.put("goals", user.getOnboardingGoals());
+            prefs.put("grocery_frequency", user.getGroceryFrequency());
+            prefs.put("grocery_stores", user.getGroceryStores());
+            prefs.put("excited_features", user.getExcitedFeatures());
             String systemInstructions = "Be extremely precise and generous in the 'tips' (notes and advice) section for each recipe. Include advice on texture, flavor variations, and storage. "
                     + "STRICT REQUIREMENT: You MUST ONLY generate recipes using the provided list of ingredients. "
                     + "DO NOT add or suggest other main ingredients or extra ingredients in the recipe creation. "
@@ -562,6 +572,11 @@ public class MarkhorAiServiceImpl implements AiService {
             prefs.put("cuisines_love", user.getFavoriteCuisines());
             prefs.put("kitchen_tools", user.getKitchenAppliances());
             prefs.put("skill_level", normalizeSkillLevel(user.getCookingSkill()));
+            prefs.put("budget", user.getGroceryBudget());
+            prefs.put("goals", user.getOnboardingGoals());
+            prefs.put("grocery_frequency", user.getGroceryFrequency());
+            prefs.put("grocery_stores", user.getGroceryStores());
+            prefs.put("excited_features", user.getExcitedFeatures());
             prefs.put("system_instructions", "Be extremely precise and generous in the 'tips' (notes and advice) section for each recipe. Include advice on texture, flavor variations, and storage.");
             
             body.add("user_preferences", objectMapper.writeValueAsString(prefs));
@@ -611,6 +626,11 @@ public class MarkhorAiServiceImpl implements AiService {
             prefs.put("cuisines_love", user.getFavoriteCuisines());
             prefs.put("kitchen_tools", user.getKitchenAppliances());
             prefs.put("skill_level", normalizeSkillLevel(user.getCookingSkill()));
+            prefs.put("budget", user.getGroceryBudget());
+            prefs.put("goals", user.getOnboardingGoals());
+            prefs.put("grocery_frequency", user.getGroceryFrequency());
+            prefs.put("grocery_stores", user.getGroceryStores());
+            prefs.put("excited_features", user.getExcitedFeatures());
 
             // Build an ultra-strict prompt that names the exact allowed ingredients
             String ingredientList = String.join(", ", ingredients);

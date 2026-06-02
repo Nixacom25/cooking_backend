@@ -59,10 +59,7 @@ public class UserServiceImpl implements UserService {
         user.setPhone(request.getPhone());
         user.setDiscoverySource(request.getDiscoverySource());
         user.setOtherDiscoverySource(request.getOtherDiscoverySource());
-        user.setLanguage(request.getLanguage());
-        user.setCountry(request.getCountry());
 
-        user.setMeasurementSystem(request.getMeasurementSystem());
         userRepository.save(user);
 
         emailService.sendAccountUpdateEmail(email, "Your profile information has been updated successfully.");
@@ -79,10 +76,11 @@ public class UserServiceImpl implements UserService {
         user.setDietaryPreferences(request.getDietaryPreferences());
         user.setAllergies(request.getAllergies());
         user.setFoodDislikes(request.getFoodDislikes());
-        user.setLanguage(request.getLanguage());
-        user.setCountry(request.getCountry());
 
-        user.setMeasurementSystem(request.getMeasurementSystem());
+        user.setGroceryFrequency(request.getGroceryFrequency());
+        user.setGroceryBudget(request.getGroceryBudget());
+        user.setGroceryStores(request.getGroceryStores());
+        user.setExcitedFeatures(request.getExcitedFeatures());
         user.setFlavorDna(request.getFlavorDna());
         user.setSpiceLevel(request.getSpiceLevel());
         user.setCookingSkill(request.getCookingSkill());
@@ -91,11 +89,8 @@ public class UserServiceImpl implements UserService {
         user.setCookingTarget(request.getCookingTarget());
         user.setFavoriteCuisines(request.getFavoriteCuisines());
         user.setKitchenAppliances(request.getKitchenAppliances());
-        user.setMealPlanningStyle(request.getMealPlanningStyle());
         user.setNotificationPreferences(request.getNotificationPreferences());
         user.setOnboardingGoals(request.getOnboardingGoals());
-        user.setOnboardingRating(request.getOnboardingRating());
-        user.setOnboardingFeedback(request.getOnboardingFeedback());
         User savedUser = userRepository.save(user);
 
         // Trigger initialization asynchronously if not already done
@@ -209,8 +204,7 @@ public class UserServiceImpl implements UserService {
         user.setPhone(request.getPhone());
         user.setDiscoverySource(request.getDiscoverySource());
         user.setOtherDiscoverySource(request.getOtherDiscoverySource());
-        user.setLanguage(request.getLanguage());
-        user.setCountry(request.getCountry());
+
         userRepository.save(user);
 
         return userMapper.toResponse(user);

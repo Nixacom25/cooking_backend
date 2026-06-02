@@ -164,9 +164,12 @@ public class AuthServiceImpl implements AuthService {
                                 .resendCount(0)
                                 .discoverySource(request.getDiscoverySource())
                                 .otherDiscoverySource(request.getOtherDiscoverySource())
-                                .language(request.getLanguage())
-                                .country(request.getCountry())
-                                .measurementSystem(request.getMeasurementSystem())
+                                .groceryFrequency(request.getGroceryFrequency())
+                                .groceryBudget(request.getGroceryBudget())
+                                .groceryStores(request.getGroceryStores() != null ? request.getGroceryStores()
+                                                : new java.util.ArrayList<>())
+                                .excitedFeatures(request.getExcitedFeatures() != null ? request.getExcitedFeatures()
+                                                : new java.util.ArrayList<>())
                                 .dietaryPreferences(request.getDietaryPreferences() != null
                                                 ? request.getDietaryPreferences()
                                                 : new java.util.ArrayList<>())
@@ -186,14 +189,11 @@ public class AuthServiceImpl implements AuthService {
                                 .kitchenAppliances(
                                                 request.getKitchenAppliances() != null ? request.getKitchenAppliances()
                                                                 : new java.util.ArrayList<>())
-                                .mealPlanningStyle(request.getMealPlanningStyle())
                                 .notificationPreferences(request.getNotificationPreferences() != null
                                                 ? request.getNotificationPreferences()
                                                 : new java.util.ArrayList<>())
                                 .onboardingGoals(request.getOnboardingGoals() != null ? request.getOnboardingGoals()
                                                 : new java.util.ArrayList<>())
-                                .onboardingRating(request.getOnboardingRating())
-                                .onboardingFeedback(request.getOnboardingFeedback())
                                 .build();
 
                 User savedUser = userRepository.save(user);
