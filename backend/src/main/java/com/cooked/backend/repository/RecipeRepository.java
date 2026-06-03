@@ -71,6 +71,11 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         int deleteByOriginAndExpiresAtBefore(com.cooked.backend.entity.RecipeOrigin origin, java.time.LocalDateTime now);
 
         @org.springframework.data.jpa.repository.Modifying
+        @org.springframework.transaction.annotation.Transactional
+        @org.springframework.data.jpa.repository.Query("UPDATE Recipe r SET r.origin = 'SCAN' WHERE r.origin = 'MANUAL' OR r.origin IS NULL")
+        int migrateOriginsToScan();
+
+        @org.springframework.data.jpa.repository.Modifying
         @org.springframework.data.jpa.repository.Query("DELETE FROM Recipe r WHERE r.origin = :origin AND r.expiresAt < :now " +
                         "AND NOT EXISTS (SELECT 1 FROM GroceryItem gi WHERE gi.recipe = r)")
         int deleteExpiredSuggestedRecipes(

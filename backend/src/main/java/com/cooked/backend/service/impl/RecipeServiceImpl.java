@@ -35,28 +35,26 @@ public class RecipeServiceImpl implements RecipeService {
     private final com.cooked.backend.service.AiService aiService;
     private final com.cooked.backend.service.TaxonomyService taxonomyService;
 
-    @jakarta.annotation.PostConstruct
+    @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
     public void onStartup() {
-        migrateOrigins();
-        taxonomyService.migrateExistingRecipes();
-        taxonomyService.mergeDuplicateTaxonomies();
+        // Run migrations in a background thread to prevent blocking port binding and deployment timeouts on Render
+        new Thread(() -> {
+            try {
+                migrateOrigins();
+                taxonomyService.migrateExistingRecipes();
+                taxonomyService.mergeDuplicateTaxonomies();
+                log.info("All background startup migrations completed.");
+            } catch (Exception e) {
+                log.error("Error during background startup migrations: ", e);
+            }
+        }).start();
     }
+    
+    @Transactional
     public void migrateOrigins() {
         log.info("Starting recipes origin migration...");
-        List<Recipe> recipes = recipeRepository.findAll();
-        long count = 0;
-        for (Recipe r : recipes) {
-            if (r.getOrigin() == RecipeOrigin.MANUAL || r.getOrigin() == null) {
-                r.setOrigin(RecipeOrigin.SCAN);
-                count++;
-            }
-        }
-        if (count > 0) {
-            recipeRepository.saveAll(recipes);
-            log.info("Successfully migrated {} recipes to SCAN origin.", count);
-        } else {
-            log.info("No recipes needed migration.");
-        }
+        int count = recipeRepository.migrateOriginsToScan();
+        log.info("Successfully migrated {} recipes to SCAN origin.", count);
     }
 
     @Override
