@@ -558,6 +558,9 @@ public class RecipeServiceImpl implements RecipeService {
                                 .quantity(ri.getQuantity())
                                 .build()).collect(Collectors.toList());
 
+        boolean isModifiedToday = recipe.getUpdatedAt() != null && 
+                                  recipe.getUpdatedAt().toLocalDate().isEqual(java.time.LocalDate.now());
+
         return RecipeResponse.builder()
                 .id(recipe.getId())
                 .name(recipe.getName())

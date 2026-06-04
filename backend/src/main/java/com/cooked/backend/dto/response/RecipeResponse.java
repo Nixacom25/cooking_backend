@@ -32,6 +32,7 @@ public class RecipeResponse {
     private boolean isPinned;
     private Double totalPrice;
     private Integer ingredientsCount;
+    private Boolean status; // true if modified today
 
     // Constructeur vide
     public RecipeResponse() {}
@@ -91,6 +92,8 @@ public class RecipeResponse {
     public void setTotalPrice(Double totalPrice) { this.totalPrice = totalPrice; }
     public Integer getIngredientsCount() { return ingredientsCount; }
     public void setIngredientsCount(Integer ingredientsCount) { this.ingredientsCount = ingredientsCount; }
+    public Boolean getStatus() { return status; }
+    public void setStatus(Boolean status) { this.status = status; }
 
     // Builder manuel
     public static RecipeResponseBuilder builder() {
@@ -127,6 +130,7 @@ public class RecipeResponse {
         public RecipeResponseBuilder isPinned(boolean isPinned) { response.setPinned(isPinned); return this; }
         public RecipeResponseBuilder totalPrice(Double totalPrice) { response.setTotalPrice(totalPrice); return this; }
         public RecipeResponseBuilder ingredientsCount(Integer ingredientsCount) { response.setIngredientsCount(ingredientsCount); return this; }
+        public RecipeResponseBuilder status(Boolean status) { response.setStatus(status); return this; }
 
         public RecipeResponse build() {
             return response;
