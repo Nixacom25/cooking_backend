@@ -654,7 +654,13 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     @Transactional(readOnly = true)
     public Page<RecipeResponse> getAdminRecipes(RecipeOrigin origin, String name, Pageable pageable) {
-        Page<Recipe> recipes = recipeRepository.findAdminRecipes(origin, name, pageable);
+        String safeName = (name == null) ? "" : name;
+        Page<Recipe> recipes;
+        if (origin == null) {
+            recipes = recipeRepository.findAdminRecipesByName(safeName, pageable);
+        } else {
+            recipes = recipeRepository.findAdminRecipesByOriginAndName(origin, safeName, pageable);
+        }
         return recipes.map(recipe -> mapToResponse(recipe, null));
     }
 
