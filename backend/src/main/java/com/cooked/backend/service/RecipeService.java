@@ -48,4 +48,13 @@ public interface RecipeService {
         List<com.cooked.backend.dto.response.ExploreTaxonomyResponse> getExploreCategories();
         
         RecipeResponse togglePin(UUID id, String userEmail);
+
+        org.springframework.data.domain.Page<RecipeResponse> getAdminRecipes(
+                com.cooked.backend.entity.RecipeOrigin origin,
+                String name,
+                org.springframework.data.domain.Pageable pageable);
+
+        RecipeResponse updateAdminRecipe(UUID id, String recipeJson, org.springframework.web.multipart.MultipartFile image);
+
+        void deleteAdminRecipe(UUID id);
 }

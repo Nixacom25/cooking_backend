@@ -34,6 +34,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final ActivityLogService activityLogService;
     private final com.cooked.backend.service.AiService aiService;
     private final com.cooked.backend.service.TaxonomyService taxonomyService;
+    private final com.cooked.backend.service.CloudinaryService cloudinaryService;
 
     @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
     public void onStartup() {
@@ -649,4 +650,94 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     // Removed private getOrCreateCategory, now using taxonomyService
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<RecipeResponse> getAdminRecipes(RecipeOrigin origin, String name, Pageable pageable) {
+        Page<Recipe> recipes = recipeRepository.findAdminRecipes(origin, name, pageable);
+        return recipes.map(recipe -> mapToResponse(recipe, null));
+    }
+
+    @Override
+    @Transactional
+    public RecipeResponse updateAdminRecipe(UUID id, String recipeJson, org.springframework.web.multipart.MultipartFile image) {
+        try {
+            Recipe recipe = recipeRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
+
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+            mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            
+            CreateRecipeRequest request = mapper.readValue(recipeJson, CreateRecipeRequest.class);
+
+            if (request.getName() != null) recipe.setName(request.getName());
+            if (request.getPrepTime() != null) recipe.setPrepTime(request.getPrepTime());
+            if (request.getCookTime() != null) recipe.setCookTime(request.getCookTime());
+            if (request.getKcal() != null) recipe.setKcal(request.getKcal());
+            if (request.getServings() != null) recipe.setServings(request.getServings());
+            if (request.getTips() != null) recipe.setTips(request.getTips());
+            
+            if (request.getCuisine() != null) {
+                recipe.setCuisine(taxonomyService.getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE));
+            }
+            if (request.getCategory() != null) {
+                recipe.setCategory(taxonomyService.getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY));
+            }
+
+            if (request.getSteps() != null) {
+                recipe.getSteps().clear();
+                recipe.getSteps().addAll(request.getSteps());
+            }
+            if (request.getEquipment() != null) {
+                recipe.getEquipment().clear();
+                recipe.getEquipment().addAll(request.getEquipment());
+            }
+
+            if (request.getIngredients() != null) {
+                if (recipe.getRecipeIngredients() != null) {
+                    recipe.getRecipeIngredients().clear();
+                } else {
+                    recipe.setRecipeIngredients(new java.util.HashSet<>());
+                }
+
+                for (IngredientPayload ip : request.getIngredients()) {
+                    String ingName = ip.getName().toLowerCase().trim();
+                    Ingredient ingredient = ingredientRepository.findFirstByName(ingName)
+                            .orElseGet(() -> ingredientRepository.save(Ingredient.builder()
+                                    .name(ingName)
+                                    .icon(ip.getIcon() != null ? ip.getIcon() : "🍲")
+                                    .build()));
+
+                    RecipeIngredient ri = RecipeIngredient.builder()
+                            .recipe(recipe)
+                            .ingredient(ingredient)
+                            .quantity(ip.getQuantity() != null ? ip.getQuantity() : "1 unit")
+                            .build();
+                    recipe.getRecipeIngredients().add(ri);
+                }
+            }
+
+            if (image != null && !image.isEmpty()) {
+                String imgUrl = cloudinaryService.upload(image);
+                recipe.setImage(imgUrl);
+            }
+
+            Recipe saved = recipeRepository.save(recipe);
+            return mapToResponse(saved, null);
+
+        } catch (Exception e) {
+            log.error("Failed to update admin recipe", e);
+            throw new BadRequestException("Invalid recipe data or image upload failed: " + e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteAdminRecipe(UUID id) {
+        if (!recipeRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Recipe not found");
+        }
+        recipeRepository.deleteById(id);
+    }
 }
