@@ -238,6 +238,15 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
+        // Handle DB-level constraints for favorite_recipes
+        try {
+            entityManager.createNativeQuery("DELETE FROM favorite_recipes WHERE user_id = :userId")
+                    .setParameter("userId", user.getId())
+                    .executeUpdate();
+        } catch (Exception e) {
+            // Ignore if table or columns don't exist
+        }
+        
         // Handle recipes: delete duplicates, keep unique ones (nullify userId)
         if (user.getRecipes() != null && !user.getRecipes().isEmpty()) {
             // Create a copy of the list to avoid ConcurrentModificationException while modifying user.getRecipes()
@@ -274,6 +283,15 @@ public class UserServiceImpl implements UserService {
                     try {
                         entityManager.createNativeQuery("UPDATE favorite_recipes SET recipe_id = :twinId WHERE recipe_id = :oldId")
                                 .setParameter("twinId", twinRecipe.getId())
+                                .setParameter("oldId", recipe.getId())
+                                .executeUpdate();
+                    } catch (Exception e) {
+                        // Ignore if table or columns don't exist
+                    }
+                    
+                    // DELETE from cookbook_recipes explicitly since Cookbook is the owning side
+                    try {
+                        entityManager.createNativeQuery("DELETE FROM cookbook_recipes WHERE recipe_id = :oldId")
                                 .setParameter("oldId", recipe.getId())
                                 .executeUpdate();
                     } catch (Exception e) {
