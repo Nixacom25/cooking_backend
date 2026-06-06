@@ -33,7 +33,7 @@ public class Recipe {
     @Column(nullable = true, columnDefinition = "TEXT")
     private String image;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
     private boolean isSuggested = false;
 
@@ -104,7 +104,7 @@ public class Recipe {
     @Builder.Default
     private RecipeOrigin origin = RecipeOrigin.MANUAL;
 
-    @Column(name = "is_pinned", nullable = false)
+    @Column(name = "is_pinned", nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
     private boolean isPinned = false;
 
