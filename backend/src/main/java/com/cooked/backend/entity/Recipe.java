@@ -33,6 +33,14 @@ public class Recipe {
     @Column(nullable = true, columnDefinition = "TEXT")
     private String image;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isSuggested = false;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private Boolean status = false;
+
     @Column(nullable = true)
     private Integer cookTime; // In minutes
 
@@ -155,4 +163,6 @@ public class Recipe {
     public void setTotalPrice(Double totalPrice) { this.totalPrice = totalPrice; }
     public Integer getIngredientsCount() { return ingredientsCount; }
     public void setIngredientsCount(Integer ingredientsCount) { this.ingredientsCount = ingredientsCount; }
+    public Boolean getStatus() { return status; }
+    public void setStatus(Boolean status) { this.status = status; }
 }

@@ -558,9 +558,6 @@ public class RecipeServiceImpl implements RecipeService {
                                 .quantity(ri.getQuantity())
                                 .build()).collect(Collectors.toList());
 
-        boolean isModifiedToday = recipe.getUpdatedAt() != null && 
-                                  recipe.getUpdatedAt().toLocalDate().isEqual(java.time.LocalDate.now());
-
         return RecipeResponse.builder()
                 .id(recipe.getId())
                 .name(recipe.getName())
@@ -731,6 +728,8 @@ public class RecipeServiceImpl implements RecipeService {
                 String imgUrl = cloudinaryService.upload(image);
                 recipe.setImage(imgUrl);
             }
+
+            recipe.setStatus(true);
 
             Recipe saved = recipeRepository.save(recipe);
             return mapToResponse(saved, null);

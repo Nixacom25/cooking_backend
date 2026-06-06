@@ -57,8 +57,19 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
                         "END $$;";
             jdbcTemplate.execute(sql);
             log.info("Successfully dropped all unique constraints from recipes, cookbooks, ingredients and recipe_data tables");
+            
+            // Run one-time migration for recipe status based on age
+            String statusMigrationSql = "DO $$ " +
+                    "BEGIN " +
+                    "  UPDATE recipes SET status = false WHERE status IS NULL; " +
+                    "  UPDATE recipes SET status = false WHERE origin = 'EXPLORE' AND updated_at < NOW() - INTERVAL '2 days'; " +
+                    "  UPDATE recipes SET status = true WHERE origin = 'EXPLORE' AND updated_at >= NOW() - INTERVAL '2 days'; " +
+                    "END $$;";
+            jdbcTemplate.execute(statusMigrationSql);
+            log.info("Successfully migrated existing recipe statuses");
+            
         } catch (Exception e) {
-            log.warn("Could not drop constraints: {}", e.getMessage());
+            log.error("Failed to migrate database constraints or statuses: {}", e.getMessage());
         }
 
         User systemUser = userRepository.findByEmail("explore@cooked.com")
