@@ -114,7 +114,6 @@ public class UserServiceImplTest {
     @Test
     void testDeleteAccount_Success() {
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(dummyUser));
-        when(entityManager.createNativeQuery(anyString())).thenReturn(mock(jakarta.persistence.Query.class));
         
         MessageResponse response = userService.deleteCurrentUser("test@example.com");
 
