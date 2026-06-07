@@ -10,8 +10,10 @@ import java.util.UUID;
 
 @Repository
 public interface GroceryItemRepository extends JpaRepository<GroceryItem, UUID> {
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"ingredient", "recipe"})
     List<GroceryItem> findAllByUserId(UUID userId);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"ingredient", "recipe"})
     List<GroceryItem> findAllByUserIdAndPlannedDate(UUID userId, LocalDate plannedDate);
 
     java.util.Optional<GroceryItem> findByUserIdAndIngredientIdAndRecipeIdAndPlannedDate(
