@@ -17,6 +17,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Entity
 @Table(name = "ingredients")
+@org.hibernate.annotations.BatchSize(size = 50)
 public class Ingredient {
 
     @Id

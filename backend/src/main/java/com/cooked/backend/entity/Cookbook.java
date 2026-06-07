@@ -36,6 +36,7 @@ public class Cookbook {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @com.fasterxml.jackson.annotation.JsonIgnore
+    @org.hibernate.annotations.BatchSize(size = 50)
     private Set<Recipe> recipes;
 
     @CreationTimestamp

@@ -64,9 +64,10 @@ public class Recipe {
     @Column(nullable = true, columnDefinition = "TEXT")
     private String tips;
 
-    @ElementCollection(fetch = jakarta.persistence.FetchType.EAGER)
+    @ElementCollection(fetch = jakarta.persistence.FetchType.LAZY)
     @CollectionTable(name = "recipe_steps", joinColumns = @JoinColumn(name = "recipe_id"))
     @Column(name = "step", columnDefinition = "TEXT")
+    @org.hibernate.annotations.BatchSize(size = 50)
     @Builder.Default
     private List<String> steps = new ArrayList<>();
 
@@ -75,9 +76,11 @@ public class Recipe {
     private boolean isPublic = false;
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.BatchSize(size = 50)
     private Set<RecipeIngredient> recipeIngredients;
 
     @ManyToMany(mappedBy = "recipes")
+    @org.hibernate.annotations.BatchSize(size = 50)
     @com.fasterxml.jackson.annotation.JsonIgnore
     private Set<Cookbook> cookbooks;
 
@@ -90,9 +93,10 @@ public class Recipe {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @ElementCollection(fetch = jakarta.persistence.FetchType.EAGER)
+    @ElementCollection(fetch = jakarta.persistence.FetchType.LAZY)
     @CollectionTable(name = "recipe_equipment", joinColumns = @JoinColumn(name = "recipe_id"))
     @Column(name = "item", columnDefinition = "TEXT")
+    @org.hibernate.annotations.BatchSize(size = 50)
     @Builder.Default
     private List<String> equipment = new ArrayList<>();
 
