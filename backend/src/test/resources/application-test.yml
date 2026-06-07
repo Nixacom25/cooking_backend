@@ -1,0 +1,34 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    driverClassName: org.h2.Driver
+    username: sa
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+    
+# Disabling cloud and external connections for testing
+cloudinary:
+  cloud:
+    name: "dummy"
+  api:
+    key: "dummy"
+    secret: "dummy"
+  folder: "dummy_folder"
+  
+jwt:
+  secret: "dummySecretKeyThatIsAtLeast32BytesLongForHS256AlgorithmToWorkProperly"
+  expiration: 86400000
+
+openai:
+  api:
+    key: "dummy"
+
+SMTP_USERNAME: "dummy_smtp_user"
+SMTP_PASSWORD: "dummy_smtp_password"

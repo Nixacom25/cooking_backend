@@ -119,17 +119,7 @@ public class BackendApplication {
 						JsonNode categories = root.get("categories");
 						JsonNode cuisines = root.get("cuisines");
 
-						// Comprehensive Standardization for Categories
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Healthy Breakfasts' WHERE UPPER(TRIM(name)) IN ('BREAKFAST', 'MEAL PREP FAVORITES') AND type = 'CATEGORY'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'High Protein Picks' WHERE UPPER(TRIM(name)) IN ('HIGH PROTEIN', 'PROTEIN PLATES', 'HIGH PROTEIN, LOW CALORIE') AND type = 'CATEGORY'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Rice & Grain' WHERE UPPER(TRIM(name)) = 'RICE & GRAIN DISHES' AND type = 'CATEGORY'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Handheld / Street Food' WHERE UPPER(TRIM(name)) IN ('HANDHELD STREET FOOD', 'SIDES & SNACKS') AND type = 'CATEGORY'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Stir Fry' WHERE UPPER(TRIM(name)) = 'STIR FRY SAUTÉ WOK' AND type = 'CATEGORY'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = '30-Minute Meals' WHERE UPPER(TRIM(name)) IN ('LUNCH', 'QUICK LUNCHES') AND type = 'CATEGORY'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Plant-Based Essentials' WHERE UPPER(TRIM(name)) = 'VEGAN ESSENTIALS' AND type = 'CATEGORY'");
-						jdbcTemplate.execute("UPDATE recipe_categories SET name = 'Pizza & Flatbreads' WHERE UPPER(TRIM(name)) = 'COMFORT FOOD' AND type = 'CATEGORY'");
-						
-						// Comprehensive Standardization for Cuisines - Removed incorrect raw SQL updates. TaxonomyServiceImpl handles merging safely.
+
 
 						// Diagnostic log
 						List<String> existing = jdbcTemplate.queryForList("SELECT name FROM recipe_categories LIMIT 50", String.class);

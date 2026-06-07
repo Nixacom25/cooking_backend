@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
+    "test": "jest",
     "lint": "echo \"Add an ESLint config to enable linting\""
   },
   "keywords": [
@@ -43,5 +44,8 @@
     "streamifier": "^0.1.1",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2"
   }
 }

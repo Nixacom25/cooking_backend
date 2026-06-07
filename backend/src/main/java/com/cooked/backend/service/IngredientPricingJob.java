@@ -27,12 +27,13 @@ public class IngredientPricingJob {
     private final RecipeRepository recipeRepository;
     private final AiService aiService;
 
-    @Async
-    @EventListener(ApplicationReadyEvent.class)
-    public void onApplicationStartup() {
-        logger.info("Application started. Running initial pricing backfill...");
-        runPricingUpdate();
-    }
+    // Removed from startup as requested to prevent errors
+    // @Async
+    // @EventListener(ApplicationReadyEvent.class)
+    // public void onApplicationStartup() {
+    //     logger.info("Application started. Running initial pricing backfill...");
+    //     runPricingUpdate();
+    // }
 
     // Runs every day at 00:00 to verify and update ingredient prices
     @Scheduled(cron = "0 0 0 * * ?")
