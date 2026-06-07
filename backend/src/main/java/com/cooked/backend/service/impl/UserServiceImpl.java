@@ -238,14 +238,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
-        // Handle DB-level constraints for favorite_recipes
-        try {
-            entityManager.createNativeQuery("DELETE FROM favorite_recipes WHERE user_id = :userId")
-                    .setParameter("userId", user.getId())
-                    .executeUpdate();
-        } catch (Exception e) {
-            // Ignore if table or columns don't exist
-        }
+
         
         // Handle recipes: delete duplicates, keep unique ones (nullify userId)
         if (user.getRecipes() != null && !user.getRecipes().isEmpty()) {
@@ -279,15 +272,7 @@ public class UserServiceImpl implements UserService {
                     // Repoint other users' Grocery Items to the twin
                     groceryItemRepository.repointRecipe(recipe, twinRecipe);
                     
-                    // Repoint/delete from favorite_recipes (native query to handle DB-level constraint safely)
-                    try {
-                        entityManager.createNativeQuery("UPDATE favorite_recipes SET recipe_id = :twinId WHERE recipe_id = :oldId")
-                                .setParameter("twinId", twinRecipe.getId())
-                                .setParameter("oldId", recipe.getId())
-                                .executeUpdate();
-                    } catch (Exception e) {
-                        // Ignore if table or columns don't exist
-                    }
+
                     
                     // DELETE from cookbook_recipes explicitly since Cookbook is the owning side
                     try {
