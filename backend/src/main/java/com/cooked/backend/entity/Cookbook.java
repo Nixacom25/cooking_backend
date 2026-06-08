@@ -14,7 +14,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "cookbooks")
+@Table(name = "cookbooks", indexes = {
+    @Index(name = "idx_cookbook_user", columnList = "user_id")
+})
 public class Cookbook {
 
     @Id

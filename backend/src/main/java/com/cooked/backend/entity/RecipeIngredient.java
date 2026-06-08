@@ -13,7 +13,10 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "recipe_ingredients")
+@Table(name = "recipe_ingredients", indexes = {
+    @Index(name = "idx_ri_recipe", columnList = "recipe_id"),
+    @Index(name = "idx_ri_ingredient", columnList = "ingredient_id")
+})
 public class RecipeIngredient {
 
     @Id

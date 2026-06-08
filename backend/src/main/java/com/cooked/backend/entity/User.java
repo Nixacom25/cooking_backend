@@ -22,7 +22,11 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "users")
+@Table(name = "users", indexes = {
+    @Index(name = "idx_user_email", columnList = "email"),
+    @Index(name = "idx_user_provider_id", columnList = "providerId"),
+    @Index(name = "idx_user_status", columnList = "status")
+})
 public class User implements UserDetails {
 
     @Id
