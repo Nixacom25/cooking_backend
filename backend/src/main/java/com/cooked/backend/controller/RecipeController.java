@@ -114,6 +114,7 @@ public class RecipeController {
 
     @Operation(summary = "Explore public recipes")
     @GetMapping("/explore")
+    @org.springframework.cache.annotation.Cacheable(value = "exploreRecipes", key = "#cuisine + '_' + #category + '_' + #page + '_' + #size")
     public ResponseEntity<org.springframework.data.domain.Page<RecipeResponse>> getExploreRecipes(
             @RequestParam(required = false) String cuisine,
             @RequestParam(required = false) String category,
@@ -126,12 +127,14 @@ public class RecipeController {
 
     @Operation(summary = "Get all distinct explore cuisines")
     @GetMapping("/explore/cuisines")
+    @org.springframework.cache.annotation.Cacheable(value = "exploreCuisines")
     public ResponseEntity<List<com.cooked.backend.dto.response.ExploreTaxonomyResponse>> getExploreCuisines() {
         return ResponseEntity.ok(recipeService.getExploreCuisines());
     }
 
     @Operation(summary = "Get all distinct explore categories")
     @GetMapping("/explore/categories")
+    @org.springframework.cache.annotation.Cacheable(value = "exploreCategories")
     public ResponseEntity<List<com.cooked.backend.dto.response.ExploreTaxonomyResponse>> getExploreCategories() {
         return ResponseEntity.ok(recipeService.getExploreCategories());
     }
@@ -153,6 +156,7 @@ public class RecipeController {
 
     @Operation(summary = "Get popular recipes based on usage")
     @GetMapping("/popular")
+    @org.springframework.cache.annotation.Cacheable(value = "popularRecipes", key = "#category + '_' + (#userDetails != null ? #userDetails.getUsername() : 'anonymous') + '_' + #page + '_' + #size")
     public ResponseEntity<org.springframework.data.domain.Page<RecipeResponse>> getPopularRecipes(
             @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "0") int page,
@@ -171,6 +175,7 @@ public class RecipeController {
 
     @Operation(summary = "Get daily AI trending dishes")
     @GetMapping("/trending-ai")
+    @org.springframework.cache.annotation.Cacheable(value = "trendingDishes")
     public ResponseEntity<List<String>> getTrendingAiDishes() {
         return ResponseEntity.ok(trendingService.getTrendingDishes());
     }
