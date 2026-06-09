@@ -13,6 +13,9 @@ import java.time.Duration;
 @Configuration
 public class Bucket4jRedisConfig {
 
+    @Value("${spring.data.redis.url:}")
+    private String redisUrl;
+
     @Value("${spring.data.redis.host:localhost}")
     private String redisHost;
 
@@ -22,11 +25,19 @@ public class Bucket4jRedisConfig {
     @Value("${spring.data.redis.password:}")
     private String redisPassword;
 
+    @Value("${spring.data.redis.ssl.enabled:false}")
+    private boolean redisSsl;
+
     @Bean
     public RedisClient redisClient() {
+        if (redisUrl != null && !redisUrl.isEmpty()) {
+            return RedisClient.create(redisUrl);
+        }
+
         RedisURI.Builder builder = RedisURI.builder()
                 .withHost(redisHost)
                 .withPort(redisPort)
+                .withSsl(redisSsl)
                 .withTimeout(Duration.ofSeconds(10));
                 
         if (redisPassword != null && !redisPassword.isEmpty()) {
