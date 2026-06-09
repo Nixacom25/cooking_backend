@@ -9,8 +9,6 @@ require('dotenv').config();
 
 const REQUIRED_VARS = [
   'OPENAI_API_KEY',
-  'MONGODB_URI',
-  'MONGODB_DB_NAME',
   'REDIS_URL',
   'CLOUDINARY_CLOUD_NAME',
   'CLOUDINARY_API_KEY',
@@ -40,25 +38,10 @@ const config = {
 
   openai: {
     apiKey: process.env.OPENAI_API_KEY,
-    /** Vision model for ingredient detection */
     visionModel: process.env.OPENAI_VISION_MODEL || 'gpt-4o',
-    /** Fast model for recipe generation and ingredient filtering */
     generationModel: process.env.OPENAI_GENERATION_MODEL || 'gpt-4o-mini',
-    /** Image generation model via the same OPENAI_API_KEY.
-     *  Returns base64 (response_format:'b64_json'), uploaded to Cloudinary for permanent URLs. */
     imageModel: process.env.OPENAI_IMAGE_MODEL || 'dall-e-3',
-    /** Request timeout in milliseconds */
     timeout: parseInt(process.env.OPENAI_TIMEOUT_MS || '90000', 10),
-  },
-
-  mongodb: {
-    uri: process.env.MONGODB_URI,
-    dbName: process.env.MONGODB_DB_NAME || 'ai_recipe_app',
-    options: {
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-    },
   },
 
   redis: {

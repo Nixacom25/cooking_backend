@@ -1,7 +1,9 @@
 'use strict';
 
 const rateLimit = require('express-rate-limit');
+const RedisStore = require('rate-limit-redis').default;
 const config = require('../config/index');
+const { getRedisClient } = require('../config/redis');
 
 /**
  * General API rate limiter — applied to ALL routes.
@@ -9,6 +11,9 @@ const config = require('../config/index');
  * so running validation tests never exhausts the window.
  */
 const apiRateLimiter = rateLimit({
+  store: new RedisStore({
+    sendCommand: (...args) => getRedisClient().call(...args),
+  }),
   windowMs: config.rateLimit.windowMs,
   max: config.env === 'production' ? config.rateLimit.maxRequests : 1000,
   standardHeaders: 'draft-7', // draft-7 or true
@@ -35,6 +40,9 @@ const apiRateLimiter = rateLimit({
  * skipFailedRequests: true — validation errors (400) don't count.
  */
 const aiEndpointLimiter = rateLimit({
+  store: new RedisStore({
+    sendCommand: (...args) => getRedisClient().call(...args),
+  }),
   windowMs: config.rateLimit.windowMs,
   max: config.rateLimit.aiMaxRequests,
   standardHeaders: true,
