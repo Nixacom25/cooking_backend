@@ -98,4 +98,5 @@ jobs:
             echo "AI Service deploy triggered!"
           else
             echo "RENDER_AI_DEPLOY_HOOK not found, skipping."
+            exit 1
           fi
