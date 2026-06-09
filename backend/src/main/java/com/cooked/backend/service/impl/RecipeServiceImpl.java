@@ -575,7 +575,7 @@ public class RecipeServiceImpl implements RecipeService {
                         .photo(recipe.getUser().getPhoto())
                         .build() : null)
                 .ingredients(ingResponses)
-                .steps(recipe.getSteps())
+                .steps(recipe.getSteps() != null ? new java.util.ArrayList<>(recipe.getSteps()) : new java.util.ArrayList<>())
                 .equipment(new java.util.ArrayList<>(recipe.getEquipment()))
                 .servings(recipe.getServings())
                 .tips(recipe.getTips())
