@@ -11,4 +11,9 @@ public class JacksonConfig {
     public Hibernate6Module hibernate6Module() {
         return new Hibernate6Module();
     }
+
+    @Bean
+    public com.fasterxml.jackson.datatype.jsr310.JavaTimeModule javaTimeModule() {
+        return new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule();
+    }
 }
