@@ -34,8 +34,9 @@ public class AdminCategoryController {
     public ResponseEntity<RecipeCategory> createCategory(
             @RequestParam String name,
             @RequestParam(required = false) String image,
-            @RequestParam CategoryType type) {
-        return ResponseEntity.ok(recipeService.createCategory(name, image, type));
+            @RequestParam CategoryType type,
+            @RequestParam(required = false, defaultValue = "true") Boolean active) {
+        return ResponseEntity.ok(recipeService.createCategory(name, image, type, active));
     }
 
     @Operation(summary = "Update an existing category or cuisine")
@@ -44,8 +45,10 @@ public class AdminCategoryController {
     public ResponseEntity<RecipeCategory> updateCategory(
             @PathVariable UUID id,
             @RequestParam(required = false) String name,
-            @RequestParam(required = false) String image) {
-        return ResponseEntity.ok(recipeService.updateCategory(id, name, image));
+            @RequestParam(required = false) String image,
+            @RequestParam(required = false) CategoryType type,
+            @RequestParam(required = false) Boolean active) {
+        return ResponseEntity.ok(recipeService.updateCategory(id, name, image, type, active));
     }
 
     @Operation(summary = "Delete a category or cuisine")

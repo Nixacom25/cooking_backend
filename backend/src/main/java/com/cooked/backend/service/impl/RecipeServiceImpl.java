@@ -761,7 +761,7 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     @Transactional
-    public RecipeCategory createCategory(String name, String image, CategoryType type) {
+    public RecipeCategory createCategory(String name, String image, CategoryType type, Boolean active) {
         if (recipeCategoryRepository.findByNameAndType(name, type).isPresent()) {
             throw new BadRequestException(type + " with name " + name + " already exists");
         }
@@ -769,14 +769,14 @@ public class RecipeServiceImpl implements RecipeService {
                 .name(name)
                 .image(image)
                 .type(type)
-                .active(true)
+                .active(active != null ? active : true)
                 .build();
         return recipeCategoryRepository.save(category);
     }
 
     @Override
     @Transactional
-    public RecipeCategory updateCategory(UUID id, String name, String image) {
+    public RecipeCategory updateCategory(UUID id, String name, String image, CategoryType type, Boolean active) {
         RecipeCategory category = recipeCategoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         
@@ -785,6 +785,12 @@ public class RecipeServiceImpl implements RecipeService {
         }
         if (image != null) {
             category.setImage(image);
+        }
+        if (type != null) {
+            category.setType(type);
+        }
+        if (active != null) {
+            category.setActive(active);
         }
         
         return recipeCategoryRepository.save(category);
