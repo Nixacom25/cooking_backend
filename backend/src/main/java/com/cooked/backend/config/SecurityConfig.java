@@ -65,6 +65,7 @@ public class SecurityConfig {
                                 "/recipes/popular",
                                 "/recipes/explore/**",
                                 "/recipes/top-creators",
+                                "/recipes/trending-ai",
                                 "/share/**",
                                 "/.well-known/**",
                                 "/actuator/**")
