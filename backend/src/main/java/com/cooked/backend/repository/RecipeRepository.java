@@ -99,10 +99,10 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r.cuisine.name FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.cuisine IS NOT NULL")
         List<String> findDistinctCuisines();
 
-    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, COUNT(r) FROM Recipe r JOIN r.category c WHERE r.origin = 'EXPLORE' AND c.type = 'CATEGORY' AND c.active = true GROUP BY c.name, c.image ORDER BY COUNT(r) DESC")
+    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, COUNT(r) FROM Recipe r JOIN r.category c WHERE r.origin = 'EXPLORE' AND c.type = com.cooked.backend.entity.CategoryType.CATEGORY AND c.active = true GROUP BY c.name, c.image ORDER BY COUNT(r) DESC")
     List<Object[]> findCategoriesWithCount();
 
-    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, COUNT(r) FROM Recipe r JOIN r.cuisine c WHERE r.origin = 'EXPLORE' AND c.type = 'CUISINE' AND c.active = true GROUP BY c.name, c.image ORDER BY COUNT(r) DESC")
+    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, COUNT(r) FROM Recipe r JOIN r.cuisine c WHERE r.origin = 'EXPLORE' AND c.type = com.cooked.backend.entity.CategoryType.CUISINE AND c.active = true GROUP BY c.name, c.image ORDER BY COUNT(r) DESC")
     List<Object[]> findCuisinesWithCount();
 
     List<Recipe> findByNameContainingIgnoreCase(String name);
