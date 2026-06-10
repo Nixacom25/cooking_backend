@@ -12,11 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import org.springframework.transaction.annotation.Transactional;
 import com.cooked.backend.entity.User;
 import com.cooked.backend.entity.Role;
+import com.cooked.backend.entity.Status;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -42,7 +42,7 @@ public class KpiService {
         this.entityManager = entityManager;
     }
 
-    @PostConstruct
+    @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
     @Transactional
     public void initMocks() {
         if (paymentRepository.count() == 0) {
@@ -53,6 +53,7 @@ public class KpiService {
             mockUser.setEmail("mock" + UUID.randomUUID().toString().substring(0, 8) + "@test.com");
             mockUser.setPassword("password");
             mockUser.setRole(Role.CLIENT);
+            mockUser.setStatus(Status.ACTIVE);
             mockUser.setSubscriptionStatus(SubscriptionStatus.PREMIUM);
             mockUser = userRepository.save(mockUser);
 
