@@ -32,6 +32,9 @@ public class SubscriptionPayment {
     @Column(name = "stripe_payment_id", columnDefinition = "TEXT")
     private String stripePaymentId;
 
+    @Column(nullable = false, columnDefinition = "varchar(255) default 'Google'")
+    private String store = "Google"; // Google or Apple
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
@@ -49,6 +52,8 @@ public class SubscriptionPayment {
     public void setStatus(String status) { this.status = status; }
     public String getStripePaymentId() { return stripePaymentId; }
     public void setStripePaymentId(String stripePaymentId) { this.stripePaymentId = stripePaymentId; }
+    public String getStore() { return store; }
+    public void setStore(String store) { this.store = store; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
