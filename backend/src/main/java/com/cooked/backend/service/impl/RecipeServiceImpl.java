@@ -280,7 +280,7 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    @Cacheable("explore_recipes")
+    @Cacheable(value = "exploreRecipes", key = "#cuisine + '_' + #category + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     public Page<RecipeResponse> getExploreRecipes(String cuisine, String category, Pageable pageable) {
         return recipeRepository.findExploreRecipes(RecipeOrigin.EXPLORE, RecipeOrigin.EXPLORE, cuisine, category, pageable)
                 .map(recipe -> mapToResponse(recipe, null));
@@ -386,6 +386,7 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    @Cacheable(value = "popularRecipes", key = "#category + '_' + (#userEmail != null ? #userEmail : 'anonymous') + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     public org.springframework.data.domain.Page<RecipeResponse> getPopularRecipes(String category, String userEmail,
             org.springframework.data.domain.Pageable pageable) {
         User user = userEmail != null ? userRepository.findByEmail(userEmail).orElse(null) : null;

@@ -30,6 +30,7 @@ public class TrendingService {
         }
     }
 
+    @org.springframework.cache.annotation.CacheEvict(value = "trendingDishes", allEntries = true)
     @Scheduled(cron = "0 0 0 * * ?") // Runs every day at 00:00
     public void generateDailyTrendingDishes() {
         log.info("Starting daily trending dishes generation...");
@@ -48,6 +49,7 @@ public class TrendingService {
         }
     }
 
+    @org.springframework.cache.annotation.Cacheable(value = "trendingDishes")
     public List<String> getTrendingDishes() {
         return trendingDishRepository.findAll().stream()
                 .map(TrendingDish::getName)
