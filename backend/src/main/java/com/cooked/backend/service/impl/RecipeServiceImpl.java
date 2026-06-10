@@ -35,6 +35,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final com.cooked.backend.service.AiService aiService;
     private final com.cooked.backend.service.TaxonomyService taxonomyService;
     private final com.cooked.backend.service.CloudinaryService cloudinaryService;
+    private final RecipeCategoryRepository recipeCategoryRepository;
 
     @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
     public void onStartup() {
