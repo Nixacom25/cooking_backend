@@ -13,7 +13,13 @@ public class JacksonConfig {
     }
 
     @Bean
-    public com.fasterxml.jackson.datatype.jsr310.JavaTimeModule javaTimeModule() {
-        return new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule();
+    @org.springframework.context.annotation.Primary
+    public com.fasterxml.jackson.databind.ObjectMapper objectMapper() {
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        mapper.registerModule(new Hibernate6Module());
+        mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper;
     }
 }
