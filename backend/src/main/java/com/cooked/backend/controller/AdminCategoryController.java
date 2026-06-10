@@ -29,26 +29,28 @@ public class AdminCategoryController {
     }
 
     @Operation(summary = "Create a new category or cuisine")
-    @PostMapping
+    @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RecipeCategory> createCategory(
             @RequestParam String name,
             @RequestParam(required = false) String image,
+            @RequestPart(value = "imageFile", required = false) org.springframework.web.multipart.MultipartFile imageFile,
             @RequestParam CategoryType type,
             @RequestParam(required = false, defaultValue = "true") Boolean active) {
-        return ResponseEntity.ok(recipeService.createCategory(name, image, type, active));
+        return ResponseEntity.ok(recipeService.createCategory(name, image, imageFile, type, active));
     }
 
     @Operation(summary = "Update an existing category or cuisine")
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RecipeCategory> updateCategory(
             @PathVariable UUID id,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String image,
+            @RequestPart(value = "imageFile", required = false) org.springframework.web.multipart.MultipartFile imageFile,
             @RequestParam(required = false) CategoryType type,
             @RequestParam(required = false) Boolean active) {
-        return ResponseEntity.ok(recipeService.updateCategory(id, name, image, type, active));
+        return ResponseEntity.ok(recipeService.updateCategory(id, name, image, imageFile, type, active));
     }
 
     @Operation(summary = "Delete a category or cuisine")

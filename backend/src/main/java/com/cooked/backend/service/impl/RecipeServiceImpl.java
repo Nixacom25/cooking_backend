@@ -801,13 +801,21 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     @Transactional
-    public RecipeCategory createCategory(String name, String image, CategoryType type, Boolean active) {
+    public RecipeCategory createCategory(String name, String image, org.springframework.web.multipart.MultipartFile imageFile, CategoryType type, Boolean active) {
         if (recipeCategoryRepository.findByNameAndType(name, type).isPresent()) {
             throw new BadRequestException(type + " with name " + name + " already exists");
         }
+        String finalImage = image;
+        if (imageFile != null && !imageFile.isEmpty()) {
+            try {
+                finalImage = cloudinaryService.upload(imageFile);
+            } catch (java.io.IOException e) {
+                throw new RuntimeException("Failed to upload image", e);
+            }
+        }
         RecipeCategory category = RecipeCategory.builder()
                 .name(name)
-                .image(image)
+                .image(finalImage)
                 .type(type)
                 .active(active != null ? active : true)
                 .build();
@@ -816,14 +824,21 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     @Transactional
-    public RecipeCategory updateCategory(UUID id, String name, String image, CategoryType type, Boolean active) {
+    public RecipeCategory updateCategory(UUID id, String name, String image, org.springframework.web.multipart.MultipartFile imageFile, CategoryType type, Boolean active) {
         RecipeCategory category = recipeCategoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         
         if (name != null && !name.isBlank()) {
             category.setName(name);
         }
-        if (image != null) {
+        if (imageFile != null && !imageFile.isEmpty()) {
+            try {
+                String uploadedImage = cloudinaryService.upload(imageFile);
+                category.setImage(uploadedImage);
+            } catch (java.io.IOException e) {
+                throw new RuntimeException("Failed to upload image", e);
+            }
+        } else if (image != null) {
             category.setImage(image);
         }
         if (type != null) {
