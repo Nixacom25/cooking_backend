@@ -21,6 +21,7 @@ public class AnalyticsController {
 
     private final AnalyticsEventRepository analyticsEventRepository;
     private final com.cooked.backend.service.AnalyticsService analyticsService;
+    private final com.cooked.backend.service.FirebaseAnalyticsService firebaseAnalyticsService;
 
     @Operation(summary = "Track Paywall Event")
     @PostMapping("/track")
@@ -68,5 +69,17 @@ public class AnalyticsController {
                 org.springframework.data.domain.Sort.by(direction, sortParams[0]));
 
         return ResponseEntity.ok(analyticsService.getActiveSubscriptions(pageable));
+    }
+
+    @GetMapping("/firebase/traffic")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> getFirebaseTraffic() {
+        return ResponseEntity.ok(firebaseAnalyticsService.getTrafficData());
+    }
+
+    @GetMapping("/firebase/events")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> getFirebaseEvents() {
+        return ResponseEntity.ok(firebaseAnalyticsService.getEventsData());
     }
 }
