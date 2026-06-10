@@ -86,6 +86,12 @@ public class UserController {
         return ResponseEntity.ok(userService.getClients(pageable));
     }
 
+    @GetMapping("/client/{id}/stats")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<com.cooked.backend.dto.response.UserStatsResponse> getClientStats(@PathVariable UUID id) {
+        return ResponseEntity.ok(userService.getUserStats(id));
+    }
+
     @PostMapping("/client")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> createClient(@Valid @RequestBody CreateUserRequest request) {

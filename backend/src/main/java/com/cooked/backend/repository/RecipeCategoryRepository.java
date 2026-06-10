@@ -13,4 +13,10 @@ import java.util.List;
 public interface RecipeCategoryRepository extends JpaRepository<RecipeCategory, UUID> {
     Optional<RecipeCategory> findByNameAndType(String name, CategoryType type);
     List<RecipeCategory> findByType(CategoryType type);
+
+    @org.springframework.data.jpa.repository.Query("SELECT c, COUNT(r) FROM RecipeCategory c LEFT JOIN Recipe r ON (c.type = 'CATEGORY' AND r.category = c) OR (c.type = 'CUISINE' AND r.cuisine = c) GROUP BY c")
+    List<Object[]> findAllWithRecipeCount();
+
+    @org.springframework.data.jpa.repository.Query("SELECT c, COUNT(r) FROM RecipeCategory c LEFT JOIN Recipe r ON (c.type = 'CATEGORY' AND r.category = c) OR (c.type = 'CUISINE' AND r.cuisine = c) WHERE c.type = :type GROUP BY c")
+    List<Object[]> findByTypeWithRecipeCount(@org.springframework.data.repository.query.Param("type") CategoryType type);
 }

@@ -23,7 +23,7 @@ public class AdminCategoryController {
 
     @Operation(summary = "Get all categories or cuisines")
     @GetMapping
-    public ResponseEntity<List<RecipeCategory>> getAllCategories(
+    public ResponseEntity<List<com.cooked.backend.dto.response.AdminCategoryResponse>> getAllCategories(
             @RequestParam(required = false) CategoryType type) {
         return ResponseEntity.ok(recipeService.getAllCategories(type));
     }

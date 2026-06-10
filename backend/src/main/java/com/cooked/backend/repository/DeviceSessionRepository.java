@@ -12,6 +12,7 @@ import java.util.UUID;
 @Repository
 public interface DeviceSessionRepository extends JpaRepository<DeviceSession, UUID> {
     List<DeviceSession> findByUserOrderByLastActiveDesc(User user);
+    long countByUser(User user);
 
     Optional<DeviceSession> findByToken(String token);
 }

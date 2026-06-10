@@ -61,7 +61,7 @@ public interface RecipeService {
         void bulkCreateAdminRecipes(String adminEmail, java.util.List<com.cooked.backend.dto.request.CreateRecipeRequest> requests);
         
         // Category Management
-        List<com.cooked.backend.entity.RecipeCategory> getAllCategories(com.cooked.backend.entity.CategoryType type);
+        List<com.cooked.backend.dto.response.AdminCategoryResponse> getAllCategories(com.cooked.backend.entity.CategoryType type);
         com.cooked.backend.entity.RecipeCategory createCategory(String name, String image, org.springframework.web.multipart.MultipartFile imageFile, com.cooked.backend.entity.CategoryType type, Boolean active);
         com.cooked.backend.entity.RecipeCategory updateCategory(UUID id, String name, String image, org.springframework.web.multipart.MultipartFile imageFile, com.cooked.backend.entity.CategoryType type, Boolean active);
         void deleteCategory(UUID id);

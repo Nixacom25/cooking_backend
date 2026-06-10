@@ -40,6 +40,8 @@ public class UserServiceImpl implements UserService {
     private final com.cooked.backend.repository.RecipeRepository recipeRepository;
     private final com.cooked.backend.repository.MealPlanRepository mealPlanRepository;
     private final com.cooked.backend.repository.GroceryItemRepository groceryItemRepository;
+    private final com.cooked.backend.repository.CookbookRepository cookbookRepository;
+    private final com.cooked.backend.repository.DeviceSessionRepository deviceSessionRepository;
     private final jakarta.persistence.EntityManager entityManager;
 
     @Override
@@ -314,5 +316,33 @@ public class UserServiceImpl implements UserService {
         userRepository.delete(user);
         
         return new MessageResponse("Your account and all associated data have been permanently deleted.");
+    }
+
+    @Override
+    public com.cooked.backend.dto.response.UserStatsResponse getUserStats(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        long totalRecipes = recipeRepository.countByUserId(id);
+        long totalCookbooks = cookbookRepository.countByUserId(id);
+        long totalScans = recipeRepository.countByUserIdAndOrigin(id, com.cooked.backend.entity.RecipeOrigin.SCAN);
+        long totalImports = recipeRepository.countByUserIdAndOrigin(id, com.cooked.backend.entity.RecipeOrigin.IMPORT);
+        long savedExploreRecipes = recipeRepository.countByUserIdAndOrigin(id, com.cooked.backend.entity.RecipeOrigin.EXPLORE);
+        
+        long totalSessions = deviceSessionRepository.countByUser(user);
+        
+        java.util.List<com.cooked.backend.entity.DeviceSession> sessions = deviceSessionRepository.findByUserOrderByLastActiveDesc(user);
+        java.time.LocalDateTime lastLogin = sessions.isEmpty() ? user.getUpdatedAt() : sessions.get(0).getLastActive();
+
+        return com.cooked.backend.dto.response.UserStatsResponse.builder()
+                .accountCreatedAt(user.getCreatedAt())
+                .lastLogin(lastLogin)
+                .totalSessions(totalSessions)
+                .totalRecipes(totalRecipes)
+                .totalCookbooks(totalCookbooks)
+                .totalScans(totalScans)
+                .totalImports(totalImports)
+                .savedExploreRecipes(savedExploreRecipes)
+                .build();
     }
 }

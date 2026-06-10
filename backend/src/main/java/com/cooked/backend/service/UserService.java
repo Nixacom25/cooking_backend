@@ -41,4 +41,6 @@ public interface UserService {
     MessageResponse updateUserStatus(UUID id, UpdateUserStatusRequest request);
     
     MessageResponse deleteCurrentUser(String email);
+
+    com.cooked.backend.dto.response.UserStatsResponse getUserStats(UUID id);
 }

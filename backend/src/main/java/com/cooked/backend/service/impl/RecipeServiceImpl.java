@@ -792,11 +792,26 @@ public class RecipeServiceImpl implements RecipeService {
     // Category Management
     
     @Override
-    public List<RecipeCategory> getAllCategories(CategoryType type) {
+    public List<com.cooked.backend.dto.response.AdminCategoryResponse> getAllCategories(CategoryType type) {
+        List<Object[]> results;
         if (type == null) {
-            return recipeCategoryRepository.findAll();
+            results = recipeCategoryRepository.findAllWithRecipeCount();
+        } else {
+            results = recipeCategoryRepository.findByTypeWithRecipeCount(type);
         }
-        return recipeCategoryRepository.findByType(type);
+        
+        return results.stream().map(result -> {
+            RecipeCategory category = (RecipeCategory) result[0];
+            long count = ((Number) result[1]).longValue();
+            return com.cooked.backend.dto.response.AdminCategoryResponse.builder()
+                    .id(category.getId())
+                    .name(category.getName())
+                    .image(category.getImage())
+                    .type(category.getType())
+                    .active(category.isActive())
+                    .recipeCount(count)
+                    .build();
+        }).collect(java.util.stream.Collectors.toList());
     }
 
     @Override
