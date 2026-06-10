@@ -57,4 +57,10 @@ public interface RecipeService {
         RecipeResponse updateAdminRecipe(UUID id, String recipeJson, org.springframework.web.multipart.MultipartFile image);
 
         void deleteAdminRecipe(UUID id);
+        
+        // Category Management
+        List<com.cooked.backend.entity.RecipeCategory> getAllCategories(com.cooked.backend.entity.CategoryType type);
+        com.cooked.backend.entity.RecipeCategory createCategory(String name, String image, com.cooked.backend.entity.CategoryType type);
+        com.cooked.backend.entity.RecipeCategory updateCategory(UUID id, String name, String image);
+        void deleteCategory(UUID id);
 }

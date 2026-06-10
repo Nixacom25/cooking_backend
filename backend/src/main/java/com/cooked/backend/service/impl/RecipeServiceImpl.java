@@ -748,4 +748,54 @@ public class RecipeServiceImpl implements RecipeService {
         }
         recipeRepository.deleteById(id);
     }
+    
+    // Category Management
+    
+    @Override
+    public List<RecipeCategory> getAllCategories(CategoryType type) {
+        if (type == null) {
+            return recipeCategoryRepository.findAll();
+        }
+        return recipeCategoryRepository.findByType(type);
+    }
+
+    @Override
+    @Transactional
+    public RecipeCategory createCategory(String name, String image, CategoryType type) {
+        if (recipeCategoryRepository.findByNameAndType(name, type).isPresent()) {
+            throw new BadRequestException(type + " with name " + name + " already exists");
+        }
+        RecipeCategory category = RecipeCategory.builder()
+                .name(name)
+                .image(image)
+                .type(type)
+                .active(true)
+                .build();
+        return recipeCategoryRepository.save(category);
+    }
+
+    @Override
+    @Transactional
+    public RecipeCategory updateCategory(UUID id, String name, String image) {
+        RecipeCategory category = recipeCategoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+        
+        if (name != null && !name.isBlank()) {
+            category.setName(name);
+        }
+        if (image != null) {
+            category.setImage(image);
+        }
+        
+        return recipeCategoryRepository.save(category);
+    }
+
+    @Override
+    @Transactional
+    public void deleteCategory(UUID id) {
+        if (!recipeCategoryRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Category not found");
+        }
+        recipeCategoryRepository.deleteById(id);
+    }
 }
