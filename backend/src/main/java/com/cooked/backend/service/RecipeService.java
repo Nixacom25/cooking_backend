@@ -58,6 +58,8 @@ public interface RecipeService {
 
         void deleteAdminRecipe(UUID id);
         
+        void bulkCreateAdminRecipes(String adminEmail, java.util.List<com.cooked.backend.dto.request.CreateRecipeRequest> requests);
+        
         // Category Management
         List<com.cooked.backend.entity.RecipeCategory> getAllCategories(com.cooked.backend.entity.CategoryType type);
         com.cooked.backend.entity.RecipeCategory createCategory(String name, String image, com.cooked.backend.entity.CategoryType type, Boolean active);

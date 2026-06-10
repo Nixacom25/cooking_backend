@@ -51,6 +51,16 @@ public class AdminRecipeController {
         return ResponseEntity.ok(recipeService.updateAdminRecipe(id, recipeJson, image));
     }
 
+    @Operation(summary = "Bulk import recipes")
+    @PostMapping("/bulk")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> bulkImportRecipes(
+            @RequestBody java.util.List<com.cooked.backend.dto.request.CreateRecipeRequest> requests,
+            org.springframework.security.core.Authentication auth) {
+        recipeService.bulkCreateAdminRecipes(auth.getName(), requests);
+        return ResponseEntity.ok(new MessageResponse(requests.size() + " recipes imported successfully"));
+    }
+
     @Operation(summary = "Delete recipe by ID")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

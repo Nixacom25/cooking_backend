@@ -61,6 +61,45 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     @Transactional
+    public void bulkCreateAdminRecipes(String adminEmail, java.util.List<com.cooked.backend.dto.request.CreateRecipeRequest> requests) {
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin user not found"));
+
+        if (admin.getRole() != com.cooked.backend.entity.Role.ADMIN) {
+            throw new BadRequestException("User does not have admin privileges");
+        }
+
+        List<Recipe> newRecipes = new ArrayList<>();
+        for (CreateRecipeRequest request : requests) {
+            String recipeName = request.getName() != null ? request.getName().trim() : "Unnamed Recipe";
+            
+            Recipe recipe = Recipe.builder()
+                    .user(admin)
+                    .name(recipeName)
+                    .image(request.getImage())
+                    .cookTime(request.getCookTime())
+                    .prepTime(request.getPrepTime())
+                    .kcal(request.getKcal())
+                    .servings(request.getServings())
+                    .tips(request.getTips())
+                    .cuisine(request.getCuisine() != null ? taxonomyService.getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE) : null)
+                    .category(request.getCategory() != null ? taxonomyService.getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY) : null)
+                    .sourceUrl(request.getSourceUrl())
+                    .steps(request.getSteps() != null ? request.getSteps() : new ArrayList<>())
+                    .equipment(request.getEquipment() != null ? request.getEquipment() : new ArrayList<>())
+                    .isPublic(true)
+                    .status(true)
+                    .origin(RecipeOrigin.EXPLORE) // Or manual based on what it is
+                    .build();
+            
+            newRecipes.add(recipe);
+        }
+
+        recipeRepository.saveAll(newRecipes);
+    }
+
+    @Override
+    @Transactional
     public RecipeResponse create(String userEmail, CreateRecipeRequest request) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
