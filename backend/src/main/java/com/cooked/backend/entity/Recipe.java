@@ -100,6 +100,9 @@ public class Recipe {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @Column(name = "last_modified_by", nullable = true)
+    private String lastModifiedBy;
+
     @ElementCollection(fetch = jakarta.persistence.FetchType.LAZY)
     @CollectionTable(name = "recipe_equipment", joinColumns = @JoinColumn(name = "recipe_id"))
     @Column(name = "item", columnDefinition = "TEXT")
@@ -166,6 +169,8 @@ public class Recipe {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public String getLastModifiedBy() { return lastModifiedBy; }
+    public void setLastModifiedBy(String lastModifiedBy) { this.lastModifiedBy = lastModifiedBy; }
     public RecipeOrigin getOrigin() { return origin; }
     public void setOrigin(RecipeOrigin origin) { this.origin = origin; }
     public boolean isPinned() { return isPinned; }

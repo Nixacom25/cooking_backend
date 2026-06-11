@@ -25,6 +25,7 @@ public class RecipeResponse {
     private String shareUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String lastModifiedBy;
     private boolean isSuggested;
     private LocalDateTime expiresAt;
     private String origin;
@@ -78,6 +79,8 @@ public class RecipeResponse {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public String getLastModifiedBy() { return lastModifiedBy; }
+    public void setLastModifiedBy(String lastModifiedBy) { this.lastModifiedBy = lastModifiedBy; }
     public boolean isSuggested() { return isSuggested; }
     public void setSuggested(boolean isSuggested) { this.isSuggested = isSuggested; }
     public LocalDateTime getExpiresAt() { return expiresAt; }
@@ -123,6 +126,7 @@ public class RecipeResponse {
         public RecipeResponseBuilder shareUrl(String shareUrl) { response.setShareUrl(shareUrl); return this; }
         public RecipeResponseBuilder createdAt(LocalDateTime createdAt) { response.setCreatedAt(createdAt); return this; }
         public RecipeResponseBuilder updatedAt(LocalDateTime updatedAt) { response.setUpdatedAt(updatedAt); return this; }
+        public RecipeResponseBuilder lastModifiedBy(String lastModifiedBy) { response.setLastModifiedBy(lastModifiedBy); return this; }
         public RecipeResponseBuilder isSuggested(boolean isSuggested) { response.setSuggested(isSuggested); return this; }
         public RecipeResponseBuilder expiresAt(LocalDateTime expiresAt) { response.setExpiresAt(expiresAt); return this; }
         public RecipeResponseBuilder origin(String origin) { response.setOrigin(origin); return this; }

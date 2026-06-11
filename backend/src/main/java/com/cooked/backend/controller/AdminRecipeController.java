@@ -31,7 +31,7 @@ public class AdminRecipeController {
 
     @Operation(summary = "Get all recipes for admin")
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<Page<RecipeResponse>> getAllRecipes(
             @RequestParam(required = false) RecipeOrigin origin,
             @RequestParam(required = false) String name,
@@ -43,7 +43,7 @@ public class AdminRecipeController {
 
     @Operation(summary = "Update full recipe details")
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<RecipeResponse> updateRecipe(
             @PathVariable UUID id,
             @RequestPart("recipe") String recipeJson,
@@ -53,7 +53,7 @@ public class AdminRecipeController {
 
     @Operation(summary = "Bulk import recipes")
     @PostMapping("/bulk")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<MessageResponse> bulkImportRecipes(
             @RequestBody java.util.List<com.cooked.backend.dto.request.CreateRecipeRequest> requests,
             org.springframework.security.core.Authentication auth) {
@@ -63,7 +63,7 @@ public class AdminRecipeController {
 
     @Operation(summary = "Delete recipe by ID")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<MessageResponse> deleteRecipe(@PathVariable UUID id) {
         recipeService.deleteAdminRecipe(id);
         return ResponseEntity.ok(new MessageResponse("Recipe deleted successfully"));

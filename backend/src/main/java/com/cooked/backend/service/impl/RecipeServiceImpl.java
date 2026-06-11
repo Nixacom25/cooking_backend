@@ -631,6 +631,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .isInCookbook(isInCookbook)
                 .totalPrice(recipe.getTotalPrice())
                 .ingredientsCount(recipe.getIngredientsCount())
+                .lastModifiedBy(recipe.getLastModifiedBy())
                 .shareUrl("https://link.cookedapp.com/share/recipes/" + recipe.getId())
                 .build();
     }
@@ -771,6 +772,14 @@ public class RecipeServiceImpl implements RecipeService {
             }
 
             recipe.setStatus(true);
+
+            String currentUserEmail = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+            User currentUser = userRepository.findByEmail(currentUserEmail).orElse(null);
+            if (currentUser != null) {
+                recipe.setLastModifiedBy(currentUser.getFirstname() + " " + currentUser.getLastname());
+            } else {
+                recipe.setLastModifiedBy("Admin");
+            }
 
             Recipe saved = recipeRepository.save(recipe);
             return mapToResponse(saved, null);

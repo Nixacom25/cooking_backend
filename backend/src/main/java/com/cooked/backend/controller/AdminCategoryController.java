@@ -30,7 +30,7 @@ public class AdminCategoryController {
 
     @Operation(summary = "Create a new category or cuisine")
     @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<RecipeCategory> createCategory(
             @RequestParam String name,
             @RequestParam(required = false) String image,
@@ -42,7 +42,7 @@ public class AdminCategoryController {
 
     @Operation(summary = "Update an existing category or cuisine")
     @PutMapping(value = "/{id}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<RecipeCategory> updateCategory(
             @PathVariable UUID id,
             @RequestParam(required = false) String name,
@@ -55,7 +55,7 @@ public class AdminCategoryController {
 
     @Operation(summary = "Delete a category or cuisine")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<Void> deleteCategory(@PathVariable UUID id) {
         recipeService.deleteCategory(id);
         return ResponseEntity.noContent().build();
