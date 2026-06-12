@@ -282,8 +282,8 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     @Cacheable(value = "exploreRecipes", key = "#cuisine + '_' + #category + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     public Page<RecipeResponse> getExploreRecipes(String cuisine, String category, Pageable pageable) {
-        return recipeRepository.findExploreRecipes(RecipeOrigin.EXPLORE, RecipeOrigin.EXPLORE, cuisine, category, pageable)
-                .map(recipe -> mapToResponse(recipe, null));
+        return new com.cooked.backend.dto.response.RestPageImpl<>(recipeRepository.findExploreRecipes(RecipeOrigin.EXPLORE, RecipeOrigin.EXPLORE, cuisine, category, pageable)
+                .map(recipe -> mapToResponse(recipe, null)));
     }
 
     @Override
@@ -400,12 +400,12 @@ public class RecipeServiceImpl implements RecipeService {
         org.springframework.data.domain.Pageable limitedPageable = org.springframework.data.domain.PageRequest.of(0, 10);
 
         try {
-            return recipeRepository.findRandomPopularRecipes(category, (preferredCuisines != null && preferredCuisines.isEmpty()) ? null : preferredCuisines, limitedPageable)
-                    .map(recipe -> mapToResponse(recipe, user));
+            return new com.cooked.backend.dto.response.RestPageImpl<>(recipeRepository.findRandomPopularRecipes(category, (preferredCuisines != null && preferredCuisines.isEmpty()) ? null : preferredCuisines, limitedPageable)
+                    .map(recipe -> mapToResponse(recipe, user)));
         } catch (Exception e) {
             System.err.println("Error fetching popular recipes: " + e.getMessage());
-            return recipeRepository.findExploreRecipes(com.cooked.backend.entity.RecipeOrigin.EXPLORE, com.cooked.backend.entity.RecipeOrigin.SUGGESTED, null, category, limitedPageable)
-                    .map(recipe -> mapToResponse(recipe, user));
+            return new com.cooked.backend.dto.response.RestPageImpl<>(recipeRepository.findExploreRecipes(com.cooked.backend.entity.RecipeOrigin.EXPLORE, com.cooked.backend.entity.RecipeOrigin.SUGGESTED, null, category, limitedPageable)
+                    .map(recipe -> mapToResponse(recipe, user)));
         }
     }
 
