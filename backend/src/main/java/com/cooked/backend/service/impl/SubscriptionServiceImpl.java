@@ -419,11 +419,17 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     private boolean callAppleVerify(String url, String receiptData) {
         try {
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+
             java.util.Map<String, String> body = new java.util.HashMap<>();
-            body.put("receipt-data", receiptData);
+            // Sanitize the base64 receipt string to prevent 21002 malformed data error
+            String cleanReceipt = receiptData.replaceAll("[\\n\\r\\t ]", "");
+            body.put("receipt-data", cleanReceipt);
             body.put("password", appleSharedSecret);
 
-            org.springframework.http.ResponseEntity<java.util.Map> response = restTemplate.postForEntity(url, body, java.util.Map.class);
+            org.springframework.http.HttpEntity<java.util.Map<String, String>> request = new org.springframework.http.HttpEntity<>(body, headers);
+            org.springframework.http.ResponseEntity<java.util.Map> response = restTemplate.postForEntity(url, request, java.util.Map.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Integer status = (Integer) response.getBody().get("status");
                 if (status != null && status == 0) {
