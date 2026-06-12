@@ -422,13 +422,19 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
             headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
 
-            java.util.Map<String, String> body = new java.util.HashMap<>();
-            // Sanitize the base64 receipt string to prevent 21002 malformed data error
             String cleanReceipt = receiptData.replaceAll("[\\n\\r\\t ]", "");
-            body.put("receipt-data", cleanReceipt);
-            body.put("password", appleSharedSecret);
+            log.info("Calling Apple verify at {} with receipt length: {}", url, cleanReceipt.length());
 
-            org.springframework.http.HttpEntity<java.util.Map<String, String>> request = new org.springframework.http.HttpEntity<>(body, headers);
+            com.fasterxml.jackson.databind.node.ObjectNode jsonNodes = new com.fasterxml.jackson.databind.ObjectMapper().createObjectNode();
+            jsonNodes.put("receipt-data", cleanReceipt);
+            if (appleSharedSecret != null && !appleSharedSecret.trim().isEmpty() && !"VOTRE_SHARED_SECRET".equals(appleSharedSecret)) {
+                jsonNodes.put("password", appleSharedSecret);
+            }
+            jsonNodes.put("exclude-old-transactions", true);
+
+            String jsonPayload = jsonNodes.toString();
+
+            org.springframework.http.HttpEntity<String> request = new org.springframework.http.HttpEntity<>(jsonPayload, headers);
             org.springframework.http.ResponseEntity<java.util.Map> response = restTemplate.postForEntity(url, request, java.util.Map.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Integer status = (Integer) response.getBody().get("status");
@@ -439,6 +445,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                     return false; // Signal retry with sandbox
                 }
                 log.warn("Apple verification returned status: {}", status);
+            } else {
+                log.error("Apple verification failed with status code: {}", response.getStatusCode());
             }
         } catch (Exception e) {
             log.error("Error calling Apple verify: {}", e.getMessage());
