@@ -398,7 +398,7 @@ public class MarkhorAiServiceImpl implements AiService {
                     req.setKcal(r.getKcal());
                     req.setServings(r.getServings());
                     req.setCuisine(r.getCuisine() != null ? r.getCuisine().getName() : null);
-                    req.setCategory(r.getCategory() != null ? r.getCategory().getName() : null);
+                    req.setCategories(r.getCategories() != null ? r.getCategories().stream().map(c -> c.getName()).collect(java.util.stream.Collectors.toList()) : null);
                     req.setTips(r.getTips());
                     req.setOrigin("ONBOARDING");
                     req.setSourceUrl(r.getSourceUrl());
@@ -856,13 +856,13 @@ public class MarkhorAiServiceImpl implements AiService {
             }
 
             // --- Phase 4: category fallback ---
-            if (!found && request.getCategory() != null && !request.getCategory().isEmpty()) {
+            if (!found && request.getCategories() != null && !request.getCategories().isEmpty()) {
                 org.springframework.data.domain.Page<com.cooked.backend.entity.Recipe> categoryMatches =
-                        recipeRepository.findByCategoryWithImage(request.getCategory(),
+                        recipeRepository.findByCategoryWithImage(request.getCategories().get(0),
                                 org.springframework.data.domain.PageRequest.of(0, 1));
                 if (categoryMatches.hasContent()) {
                     request.setImage(categoryMatches.getContent().get(0).getImage());
-                    log.info("Assigned image for '{}' via category fallback (category='{}')", name, request.getCategory());
+                    log.info("Assigned image for '{}' via category fallback (category='{}')", name, request.getCategories().get(0));
                 }
             }
         }

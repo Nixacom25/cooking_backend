@@ -57,9 +57,14 @@ public class Recipe {
     @Column(nullable = true)
     private Integer kcal;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = true)
-    private RecipeCategory category;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "recipe_categories_mapping",
+        joinColumns = @JoinColumn(name = "recipe_id"),
+        inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    @Builder.Default
+    private Set<RecipeCategory> categories = new java.util.HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cuisine_id", nullable = true)
@@ -143,8 +148,8 @@ public class Recipe {
     public void setPrepTime(Integer prepTime) { this.prepTime = prepTime; }
     public Integer getKcal() { return kcal; }
     public void setKcal(Integer kcal) { this.kcal = kcal; }
-    public RecipeCategory getCategory() { return category; }
-    public void setCategory(RecipeCategory category) { this.category = category; }
+    public Set<RecipeCategory> getCategories() { return categories; }
+    public void setCategories(Set<RecipeCategory> categories) { this.categories = categories; }
     public RecipeCategory getCuisine() { return cuisine; }
     public void setCuisine(RecipeCategory cuisine) { this.cuisine = cuisine; }
     public Integer getServings() { return servings; }

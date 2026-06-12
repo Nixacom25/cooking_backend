@@ -11,7 +11,7 @@ public class RecipeResponse {
     private Integer cookTime;
     private Integer prepTime;
     private Integer kcal;
-    private String category;
+    private List<String> categories;
     private String cuisine;
     private Integer servings;
     private String tips;
@@ -51,8 +51,8 @@ public class RecipeResponse {
     public void setPrepTime(Integer prepTime) { this.prepTime = prepTime; }
     public Integer getKcal() { return kcal; }
     public void setKcal(Integer kcal) { this.kcal = kcal; }
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
+    public List<String> getCategories() { return categories; }
+    public void setCategories(List<String> categories) { this.categories = categories; }
     public String getCuisine() { return cuisine; }
     public void setCuisine(String cuisine) { this.cuisine = cuisine; }
     public Integer getServings() { return servings; }
@@ -112,7 +112,7 @@ public class RecipeResponse {
         public RecipeResponseBuilder cookTime(Integer cookTime) { response.setCookTime(cookTime); return this; }
         public RecipeResponseBuilder prepTime(Integer prepTime) { response.setPrepTime(prepTime); return this; }
         public RecipeResponseBuilder kcal(Integer kcal) { response.setKcal(kcal); return this; }
-        public RecipeResponseBuilder category(String category) { response.setCategory(category); return this; }
+        public RecipeResponseBuilder categories(List<String> categories) { response.setCategories(categories); return this; }
         public RecipeResponseBuilder cuisine(String cuisine) { response.setCuisine(cuisine); return this; }
         public RecipeResponseBuilder servings(Integer servings) { response.setServings(servings); return this; }
         public RecipeResponseBuilder tips(String tips) { response.setTips(tips); return this; }

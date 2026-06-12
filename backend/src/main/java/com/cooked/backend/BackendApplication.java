@@ -96,6 +96,16 @@ public class BackendApplication {
 					jdbcTemplate.execute("UPDATE recipes r SET category_id = (SELECT id FROM recipe_categories rc WHERE rc.name = r.category AND rc.type = 'CATEGORY') WHERE category_id IS NULL AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='recipes' AND column_name='category')");
 					jdbcTemplate.execute("UPDATE recipes r SET cuisine_id = (SELECT id FROM recipe_categories rc WHERE rc.name = r.cuisine AND rc.type = 'CUISINE') WHERE cuisine_id IS NULL AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='recipes' AND column_name='cuisine')");
 
+					// 3.5 Migrate Many-to-Many Categories
+					try {
+						jdbcTemplate.execute("INSERT INTO recipe_categories_mapping (recipe_id, category_id) " +
+								"SELECT id, category_id FROM recipes WHERE category_id IS NOT NULL " +
+								"ON CONFLICT DO NOTHING");
+						System.out.println("COOKED_DB_CLEANUP: Migrated existing category_ids to recipe_categories_mapping!");
+					} catch (Exception m2mEx) {
+						System.err.println("COOKED_DB_CLEANUP: M2M category migration skipped or already done: " + m2mEx.getMessage());
+					}
+
 					// 4. Drop legacy columns
 					try {
 						jdbcTemplate.execute("ALTER TABLE recipes DROP COLUMN IF EXISTS category");

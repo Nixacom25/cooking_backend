@@ -83,7 +83,7 @@ public class RecipeServiceImpl implements RecipeService {
                     .servings(request.getServings())
                     .tips(request.getTips())
                     .cuisine(request.getCuisine() != null ? taxonomyService.getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE) : null)
-                    .category(request.getCategory() != null ? taxonomyService.getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY) : null)
+                    .categories(request.getCategories() != null ? request.getCategories().stream().map(c -> taxonomyService.getOrCreateCategory(c, CategoryType.CATEGORY)).collect(java.util.stream.Collectors.toSet()) : new java.util.HashSet<>())
                     .sourceUrl(request.getSourceUrl())
                     .steps(request.getSteps() != null ? request.getSteps() : new ArrayList<>())
                     .equipment(request.getEquipment() != null ? request.getEquipment() : new ArrayList<>())
@@ -120,7 +120,7 @@ public class RecipeServiceImpl implements RecipeService {
             if (request.getServings() != null) recipe.setServings(request.getServings());
             if (request.getTips() != null) recipe.setTips(request.getTips());
             if (request.getCuisine() != null) recipe.setCuisine(taxonomyService.getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE));
-            if (request.getCategory() != null) recipe.setCategory(taxonomyService.getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY));
+            if (request.getCategories() != null) recipe.setCategories(request.getCategories().stream().map(c -> taxonomyService.getOrCreateCategory(c, CategoryType.CATEGORY)).collect(java.util.stream.Collectors.toSet()));
             if (request.getSourceUrl() != null) recipe.setSourceUrl(request.getSourceUrl());
             if (request.getSteps() != null) recipe.setSteps(request.getSteps());
             if (request.getEquipment() != null) recipe.setEquipment(request.getEquipment());
@@ -135,7 +135,7 @@ public class RecipeServiceImpl implements RecipeService {
                     .servings(request.getServings())
                     .tips(request.getTips())
                     .cuisine(taxonomyService.getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE))
-                    .category(taxonomyService.getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY))
+                    .categories(request.getCategories() != null ? request.getCategories().stream().map(c -> taxonomyService.getOrCreateCategory(c, CategoryType.CATEGORY)).collect(java.util.stream.Collectors.toSet()) : new java.util.HashSet<>())
                     .sourceUrl(request.getSourceUrl())
                     .steps(request.getSteps() != null ? request.getSteps() : new java.util.ArrayList<>())
                     .equipment(request.getEquipment() != null ? request.getEquipment() : new java.util.ArrayList<>())
@@ -443,7 +443,7 @@ public class RecipeServiceImpl implements RecipeService {
             recipe.setServings(request.getServings());
             recipe.setTips(request.getTips());
             recipe.setCuisine(taxonomyService.getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE));
-            recipe.setCategory(taxonomyService.getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY));
+            if (request.getCategories() != null) recipe.setCategories(request.getCategories().stream().map(c -> taxonomyService.getOrCreateCategory(c, CategoryType.CATEGORY)).collect(java.util.stream.Collectors.toSet()));
             recipe.setSourceUrl(url);
             recipe.setSteps(request.getSteps() != null ? request.getSteps() : new ArrayList<>());
             recipe.setEquipment(request.getEquipment() != null ? request.getEquipment() : new ArrayList<>());
@@ -463,7 +463,7 @@ public class RecipeServiceImpl implements RecipeService {
                     .servings(request.getServings())
                     .tips(request.getTips())
                     .cuisine(taxonomyService.getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE))
-                    .category(taxonomyService.getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY))
+                    .categories(request.getCategories() != null ? request.getCategories().stream().map(c -> taxonomyService.getOrCreateCategory(c, CategoryType.CATEGORY)).collect(java.util.stream.Collectors.toSet()) : new java.util.HashSet<>())
                     .sourceUrl(url)
                     .steps(request.getSteps() != null ? request.getSteps() : new ArrayList<>())
                     .equipment(request.getEquipment() != null ? request.getEquipment() : new ArrayList<>())
@@ -554,7 +554,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .cookTime(original.getCookTime())
                 .prepTime(original.getPrepTime())
                 .kcal(original.getKcal())
-                .category(original.getCategory())
+                .categories(new java.util.HashSet<>(original.getCategories()))
                 .cuisine(original.getCuisine())
                 .servings(original.getServings())
                 .tips(original.getTips())
@@ -607,7 +607,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .cookTime(recipe.getCookTime())
                 .prepTime(recipe.getPrepTime())
                 .kcal(recipe.getKcal())
-                .category(recipe.getCategory() != null ? recipe.getCategory().getName() : null)
+                .categories(recipe.getCategories() != null ? recipe.getCategories().stream().map(RecipeCategory::getName).collect(java.util.stream.Collectors.toList()) : new java.util.ArrayList<>())
                 .cuisine(recipe.getCuisine() != null ? recipe.getCuisine().getName() : null)
                 .creator(recipe.getUser() != null ? RecipeCreatorResponse.builder()
                         .id(recipe.getUser().getId())
@@ -729,8 +729,8 @@ public class RecipeServiceImpl implements RecipeService {
             if (request.getCuisine() != null) {
                 recipe.setCuisine(taxonomyService.getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE));
             }
-            if (request.getCategory() != null) {
-                recipe.setCategory(taxonomyService.getOrCreateCategory(request.getCategory(), CategoryType.CATEGORY));
+            if (request.getCategories() != null) {
+                recipe.setCategories(request.getCategories().stream().map(c -> taxonomyService.getOrCreateCategory(c, CategoryType.CATEGORY)).collect(java.util.stream.Collectors.toSet()));
             }
 
             if (request.getSteps() != null) {

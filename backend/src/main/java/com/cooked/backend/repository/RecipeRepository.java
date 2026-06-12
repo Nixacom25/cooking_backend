@@ -19,22 +19,22 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         boolean existsByUserIdAndName(UUID userId, String name);
         boolean existsByNameAndOrigin(String name, com.cooked.backend.entity.RecipeOrigin origin);
 
-        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "category", "cuisine"})
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
         List<Recipe> findAllByUserId(UUID userId);
-        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "category", "cuisine"})
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
         List<Recipe> findAllByUserIdAndOriginNot(UUID userId, com.cooked.backend.entity.RecipeOrigin origin);
         
         Optional<Recipe> findFirstByUserIdAndOriginNotInOrderByCreatedAtAsc(UUID userId, List<com.cooked.backend.entity.RecipeOrigin> origins);
-        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "category", "cuisine"})
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
         List<Recipe> findAllByUserIdAndOriginOrderByCreatedAtDesc(UUID userId, com.cooked.backend.entity.RecipeOrigin origin);
 
         @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.isPublic = true " +
                         "AND r.status = true " +
                         "AND (r.origin = :origin1 OR r.origin = :origin2) " +
                         "AND (:cuisine IS NULL OR r.cuisine.name = :cuisine) " +
-                        "AND (:category IS NULL OR r.category.name = :category) " +
+                        "AND (:category IS NULL OR :category IN (SELECT c.name FROM r.categories c)) " +
                         "ORDER BY r.createdAt DESC")
-        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "category", "cuisine"})
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
         org.springframework.data.domain.Page<Recipe> findExploreRecipes(
                         @org.springframework.data.repository.query.Param("origin1") com.cooked.backend.entity.RecipeOrigin origin1,
                         @org.springframework.data.repository.query.Param("origin2") com.cooked.backend.entity.RecipeOrigin origin2,
@@ -42,7 +42,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
                         @org.springframework.data.repository.query.Param("category") String category,
                         org.springframework.data.domain.Pageable pageable);
 
-        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "category", "cuisine"})
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
         org.springframework.data.domain.Page<Recipe> findByOriginOrderByCreatedAtDesc(
                         com.cooked.backend.entity.RecipeOrigin origin,
                         org.springframework.data.domain.Pageable pageable);
@@ -59,7 +59,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
 
         @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r " +
                         "WHERE r.isPublic = true " +
-                        "AND (:category IS NULL OR r.category.name = :category) " +
+                        "AND (:category IS NULL OR :category IN (SELECT c.name FROM r.categories c)) " +
                         "AND (:cuisines IS NULL OR (SELECT COUNT(r2) FROM Recipe r2 WHERE r2.id = r.id AND r2.cuisine.name IN :cuisines) > 0) " +
                         "ORDER BY RANDOM()")
         org.springframework.data.domain.Page<Recipe> findRandomPopularRecipes(
@@ -100,7 +100,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r.cuisine.name FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.cuisine IS NOT NULL")
         List<String> findDistinctCuisines();
 
-    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, COUNT(r) FROM Recipe r JOIN r.category c WHERE r.origin = 'EXPLORE' AND c.type = com.cooked.backend.entity.CategoryType.CATEGORY AND c.active = true GROUP BY c.name, c.image ORDER BY COUNT(r) DESC")
+    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, COUNT(r) FROM Recipe r JOIN r.categories c WHERE r.origin = 'EXPLORE' AND c.type = com.cooked.backend.entity.CategoryType.CATEGORY AND c.active = true GROUP BY c.name, c.image ORDER BY COUNT(r) DESC")
     List<Object[]> findCategoriesWithCount();
 
     @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, COUNT(r) FROM Recipe r JOIN r.cuisine c WHERE r.origin = 'EXPLORE' AND c.type = com.cooked.backend.entity.CategoryType.CUISINE AND c.active = true GROUP BY c.name, c.image ORDER BY COUNT(r) DESC")
@@ -120,7 +120,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
             "LOWER(r.name) LIKE LOWER(CONCAT('%', :kw4, '%')) OR " +
             "LOWER(r.name) LIKE LOWER(CONCAT('%', :kw5, '%'))" +
         ")")
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "category", "cuisine"})
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
     List<Recipe> findExploreRecipesByKeywords(
         @org.springframework.data.repository.query.Param("kw1") String kw1,
         @org.springframework.data.repository.query.Param("kw2") String kw2,
@@ -140,15 +140,15 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
     List<Recipe> findRecipesExistingInData();
 
     @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.status = true AND LOWER(r.cuisine.name) = LOWER(:cuisine) AND r.image IS NOT NULL AND r.image != '' AND r.image NOT LIKE '%unsplash%' AND r.image NOT LIKE '%splash%' ORDER BY RANDOM()")
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "category", "cuisine"})
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
     org.springframework.data.domain.Page<Recipe> findByCuisineWithImage(@org.springframework.data.repository.query.Param("cuisine") String cuisine, org.springframework.data.domain.Pageable pageable);
 
-    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.status = true AND LOWER(r.category.name) = LOWER(:category) AND r.image IS NOT NULL AND r.image != '' AND r.image NOT LIKE '%unsplash%' AND r.image NOT LIKE '%splash%' ORDER BY RANDOM()")
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "category", "cuisine"})
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.status = true AND LOWER(:category) IN (SELECT LOWER(c.name) FROM r.categories c) AND r.image IS NOT NULL AND r.image != '' AND r.image NOT LIKE '%unsplash%' AND r.image NOT LIKE '%splash%' ORDER BY RANDOM()")
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
     org.springframework.data.domain.Page<Recipe> findByCategoryWithImage(@org.springframework.data.repository.query.Param("category") String category, org.springframework.data.domain.Pageable pageable);
 
     @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE LOWER(r.name) LIKE LOWER(CONCAT('%', :name, '%'))")
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "category", "cuisine"})
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
     org.springframework.data.domain.Page<Recipe> findAdminRecipesByName(@org.springframework.data.repository.query.Param("name") String name, org.springframework.data.domain.Pageable pageable);
 
     @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.origin = :origin AND LOWER(r.name) LIKE LOWER(CONCAT('%', :name, '%'))")

@@ -77,7 +77,7 @@ public class ShareController {
         String recipeImage = escapeHtml(rawImage);
 
         String cuisine = recipe.getCuisine() != null ? recipe.getCuisine().getName() : "";
-        String category = recipe.getCategory() != null ? recipe.getCategory().getName() : "";
+        String category = recipe.getCategories() != null && !recipe.getCategories().isEmpty() ? recipe.getCategories().iterator().next().getName() : "";
 
         String description = buildDescription(recipe, cuisine, category);
         String deepLink = APP_SCHEME + id;

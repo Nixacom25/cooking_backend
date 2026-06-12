@@ -18,7 +18,7 @@ public class CreateRecipeRequest {
     private Integer servings;
     private String tips;
     private String cuisine;
-    private String category;
+    private List<String> categories;
 
     @Valid
     private List<IngredientPayload> ingredients;
@@ -53,8 +53,8 @@ public class CreateRecipeRequest {
     public void setTips(String tips) { this.tips = tips; }
     public String getCuisine() { return cuisine; }
     public void setCuisine(String cuisine) { this.cuisine = cuisine; }
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
+    public List<String> getCategories() { return categories; }
+    public void setCategories(List<String> categories) { this.categories = categories; }
     public List<IngredientPayload> getIngredients() { return ingredients; }
     public void setIngredients(List<IngredientPayload> ingredients) { this.ingredients = ingredients; }
     public List<String> getSteps() { return steps; }

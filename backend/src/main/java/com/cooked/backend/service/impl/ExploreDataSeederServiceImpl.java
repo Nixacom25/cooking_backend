@@ -112,7 +112,7 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
                                         .build());
 
                         recipe.setCuisine(taxonomyService.getOrCreateCategory(cuisineName, CategoryType.CUISINE));
-                        recipe.setCategory(taxonomyService.getOrCreateCategory(categoryName, CategoryType.CATEGORY));
+                        recipe.setCategories(java.util.Collections.singleton(taxonomyService.getOrCreateCategory(categoryName, CategoryType.CATEGORY)));
                         recipe.setImage((String) data.get("image"));
                         recipe.setPrepTime(data.get("prepTime") != null ? (Integer) data.get("prepTime") : 0);
                         recipe.setCookTime(data.get("cookTime") != null ? (Integer) data.get("cookTime") : 0);

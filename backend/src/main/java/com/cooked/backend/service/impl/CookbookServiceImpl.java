@@ -173,7 +173,7 @@ public class CookbookServiceImpl implements CookbookService {
                                     .cookTime(r.getCookTime())
                                     .prepTime(r.getPrepTime())
                                     .kcal(r.getKcal())
-                                    .category(r.getCategory() != null ? r.getCategory().getName() : null)
+                                    .categories(r.getCategories() != null ? r.getCategories().stream().map(com.cooked.backend.entity.RecipeCategory::getName).collect(java.util.stream.Collectors.toList()) : new java.util.ArrayList<>())
                                     .cuisine(r.getCuisine() != null ? r.getCuisine().getName() : null)
                                     .creator(r.getUser() != null ? RecipeCreatorResponse.builder()
                                             .id(r.getUser().getId())
