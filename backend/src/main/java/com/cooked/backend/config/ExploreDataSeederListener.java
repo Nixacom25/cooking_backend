@@ -18,8 +18,8 @@ public class ExploreDataSeederListener {
     public void onApplicationReady() {
         log.info("Application is ready! Triggering explore recipes and categories seeder...");
         try {
-            exploreDataSeederService.seedExploreData();
-            log.info("Explore recipes and categories seeding completed successfully.");
+            // exploreDataSeederService.seedExploreData();
+            log.info("Explore recipes and categories seeding is disabled by user request.");
         } catch (Exception e) {
             log.error("CRITICAL: Failed to seed explore recipes and categories on startup", e);
         }
