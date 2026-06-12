@@ -422,8 +422,17 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
             headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
 
-            String cleanReceipt = receiptData.replaceAll("[\\n\\r\\t ]", "");
-            log.info("Calling Apple verify at {} with receipt length: {}", url, cleanReceipt.length());
+            // 1. Restore '+' signs that might have been converted to spaces during HTTP transport
+            // 2. Remove newlines and carriage returns
+            String cleanReceipt = receiptData.replace(' ', '+').replaceAll("[\\n\\r\\t]", "");
+            
+            // 3. Add missing Base64 padding if necessary
+            int missingPadding = cleanReceipt.length() % 4;
+            if (missingPadding > 0 && missingPadding < 4) {
+                cleanReceipt += "===".substring(0, 4 - missingPadding);
+            }
+
+            log.info("Calling Apple verify at {} with receipt length: {} (Original length: {})", url, cleanReceipt.length(), receiptData.length());
 
             com.fasterxml.jackson.databind.node.ObjectNode jsonNodes = new com.fasterxml.jackson.databind.ObjectMapper().createObjectNode();
             jsonNodes.put("receipt-data", cleanReceipt);
