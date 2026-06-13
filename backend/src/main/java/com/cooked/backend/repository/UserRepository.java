@@ -10,6 +10,8 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
+    Optional<User> findByOriginalTransactionId(String originalTransactionId);
+    Optional<User> findByIapReceiptData(String iapReceiptData);
 
     long countBySubscriptionStatus(com.cooked.backend.entity.SubscriptionStatus status);
 

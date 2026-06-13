@@ -15,4 +15,6 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
 
     List<UserSubscription> findAllByEndDateBeforeAndStatusNot(LocalDateTime endDate,
             com.cooked.backend.entity.SubscriptionStatus status);
+
+    List<UserSubscription> findAllByStatusIn(List<com.cooked.backend.entity.SubscriptionStatus> statuses);
 }

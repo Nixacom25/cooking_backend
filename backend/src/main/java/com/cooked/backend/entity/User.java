@@ -73,6 +73,9 @@ public class User implements UserDetails {
     @Column(columnDefinition = "TEXT")
     private String originalTransactionId;
 
+    @Column(columnDefinition = "TEXT")
+    private String iapReceiptData;
+
     @ElementCollection
     @CollectionTable(name = "user_dietary_preferences", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "preference")
@@ -330,6 +333,9 @@ public class User implements UserDetails {
     public void setSubscriptionExpiresAt(LocalDateTime subscriptionExpiresAt) { this.subscriptionExpiresAt = subscriptionExpiresAt; }
     public String getOriginalTransactionId() { return originalTransactionId; }
     public void setOriginalTransactionId(String originalTransactionId) { this.originalTransactionId = originalTransactionId; }
+
+    public String getIapReceiptData() { return iapReceiptData; }
+    public void setIapReceiptData(String iapReceiptData) { this.iapReceiptData = iapReceiptData; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

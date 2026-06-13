@@ -20,6 +20,9 @@ public interface SubscriptionService {
     MessageResponse verifyReceipt(String userEmail, IapReceiptRequest request);
     List<SubscriptionPaymentResponse> getPaymentHistory(String userEmail);
     void processExpiredSubscriptions();
+    void handleAppleWebhook(String signedPayload);
+    void handleGoogleWebhook(java.util.Map<String, Object> payload);
+    void syncAllActiveSubscriptions();
     
     // Legacy support methods if needed
     void activatePremium(User user, SubscriptionType type, String transactionId);

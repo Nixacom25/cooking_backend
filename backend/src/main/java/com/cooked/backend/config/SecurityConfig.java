@@ -70,6 +70,7 @@ public class SecurityConfig {
                                 "/recipes/trending-ai",
                                 "/share/**",
                                 "/.well-known/**",
+                                "/webhooks/**",
                                 "/actuator/**")
                         .permitAll()
                         .anyRequest().authenticated())
