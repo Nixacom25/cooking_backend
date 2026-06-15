@@ -52,6 +52,8 @@ public interface RecipeService {
         org.springframework.data.domain.Page<RecipeResponse> getAdminRecipes(
                 com.cooked.backend.entity.RecipeOrigin origin,
                 String name,
+                String cuisine,
+                String category,
                 org.springframework.data.domain.Pageable pageable);
 
         RecipeResponse updateAdminRecipe(UUID id, String recipeJson, org.springframework.web.multipart.MultipartFile image);

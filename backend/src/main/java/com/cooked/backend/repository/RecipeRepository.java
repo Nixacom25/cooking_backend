@@ -147,10 +147,16 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
     org.springframework.data.domain.Page<Recipe> findByCategoryWithImage(@org.springframework.data.repository.query.Param("category") String category, org.springframework.data.domain.Pageable pageable);
 
-    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE LOWER(r.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE " +
+        "(:origin IS NULL OR r.origin = :origin) AND " +
+        "(:name IS NULL OR :name = '' OR LOWER(r.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
+        "(:cuisine IS NULL OR :cuisine = '' OR r.cuisine.name = :cuisine) AND " +
+        "(:category IS NULL OR :category = '' OR :category IN (SELECT c.name FROM r.categories c))")
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
-    org.springframework.data.domain.Page<Recipe> findAdminRecipesByName(@org.springframework.data.repository.query.Param("name") String name, org.springframework.data.domain.Pageable pageable);
-
-    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.origin = :origin AND LOWER(r.name) LIKE LOWER(CONCAT('%', :name, '%'))")
-    org.springframework.data.domain.Page<Recipe> findAdminRecipesByOriginAndName(@org.springframework.data.repository.query.Param("origin") com.cooked.backend.entity.RecipeOrigin origin, @org.springframework.data.repository.query.Param("name") String name, org.springframework.data.domain.Pageable pageable);
+    org.springframework.data.domain.Page<Recipe> findAdminRecipesWithFilters(
+        @org.springframework.data.repository.query.Param("origin") com.cooked.backend.entity.RecipeOrigin origin,
+        @org.springframework.data.repository.query.Param("name") String name,
+        @org.springframework.data.repository.query.Param("cuisine") String cuisine,
+        @org.springframework.data.repository.query.Param("category") String category,
+        org.springframework.data.domain.Pageable pageable);
 }
