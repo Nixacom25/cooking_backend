@@ -64,6 +64,7 @@ public class SecurityConfig {
                                 "/api/subscription/paywall-config",
                                 "/api/analytics/track",
                                 "/api/recipe-data/**",
+                                "/api/ingredients/**",
                                 "/recipes/popular",
                                 "/recipes/explore/**",
                                 "/recipes/top-creators",

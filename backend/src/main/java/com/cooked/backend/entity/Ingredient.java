@@ -30,6 +30,9 @@ public class Ingredient {
     @Column(nullable = true, columnDefinition = "TEXT")
     private String icon;
 
+    @Column(nullable = true, columnDefinition = "TEXT")
+    private String image;
+
     @Column(nullable = true)
     private Double price;
 
