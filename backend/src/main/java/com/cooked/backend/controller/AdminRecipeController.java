@@ -35,12 +35,10 @@ public class AdminRecipeController {
     public ResponseEntity<Page<RecipeResponse>> getAllRecipes(
             @RequestParam(required = false) RecipeOrigin origin,
             @RequestParam(required = false) String name,
-            @RequestParam(required = false) String cuisine,
-            @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("updatedAt").ascending());
-        return ResponseEntity.ok(recipeService.getAdminRecipes(origin, name, cuisine, category, pageable));
+        return ResponseEntity.ok(recipeService.getAdminRecipes(origin, name, pageable));
     }
 
     @Operation(summary = "Update full recipe details")
