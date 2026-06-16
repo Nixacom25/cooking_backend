@@ -54,8 +54,8 @@ public class MarkhorAiServiceImpl implements AiService {
     private final UserRepository userRepository;
     private final SubscriptionService subscriptionService;
     private final com.cooked.backend.repository.RecipeRepository recipeRepository;
-
     private final com.cooked.backend.repository.RecipeDataRepository recipeDataRepository;
+    private final com.cooked.backend.repository.IngredientRepository ingredientRepository;
 
     @Value("${ai.api.base-url:https://recipe.markhorsystems.com}")
     private String baseUrl;
@@ -712,6 +712,38 @@ public class MarkhorAiServiceImpl implements AiService {
     }
 
     @Override
+    public AiIngredientDetectionResponse validateTypedIngredients(List<String> ingredients) {
+        List<com.cooked.backend.dto.request.IngredientPayload> allowed = new ArrayList<>();
+        
+        for (String ingName : ingredients) {
+            com.cooked.backend.dto.request.IngredientPayload p = new com.cooked.backend.dto.request.IngredientPayload();
+            p.setName(ingName);
+            p.setQuantity("-");
+            
+            // Fast direct database lookup (no AI wait time)
+            java.util.Optional<com.cooked.backend.entity.Ingredient> dbIng = ingredientRepository.findFirstByName(ingName);
+            if (dbIng.isPresent() && dbIng.get().getIcon() != null) {
+                p.setIcon(dbIng.get().getIcon());
+            } else {
+                // Try searching with containing text
+                List<com.cooked.backend.entity.Ingredient> matches = ingredientRepository.findByNameContainingIgnoreCase(ingName);
+                if (!matches.isEmpty() && matches.get(0).getIcon() != null) {
+                    p.setIcon(matches.get(0).getIcon());
+                } else {
+                    p.setIcon("🛒"); // generic fallback icon
+                }
+            }
+            allowed.add(p);
+        }
+        
+        AiIngredientDetectionResponse response = new AiIngredientDetectionResponse();
+        response.setAllowed_ingredients(allowed);
+        response.setRestricted_ingredients(new ArrayList<>());
+        
+        return response;
+    }
+
+    @Override
     public AiIngredientDetectionResponse detectIngredients(MultipartFile file, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("User not found"));
@@ -739,7 +771,21 @@ public class MarkhorAiServiceImpl implements AiService {
             );
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                return response.getBody();
+                AiIngredientDetectionResponse res = response.getBody();
+                if (res.getAllowed_ingredients() != null) {
+                    for (com.cooked.backend.dto.request.IngredientPayload p : res.getAllowed_ingredients()) {
+                        java.util.Optional<com.cooked.backend.entity.Ingredient> dbIng = ingredientRepository.findFirstByName(p.getName());
+                        if (dbIng.isPresent() && dbIng.get().getIcon() != null) {
+                            p.setIcon(dbIng.get().getIcon());
+                        } else {
+                            List<com.cooked.backend.entity.Ingredient> matches = ingredientRepository.findByNameContainingIgnoreCase(p.getName());
+                            if (!matches.isEmpty() && matches.get(0).getIcon() != null) {
+                                p.setIcon(matches.get(0).getIcon());
+                            }
+                        }
+                    }
+                }
+                return res;
             }
             throw new BadRequestException("Ingredient detection failed: Invalid response from AI service");
         } catch (BadRequestException | PaymentRequiredException e) {

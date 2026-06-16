@@ -82,6 +82,17 @@ public class RecipeController {
         return ResponseEntity.ok(aiService.scanTyped(ingredients, auth.getName()));
     }
 
+    @Operation(summary = "Validate Typed Ingredients directly via DB")
+    @PostMapping("/validate-typed-ingredients")
+    public ResponseEntity<AiIngredientDetectionResponse> validateTypedIngredients(
+            @RequestBody Map<String, List<String>> payload) {
+        List<String> ingredients = payload.get("ingredients");
+        if (ingredients == null || ingredients.isEmpty()) {
+            throw new com.cooked.backend.exception.BadRequestException("Ingredients list is required");
+        }
+        return ResponseEntity.ok(aiService.validateTypedIngredients(ingredients));
+    }
+
     @Operation(summary = "Create a new recipe")
     @PostMapping
     public ResponseEntity<RecipeResponse> create(Authentication auth, @Valid @RequestBody CreateRecipeRequest request) {

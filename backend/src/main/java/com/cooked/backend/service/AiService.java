@@ -21,6 +21,8 @@ public interface AiService {
     ScanResponse scan(MultipartFile file, String email);
 
     ScanResponse scanTyped(List<String> ingredients, String email);
+    
+    AiIngredientDetectionResponse validateTypedIngredients(List<String> ingredients);
 
     List<Map<String, String>> searchWeb(String query, String email);
 

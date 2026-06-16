@@ -50,6 +50,7 @@ public class AiServiceImpl implements AiService {
     private final CloudinaryService cloudinaryService;
     private final UserRepository userRepository;
     private final SubscriptionService subscriptionService;
+    private final com.cooked.backend.repository.IngredientRepository ingredientRepository;
 
     private void verifyAiAccess(User user) {
         if (!subscriptionService.hasAiAccess(user)) {
@@ -137,6 +138,38 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
+    public AiIngredientDetectionResponse validateTypedIngredients(List<String> ingredients) {
+        List<com.cooked.backend.dto.request.IngredientPayload> allowed = new java.util.ArrayList<>();
+        
+        for (String ingName : ingredients) {
+            com.cooked.backend.dto.request.IngredientPayload p = new com.cooked.backend.dto.request.IngredientPayload();
+            p.setName(ingName);
+            p.setQuantity("-");
+            
+            // Fast direct database lookup (no AI wait time)
+            java.util.Optional<com.cooked.backend.entity.Ingredient> dbIng = ingredientRepository.findFirstByName(ingName);
+            if (dbIng.isPresent() && dbIng.get().getIcon() != null) {
+                p.setIcon(dbIng.get().getIcon());
+            } else {
+                // Try searching with containing text
+                List<com.cooked.backend.entity.Ingredient> matches = ingredientRepository.findByNameContainingIgnoreCase(ingName);
+                if (!matches.isEmpty() && matches.get(0).getIcon() != null) {
+                    p.setIcon(matches.get(0).getIcon());
+                } else {
+                    p.setIcon("🛒"); // generic fallback icon
+                }
+            }
+            allowed.add(p);
+        }
+        
+        AiIngredientDetectionResponse response = new AiIngredientDetectionResponse();
+        response.setAllowed_ingredients(allowed);
+        response.setRestricted_ingredients(new java.util.ArrayList<>());
+        
+        return response;
+    }
+
+    @Override
     public AiIngredientDetectionResponse detectIngredients(MultipartFile file, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -154,7 +187,21 @@ public class AiServiceImpl implements AiService {
                     String.join(", ", user.getDietaryPreferences()));
 
             String responseJson = sanitizeJson(callOpenAiVision(imageUrl, detectionPrompt));
-            return objectMapper.readValue(responseJson, AiIngredientDetectionResponse.class);
+            AiIngredientDetectionResponse res = objectMapper.readValue(responseJson, AiIngredientDetectionResponse.class);
+            if (res.getAllowed_ingredients() != null) {
+                for (com.cooked.backend.dto.request.IngredientPayload p : res.getAllowed_ingredients()) {
+                    java.util.Optional<com.cooked.backend.entity.Ingredient> dbIng = ingredientRepository.findFirstByName(p.getName());
+                    if (dbIng.isPresent() && dbIng.get().getIcon() != null) {
+                        p.setIcon(dbIng.get().getIcon());
+                    } else {
+                        List<com.cooked.backend.entity.Ingredient> matches = ingredientRepository.findByNameContainingIgnoreCase(p.getName());
+                        if (!matches.isEmpty() && matches.get(0).getIcon() != null) {
+                            p.setIcon(matches.get(0).getIcon());
+                        }
+                    }
+                }
+            }
+            return res;
         } catch (Exception e) {
             throw new AiServiceException("AI failed to detect ingredients. Please try again with a clearer photo.", "IA_DETECTION_ERROR");
         }
