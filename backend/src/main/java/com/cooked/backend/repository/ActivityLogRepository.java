@@ -12,6 +12,6 @@ import java.util.UUID;
 public interface ActivityLogRepository extends JpaRepository<ActivityLog, UUID> {
     Page<ActivityLog> findAllByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
-    @org.springframework.data.jpa.repository.Query("SELECT a FROM ActivityLog a WHERE a.user.role = :role ORDER BY a.createdAt DESC")
+    @org.springframework.data.jpa.repository.Query("SELECT a FROM ActivityLog a WHERE a.user.role = :role AND a.message NOT LIKE 'User logged in%' ORDER BY a.createdAt DESC")
     Page<ActivityLog> findAllByUserRoleOrderByCreatedAtDesc(@org.springframework.data.repository.query.Param("role") com.cooked.backend.entity.Role role, Pageable pageable);
 }

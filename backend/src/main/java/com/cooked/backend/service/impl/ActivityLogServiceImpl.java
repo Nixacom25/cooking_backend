@@ -51,18 +51,18 @@ public class ActivityLogServiceImpl implements ActivityLogService {
             return;
         }
 
-        String fieldsString = String.join(" et ", changedFields);
+        String fieldsString = String.join(" and ", changedFields);
         
         String message;
         if (parentEntityName != null && !parentEntityName.isEmpty()) {
-            message = String.format("%s vient de modifier %s du %s %s de la cuisine %s", 
+            message = String.format("%s modified %s of the %s %s in the %s cuisine", 
                 editor.getFirstname(), fieldsString, entityType, entityName, parentEntityName);
         } else {
-            message = String.format("%s vient de modifier %s du %s %s", 
+            message = String.format("%s modified %s of the %s %s", 
                 editor.getFirstname(), fieldsString, entityType, entityName);
         }
 
-        logActivity(editor, "Modification Editor", message);
+        logActivity(editor, "Editor Modification", message);
     }
 
     private ActivityLogResponse mapToResponse(ActivityLog log) {

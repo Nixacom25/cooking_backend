@@ -722,7 +722,7 @@ public class RecipeServiceImpl implements RecipeService {
             java.util.List<String> changedFields = new java.util.ArrayList<>();
 
             if (request.getName() != null && !request.getName().equals(recipe.getName())) {
-                changedFields.add("le nom");
+                changedFields.add("name");
                 recipe.setName(request.getName());
             } else if (request.getName() != null) {
                 recipe.setName(request.getName());
@@ -776,7 +776,7 @@ public class RecipeServiceImpl implements RecipeService {
             if (image != null && !image.isEmpty()) {
                 String imgUrl = cloudinaryService.upload(image);
                 if (!imgUrl.equals(recipe.getImage())) {
-                    changedFields.add("l'image");
+                    changedFields.add("image");
                 }
                 recipe.setImage(imgUrl);
             }
@@ -788,8 +788,8 @@ public class RecipeServiceImpl implements RecipeService {
             if (currentUser != null) {
                 recipe.setLastModifiedBy(currentUser.getFirstname() + " " + currentUser.getLastname());
                 if (currentUser.getRole() == com.cooked.backend.entity.Role.EDITOR && !changedFields.isEmpty()) {
-                    String cuisineName = recipe.getCuisine() != null ? recipe.getCuisine().getName() : "Inconnue";
-                    activityLogService.logDetailedEditorActivity(currentUser, changedFields, "plat", recipe.getName(), cuisineName);
+                    String cuisineName = recipe.getCuisine() != null ? recipe.getCuisine().getName() : "Unknown";
+                    activityLogService.logDetailedEditorActivity(currentUser, changedFields, "recipe", recipe.getName(), cuisineName);
                 }
             } else {
                 recipe.setLastModifiedBy("Admin");
@@ -870,7 +870,7 @@ public class RecipeServiceImpl implements RecipeService {
         java.util.List<String> changedFields = new java.util.ArrayList<>();
 
         if (name != null && !name.isBlank() && !name.equals(category.getName())) {
-            changedFields.add("le nom");
+            changedFields.add("name");
             category.setName(name);
         }
         
@@ -889,11 +889,7 @@ public class RecipeServiceImpl implements RecipeService {
         }
         
         if (imageChanged) {
-            if (category.getType() == CategoryType.CUISINE) {
-                changedFields.add("l'image");
-            } else {
-                changedFields.add("l'icône");
-            }
+            changedFields.add("image");
         }
         
         if (type != null && type != category.getType()) {
@@ -908,7 +904,7 @@ public class RecipeServiceImpl implements RecipeService {
             if (auth != null && auth.isAuthenticated()) {
                 userRepository.findByEmail(auth.getName()).ifPresent(user -> {
                     if (user.getRole() == com.cooked.backend.entity.Role.EDITOR) {
-                        String entityType = category.getType() == CategoryType.CUISINE ? "cuisine" : "catégorie";
+                        String entityType = category.getType() == CategoryType.CUISINE ? "cuisine" : "category";
                         activityLogService.logDetailedEditorActivity(user, changedFields, entityType, category.getName(), null);
                     }
                 });

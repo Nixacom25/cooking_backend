@@ -64,12 +64,12 @@ public class IngredientController {
         java.util.List<String> changedFields = new java.util.ArrayList<>();
 
         if (icon != null && !icon.equals(ingredient.getIcon())) {
-            changedFields.add("l'icône");
+            changedFields.add("icon");
             ingredient.setIcon(icon.isBlank() ? null : icon);
         }
         
         if (price != null && !price.equals(ingredient.getPrice())) {
-            changedFields.add("le prix");
+            changedFields.add("price");
             ingredient.setPrice(price);
         }
 
@@ -90,7 +90,7 @@ public class IngredientController {
         }
 
         if (imageChanged) {
-            changedFields.add("l'image");
+            changedFields.add("image");
         }
 
         final String finalIngredientName = ingredient.getName();
@@ -100,7 +100,7 @@ public class IngredientController {
             if (auth != null && auth.isAuthenticated()) {
                 userRepository.findByEmail(auth.getName()).ifPresent(user -> {
                     if (user.getRole() == com.cooked.backend.entity.Role.EDITOR) {
-                        activityLogService.logDetailedEditorActivity(user, changedFields, "ingrédient", finalIngredientName, null);
+                        activityLogService.logDetailedEditorActivity(user, changedFields, "ingredient", finalIngredientName, null);
                     }
                 });
             }
