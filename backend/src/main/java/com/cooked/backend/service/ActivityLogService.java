@@ -9,4 +9,8 @@ public interface ActivityLogService {
     void logActivity(User user, String title, String message);
 
     Page<ActivityLogResponse> getMyActivities(String userEmail, Pageable pageable);
+
+    Page<ActivityLogResponse> getActivitiesByRole(com.cooked.backend.entity.Role role, Pageable pageable);
+
+    void logDetailedEditorActivity(User editor, java.util.List<String> changedFields, String entityType, String entityName, String parentEntityName);
 }

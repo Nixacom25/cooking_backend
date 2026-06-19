@@ -719,7 +719,14 @@ public class RecipeServiceImpl implements RecipeService {
             
             CreateRecipeRequest request = mapper.readValue(recipeJson, CreateRecipeRequest.class);
 
-            if (request.getName() != null) recipe.setName(request.getName());
+            java.util.List<String> changedFields = new java.util.ArrayList<>();
+
+            if (request.getName() != null && !request.getName().equals(recipe.getName())) {
+                changedFields.add("le nom");
+                recipe.setName(request.getName());
+            } else if (request.getName() != null) {
+                recipe.setName(request.getName());
+            }
             if (request.getPrepTime() != null) recipe.setPrepTime(request.getPrepTime());
             if (request.getCookTime() != null) recipe.setCookTime(request.getCookTime());
             if (request.getKcal() != null) recipe.setKcal(request.getKcal());
@@ -768,6 +775,9 @@ public class RecipeServiceImpl implements RecipeService {
 
             if (image != null && !image.isEmpty()) {
                 String imgUrl = cloudinaryService.upload(image);
+                if (!imgUrl.equals(recipe.getImage())) {
+                    changedFields.add("l'image");
+                }
                 recipe.setImage(imgUrl);
             }
 
@@ -777,6 +787,10 @@ public class RecipeServiceImpl implements RecipeService {
             User currentUser = userRepository.findByEmail(currentUserEmail).orElse(null);
             if (currentUser != null) {
                 recipe.setLastModifiedBy(currentUser.getFirstname() + " " + currentUser.getLastname());
+                if (currentUser.getRole() == com.cooked.backend.entity.Role.EDITOR && !changedFields.isEmpty()) {
+                    String cuisineName = recipe.getCuisine() != null ? recipe.getCuisine().getName() : "Inconnue";
+                    activityLogService.logDetailedEditorActivity(currentUser, changedFields, "plat", recipe.getName(), cuisineName);
+                }
             } else {
                 recipe.setLastModifiedBy("Admin");
             }
@@ -853,26 +867,54 @@ public class RecipeServiceImpl implements RecipeService {
         RecipeCategory category = recipeCategoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
         
-        if (name != null && !name.isBlank()) {
+        java.util.List<String> changedFields = new java.util.ArrayList<>();
+
+        if (name != null && !name.isBlank() && !name.equals(category.getName())) {
+            changedFields.add("le nom");
             category.setName(name);
         }
+        
+        boolean imageChanged = false;
         if (imageFile != null && !imageFile.isEmpty()) {
             try {
                 String uploadedImage = cloudinaryService.upload(imageFile);
                 category.setImage(uploadedImage);
+                imageChanged = true;
             } catch (java.io.IOException e) {
                 throw new RuntimeException("Failed to upload image", e);
             }
-        } else if (image != null) {
+        } else if (image != null && !image.equals(category.getImage())) {
             category.setImage(image);
+            imageChanged = true;
         }
-        if (type != null) {
+        
+        if (imageChanged) {
+            if (category.getType() == CategoryType.CUISINE) {
+                changedFields.add("l'image");
+            } else {
+                changedFields.add("l'icône");
+            }
+        }
+        
+        if (type != null && type != category.getType()) {
             category.setType(type);
         }
-        if (active != null) {
+        if (active != null && active != category.isActive()) {
             category.setActive(active);
         }
         
+        if (!changedFields.isEmpty()) {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated()) {
+                userRepository.findByEmail(auth.getName()).ifPresent(user -> {
+                    if (user.getRole() == com.cooked.backend.entity.Role.EDITOR) {
+                        String entityType = category.getType() == CategoryType.CUISINE ? "cuisine" : "catégorie";
+                        activityLogService.logDetailedEditorActivity(user, changedFields, entityType, category.getName(), null);
+                    }
+                });
+            }
+        }
+
         return recipeCategoryRepository.save(category);
     }
 

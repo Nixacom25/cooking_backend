@@ -13,6 +13,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.cooked.backend.repository.UserRepository;
+import com.cooked.backend.service.ActivityLogService;
+import com.cooked.backend.entity.User;
+
 @RestController
 @RequestMapping("/api/ingredients")
 @CrossOrigin(origins = "*")
@@ -20,10 +24,15 @@ public class IngredientController {
 
     private final IngredientRepository ingredientRepository;
     private final CloudinaryService cloudinaryService;
+    private final UserRepository userRepository;
+    private final ActivityLogService activityLogService;
 
-    public IngredientController(IngredientRepository ingredientRepository, CloudinaryService cloudinaryService) {
+    public IngredientController(IngredientRepository ingredientRepository, CloudinaryService cloudinaryService,
+                                UserRepository userRepository, ActivityLogService activityLogService) {
         this.ingredientRepository = ingredientRepository;
         this.cloudinaryService = cloudinaryService;
+        this.userRepository = userRepository;
+        this.activityLogService = activityLogService;
     }
 
     @GetMapping
@@ -52,23 +61,49 @@ public class IngredientController {
         Ingredient ingredient = ingredientRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Ingredient not found"));
 
-        if (icon != null) {
+        java.util.List<String> changedFields = new java.util.ArrayList<>();
+
+        if (icon != null && !icon.equals(ingredient.getIcon())) {
+            changedFields.add("l'icône");
             ingredient.setIcon(icon.isBlank() ? null : icon);
         }
         
-        if (price != null) {
+        if (price != null && !price.equals(ingredient.getPrice())) {
+            changedFields.add("le prix");
             ingredient.setPrice(price);
         }
 
+        boolean imageChanged = false;
         if (imageFile != null && !imageFile.isEmpty()) {
             try {
                 String uploadedImage = cloudinaryService.upload(imageFile);
+                if (!uploadedImage.equals(ingredient.getImage())) {
+                    imageChanged = true;
+                }
                 ingredient.setImage(uploadedImage);
             } catch (java.io.IOException e) {
                 throw new RuntimeException("Failed to upload image", e);
             }
-        } else if (image != null) {
+        } else if (image != null && !image.equals(ingredient.getImage())) {
             ingredient.setImage(image.isBlank() ? null : image);
+            imageChanged = true;
+        }
+
+        if (imageChanged) {
+            changedFields.add("l'image");
+        }
+
+        final String finalIngredientName = ingredient.getName();
+
+        if (!changedFields.isEmpty()) {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated()) {
+                userRepository.findByEmail(auth.getName()).ifPresent(user -> {
+                    if (user.getRole() == com.cooked.backend.entity.Role.EDITOR) {
+                        activityLogService.logDetailedEditorActivity(user, changedFields, "ingrédient", finalIngredientName, null);
+                    }
+                });
+            }
         }
 
         ingredient = ingredientRepository.save(ingredient);

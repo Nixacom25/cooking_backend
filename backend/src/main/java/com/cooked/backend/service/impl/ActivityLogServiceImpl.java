@@ -36,11 +36,41 @@ public class ActivityLogServiceImpl implements ActivityLogService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return activityLogRepository.findAllByUserIdOrderByCreatedAtDesc(user.getId(), pageable)
-                .map(log -> ActivityLogResponse.builder()
-                        .id(log.getId())
-                        .title(log.getTitle())
-                        .message(log.getMessage())
-                        .createdAt(log.getCreatedAt())
-                        .build());
+                .map(this::mapToResponse);
+    }
+
+    @Override
+    public Page<ActivityLogResponse> getActivitiesByRole(com.cooked.backend.entity.Role role, Pageable pageable) {
+        return activityLogRepository.findAllByUserRoleOrderByCreatedAtDesc(role, pageable)
+                .map(this::mapToResponse);
+    }
+
+    @Override
+    public void logDetailedEditorActivity(User editor, java.util.List<String> changedFields, String entityType, String entityName, String parentEntityName) {
+        if (changedFields == null || changedFields.isEmpty()) {
+            return;
+        }
+
+        String fieldsString = String.join(" et ", changedFields);
+        
+        String message;
+        if (parentEntityName != null && !parentEntityName.isEmpty()) {
+            message = String.format("%s vient de modifier %s du %s %s de la cuisine %s", 
+                editor.getFirstname(), fieldsString, entityType, entityName, parentEntityName);
+        } else {
+            message = String.format("%s vient de modifier %s du %s %s", 
+                editor.getFirstname(), fieldsString, entityType, entityName);
+        }
+
+        logActivity(editor, "Modification Editor", message);
+    }
+
+    private ActivityLogResponse mapToResponse(ActivityLog log) {
+        return ActivityLogResponse.builder()
+                .id(log.getId())
+                .title(log.getTitle())
+                .message(log.getMessage())
+                .createdAt(log.getCreatedAt())
+                .build();
     }
 }

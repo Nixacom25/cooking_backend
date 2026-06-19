@@ -28,4 +28,11 @@ public class ActivityController {
     public ResponseEntity<Page<ActivityLogResponse>> getMyActivities(Authentication auth, Pageable pageable) {
         return ResponseEntity.ok(activityLogService.getMyActivities(auth.getName(), pageable));
     }
+
+    @Operation(summary = "Get editor activity logs (paginated) for Admin")
+    @GetMapping("/editors")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<ActivityLogResponse>> getEditorActivities(Pageable pageable) {
+        return ResponseEntity.ok(activityLogService.getActivitiesByRole(com.cooked.backend.entity.Role.EDITOR, pageable));
+    }
 }
