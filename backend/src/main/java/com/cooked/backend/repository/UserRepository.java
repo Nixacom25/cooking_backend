@@ -31,6 +31,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             
     long countByRole(com.cooked.backend.entity.Role role);
 
+    org.springframework.data.domain.Page<User> findAllByRoleIn(java.util.List<com.cooked.backend.entity.Role> roles,
+            org.springframework.data.domain.Pageable pageable);
+            
+    long countByRoleIn(java.util.List<com.cooked.backend.entity.Role> roles);
+
     @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r.user FROM Recipe r WHERE r.isPublic = true")
     java.util.List<User> findPublicCreators();
 }

@@ -31,4 +31,7 @@ public class UpdateUserRequest {
     public String getOtherDiscoverySource() { return otherDiscoverySource; }
     public void setOtherDiscoverySource(String otherDiscoverySource) { this.otherDiscoverySource = otherDiscoverySource; }
 
+    private com.cooked.backend.entity.Role role;
+    public com.cooked.backend.entity.Role getRole() { return role; }
+    public void setRole(com.cooked.backend.entity.Role role) { this.role = role; }
 }

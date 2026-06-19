@@ -10,7 +10,6 @@ public class CreateUserRequest {
 
     private String lastname;
 
-    @NotBlank
     private String phone;
 
     @Email
@@ -19,4 +18,6 @@ public class CreateUserRequest {
 
     @NotBlank
     private String password;
+
+    private com.cooked.backend.entity.Role role;
 }

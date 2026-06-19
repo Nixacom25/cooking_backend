@@ -143,18 +143,41 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Page<UserResponse> getAdmins(Pageable pageable) {
-        return userRepository.findAllByRole(Role.ADMIN, pageable)
+        return userRepository.findAllByRoleIn(java.util.Arrays.asList(Role.ADMIN, Role.EDITOR), pageable)
                 .map(userMapper::toResponse);
     }
 
     @Override
     public UserResponse createAdmin(CreateUserRequest request) {
-        return createUserWithRole(request, Role.ADMIN);
+        Role targetRole = request.getRole();
+        if (targetRole == null || (targetRole != Role.ADMIN && targetRole != Role.EDITOR)) {
+            targetRole = Role.ADMIN;
+        }
+        return createUserWithRole(request, targetRole);
     }
 
     @Override
     public UserResponse updateAdmin(UUID id, UpdateUserRequest request) {
-        return updateUser(id, request, Role.ADMIN);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (user.getRole() != Role.ADMIN && user.getRole() != Role.EDITOR) {
+            throw new BadRequestException("User is not an admin or editor");
+        }
+
+        user.setFirstname(request.getFirstname());
+        user.setLastname(request.getLastname());
+        user.setPhone(request.getPhone());
+        user.setDiscoverySource(request.getDiscoverySource());
+        user.setOtherDiscoverySource(request.getOtherDiscoverySource());
+
+        if (request.getRole() != null && (request.getRole() == Role.ADMIN || request.getRole() == Role.EDITOR)) {
+            user.setRole(request.getRole());
+        }
+
+        userRepository.save(user);
+
+        return userMapper.toResponse(user);
     }
 
     @Override
