@@ -32,6 +32,12 @@ public class UpdatePreferencesRequest {
     private List<String> kitchenAppliances;
     private List<String> notificationPreferences;
     private List<String> onboardingGoals;
+    
+    private List<String> frustrations;
+    private String ageSelection;
+    private String eatingOutSelection;
+    private String grocerySelection;
+
     // Getters manuels pour garantir la compilation
     public List<String> getDietaryPreferences() { return dietaryPreferences; }
     public List<String> getAllergies() { return allergies; }
@@ -50,4 +56,8 @@ public class UpdatePreferencesRequest {
     public List<String> getKitchenAppliances() { return kitchenAppliances; }
     public List<String> getNotificationPreferences() { return notificationPreferences; }
     public List<String> getOnboardingGoals() { return onboardingGoals; }
+    public List<String> getFrustrations() { return frustrations; }
+    public String getAgeSelection() { return ageSelection; }
+    public String getEatingOutSelection() { return eatingOutSelection; }
+    public String getGrocerySelection() { return grocerySelection; }
 }

@@ -161,6 +161,21 @@ public class User implements UserDetails {
     @Builder.Default
     private List<String> onboardingGoals = new ArrayList<>();
 
+    @ElementCollection
+    @CollectionTable(name = "user_frustrations", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "frustration")
+    @Builder.Default
+    private List<String> frustrations = new ArrayList<>();
+
+    @Column(columnDefinition = "TEXT")
+    private String ageSelection;
+
+    @Column(columnDefinition = "TEXT")
+    private String eatingOutSelection;
+
+    @Column(columnDefinition = "TEXT")
+    private String grocerySelection;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
@@ -292,7 +307,17 @@ public class User implements UserDetails {
     public List<String> getOnboardingGoals() { return onboardingGoals; }
     public void setOnboardingGoals(List<String> onboardingGoals) { this.onboardingGoals = onboardingGoals; }
 
+    public List<String> getFrustrations() { return frustrations; }
+    public void setFrustrations(List<String> frustrations) { this.frustrations = frustrations; }
 
+    public String getAgeSelection() { return ageSelection; }
+    public void setAgeSelection(String ageSelection) { this.ageSelection = ageSelection; }
+
+    public String getEatingOutSelection() { return eatingOutSelection; }
+    public void setEatingOutSelection(String eatingOutSelection) { this.eatingOutSelection = eatingOutSelection; }
+
+    public String getGrocerySelection() { return grocerySelection; }
+    public void setGrocerySelection(String grocerySelection) { this.grocerySelection = grocerySelection; }
     public List<Recipe> getRecipes() { return recipes; }
     public void setRecipes(List<Recipe> recipes) { this.recipes = recipes; }
 

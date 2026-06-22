@@ -32,6 +32,10 @@ public class UserResponse {
     private String mealPlanningStyle;
     private List<String> notificationPreferences;
     private List<String> onboardingGoals;
+    private List<String> frustrations;
+    private String ageSelection;
+    private String eatingOutSelection;
+    private String grocerySelection;
     private Role role;
     private Status status;
     private Integer onboardingRating;
@@ -95,6 +99,14 @@ public class UserResponse {
     public void setNotificationPreferences(List<String> notificationPreferences) { this.notificationPreferences = notificationPreferences; }
     public List<String> getOnboardingGoals() { return onboardingGoals; }
     public void setOnboardingGoals(List<String> onboardingGoals) { this.onboardingGoals = onboardingGoals; }
+    public List<String> getFrustrations() { return frustrations; }
+    public void setFrustrations(List<String> frustrations) { this.frustrations = frustrations; }
+    public String getAgeSelection() { return ageSelection; }
+    public void setAgeSelection(String ageSelection) { this.ageSelection = ageSelection; }
+    public String getEatingOutSelection() { return eatingOutSelection; }
+    public void setEatingOutSelection(String eatingOutSelection) { this.eatingOutSelection = eatingOutSelection; }
+    public String getGrocerySelection() { return grocerySelection; }
+    public void setGrocerySelection(String grocerySelection) { this.grocerySelection = grocerySelection; }
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
     public Status getStatus() { return status; }

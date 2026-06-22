@@ -61,4 +61,9 @@ public class RegisterRequest {
     private java.util.List<String> kitchenAppliances;
     private java.util.List<String> notificationPreferences;
     private java.util.List<String> onboardingGoals;
+    
+    private java.util.List<String> frustrations;
+    private String ageSelection;
+    private String eatingOutSelection;
+    private String grocerySelection;
 }

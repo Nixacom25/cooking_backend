@@ -194,6 +194,11 @@ public class AuthServiceImpl implements AuthService {
                                                 : new java.util.ArrayList<>())
                                 .onboardingGoals(request.getOnboardingGoals() != null ? request.getOnboardingGoals()
                                                 : new java.util.ArrayList<>())
+                                .frustrations(request.getFrustrations() != null ? request.getFrustrations()
+                                                : new java.util.ArrayList<>())
+                                .ageSelection(request.getAgeSelection())
+                                .eatingOutSelection(request.getEatingOutSelection())
+                                .grocerySelection(request.getGrocerySelection())
                                 .build();
 
                 User savedUser = userRepository.save(user);

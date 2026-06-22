@@ -93,6 +93,10 @@ public class UserServiceImpl implements UserService {
         user.setKitchenAppliances(request.getKitchenAppliances());
         user.setNotificationPreferences(request.getNotificationPreferences());
         user.setOnboardingGoals(request.getOnboardingGoals());
+        user.setFrustrations(request.getFrustrations());
+        user.setAgeSelection(request.getAgeSelection());
+        user.setEatingOutSelection(request.getEatingOutSelection());
+        user.setGrocerySelection(request.getGrocerySelection());
         User savedUser = userRepository.save(user);
 
         // Trigger initialization asynchronously if not already done
