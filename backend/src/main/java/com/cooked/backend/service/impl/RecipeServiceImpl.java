@@ -393,20 +393,26 @@ public class RecipeServiceImpl implements RecipeService {
         
         List<String> preferredCuisines = null;
         if (user != null && user.getFavoriteCuisines() != null && !user.getFavoriteCuisines().isEmpty()) {
-            preferredCuisines = user.getFavoriteCuisines();
+            preferredCuisines = user.getFavoriteCuisines().stream()
+                    .map(String::toLowerCase)
+                    .collect(Collectors.toList());
         }
 
         // Enforce 10 items limit for "Popular Now" as requested
         org.springframework.data.domain.Pageable limitedPageable = org.springframework.data.domain.PageRequest.of(0, 10);
 
+        org.springframework.data.domain.Page<Recipe> popularPage;
         try {
-            return new com.cooked.backend.dto.response.RestPageImpl<>(recipeRepository.findRandomPopularRecipes(category, (preferredCuisines != null && preferredCuisines.isEmpty()) ? null : preferredCuisines, limitedPageable)
-                    .map(recipe -> mapToResponse(recipe, user)));
+            popularPage = recipeRepository.findRandomPopularRecipes(category, (preferredCuisines != null && preferredCuisines.isEmpty()) ? null : preferredCuisines, limitedPageable);
+            if (popularPage.isEmpty() && preferredCuisines != null && !preferredCuisines.isEmpty()) {
+                popularPage = recipeRepository.findRandomPopularRecipes(category, null, limitedPageable);
+            }
         } catch (Exception e) {
             System.err.println("Error fetching popular recipes: " + e.getMessage());
-            return new com.cooked.backend.dto.response.RestPageImpl<>(recipeRepository.findExploreRecipes(com.cooked.backend.entity.RecipeOrigin.EXPLORE, com.cooked.backend.entity.RecipeOrigin.SUGGESTED, null, category, limitedPageable)
-                    .map(recipe -> mapToResponse(recipe, user)));
+            popularPage = recipeRepository.findExploreRecipes(com.cooked.backend.entity.RecipeOrigin.EXPLORE, com.cooked.backend.entity.RecipeOrigin.SUGGESTED, null, category, limitedPageable);
         }
+
+        return new com.cooked.backend.dto.response.RestPageImpl<>(popularPage.map(recipe -> mapToResponse(recipe, user)));
     }
 
     @Override
@@ -708,6 +714,7 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"exploreRecipes", "popularRecipes", "explore_cuisines", "explore_categories"}, allEntries = true)
     public RecipeResponse updateAdminRecipe(UUID id, String recipeJson, org.springframework.web.multipart.MultipartFile image) {
         try {
             Recipe recipe = recipeRepository.findById(id)
@@ -926,6 +933,7 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"exploreRecipes", "popularRecipes", "explore_cuisines", "explore_categories"}, allEntries = true)
     public RecipeResponse toggleRecipeStatus(UUID id, Boolean status, String adminEmail) {
         User user = userRepository.findByEmail(adminEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -945,6 +953,7 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"exploreRecipes", "popularRecipes", "explore_cuisines", "explore_categories"}, allEntries = true)
     public void bulkUpdateRecipeStatus(List<UUID> ids, Boolean status, String adminEmail) {
         User user = userRepository.findByEmail(adminEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
