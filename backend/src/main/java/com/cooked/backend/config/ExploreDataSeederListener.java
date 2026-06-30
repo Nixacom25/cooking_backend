@@ -14,10 +14,24 @@ public class ExploreDataSeederListener {
 
     private final ExploreDataSeederService exploreDataSeederService;
     private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+    private final org.springframework.cache.CacheManager cacheManager;
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
         log.info("Application is ready! Running custom database migrations...");
+        try {
+            log.info("Evicting Explore and Popular caches on startup...");
+            for (String cacheName : java.util.Arrays.asList("exploreRecipes", "popularRecipes", "explore_cuisines", "explore_categories")) {
+                org.springframework.cache.Cache cache = cacheManager.getCache(cacheName);
+                if (cache != null) {
+                    cache.clear();
+                    log.info("Cleared cache: {}", cacheName);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to clear caches on startup: " + e.getMessage());
+        }
+
         try {
             // Create migrations table if not exists
             jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS schema_migrations_cooked (version VARCHAR(255) PRIMARY KEY)");

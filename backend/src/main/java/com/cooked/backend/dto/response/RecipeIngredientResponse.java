@@ -2,11 +2,15 @@ package com.cooked.backend.dto.response;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import java.util.UUID;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RecipeIngredientResponse {
     private UUID id; // Optional (The real Ingredient UUID)
     private String name;
