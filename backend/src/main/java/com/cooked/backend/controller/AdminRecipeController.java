@@ -68,4 +68,25 @@ public class AdminRecipeController {
         recipeService.deleteAdminRecipe(id);
         return ResponseEntity.ok(new MessageResponse("Recipe deleted successfully"));
     }
+
+    @Operation(summary = "Toggle recipe activation status")
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
+    public ResponseEntity<RecipeResponse> toggleStatus(
+            @PathVariable UUID id,
+            @RequestParam(required = false) Boolean status,
+            org.springframework.security.core.Authentication auth) {
+        return ResponseEntity.ok(recipeService.toggleRecipeStatus(id, status, auth.getName()));
+    }
+
+    @Operation(summary = "Bulk update recipes activation status")
+    @PutMapping("/bulk-status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
+    public ResponseEntity<MessageResponse> bulkUpdateStatus(
+            @RequestBody java.util.List<UUID> ids,
+            @RequestParam Boolean status,
+            org.springframework.security.core.Authentication auth) {
+        recipeService.bulkUpdateRecipeStatus(ids, status, auth.getName());
+        return ResponseEntity.ok(new MessageResponse("Successfully updated activation status for " + ids.size() + " recipes."));
+    }
 }

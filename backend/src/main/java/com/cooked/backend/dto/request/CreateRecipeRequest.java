@@ -34,6 +34,8 @@ public class CreateRecipeRequest {
 
     private String imagePrompt;
 
+    private Boolean status;
+
     // --- Getters & Setters Manuels ---
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -67,4 +69,6 @@ public class CreateRecipeRequest {
     public void setCookbookIds(List<UUID> cookbookIds) { this.cookbookIds = cookbookIds; }
     public String getOrigin() { return origin; }
     public void setOrigin(String origin) { this.origin = origin; }
+    public Boolean getStatus() { return status; }
+    public void setStatus(Boolean status) { this.status = status; }
 }

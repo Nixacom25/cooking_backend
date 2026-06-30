@@ -732,6 +732,7 @@ public class RecipeServiceImpl implements RecipeService {
             if (request.getKcal() != null) recipe.setKcal(request.getKcal());
             if (request.getServings() != null) recipe.setServings(request.getServings());
             if (request.getTips() != null) recipe.setTips(request.getTips());
+            if (request.getStatus() != null) recipe.setStatus(request.getStatus());
             
             if (request.getCuisine() != null) {
                 recipe.setCuisine(taxonomyService.getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE));
@@ -921,5 +922,38 @@ public class RecipeServiceImpl implements RecipeService {
             throw new ResourceNotFoundException("Category not found");
         }
         recipeCategoryRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public RecipeResponse toggleRecipeStatus(UUID id, Boolean status, String adminEmail) {
+        User user = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
+        
+        if (status != null) {
+            recipe.setStatus(status);
+        } else {
+            recipe.setStatus(!Boolean.TRUE.equals(recipe.getStatus()));
+        }
+        
+        recipe.setLastModifiedBy(user.getFirstname() + " " + user.getLastname());
+        Recipe saved = recipeRepository.save(recipe);
+        return mapToResponse(saved, null);
+    }
+
+    @Override
+    @Transactional
+    public void bulkUpdateRecipeStatus(List<UUID> ids, Boolean status, String adminEmail) {
+        User user = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        List<Recipe> recipes = recipeRepository.findAllById(ids);
+        for (Recipe recipe : recipes) {
+            recipe.setStatus(status);
+            recipe.setLastModifiedBy(user.getFirstname() + " " + user.getLastname());
+        }
+        recipeRepository.saveAll(recipes);
     }
 }

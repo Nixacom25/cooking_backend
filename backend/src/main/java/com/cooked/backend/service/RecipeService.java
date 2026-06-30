@@ -65,4 +65,7 @@ public interface RecipeService {
         com.cooked.backend.entity.RecipeCategory createCategory(String name, String image, org.springframework.web.multipart.MultipartFile imageFile, com.cooked.backend.entity.CategoryType type, Boolean active);
         com.cooked.backend.entity.RecipeCategory updateCategory(UUID id, String name, String image, org.springframework.web.multipart.MultipartFile imageFile, com.cooked.backend.entity.CategoryType type, Boolean active);
         void deleteCategory(UUID id);
+
+        RecipeResponse toggleRecipeStatus(UUID id, Boolean status, String adminEmail);
+        void bulkUpdateRecipeStatus(List<UUID> ids, Boolean status, String adminEmail);
 }
