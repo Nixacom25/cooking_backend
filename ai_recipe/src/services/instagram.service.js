@@ -8,6 +8,27 @@ const INSTAGRAM_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb
 const INSTAGRAM_HOST_REGEX = /(?:instagram\.com|instagr\.am)/i;
 
 /**
+ * Decodes all HTML entities including multiple/nested encodings.
+ * 
+ * @param {string} str 
+ * @returns {string} decoded string
+ */
+const unescapeHtml = (str) => {
+    if (!str || typeof str !== 'string') return str;
+    let decoded = str;
+    // Loop to resolve potential nested &amp; entities (e.g. &amp;amp;)
+    while (decoded.includes('&amp;')) {
+        decoded = decoded.replace(/&amp;/g, '&');
+    }
+    return decoded
+        .replace(/&quot;/g, '"')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&#39;/g, "'")
+        .replace(/&apos;/g, "'");
+};
+
+/**
  * Extracts the shortcode from an Instagram URL.
  * 
  * @param {string} url 
@@ -60,18 +81,17 @@ const parseInstagramMetaFromHtml = (html) => {
     
     let description = ogDescMatch ? ogDescMatch[1] : null;
     if (description) {
-        // Unescape standard HTML entities
-        description = description
-            .replace(/&quot;/g, '"')
-            .replace(/&amp;/g, '&')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&#39;/g, "'");
+        description = unescapeHtml(description);
+    }
+
+    let cover = ogImageMatch ? ogImageMatch[1] : null;
+    if (cover) {
+        cover = unescapeHtml(cover);
     }
     
     return {
         description,
-        cover: ogImageMatch ? ogImageMatch[1] : null
+        cover
     };
 };
 
@@ -94,8 +114,8 @@ const instagramService = async (url) => {
             console.log(`[Instagram] Fast API extraction successful!`);
             return {
                 platform: "instagram",
-                description: postData.description,
-                thumbnail,
+                description: unescapeHtml(postData.description),
+                thumbnail: unescapeHtml(thumbnail),
             };
         }
         console.log(`[Instagram] Fast API extraction returned empty description.`);
@@ -139,8 +159,8 @@ const instagramService = async (url) => {
 
         return {
             platform: "instagram",
-            description: meta.description,
-            thumbnail: meta.cover,
+            description: unescapeHtml(meta.description),
+            thumbnail: unescapeHtml(meta.cover),
         };
     } catch (error) {
         if (error instanceof AppError) throw error;
