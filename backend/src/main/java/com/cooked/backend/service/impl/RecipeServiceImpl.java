@@ -282,7 +282,9 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     @Cacheable(value = "exploreRecipes", key = "#cuisine + '_' + #category + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     public Page<RecipeResponse> getExploreRecipes(String cuisine, String category, Pageable pageable) {
-        return new com.cooked.backend.dto.response.RestPageImpl<>(recipeRepository.findExploreRecipes(RecipeOrigin.EXPLORE, RecipeOrigin.EXPLORE, cuisine, category, pageable)
+        String lowerCuisine = cuisine != null ? cuisine.trim().toLowerCase() : null;
+        String lowerCategory = category != null ? category.trim().toLowerCase() : null;
+        return new com.cooked.backend.dto.response.RestPageImpl<>(recipeRepository.findExploreRecipes(RecipeOrigin.EXPLORE, RecipeOrigin.EXPLORE, lowerCuisine, lowerCategory, pageable)
                 .map(recipe -> mapToResponse(recipe, null)));
     }
 
@@ -398,18 +400,20 @@ public class RecipeServiceImpl implements RecipeService {
                     .collect(Collectors.toList());
         }
 
+        String lowerCategory = category != null ? category.trim().toLowerCase() : null;
+
         // Enforce 10 items limit for "Popular Now" as requested
         org.springframework.data.domain.Pageable limitedPageable = org.springframework.data.domain.PageRequest.of(0, 10);
 
         org.springframework.data.domain.Page<Recipe> popularPage;
         try {
-            popularPage = recipeRepository.findRandomPopularRecipes(category, (preferredCuisines != null && preferredCuisines.isEmpty()) ? null : preferredCuisines, limitedPageable);
+            popularPage = recipeRepository.findRandomPopularRecipes(lowerCategory, (preferredCuisines != null && preferredCuisines.isEmpty()) ? null : preferredCuisines, limitedPageable);
             if (popularPage.isEmpty() && preferredCuisines != null && !preferredCuisines.isEmpty()) {
-                popularPage = recipeRepository.findRandomPopularRecipes(category, null, limitedPageable);
+                popularPage = recipeRepository.findRandomPopularRecipes(lowerCategory, null, limitedPageable);
             }
         } catch (Exception e) {
             System.err.println("Error fetching popular recipes: " + e.getMessage());
-            popularPage = recipeRepository.findExploreRecipes(com.cooked.backend.entity.RecipeOrigin.EXPLORE, com.cooked.backend.entity.RecipeOrigin.SUGGESTED, null, category, limitedPageable);
+            popularPage = recipeRepository.findExploreRecipes(com.cooked.backend.entity.RecipeOrigin.EXPLORE, com.cooked.backend.entity.RecipeOrigin.SUGGESTED, null, lowerCategory, limitedPageable);
         }
 
         return new com.cooked.backend.dto.response.RestPageImpl<>(popularPage.map(recipe -> mapToResponse(recipe, user)));

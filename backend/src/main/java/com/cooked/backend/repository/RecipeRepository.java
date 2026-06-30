@@ -31,8 +31,8 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.isPublic = true " +
                         "AND r.status = true " +
                         "AND (r.origin = :origin1 OR r.origin = :origin2) " +
-                        "AND (:cuisine IS NULL OR LOWER(r.cuisine.name) = LOWER(:cuisine)) " +
-                        "AND (:category IS NULL OR LOWER(:category) IN (SELECT LOWER(c.name) FROM r.categories c)) " +
+                        "AND (:cuisine IS NULL OR LOWER(r.cuisine.name) = :cuisine) " +
+                        "AND (:category IS NULL OR :category IN (SELECT LOWER(c.name) FROM r.categories c)) " +
                         "ORDER BY r.createdAt DESC")
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
         org.springframework.data.domain.Page<Recipe> findExploreRecipes(
@@ -60,7 +60,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r " +
                         "WHERE r.isPublic = true " +
                         "AND r.status = true " +
-                        "AND (:category IS NULL OR LOWER(:category) IN (SELECT LOWER(c.name) FROM r.categories c)) " +
+                        "AND (:category IS NULL OR :category IN (SELECT LOWER(c.name) FROM r.categories c)) " +
                         "AND (:cuisines IS NULL OR (SELECT COUNT(r2) FROM Recipe r2 WHERE r2.id = r.id AND LOWER(r2.cuisine.name) IN :cuisines) > 0) " +
                         "ORDER BY RANDOM()")
         org.springframework.data.domain.Page<Recipe> findRandomPopularRecipes(
