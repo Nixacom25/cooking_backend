@@ -140,8 +140,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public MessageResponse deleteClient(UUID id) {
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        cleanupAndExecuteDelete(user);
         return new MessageResponse("Client deleted successfully");
     }
 
@@ -185,8 +188,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public MessageResponse deleteAdmin(UUID id) {
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        cleanupAndExecuteDelete(user);
         return new MessageResponse("Admin deleted successfully");
     }
 
@@ -266,9 +272,11 @@ public class UserServiceImpl implements UserService {
     public MessageResponse deleteCurrentUser(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
+        cleanupAndExecuteDelete(user);
+        return new MessageResponse("Your account and all associated data have been permanently deleted.");
+    }
 
-        
+    private void cleanupAndExecuteDelete(User user) {
         // Handle recipes: delete duplicates, keep unique ones (nullify userId)
         if (user.getRecipes() != null && !user.getRecipes().isEmpty()) {
             // Create a copy of the list to avoid ConcurrentModificationException while modifying user.getRecipes()
@@ -341,8 +349,6 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.delete(user);
-        
-        return new MessageResponse("Your account and all associated data have been permanently deleted.");
     }
 
     @Override
