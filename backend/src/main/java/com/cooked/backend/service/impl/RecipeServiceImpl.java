@@ -643,6 +643,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .ingredientsCount(recipe.getIngredientsCount())
                 .lastModifiedBy(recipe.getLastModifiedBy())
                 .shareUrl("https://link.cookedapp.com/share/recipes/" + recipe.getId())
+                .status(recipe.getStatus())
                 .build();
     }
     @Override
@@ -792,8 +793,6 @@ public class RecipeServiceImpl implements RecipeService {
                 }
                 recipe.setImage(imgUrl);
             }
-
-            recipe.setStatus(true);
 
             String currentUserEmail = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
             User currentUser = userRepository.findByEmail(currentUserEmail).orElse(null);
