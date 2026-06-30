@@ -62,11 +62,9 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
             String statusMigrationSql = "DO $$ " +
                     "BEGIN " +
                     "  UPDATE recipes SET status = false WHERE status IS NULL; " +
-                    "  UPDATE recipes SET status = false WHERE origin = 'EXPLORE' AND updated_at < NOW() - INTERVAL '2 days'; " +
-                    "  UPDATE recipes SET status = true WHERE origin = 'EXPLORE' AND updated_at >= NOW() - INTERVAL '2 days'; " +
                     "END $$;";
             jdbcTemplate.execute(statusMigrationSql);
-            log.info("Successfully migrated existing recipe statuses");
+            log.info("Successfully migrated null recipe statuses to false");
             
         } catch (Exception e) {
             log.error("Failed to migrate database constraints or statuses: {}", e.getMessage());

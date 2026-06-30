@@ -13,10 +13,34 @@ import org.springframework.stereotype.Component;
 public class ExploreDataSeederListener {
 
     private final ExploreDataSeederService exploreDataSeederService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
-        log.info("Application is ready! Triggering explore recipes and categories seeder...");
+        log.info("Application is ready! Running custom database migrations...");
+        try {
+            // Create migrations table if not exists
+            jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS schema_migrations_cooked (version VARCHAR(255) PRIMARY KEY)");
+            
+            // Check if reset migration has run
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM schema_migrations_cooked WHERE version = 'reset_explore_status_to_false_2026'",
+                Integer.class
+            );
+            
+            if (count == null || count == 0) {
+                log.info("Running one-time migration: Setting all EXPLORE recipes status to false...");
+                jdbcTemplate.execute("UPDATE recipes SET status = false WHERE origin = 'EXPLORE'");
+                jdbcTemplate.execute("INSERT INTO schema_migrations_cooked (version) VALUES ('reset_explore_status_to_false_2026')");
+                log.info("Migration completed successfully.");
+            } else {
+                log.info("One-time EXPLORE status reset migration has already run. Skipping.");
+            }
+        } catch (Exception e) {
+            log.error("Failed to run custom explore status migration", e);
+        }
+
+        log.info("Triggering explore recipes and categories seeder...");
         try {
             // exploreDataSeederService.seedExploreData();
             log.info("Explore recipes and categories seeding is disabled by user request.");

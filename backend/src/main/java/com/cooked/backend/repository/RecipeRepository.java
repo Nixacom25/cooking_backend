@@ -59,6 +59,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
 
         @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r " +
                         "WHERE r.isPublic = true " +
+                        "AND r.status = true " +
                         "AND (:category IS NULL OR :category IN (SELECT c.name FROM r.categories c)) " +
                         "AND (:cuisines IS NULL OR (SELECT COUNT(r2) FROM Recipe r2 WHERE r2.id = r.id AND r2.cuisine.name IN :cuisines) > 0) " +
                         "ORDER BY RANDOM()")
@@ -97,13 +98,13 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         @org.springframework.transaction.annotation.Transactional
         void deleteByUserId(UUID userId);
 
-        @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r.cuisine.name FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.cuisine IS NOT NULL")
+        @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r.cuisine.name FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.status = true AND r.cuisine IS NOT NULL")
         List<String> findDistinctCuisines();
 
-    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, COUNT(r) FROM Recipe r JOIN r.categories c WHERE r.origin = 'EXPLORE' AND c.type = com.cooked.backend.entity.CategoryType.CATEGORY AND c.active = true GROUP BY c.name, c.image ORDER BY COUNT(r) DESC")
+    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, COUNT(r) FROM Recipe r JOIN r.categories c WHERE r.origin = 'EXPLORE' AND r.status = true AND c.type = com.cooked.backend.entity.CategoryType.CATEGORY AND c.active = true GROUP BY c.name, c.image ORDER BY COUNT(r) DESC")
     List<Object[]> findCategoriesWithCount();
 
-    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, COUNT(r) FROM Recipe r JOIN r.cuisine c WHERE r.origin = 'EXPLORE' AND c.type = com.cooked.backend.entity.CategoryType.CUISINE AND c.active = true GROUP BY c.name, c.image ORDER BY COUNT(r) DESC")
+    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, COUNT(r) FROM Recipe r JOIN r.cuisine c WHERE r.origin = 'EXPLORE' AND r.status = true AND c.type = com.cooked.backend.entity.CategoryType.CUISINE AND c.active = true GROUP BY c.name, c.image ORDER BY COUNT(r) DESC")
     List<Object[]> findCuisinesWithCount();
 
     List<Recipe> findByNameContainingIgnoreCase(String name);
