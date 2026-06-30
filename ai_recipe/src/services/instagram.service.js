@@ -2,7 +2,9 @@
 
 const { AppError } = require('../middleware/errorHandler');
 const { InstagramExtractor } = require('@h4md1/instagram-data-extractor');
+const { chromium } = require('playwright');
 
+const INSTAGRAM_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 const INSTAGRAM_HOST_REGEX = /(?:instagram\.com|instagr\.am)/i;
 
 /**
@@ -42,6 +44,38 @@ const getInstagramShortcodeFromUrl = (url) => {
 };
 
 /**
+ * Parses OG metadata from Instagram page HTML.
+ * 
+ * @param {string} html 
+ * @returns {object|null}
+ */
+const parseInstagramMetaFromHtml = (html) => {
+    if (!html) return null;
+    
+    // Extract og:description
+    const ogDescMatch = html.match(/<meta[^>]*property="og:description"[^>]*content="([^"]*)"/) ||
+                       html.match(/<meta[^>]*name="description"[^>]*content="([^"]*)"/);
+    // Extract og:image
+    const ogImageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]*)"/);
+    
+    let description = ogDescMatch ? ogDescMatch[1] : null;
+    if (description) {
+        // Unescape standard HTML entities
+        description = description
+            .replace(/&quot;/g, '"')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&#39;/g, "'");
+    }
+    
+    return {
+        description,
+        cover: ogImageMatch ? ogImageMatch[1] : null
+    };
+};
+
+/**
  * Fetches post data from Instagram.
  * 
  * @param {string} url 
@@ -49,18 +83,70 @@ const getInstagramShortcodeFromUrl = (url) => {
  */
 const instagramService = async (url) => {
     const shortcode = getInstagramShortcodeFromUrl(url);
+
+    // Attempt 1: Fast API extraction using InstagramExtractor
     try {
+        console.log(`[Instagram] Attempting fast API extraction for shortcode: ${shortcode}`);
         const postData = await InstagramExtractor.extractPost(shortcode);
-        
         const thumbnail = postData?.media?.find((media) => media?.thumbnailUrl)?.thumbnailUrl ?? postData?.thumbnailUrl ?? null;
+
+        if (postData && postData.description) {
+            console.log(`[Instagram] Fast API extraction successful!`);
+            return {
+                platform: "instagram",
+                description: postData.description,
+                thumbnail,
+            };
+        }
+        console.log(`[Instagram] Fast API extraction returned empty description.`);
+    } catch (error) {
+        console.log(`[Instagram] Fast API extraction failed: ${error.message}`);
+    }
+
+    // Attempt 2: Headless browser extraction with Playwright (fallback)
+    console.log(`[Instagram] Attempting browser extraction for URL: ${url}`);
+    let browser;
+    try {
+        browser = await chromium.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        const page = await browser.newPage({ userAgent: INSTAGRAM_USER_AGENT });
+        
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+        await page.waitForTimeout(3000);
+        
+        const html = await page.content();
+        let meta = parseInstagramMetaFromHtml(html);
+
+        // Fallback to visible body text if description metadata tag is missing
+        if (!meta || !meta.description) {
+            const bodyText = await page.evaluate(() => {
+                return (document.querySelector('main')?.innerText || document.body?.innerText || "").trim();
+            });
+            if (bodyText && bodyText.length > 20) {
+                meta = {
+                    description: bodyText.substring(0, 8000),
+                    cover: meta?.cover || null
+                };
+                console.log(`[Instagram] Fallback to raw page text successful.`);
+            }
+        }
+
+        if (!meta || !meta.description) {
+            throw new AppError(502, 'BAD_GATEWAY', "Impossible d'extraire les données d'Instagram.");
+        }
 
         return {
             platform: "instagram",
-            description: postData.description || "",
-            thumbnail,
+            description: meta.description,
+            thumbnail: meta.cover,
         };
     } catch (error) {
-        throw new AppError(502, 'BAD_GATEWAY', "Impossible d'extraire les données d'Instagram");
+        if (error instanceof AppError) throw error;
+        throw new AppError(502, 'BAD_GATEWAY', `Impossible d'extraire les données d'Instagram via le navigateur: ${error.message}`);
+    } finally {
+        if (browser) await browser.close();
     }
 };
 

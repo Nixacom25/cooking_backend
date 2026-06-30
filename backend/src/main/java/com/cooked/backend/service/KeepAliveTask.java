@@ -26,7 +26,7 @@ public class KeepAliveTask {
         this.activityTracker = activityTracker;
     }
 
-    @Scheduled(fixedRate = 60000) // Check every minute
+    // @Scheduled(fixedRate = 60000) // Check every minute (Disabled because Render Pro keeps services always online)
     public void keepServicesAlive() {
         long now = System.currentTimeMillis();
         long inactivityThreshold = 780000; // 13 minutes
