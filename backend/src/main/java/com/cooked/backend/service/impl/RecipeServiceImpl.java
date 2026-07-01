@@ -851,6 +851,7 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"exploreRecipes", "popularRecipes", "explore_cuisines", "explore_categories"}, allEntries = true)
     public RecipeCategory createCategory(String name, String image, org.springframework.web.multipart.MultipartFile imageFile, CategoryType type, Boolean active) {
         if (recipeCategoryRepository.findByNameAndType(name, type).isPresent()) {
             throw new BadRequestException(type + " with name " + name + " already exists");
@@ -874,6 +875,7 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"exploreRecipes", "popularRecipes", "explore_cuisines", "explore_categories"}, allEntries = true)
     public RecipeCategory updateCategory(UUID id, String name, String image, org.springframework.web.multipart.MultipartFile imageFile, CategoryType type, Boolean active) {
         RecipeCategory category = recipeCategoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
@@ -927,6 +929,7 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"exploreRecipes", "popularRecipes", "explore_cuisines", "explore_categories"}, allEntries = true)
     public void deleteCategory(UUID id) {
         if (!recipeCategoryRepository.existsById(id)) {
             throw new ResourceNotFoundException("Category not found");
