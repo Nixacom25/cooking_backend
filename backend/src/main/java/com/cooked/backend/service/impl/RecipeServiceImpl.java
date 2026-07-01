@@ -42,10 +42,10 @@ public class RecipeServiceImpl implements RecipeService {
         // Run migrations in a background thread to prevent blocking port binding and deployment timeouts on Render
         new Thread(() -> {
             try {
-                migrateOrigins();
-                taxonomyService.migrateExistingRecipes();
-                taxonomyService.mergeDuplicateTaxonomies();
-                log.info("All background startup migrations completed.");
+                // migrateOrigins();
+                // taxonomyService.migrateExistingRecipes();
+                // taxonomyService.mergeDuplicateTaxonomies();
+                log.info("Startup migrations are disabled by user request.");
             } catch (Exception e) {
                 log.error("Error during background startup migrations: ", e);
             }

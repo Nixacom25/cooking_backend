@@ -128,14 +128,6 @@ public class TaxonomyServiceImpl implements TaxonomyService {
         String mappedImage = (type == CategoryType.CUISINE) ? CUISINE_IMAGES.get(finalName) : CATEGORY_IMAGES.get(finalName);
         
         return recipeCategoryRepository.findByNameAndType(finalName, type)
-                .map(existing -> {
-                    // Update image if it's missing or different from our curated map
-                    if (mappedImage != null && (existing.getImage() == null || !existing.getImage().equals(mappedImage))) {
-                        existing.setImage(mappedImage);
-                        return recipeCategoryRepository.save(existing);
-                    }
-                    return existing;
-                })
                 .orElseGet(() -> recipeCategoryRepository.save(RecipeCategory.builder()
                         .name(finalName)
                         .type(type)
@@ -146,132 +138,13 @@ public class TaxonomyServiceImpl implements TaxonomyService {
     @Override
     @Transactional
     public void migrateExistingRecipes() {
-        log.info("Checking for legacy taxonomy columns in recipes table...");
-        
-        try {
-            // Check if 'category' column exists
-            Boolean hasCategory = jdbcTemplate.queryForObject(
-                "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='recipes' AND column_name='category')", 
-                Boolean.class
-            );
-
-            // Check if 'cuisine' column exists
-            Boolean hasCuisine = jdbcTemplate.queryForObject(
-                "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='recipes' AND column_name='cuisine')", 
-                Boolean.class
-            );
-
-            if (Boolean.TRUE.equals(hasCategory)) {
-                log.info("Migrating legacy 'category' column...");
-                jdbcTemplate.query("SELECT id, category FROM recipes WHERE category_id IS NULL AND category IS NOT NULL", (rs, rowNum) -> {
-                    UUID id = (UUID) rs.getObject("id");
-                    String oldCat = rs.getString("category");
-                    if (oldCat != null && !oldCat.isBlank()) {
-                        RecipeCategory entity = getOrCreateCategory(oldCat, CategoryType.CATEGORY);
-                        if (entity != null) {
-                            jdbcTemplate.update("UPDATE recipes SET category_id = ? WHERE id = ?", entity.getId(), id);
-                        }
-                    }
-                    return null;
-                });
-            }
-
-            if (Boolean.TRUE.equals(hasCuisine)) {
-                log.info("Migrating legacy 'cuisine' column...");
-                jdbcTemplate.query("SELECT id, cuisine FROM recipes WHERE cuisine_id IS NULL AND cuisine IS NOT NULL", (rs, rowNum) -> {
-                    UUID id = (UUID) rs.getObject("id");
-                    String oldCui = rs.getString("cuisine");
-                    if (oldCui != null && !oldCui.isBlank()) {
-                        RecipeCategory entity = getOrCreateCategory(oldCui, CategoryType.CUISINE);
-                        if (entity != null) {
-                            jdbcTemplate.update("UPDATE recipes SET cuisine_id = ? WHERE id = ?", entity.getId(), id);
-                        }
-                    }
-                    return null;
-                });
-            }
-
-            if (Boolean.TRUE.equals(hasCategory) || Boolean.TRUE.equals(hasCuisine)) {
-                log.info("Taxonomy migration completed. Cleaning up columns...");
-                try {
-                    if (Boolean.TRUE.equals(hasCategory)) jdbcTemplate.execute("ALTER TABLE recipes DROP COLUMN IF EXISTS category");
-                    if (Boolean.TRUE.equals(hasCuisine)) jdbcTemplate.execute("ALTER TABLE recipes DROP COLUMN IF EXISTS cuisine");
-                    log.info("Successfully dropped old taxonomy columns.");
-                } catch (Exception e) {
-                    log.warn("Could not drop old columns: {}", e.getMessage());
-                }
-            } else {
-                log.info("No legacy taxonomy columns found. Skipping migration.");
-            }
-
-        } catch (Exception e) {
-            log.error("Migration check/process failed: {}", e.getMessage(), e);
-        }
+        log.info("migrateExistingRecipes is disabled by user request. No database modifications allowed.");
     }
 
     @Override
     @Transactional
     public void mergeDuplicateTaxonomies() {
-        log.info("Starting taxonomy cleanup and merging...");
-        
-        Map<String, String> merges = Map.ofEntries(
-            Map.entry("Brazil", "Brazilian"),
-            Map.entry("Vietnam", "Vietnamese"),
-            Map.entry("Morocco", "Moroccan"),
-            Map.entry("Senegal", "Senegalese"),
-            Map.entry("Sénégal", "Senegalese"),
-            Map.entry("USA", "American"),
-            Map.entry("America", "American"),
-            Map.entry("United Kingdom", "British"),
-            Map.entry("UK", "British"),
-            Map.entry("Lebanon", "Lebanese"),
-            Map.entry("Turkey", "Turkish"),
-            Map.entry("Wast African", "West African"),
-            Map.entry("Japanese Fusion", "Japanese"),
-            Map.entry("Japan Fusion", "Japanese")
-        );
-
-        for (Map.Entry<String, String> entry : merges.entrySet()) {
-            String oldName = entry.getKey();
-            String newName = entry.getValue();
-
-            // Find existing categories
-            Map<String, UUID> map = jdbcTemplate.query("SELECT id, name FROM recipe_categories WHERE type = 'CUISINE' AND (name = ? OR name = ?)", (rs, rowNum) -> {
-                UUID id = (UUID) rs.getObject("id");
-                String name = rs.getString("name");
-                return Map.entry(name, id);
-            }, oldName, newName).stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a));
-
-            if (!map.isEmpty()) {
-                UUID oldId = map.get(oldName);
-                UUID newId = map.get(newName);
-
-                if (oldId != null && newId != null) {
-                    log.info("Merging '{}' into '{}'...", oldName, newName);
-                    // Update recipes
-                    jdbcTemplate.update("UPDATE recipes SET cuisine_id = ? WHERE cuisine_id = ?", newId, oldId);
-                    // Delete old category
-                    jdbcTemplate.update("DELETE FROM recipe_categories WHERE id = ?", oldId);
-                } else if (oldId != null) {
-                    log.info("Renaming '{}' to '{}'...", oldName, newName);
-                    try {
-                        jdbcTemplate.update("UPDATE recipe_categories SET name = ? WHERE id = ?", newName, oldId);
-                    } catch (org.springframework.dao.DuplicateKeyException e) {
-                        log.warn("Cannot rename {} to {}, target already exists. Merging instead...", oldName, newName);
-                        java.util.List<UUID> targets = jdbcTemplate.queryForList(
-                            "SELECT id FROM recipe_categories WHERE type = 'CUISINE' AND LOWER(name) = LOWER(?)", 
-                            UUID.class, newName
-                        );
-                        if (!targets.isEmpty()) {
-                            UUID targetId = targets.get(0);
-                            jdbcTemplate.update("UPDATE recipes SET cuisine_id = ? WHERE cuisine_id = ?", targetId, oldId);
-                            jdbcTemplate.update("DELETE FROM recipe_categories WHERE id = ?", oldId);
-                        }
-                    }
-                }
-            }
-        }
-        log.info("Taxonomy cleanup completed.");
+        log.info("mergeDuplicateTaxonomies is disabled by user request. No database modifications allowed.");
     }
 
     @Override

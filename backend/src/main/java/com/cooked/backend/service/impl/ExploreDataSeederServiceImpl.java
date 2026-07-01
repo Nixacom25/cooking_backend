@@ -29,7 +29,8 @@ public class ExploreDataSeederServiceImpl implements ExploreDataSeederService {
     @Override
     @Transactional
     public void seedExploreData() {
-        log.info("Checking for Explore Data updates in explore_recipes.json...");
+        log.info("Explore recipes and categories seeding is completely disabled by user request.");
+        if (true) return;
 
         // Drop ALL unique constraints on recipes, cookbooks, ingredients, etc. to allow duplicates as requested
         try {
