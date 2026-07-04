@@ -33,6 +33,12 @@ public class ActivityLog {
     @Column(nullable = false, length = 1000)
     private String message;
 
+    @Column(name = "entity_id", nullable = true)
+    private UUID entityId;
+
+    @Column(name = "entity_type", nullable = true)
+    private String entityType;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

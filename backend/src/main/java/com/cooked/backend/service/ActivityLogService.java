@@ -7,10 +7,11 @@ import org.springframework.data.domain.Pageable;
 
 public interface ActivityLogService {
     void logActivity(User user, String title, String message);
+    void logActivity(User user, String title, String message, java.util.UUID entityId, String entityType);
 
     Page<ActivityLogResponse> getMyActivities(String userEmail, Pageable pageable);
 
     Page<ActivityLogResponse> getActivitiesByRole(com.cooked.backend.entity.Role role, Pageable pageable);
 
-    void logDetailedEditorActivity(User editor, java.util.List<String> changedFields, String entityType, String entityName, String parentEntityName);
+    void logDetailedEditorActivity(User editor, java.util.List<String> changedFields, String entityType, String entityName, String parentEntityName, java.util.UUID entityId);
 }

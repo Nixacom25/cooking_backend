@@ -13,4 +13,8 @@ public class ActivityLogResponse {
     private String title;
     private String message;
     private LocalDateTime createdAt;
+    private UUID entityId;
+    private String entityType;
+    private String editorName;
+    private String editorEmail;
 }

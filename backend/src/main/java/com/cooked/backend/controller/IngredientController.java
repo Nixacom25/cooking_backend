@@ -94,13 +94,14 @@ public class IngredientController {
         }
 
         final String finalIngredientName = ingredient.getName();
+        final UUID finalIngredientId = ingredient.getId();
 
         if (!changedFields.isEmpty()) {
             org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.isAuthenticated()) {
                 userRepository.findByEmail(auth.getName()).ifPresent(user -> {
                     if (user.getRole() == com.cooked.backend.entity.Role.EDITOR) {
-                        activityLogService.logDetailedEditorActivity(user, changedFields, "ingredient", finalIngredientName, null);
+                        activityLogService.logDetailedEditorActivity(user, changedFields, "ingredient", finalIngredientName, null, finalIngredientId);
                     }
                 });
             }

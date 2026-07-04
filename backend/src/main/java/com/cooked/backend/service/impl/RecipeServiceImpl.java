@@ -800,7 +800,7 @@ public class RecipeServiceImpl implements RecipeService {
                 recipe.setLastModifiedBy(currentUser.getFirstname() + " " + currentUser.getLastname());
                 if (currentUser.getRole() == com.cooked.backend.entity.Role.EDITOR && !changedFields.isEmpty()) {
                     String cuisineName = recipe.getCuisine() != null ? recipe.getCuisine().getName() : "Unknown";
-                    activityLogService.logDetailedEditorActivity(currentUser, changedFields, "recipe", recipe.getName(), cuisineName);
+                    activityLogService.logDetailedEditorActivity(currentUser, changedFields, "recipe", recipe.getName(), cuisineName, recipe.getId());
                 }
             } else {
                 recipe.setLastModifiedBy("Admin");
@@ -918,7 +918,7 @@ public class RecipeServiceImpl implements RecipeService {
                 userRepository.findByEmail(auth.getName()).ifPresent(user -> {
                     if (user.getRole() == com.cooked.backend.entity.Role.EDITOR) {
                         String entityType = category.getType() == CategoryType.CUISINE ? "cuisine" : "category";
-                        activityLogService.logDetailedEditorActivity(user, changedFields, entityType, category.getName(), null);
+                        activityLogService.logDetailedEditorActivity(user, changedFields, entityType, category.getName(), null, category.getId());
                     }
                 });
             }

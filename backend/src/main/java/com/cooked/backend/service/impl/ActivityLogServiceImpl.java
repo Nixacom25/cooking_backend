@@ -22,10 +22,17 @@ public class ActivityLogServiceImpl implements ActivityLogService {
 
     @Override
     public void logActivity(User user, String title, String message) {
+        logActivity(user, title, message, null, null);
+    }
+
+    @Override
+    public void logActivity(User user, String title, String message, java.util.UUID entityId, String entityType) {
         ActivityLog log = ActivityLog.builder()
                 .user(user)
                 .title(title)
                 .message(message)
+                .entityId(entityId)
+                .entityType(entityType)
                 .build();
         activityLogRepository.save(log);
     }
@@ -46,7 +53,7 @@ public class ActivityLogServiceImpl implements ActivityLogService {
     }
 
     @Override
-    public void logDetailedEditorActivity(User editor, java.util.List<String> changedFields, String entityType, String entityName, String parentEntityName) {
+    public void logDetailedEditorActivity(User editor, java.util.List<String> changedFields, String entityType, String entityName, String parentEntityName, java.util.UUID entityId) {
         if (changedFields == null || changedFields.isEmpty()) {
             return;
         }
@@ -62,7 +69,7 @@ public class ActivityLogServiceImpl implements ActivityLogService {
                 editor.getFirstname(), fieldsString, entityType, entityName);
         }
 
-        logActivity(editor, "Editor Modification", message);
+        logActivity(editor, "Editor Modification", message, entityId, entityType);
     }
 
     private ActivityLogResponse mapToResponse(ActivityLog log) {
@@ -71,6 +78,10 @@ public class ActivityLogServiceImpl implements ActivityLogService {
                 .title(log.getTitle())
                 .message(log.getMessage())
                 .createdAt(log.getCreatedAt())
+                .entityId(log.getEntityId())
+                .entityType(log.getEntityType())
+                .editorName(log.getUser() != null ? log.getUser().getFirstname() + " " + log.getUser().getLastname() : null)
+                .editorEmail(log.getUser() != null ? log.getUser().getEmail() : null)
                 .build();
     }
 }
