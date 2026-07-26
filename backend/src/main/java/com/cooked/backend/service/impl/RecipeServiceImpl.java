@@ -258,7 +258,8 @@ public class RecipeServiceImpl implements RecipeService {
             cookbookRepository.save(cb);
         }
 
-        recipeRepository.delete(recipe);
+        recipe.setDeleted(true);
+        recipeRepository.save(recipe);
         return new MessageResponse("Recipe deleted successfully.");
     }
 
@@ -818,10 +819,10 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     @Transactional
     public void deleteAdminRecipe(UUID id) {
-        if (!recipeRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Recipe not found");
-        }
-        recipeRepository.deleteById(id);
+        Recipe recipe = recipeRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
+        recipe.setDeleted(true);
+        recipeRepository.save(recipe);
     }
     
     // Category Management

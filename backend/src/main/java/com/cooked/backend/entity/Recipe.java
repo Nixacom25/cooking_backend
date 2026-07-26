@@ -133,6 +133,10 @@ public class Recipe {
     @Column(name = "ingredients_count", nullable = true)
     private Integer ingredientsCount;
 
+    @Column(name = "is_deleted", nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean isDeleted = false;
+
     // --- Getters & Setters Manuels ---
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -184,6 +188,8 @@ public class Recipe {
     public void setTotalPrice(Double totalPrice) { this.totalPrice = totalPrice; }
     public Integer getIngredientsCount() { return ingredientsCount; }
     public void setIngredientsCount(Integer ingredientsCount) { this.ingredientsCount = ingredientsCount; }
+    public boolean isDeleted() { return isDeleted; }
+    public void setDeleted(boolean deleted) { isDeleted = deleted; }
     public Boolean getStatus() { return status; }
     public void setStatus(Boolean status) { this.status = status; }
 }

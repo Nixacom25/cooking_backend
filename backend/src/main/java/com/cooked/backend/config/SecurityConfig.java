@@ -72,7 +72,8 @@ public class SecurityConfig {
                                 "/share/**",
                                 "/.well-known/**",
                                 "/webhooks/**",
-                                "/actuator/**")
+                                "/actuator/**",
+                                "/ws/**")
                         .permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

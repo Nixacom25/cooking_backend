@@ -13,8 +13,9 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         Optional<Recipe> findByUserIdAndName(UUID userId, String name);
         long countByUserId(UUID userId);
         long countByUserIdAndOrigin(UUID userId, com.cooked.backend.entity.RecipeOrigin origin);
-
         long countByOrigin(com.cooked.backend.entity.RecipeOrigin origin);
+        long countByIsDeleted(boolean isDeleted);
+        long countByIsDeletedAndLastModifiedByIsNotNull(boolean isDeleted);
 
         boolean existsByUserIdAndName(UUID userId, String name);
         boolean existsByNameAndOrigin(String name, com.cooked.backend.entity.RecipeOrigin origin);
