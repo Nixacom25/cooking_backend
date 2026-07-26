@@ -46,7 +46,7 @@ public class TaxonomyServiceImplTest {
     @Test
     void testGetOrCreateCategory_Existing() {
         when(categoryRepository.findByNameAndType("Italian", CategoryType.CUISINE)).thenReturn(Optional.of(dummyCategory));
-        when(categoryRepository.save(any(RecipeCategory.class))).thenAnswer(i -> i.getArgument(0));
+        // when(categoryRepository.save(any(RecipeCategory.class))).thenAnswer(i -> i.getArgument(0));
         
         RecipeCategory response = taxonomyService.getOrCreateCategory("Italian", CategoryType.CUISINE);
 
