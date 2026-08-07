@@ -13,4 +13,7 @@ public class CreateAssignmentRequest {
     private List<UUID> userIds;
     private LocalDateTime dueDate;
     private AssignmentFrequency frequency;
+    /** If true, any existing active assignment for the recipe will be cancelled and replaced. */
+    private Boolean forceReassign;
 }
+

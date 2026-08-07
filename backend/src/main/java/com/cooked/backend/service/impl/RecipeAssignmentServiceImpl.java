@@ -82,7 +82,16 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
 
             List<RecipeAssignment> existing = assignmentRepository.findActiveAssignmentsByRecipeId(recipeId);
             if (!existing.isEmpty()) {
-                throw new BadRequestException("Recipe '" + recipe.getName() + "' is already assigned.");
+                if (Boolean.TRUE.equals(request.getForceReassign())) {
+                    // Cancel existing assignments before creating a new one
+                    for (RecipeAssignment old : existing) {
+                        recordHistory(old, admin, "REASSIGNED", old.getStatus(), AssignmentStatus.DELETED, null,
+                                "Réassignation forcée par l'admin");
+                        assignmentRepository.delete(old);
+                    }
+                } else {
+                    throw new BadRequestException("Recipe '" + recipe.getName() + "' is already assigned. Use forceReassign=true to override.");
+                }
             }
 
             for (UUID userId : request.getUserIds()) {
