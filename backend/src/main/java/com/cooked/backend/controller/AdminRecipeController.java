@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.Authentication;
 
 import java.util.UUID;
 
@@ -64,9 +65,18 @@ public class AdminRecipeController {
     @Operation(summary = "Delete recipe by ID")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
-    public ResponseEntity<MessageResponse> deleteRecipe(@PathVariable UUID id) {
-        recipeService.deleteAdminRecipe(id);
+    public ResponseEntity<MessageResponse> deleteRecipe(@PathVariable UUID id, Authentication auth) {
+        String userEmail = auth != null ? auth.getName() : null;
+        recipeService.deleteAdminRecipe(id, userEmail);
         return ResponseEntity.ok(new MessageResponse("Recipe deleted successfully"));
+    }
+
+    @PutMapping("/{id}/restore")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
+    public ResponseEntity<MessageResponse> restoreRecipe(@PathVariable UUID id, Authentication auth) {
+        String userEmail = auth != null ? auth.getName() : null;
+        recipeService.restoreAdminRecipe(id, userEmail);
+        return ResponseEntity.ok(new MessageResponse("Recipe restored successfully"));
     }
 
     @Operation(summary = "Toggle recipe activation status")

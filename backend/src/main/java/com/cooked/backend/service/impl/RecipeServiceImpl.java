@@ -819,10 +819,25 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     @Transactional
-    public void deleteAdminRecipe(UUID id) {
+    public void deleteAdminRecipe(UUID id, String userEmail) {
         Recipe recipe = recipeRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
         recipe.setDeleted(true);
+        if (userEmail != null) {
+            recipe.setLastModifiedBy(userEmail);
+        }
+        recipeRepository.save(recipe);
+    }
+
+    @Override
+    @Transactional
+    public void restoreAdminRecipe(UUID id, String userEmail) {
+        Recipe recipe = recipeRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
+        recipe.setDeleted(false);
+        if (userEmail != null) {
+            recipe.setLastModifiedBy(userEmail);
+        }
         recipeRepository.save(recipe);
     }
     

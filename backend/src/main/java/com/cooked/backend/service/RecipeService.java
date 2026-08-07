@@ -56,7 +56,8 @@ public interface RecipeService {
 
         RecipeResponse updateAdminRecipe(UUID id, String recipeJson, org.springframework.web.multipart.MultipartFile image);
 
-        void deleteAdminRecipe(UUID id);
+        void deleteAdminRecipe(UUID id, String userEmail);
+        void restoreAdminRecipe(UUID id, String userEmail);
         
         void bulkCreateAdminRecipes(String adminEmail, java.util.List<com.cooked.backend.dto.request.CreateRecipeRequest> requests);
         
