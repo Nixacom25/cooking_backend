@@ -63,7 +63,7 @@ public class RecipeAssignmentController {
         return ResponseEntity.ok(assignmentService.getAllAssignments(pageable));
     }
 
-    @Operation(summary = "Get assignments filtered by status")
+    @Operation(summary = "Get assignments filtered by status (path param)")
     @GetMapping("/assignments/status/{status}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<RecipeAssignmentResponse>> getAssignmentsByStatus(
@@ -73,6 +73,18 @@ public class RecipeAssignmentController {
         Pageable pageable = PageRequest.of(page, size, Sort.by("assignedDate").descending());
         return ResponseEntity.ok(assignmentService.getAssignmentsByStatus(status, pageable));
     }
+
+    @Operation(summary = "Get assignments filtered by status (query param)")
+    @GetMapping("/assignments/by-status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<RecipeAssignmentResponse>> getAssignmentsByStatusQuery(
+            @RequestParam AssignmentStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("assignedDate").descending());
+        return ResponseEntity.ok(assignmentService.getAssignmentsByStatus(status, pageable));
+    }
+
 
     @Operation(summary = "Get assignments for logged-in editor")
     @GetMapping("/my-assignments")
