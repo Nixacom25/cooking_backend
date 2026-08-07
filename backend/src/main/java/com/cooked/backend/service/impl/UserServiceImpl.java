@@ -155,6 +155,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Page<UserResponse> getEditors(Pageable pageable) {
+        return userRepository.findAllByRole(Role.EDITOR, pageable)
+                .map(userMapper::toResponse);
+    }
+
+    @Override
     public UserResponse createAdmin(CreateUserRequest request) {
         Role targetRole = request.getRole();
         if (targetRole == null || (targetRole != Role.ADMIN && targetRole != Role.EDITOR)) {

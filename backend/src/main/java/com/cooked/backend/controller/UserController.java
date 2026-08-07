@@ -113,7 +113,7 @@ public class UserController {
 
     // --- Admin Routes (ADMIN) ---
 
-    @Operation(summary = "Get admins")
+    @Operation(summary = "Get admins and editors")
     @GetMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<UserResponse>> getAdmins(
@@ -129,6 +129,17 @@ public class UserController {
                 org.springframework.data.domain.Sort.by(direction, sortParams[0]));
 
         return ResponseEntity.ok(userService.getAdmins(pageable));
+    }
+
+    @Operation(summary = "Get editors only (stagiaires)")
+    @GetMapping("/editors")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<UserResponse>> getEditors(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "200") int size) {
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
+                org.springframework.data.domain.Sort.by("firstname").ascending());
+        return ResponseEntity.ok(userService.getEditors(pageable));
     }
 
     @PostMapping("/admin")

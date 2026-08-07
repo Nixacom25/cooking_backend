@@ -32,6 +32,8 @@ public interface UserService {
 
     Page<UserResponse> getAdmins(Pageable pageable);
 
+    Page<UserResponse> getEditors(Pageable pageable);
+
     UserResponse createAdmin(CreateUserRequest request);
 
     UserResponse updateAdmin(UUID id, UpdateUserRequest request);
