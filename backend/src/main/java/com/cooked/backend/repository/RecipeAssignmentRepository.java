@@ -6,9 +6,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -20,9 +23,22 @@ public interface RecipeAssignmentRepository extends JpaRepository<RecipeAssignme
 
     Page<RecipeAssignment> findAllByAssignedToUserIdAndStatusOrderByAssignedDateDesc(UUID userId, AssignmentStatus status, Pageable pageable);
 
-    @Query("SELECT COUNT(ra) FROM RecipeAssignment ra WHERE ra.status IN ('NOT_STARTED', 'IN_PROGRESS')")
+    Page<RecipeAssignment> findAllByStatusOrderByAssignedDateDesc(AssignmentStatus status, Pageable pageable);
+
+    long countByStatus(AssignmentStatus status);
+
+    long countByAssignedToUserId(UUID userId);
+
+    long countByAssignedToUserIdAndStatus(UUID userId, AssignmentStatus status);
+
+    @Query("SELECT COUNT(ra) FROM RecipeAssignment ra WHERE ra.status IN ('ASSIGNED', 'NOT_STARTED', 'IN_PROGRESS', 'NEEDS_CORRECTION')")
     long countActiveAssignments();
 
-    @Query("SELECT ra FROM RecipeAssignment ra WHERE ra.recipe.id = :recipeId AND ra.status IN ('NOT_STARTED', 'IN_PROGRESS')")
-    List<RecipeAssignment> findActiveAssignmentsByRecipeId(UUID recipeId);
+    @Query("SELECT ra FROM RecipeAssignment ra WHERE ra.recipe.id = :recipeId AND ra.status IN ('ASSIGNED', 'NOT_STARTED', 'IN_PROGRESS', 'SUBMITTED_FOR_VALIDATION', 'NEEDS_CORRECTION')")
+    List<RecipeAssignment> findActiveAssignmentsByRecipeId(@Param("recipeId") UUID recipeId);
+
+    Optional<RecipeAssignment> findFirstByRecipeIdOrderByAssignedDateDesc(UUID recipeId);
+
+    @Query("SELECT COUNT(ra) FROM RecipeAssignment ra WHERE (ra.validatedDate >= :startOfDay OR ra.completedDate >= :startOfDay)")
+    long countProcessedToday(@Param("startOfDay") LocalDateTime startOfDay);
 }

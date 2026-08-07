@@ -16,4 +16,9 @@ public class RecipeStatsResponse {
     private long unassignedRecipes;
     private long deletedRecipes;
     private long modifiedRecipes;
+    private long pendingValidationRecipes;
+    private long validatedRecipes;
+    private long needsCorrectionRecipes;
+    private long inProgressRecipes;
+    private long processedToday;
 }

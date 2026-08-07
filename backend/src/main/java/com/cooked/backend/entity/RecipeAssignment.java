@@ -5,6 +5,8 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Builder
@@ -41,7 +43,7 @@ public class RecipeAssignment {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     @Builder.Default
-    private AssignmentStatus status = AssignmentStatus.NOT_STARTED;
+    private AssignmentStatus status = AssignmentStatus.ASSIGNED;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "frequency", nullable = false)
@@ -50,4 +52,23 @@ public class RecipeAssignment {
 
     @Column(name = "completed_date")
     private LocalDateTime completedDate;
+
+    @Column(name = "submitted_date")
+    private LocalDateTime submittedDate;
+
+    @Column(name = "validated_date")
+    private LocalDateTime validatedDate;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "recipe_assignment_error_categories", joinColumns = @JoinColumn(name = "assignment_id"))
+    @Column(name = "error_category")
+    @Builder.Default
+    private List<String> errorCategories = new ArrayList<>();
+
+    @Column(name = "feedback_comment", columnDefinition = "TEXT")
+    private String feedbackComment;
+
+    @Column(name = "revision_count")
+    @Builder.Default
+    private Integer revisionCount = 0;
 }

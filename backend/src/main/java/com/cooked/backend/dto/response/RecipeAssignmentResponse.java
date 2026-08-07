@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -20,4 +21,9 @@ public class RecipeAssignmentResponse {
     private AssignmentStatus status;
     private AssignmentFrequency frequency;
     private LocalDateTime completedDate;
+    private LocalDateTime submittedDate;
+    private LocalDateTime validatedDate;
+    private List<String> errorCategories;
+    private String feedbackComment;
+    private Integer revisionCount;
 }
