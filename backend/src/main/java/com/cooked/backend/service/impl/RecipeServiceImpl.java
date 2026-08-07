@@ -645,6 +645,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .lastModifiedBy(recipe.getLastModifiedBy())
                 .shareUrl("https://link.cookedapp.com/share/recipes/" + recipe.getId())
                 .status(recipe.getStatus())
+                .isDeleted(recipe.isDeleted())
                 .build();
     }
     @Override
