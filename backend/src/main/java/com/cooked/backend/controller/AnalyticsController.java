@@ -82,4 +82,10 @@ public class AnalyticsController {
     public ResponseEntity<Map<String, Object>> getFirebaseEvents() {
         return ResponseEntity.ok(firebaseAnalyticsService.getEventsData());
     }
+
+    @GetMapping("/firebase/detailed")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> getFirebaseDetailed() {
+        return ResponseEntity.ok(firebaseAnalyticsService.getOverviewMetrics());
+    }
 }
