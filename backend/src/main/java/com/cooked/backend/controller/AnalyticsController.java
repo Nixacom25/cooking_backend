@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/analytics")
+@RequestMapping({"/api/app-metrics", "/api/analytics"})
 @RequiredArgsConstructor
-@Tag(name = "Analytics", description = "Paywall Funnel Tracking")
+@Tag(name = "Analytics", description = "Paywall Funnel & Platform Metrics")
 @SecurityRequirement(name = "bearerAuth")
 public class AnalyticsController {
 
