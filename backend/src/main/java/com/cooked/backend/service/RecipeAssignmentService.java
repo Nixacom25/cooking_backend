@@ -24,4 +24,6 @@ public interface RecipeAssignmentService {
     void removeAssignment(UUID assignmentId, String adminEmail);
     List<RecipeAssignmentHistoryResponse> getAssignmentHistory(UUID assignmentId);
     List<StagiaireLeaderboardResponse> getStagiairesLeaderboard();
+    List<RecipeAssignmentResponse> assignBatchByCount(com.cooked.backend.dto.request.BatchAssignmentRequest request, String adminEmail);
+    long getAvailableUnassignedCount();
 }

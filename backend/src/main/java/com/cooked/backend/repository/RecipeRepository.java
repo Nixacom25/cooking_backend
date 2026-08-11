@@ -155,4 +155,10 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
 
     @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.origin = :origin AND LOWER(r.name) LIKE LOWER(CONCAT('%', :name, '%')) ORDER BY COALESCE(r.updatedAt, r.createdAt) DESC")
     org.springframework.data.domain.Page<Recipe> findAdminRecipesByOriginAndName(@org.springframework.data.repository.query.Param("origin") com.cooked.backend.entity.RecipeOrigin origin, @org.springframework.data.repository.query.Param("name") String name, org.springframework.data.domain.Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE (r.isDeleted IS NULL OR r.isDeleted = false) AND r.lastModifiedBy IS NULL AND r.id NOT IN (SELECT ra.recipe.id FROM RecipeAssignment ra)")
+    List<Recipe> findUnassignedUnmodifiedRecipes(org.springframework.data.domain.Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(r) FROM Recipe r WHERE (r.isDeleted IS NULL OR r.isDeleted = false) AND r.lastModifiedBy IS NULL AND r.id NOT IN (SELECT ra.recipe.id FROM RecipeAssignment ra)")
+    long countUnassignedUnmodifiedRecipes();
 }

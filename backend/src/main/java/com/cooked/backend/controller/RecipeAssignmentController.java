@@ -53,6 +53,22 @@ public class RecipeAssignmentController {
         return ResponseEntity.ok(assignmentService.createAssignments(request, auth.getName()));
     }
 
+    @Operation(summary = "Assign a specific quantity of unassigned recipes to a stagiaire")
+    @PostMapping("/assignments/batch")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<RecipeAssignmentResponse>> assignBatch(
+            @RequestBody com.cooked.backend.dto.request.BatchAssignmentRequest request,
+            Authentication auth) {
+        return ResponseEntity.ok(assignmentService.assignBatchByCount(request, auth.getName()));
+    }
+
+    @Operation(summary = "Get count of unassigned unmodified recipes")
+    @GetMapping("/assignments/unassigned-count")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Long> getUnassignedCount() {
+        return ResponseEntity.ok(assignmentService.getAvailableUnassignedCount());
+    }
+
     @Operation(summary = "Get all recipe assignments")
     @GetMapping("/assignments")
     @PreAuthorize("hasRole('ADMIN')")

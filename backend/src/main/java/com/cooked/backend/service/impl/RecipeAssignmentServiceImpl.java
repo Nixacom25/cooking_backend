@@ -144,6 +144,61 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
     }
 
     @Override
+    public long getAvailableUnassignedCount() {
+        return recipeRepository.countUnassignedUnmodifiedRecipes();
+    }
+
+    @Override
+    @Transactional
+    public List<RecipeAssignmentResponse> assignBatchByCount(com.cooked.backend.dto.request.BatchAssignmentRequest request, String adminEmail) {
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
+        User editor = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Stagiaire introuvable"));
+
+        int requestedCount = request.getCount();
+        long availableCount = recipeRepository.countUnassignedUnmodifiedRecipes();
+
+        if (requestedCount > availableCount) {
+            throw new BadRequestException("Impossible d'attribuer " + requestedCount + " recettes : seulement " + availableCount + " recette(s) non attribuée(s) disponible(s).");
+        }
+
+        List<Recipe> availableRecipes = recipeRepository.findUnassignedUnmodifiedRecipes(org.springframework.data.domain.PageRequest.of(0, requestedCount));
+        List<RecipeAssignmentResponse> results = new ArrayList<>();
+
+        for (Recipe recipe : availableRecipes) {
+            RecipeAssignment assignment = RecipeAssignment.builder()
+                    .recipe(recipe)
+                    .assignedToUser(editor)
+                    .assignedByUser(admin)
+                    .frequency(AssignmentFrequency.NONE)
+                    .status(AssignmentStatus.ASSIGNED)
+                    .revisionCount(0)
+                    .build();
+
+            RecipeAssignment saved = assignmentRepository.save(assignment);
+            recordHistory(saved, admin, "BATCH_ASSIGNED", null, AssignmentStatus.ASSIGNED, null, "Attribution automatique par lot (" + requestedCount + " recettes)");
+
+            notificationService.createAndSendNotification(
+                    editor,
+                    admin,
+                    "Nouvelles recettes attribuées",
+                    "Une attribution de " + requestedCount + " recettes vous a été attribuée.",
+                    "ASSIGNMENT",
+                    recipe.getId(),
+                    saved.getId()
+            );
+
+            RecipeAssignmentResponse resp = mapToResponse(saved);
+            results.add(resp);
+            messagingTemplate.convertAndSend("/topic/assignments/user/" + editor.getId(), resp);
+        }
+
+        broadcastStats();
+        return results;
+    }
+
+    @Override
     public Page<RecipeAssignmentResponse> getAllAssignments(Pageable pageable) {
         return assignmentRepository.findAll(pageable).map(this::mapToResponse);
     }
