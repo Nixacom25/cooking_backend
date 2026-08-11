@@ -36,6 +36,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final com.cooked.backend.service.TaxonomyService taxonomyService;
     private final com.cooked.backend.service.CloudinaryService cloudinaryService;
     private final RecipeCategoryRepository recipeCategoryRepository;
+    private final org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
 
     @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
     public void onStartup() {
@@ -215,6 +216,25 @@ public class RecipeServiceImpl implements RecipeService {
         }
 
         activityLogService.logActivity(user, "New Recipe", "You created the recipe '" + savedRecipe.getName() + "'.");
+
+        // Notify Admin if created via AI / SCAN from mobile
+        if (savedRecipe.getOrigin() == RecipeOrigin.SCAN || savedRecipe.getOrigin() == RecipeOrigin.SUGGESTED) {
+            try {
+                java.util.Map<String, Object> aiAlert = java.util.Map.of(
+                    "type", "NEW_AI_RECIPE",
+                    "recipeId", savedRecipe.getId(),
+                    "recipeName", savedRecipe.getName(),
+                    "userEmail", user.getEmail(),
+                    "userName", (user.getFirstname() != null ? user.getFirstname() : "") + " " + (user.getLastname() != null ? user.getLastname() : ""),
+                    "origin", savedRecipe.getOrigin().name(),
+                    "message", "🤖 Nouvelle recette IA créée par " + (user.getFirstname() != null ? user.getFirstname() : user.getEmail()) + " : " + savedRecipe.getName()
+                );
+                messagingTemplate.convertAndSend("/topic/admin/new-ai-recipe", aiAlert);
+                messagingTemplate.convertAndSend("/topic/admin/notifications", aiAlert);
+            } catch (Exception e) {
+                log.warn("Could not send AI recipe websocket notification: {}", e.getMessage());
+            }
+        }
 
         return mapToResponse(savedRecipe, user);
     }

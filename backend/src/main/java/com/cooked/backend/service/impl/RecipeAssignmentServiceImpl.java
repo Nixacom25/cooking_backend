@@ -295,6 +295,13 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
         assignment.setErrorCategories(new ArrayList<>());
         assignment.setFeedbackComment(null);
 
+        // Automatically activate & publish the recipe so it appears active in client mobile app
+        Recipe recipe = assignment.getRecipe();
+        if (recipe != null) {
+            recipe.setPublic(true);
+            recipeRepository.save(recipe);
+        }
+
         RecipeAssignment saved = assignmentRepository.save(assignment);
         recordHistory(saved, admin, "VALIDATED", prevStatus, AssignmentStatus.VALIDATED, null, "Recette validée par l'administrateur");
 
