@@ -61,6 +61,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/subscriptions/plan",
                                 "/subscriptions/paywall-config",
+                                "/subscriptions/revenuecat-webhook",
                                 "/api/subscription/paywall-config",
                                 "/api/analytics/track",
                                 "/api/app-metrics/track",
