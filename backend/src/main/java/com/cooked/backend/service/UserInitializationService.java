@@ -1,7 +1,5 @@
 package com.cooked.backend.service;
 
-import com.cooked.backend.entity.User;
-
 public interface UserInitializationService {
     /**
      * Initializes a new user account with default content:

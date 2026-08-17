@@ -1,7 +1,6 @@
 package com.cooked.backend.service;
 
 import com.cooked.backend.entity.RecipeData;
-import com.cooked.backend.entity.Recipe;
 
 public interface RecipeDataService {
     RecipeData create(String name, org.springframework.web.multipart.MultipartFile image);

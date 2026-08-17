@@ -39,9 +39,6 @@ public class ShareController {
     /** Public site name shown in the social preview */
     private static final String SITE_NAME = "Cooked";
 
-    /** Site domain shown under the title in the preview */
-    private static final String SITE_DOMAIN = "link.cookedapp.com";
-
     /**
      * GET /share/recipes/{id}
      *

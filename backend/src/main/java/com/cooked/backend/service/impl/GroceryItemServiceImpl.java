@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.cooked.backend.dto.response.InstacartLinkResponse;
+import com.cooked.backend.service.InstacartService;
+
 @Service
 @RequiredArgsConstructor
 public class GroceryItemServiceImpl implements GroceryItemService {
@@ -31,6 +34,20 @@ public class GroceryItemServiceImpl implements GroceryItemService {
         private final IngredientRepository ingredientRepository;
         private final RecipeRepository recipeRepository;
         private final UserRepository userRepository;
+        private final InstacartService instacartService;
+
+        @Override
+        public InstacartLinkResponse createInstacartShoppingLink(String userEmail) {
+                User user = userRepository.findByEmail(userEmail)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+                List<GroceryItem> items = groceryItemRepository.findAllByUserId(user.getId());
+                if (items.isEmpty()) {
+                        throw new BadRequestException("Your grocery list is empty. Add ingredients from a recipe to get started.");
+                }
+
+                return instacartService.createShoppableList(items);
+        }
 
         @Override
         public GroceryItemResponse create(String userEmail, CreateGroceryItemRequest request) {

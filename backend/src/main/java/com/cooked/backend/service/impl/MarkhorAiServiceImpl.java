@@ -14,7 +14,6 @@ import com.cooked.backend.exception.ResourceNotFoundException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -54,7 +53,6 @@ public class MarkhorAiServiceImpl implements AiService {
     private final UserRepository userRepository;
     private final SubscriptionService subscriptionService;
     private final com.cooked.backend.repository.RecipeRepository recipeRepository;
-    private final com.cooked.backend.repository.RecipeDataRepository recipeDataRepository;
     private final com.cooked.backend.repository.IngredientRepository ingredientRepository;
 
     @Value("${ai.api.base-url:https://recipe.markhorsystems.com}")

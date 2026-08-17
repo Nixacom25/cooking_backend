@@ -2,6 +2,7 @@ package com.cooked.backend.controller;
 
 import com.cooked.backend.dto.request.CreateGroceryItemRequest;
 import com.cooked.backend.dto.response.GroceryItemResponse;
+import com.cooked.backend.dto.response.InstacartLinkResponse;
 import com.cooked.backend.dto.response.MessageResponse;
 import com.cooked.backend.service.GroceryItemService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,6 +27,12 @@ import java.util.UUID;
 public class GroceryItemController {
 
     private final GroceryItemService groceryItemService;
+
+    @Operation(summary = "Generate an Instacart shoppable list link from current grocery items")
+    @PostMapping("/instacart")
+    public ResponseEntity<InstacartLinkResponse> createInstacartShoppingLink(Authentication auth) {
+        return ResponseEntity.ok(groceryItemService.createInstacartShoppingLink(auth.getName()));
+    }
 
     @Operation(summary = "Manually add an item to the grocery list")
     @PostMapping

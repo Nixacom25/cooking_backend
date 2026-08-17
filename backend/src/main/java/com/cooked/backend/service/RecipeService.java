@@ -5,7 +5,6 @@ import com.cooked.backend.dto.response.MessageResponse;
 import com.cooked.backend.dto.response.RecipeResponse;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public interface RecipeService {

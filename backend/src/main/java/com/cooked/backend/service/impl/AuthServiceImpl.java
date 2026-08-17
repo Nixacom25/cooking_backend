@@ -26,9 +26,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.http.ResponseEntity;
-import java.util.Map;
-import java.util.HashMap;
 
 import java.time.LocalDateTime;
 import java.util.Random;
@@ -42,20 +39,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
-import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.JsonNode;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import java.security.KeyFactory;
-import java.security.PublicKey;
-import java.security.spec.RSAPublicKeySpec;
-import java.math.BigInteger;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Arrays;
 
 import lombok.extern.slf4j.Slf4j;
@@ -89,12 +73,6 @@ public class AuthServiceImpl implements AuthService {
                 if (userRepository.existsByEmail(request.getEmail())) {
                         throw new BadRequestException("This email is already associated with an account. Please log in instead or use a different email address.");
                 }
-
-                String phone = (request.getPhone() != null && !request.getPhone().trim().isEmpty())
-                                ? request.getPhone().trim()
-                                : null;
-
-                // Phone is no longer unique or mandatory
 
                 Provider provider = Provider.LOCAL;
                 if (request.getProvider() != null && !request.getProvider().trim().isEmpty()) {

@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.service.ActivityLogService;
-import com.cooked.backend.entity.User;
 
 @RestController
 @RequestMapping("/api/ingredients")

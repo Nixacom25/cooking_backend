@@ -2,6 +2,7 @@ package com.cooked.backend.service;
 
 import com.cooked.backend.dto.request.CreateGroceryItemRequest;
 import com.cooked.backend.dto.response.GroceryItemResponse;
+import com.cooked.backend.dto.response.InstacartLinkResponse;
 import com.cooked.backend.dto.response.MessageResponse;
 
 import java.time.LocalDate;
@@ -18,4 +19,6 @@ public interface GroceryItemService {
     GroceryItemResponse toggleBought(UUID id, String userEmail);
 
     MessageResponse delete(UUID id, String userEmail);
+
+    InstacartLinkResponse createInstacartShoppingLink(String userEmail);
 }

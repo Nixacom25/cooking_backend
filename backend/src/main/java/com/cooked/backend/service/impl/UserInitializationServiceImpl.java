@@ -89,21 +89,6 @@ public class UserInitializationServiceImpl implements UserInitializationService 
         }
     }
 
-    private void createDefaultCookbooks(User user) {
-        String[] defaultNames = {"My Creations", "To Try"};
-        for (String name : defaultNames) {
-            if (!cookbookRepository.existsByUserIdAndName(user.getId(), name)) {
-                Cookbook cb = Cookbook.builder()
-                        .user(user)
-                        .name(name)
-                        .recipes(new HashSet<>())
-                        .build();
-                cookbookRepository.save(cb);
-                log.info("Created default cookbook '{}' for user: {}", name, user.getEmail());
-            }
-        }
-    }
-
     private void saveSuggestedRecipeForUser(User user, CreateRecipeRequest request, LocalDateTime expiration) {
         // Build Recipe Entity as Suggested
         Recipe recipe = Recipe.builder()

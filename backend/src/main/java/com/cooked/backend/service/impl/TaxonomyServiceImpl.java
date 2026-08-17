@@ -6,13 +6,10 @@ import com.cooked.backend.repository.RecipeCategoryRepository;
 import com.cooked.backend.service.TaxonomyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +17,6 @@ import java.util.stream.Collectors;
 public class TaxonomyServiceImpl implements TaxonomyService {
 
     private final RecipeCategoryRepository recipeCategoryRepository;
-    private final JdbcTemplate jdbcTemplate;
 
     private static final Map<String, String> CATEGORY_IMAGES = Map.ofEntries(
         Map.entry("High Protein Picks", "https://res.cloudinary.com/davj7mdjj/image/upload/v1778825794/ai-recipe-app/taxonomy/gjndqlconjidynpzgljm.png"),

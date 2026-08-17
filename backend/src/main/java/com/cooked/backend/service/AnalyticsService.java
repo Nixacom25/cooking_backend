@@ -3,7 +3,6 @@ package com.cooked.backend.service;
 import com.cooked.backend.repository.SubscriptionPaymentRepository;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.entity.SubscriptionPayment;
-import com.cooked.backend.entity.SubscriptionStatus;
 import com.cooked.backend.entity.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
