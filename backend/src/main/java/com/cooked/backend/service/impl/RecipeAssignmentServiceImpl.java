@@ -528,11 +528,37 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
     }
 
     private com.cooked.backend.dto.response.RecipeResponse buildMinimalRecipeResponse(Recipe r) {
+        if (r == null) return null;
+        
+        java.util.List<com.cooked.backend.dto.response.RecipeIngredientResponse> ingResponses = r.getRecipeIngredients() == null ? java.util.Collections.emptyList()
+                : r.getRecipeIngredients().stream()
+                        .filter(ri -> ri.getIngredient() != null)
+                        .map(ri -> com.cooked.backend.dto.response.RecipeIngredientResponse.builder()
+                                .id(ri.getIngredient().getId())
+                                .name(ri.getIngredient().getName())
+                                .icon(ri.getIngredient().getIcon())
+                                .price(ri.getIngredient().getPrice())
+                                .quantity(ri.getQuantity())
+                                .build()).collect(java.util.stream.Collectors.toList());
+
         return com.cooked.backend.dto.response.RecipeResponse.builder()
                 .id(r.getId())
                 .name(r.getName())
                 .image(r.getImage())
+                .prepTime(r.getPrepTime())
+                .cookTime(r.getCookTime())
+                .kcal(r.getKcal())
+                .servings(r.getServings())
+                .tips(r.getTips())
+                .cuisine(r.getCuisine() != null ? r.getCuisine().getName() : null)
+                .categories(r.getCategories() != null ? r.getCategories().stream().map(c -> c.getName()).collect(java.util.stream.Collectors.toList()) : new java.util.ArrayList<>())
+                .ingredients(ingResponses)
+                .steps(r.getSteps() != null ? new java.util.ArrayList<>(r.getSteps()) : new java.util.ArrayList<>())
+                .equipment(r.getEquipment() != null ? new java.util.ArrayList<>(r.getEquipment()) : new java.util.ArrayList<>())
+                .totalPrice(r.getTotalPrice())
+                .ingredientsCount(r.getIngredientsCount())
                 .status(r.getStatus())
+                .isDeleted(r.isDeleted())
                 .lastModifiedBy(r.getLastModifiedBy())
                 .build();
     }

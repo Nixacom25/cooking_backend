@@ -42,6 +42,13 @@ public class AdminRecipeController {
         return ResponseEntity.ok(recipeService.getAdminRecipes(origin, name, pageable));
     }
 
+    @Operation(summary = "Get single recipe details for admin")
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
+    public ResponseEntity<RecipeResponse> getRecipeById(@PathVariable UUID id) {
+        return ResponseEntity.ok(recipeService.getAdminRecipeById(id));
+    }
+
     @Operation(summary = "Update full recipe details")
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")

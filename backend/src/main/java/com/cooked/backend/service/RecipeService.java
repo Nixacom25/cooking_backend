@@ -68,4 +68,6 @@ public interface RecipeService {
 
         RecipeResponse toggleRecipeStatus(UUID id, Boolean status, String adminEmail);
         void bulkUpdateRecipeStatus(List<UUID> ids, Boolean status, String adminEmail);
+
+        RecipeResponse getAdminRecipeById(UUID id);
 }

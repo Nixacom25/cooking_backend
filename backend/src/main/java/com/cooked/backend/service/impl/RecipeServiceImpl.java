@@ -740,6 +740,14 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public RecipeResponse getAdminRecipeById(UUID id) {
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
+        return mapToResponse(recipe, null);
+    }
+
+    @Override
     @Transactional
     @org.springframework.cache.annotation.CacheEvict(value = {"exploreRecipes", "popularRecipes", "explore_cuisines", "explore_categories"}, allEntries = true)
     public RecipeResponse updateAdminRecipe(UUID id, String recipeJson, org.springframework.web.multipart.MultipartFile image) {

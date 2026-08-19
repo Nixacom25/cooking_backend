@@ -100,12 +100,9 @@ public class InstacartServiceImpl implements InstacartService {
 
         // Fallback shoppable URL generation if production API key is in setup phase
         if (webUrl == null || webUrl.isEmpty()) {
-            String itemsParam = normalizedIngredients.stream()
-                    .map(InstacartIngredientDto::getName)
-                    .map(n -> URLEncoder.encode(n, StandardCharsets.UTF_8))
-                    .collect(Collectors.joining(","));
-
-            webUrl = "https://www.instacart.com/store/partner_collections/cooked?items=" + itemsParam;
+            String primaryItem = normalizedIngredients.get(0).getName();
+            String encodedItem = URLEncoder.encode(primaryItem, StandardCharsets.UTF_8);
+            webUrl = "https://www.instacart.com/store/search/" + encodedItem;
         }
 
         if (deepLinkUrl == null || deepLinkUrl.isEmpty()) {
