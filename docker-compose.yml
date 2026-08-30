@@ -18,7 +18,7 @@ services:
 
   # AI Recipe Service (Node.js + Playwright)
   ai-recipe:
-    build: ./ai_recipe
+    build: ./recipe_generate_ai
     container_name: ai-recipe-service
     environment:
       - PORT=3000

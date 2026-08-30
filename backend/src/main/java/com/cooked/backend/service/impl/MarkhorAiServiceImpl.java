@@ -584,7 +584,7 @@ public class MarkhorAiServiceImpl implements AiService {
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
-            ResponseEntity<ScanResponse> response = restTemplate.postForEntity(baseUrl + "/api/analyze", requestEntity, ScanResponse.class);
+            ResponseEntity<ScanResponse> response = restTemplate.postForEntity(baseUrl + "/api/image", requestEntity, ScanResponse.class);
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 ScanResponse res = response.getBody();
