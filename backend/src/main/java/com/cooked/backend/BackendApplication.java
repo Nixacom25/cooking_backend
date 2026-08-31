@@ -120,43 +120,8 @@ public class BackendApplication {
 					System.err.println("COOKED_DB_CLEANUP: Taxonomy migration (populating/linking) skipped or already done: " + migEx.getMessage());
 				}
 
-				// 5. Update categories with Cloudinary images from JSON - ALWAYS RUN THIS
-				try {
-					InputStream is = BackendApplication.class.getResourceAsStream("/taxonomy_images.json");
-					if (is != null) {
-						ObjectMapper mapper = new ObjectMapper();
-						JsonNode root = mapper.readTree(is);
-						JsonNode categories = root.get("categories");
-						JsonNode cuisines = root.get("cuisines");
-
-
-
-						// Diagnostic log
-						List<String> existing = jdbcTemplate.queryForList("SELECT name FROM recipe_categories LIMIT 50", String.class);
-						System.out.println("DEBUG: Final Standardized categories in DB: " + existing);
-
-
-						if (categories != null) {
-							categories.fields().forEachRemaining(entry -> {
-								int rows = jdbcTemplate.update("UPDATE recipe_categories SET image = ? WHERE UPPER(TRIM(name)) = UPPER(?) AND type = 'CATEGORY'", 
-									entry.getValue().asText(), entry.getKey().trim());
-								if (rows > 0) System.out.println("Updated Category image: " + entry.getKey());
-							});
-						}
-						if (cuisines != null) {
-							cuisines.fields().forEachRemaining(entry -> {
-								int rows = jdbcTemplate.update("UPDATE recipe_categories SET image = ? WHERE UPPER(TRIM(name)) = UPPER(?) AND type = 'CUISINE'", 
-									entry.getValue().asText(), entry.getKey().trim());
-								if (rows > 0) System.out.println("Updated Cuisine image: " + entry.getKey());
-							});
-						}
-						System.out.println("COOKED_DB_CLEANUP: Taxonomy images updated from JSON!");
-					} else {
-						System.err.println("COOKED_DB_CLEANUP: taxonomy_images.json NOT FOUND in classpath!");
-					}
-				} catch (Exception jsonEx) {
-					System.err.println("COOKED_DB_CLEANUP: Taxonomy image update error: " + jsonEx.getMessage());
-				}
+				// 5. Automatic image overwriting disabled by user request to preserve custom database images
+				System.out.println("COOKED_DB_CLEANUP: Image overwriting from taxonomy_images.json is disabled by user request.");
 
 				System.out.println("COOKED_DB_CLEANUP: Database constraints and schema fixed successfully!");
 			} catch (Exception e) {
