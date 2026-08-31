@@ -763,7 +763,7 @@ public class MarkhorAiServiceImpl implements AiService {
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
             ResponseEntity<AiIngredientDetectionResponse> response = restTemplate.postForEntity(
-                baseUrl + "/api/ingredients/detect", 
+                baseUrl + "/api/image", 
                 requestEntity, 
                 AiIngredientDetectionResponse.class
             );
