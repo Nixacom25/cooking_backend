@@ -25,6 +25,37 @@ public class DatabaseMigrationRunner {
     public void runMigrations() {
         fixAssignmentStatusConstraint();
         ensureAssignmentNewColumns();
+        fixRecipeAssignmentForeignKeys();
+    }
+
+    /**
+     * Migration 3: Ensure foreign key constraints on recipe_assignments use ON DELETE CASCADE
+     * to avoid SQL 23503 foreign key violations when deleting users or recipes.
+     */
+    private void fixRecipeAssignmentForeignKeys() {
+        try {
+            // Find foreign key constraint names on recipe_assignments for recipe_id
+            java.util.List<String> fkNames = jdbc.queryForList(
+                "SELECT constraint_name FROM information_schema.table_constraints " +
+                "WHERE table_name = 'recipe_assignments' AND constraint_type = 'FOREIGN_KEY'",
+                String.class
+            );
+
+            for (String fk : fkNames) {
+                if (fk.startsWith("fk84eq7") || fk.contains("recipe")) {
+                    jdbc.execute("ALTER TABLE recipe_assignments DROP CONSTRAINT IF EXISTS " + fk);
+                }
+            }
+
+            jdbc.execute(
+                "ALTER TABLE recipe_assignments " +
+                "ADD CONSTRAINT fk_recipe_assignments_recipe " +
+                "FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE"
+            );
+            log.info("[Migration] Updated recipe_assignments.recipe_id foreign key to ON DELETE CASCADE.");
+        } catch (Exception e) {
+            log.debug("[Migration] Recipe assignment FK update info: {}", e.getMessage());
+        }
     }
 
     /**

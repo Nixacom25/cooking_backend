@@ -41,4 +41,16 @@ public interface RecipeAssignmentRepository extends JpaRepository<RecipeAssignme
 
     @Query("SELECT COUNT(ra) FROM RecipeAssignment ra WHERE (ra.validatedDate >= :startOfDay OR ra.completedDate >= :startOfDay)")
     long countProcessedToday(@Param("startOfDay") LocalDateTime startOfDay);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("UPDATE RecipeAssignment ra SET ra.recipe = :twinRecipe WHERE ra.recipe.id = :oldRecipeId")
+    void repointRecipe(@Param("oldRecipeId") UUID oldRecipeId, @Param("twinRecipe") com.cooked.backend.entity.Recipe twinRecipe);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("DELETE FROM RecipeAssignment ra WHERE ra.recipe.id = :recipeId")
+    void deleteByRecipeId(@Param("recipeId") UUID recipeId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("DELETE FROM RecipeAssignment ra WHERE ra.assignedToUser.id = :userId OR ra.assignedByUser.id = :userId")
+    void deleteByUserId(@Param("userId") UUID userId);
 }

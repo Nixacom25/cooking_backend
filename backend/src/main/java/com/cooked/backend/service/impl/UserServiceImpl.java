@@ -42,6 +42,7 @@ public class UserServiceImpl implements UserService {
     private final com.cooked.backend.repository.GroceryItemRepository groceryItemRepository;
     private final com.cooked.backend.repository.CookbookRepository cookbookRepository;
     private final com.cooked.backend.repository.DeviceSessionRepository deviceSessionRepository;
+    private final com.cooked.backend.repository.RecipeAssignmentRepository recipeAssignmentRepository;
     private final jakarta.persistence.EntityManager entityManager;
 
     @Override
@@ -283,6 +284,9 @@ public class UserServiceImpl implements UserService {
     }
 
     private void cleanupAndExecuteDelete(User user) {
+        // Delete any recipe assignments where this user is assignedToUser or assignedByUser
+        recipeAssignmentRepository.deleteByUserId(user.getId());
+
         // Handle recipes: delete duplicates, keep unique ones (nullify userId)
         if (user.getRecipes() != null && !user.getRecipes().isEmpty()) {
             // Create a copy of the list to avoid ConcurrentModificationException while modifying user.getRecipes()
@@ -315,7 +319,11 @@ public class UserServiceImpl implements UserService {
                     // Repoint other users' Grocery Items to the twin
                     groceryItemRepository.repointRecipe(recipe, twinRecipe);
                     
-
+                    // Repoint Recipe Assignments to the twin
+                    recipeAssignmentRepository.repointRecipe(recipe.getId(), twinRecipe);
+                    
+                    // Delete any remaining assignments for this recipe ID
+                    recipeAssignmentRepository.deleteByRecipeId(recipe.getId());
                     
                     // DELETE from cookbook_recipes explicitly since Cookbook is the owning side
                     try {
