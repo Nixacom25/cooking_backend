@@ -6,7 +6,6 @@ import { instagramService } from "../services/instagram.service.js";
 import { openAiService } from "../services/openai.service.js";
 import { youtubeService } from "../services/youtube.service.js";
 import { webService } from "../services/web.service.js";
-import { Recipie } from "../models/recipie.model.js";
 
 export const main = asyncHandler(async (req, res) => {
   const { url } = req.body ?? {};
@@ -48,18 +47,6 @@ export const main = asyncHandler(async (req, res) => {
     image: data.thumbnail ?? null,
     recipe,
   };
-
-  // Non-blocking asynchronous DB log saving (doesn't delay user response)
-  if (recipe?.status === "success") {
-    Recipie.create({
-      source: payload.source,
-      image: payload.image,
-      url,
-      recipe: payload.recipe,
-    }).catch((dbErr) => {
-      console.warn("⚠️ Could not save recipe log to DB:", dbErr.message);
-    });
-  }
 
   return res
     .status(200)
