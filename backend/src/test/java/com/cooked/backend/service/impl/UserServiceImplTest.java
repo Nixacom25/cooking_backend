@@ -45,6 +45,12 @@ public class UserServiceImplTest {
     @Mock
     private GroceryItemRepository groceryItemRepository;
     @Mock
+    private com.cooked.backend.repository.CookbookRepository cookbookRepository;
+    @Mock
+    private com.cooked.backend.repository.DeviceSessionRepository deviceSessionRepository;
+    @Mock
+    private com.cooked.backend.repository.RecipeAssignmentRepository recipeAssignmentRepository;
+    @Mock
     private EntityManager entityManager;
     
     @Mock
