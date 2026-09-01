@@ -111,19 +111,32 @@ const parseModelJson = (rawText) => {
 
     try {
         return JSON.parse(cleaned);
-    } catch {
+    } catch (err) {
         try {
             const firstBrace = cleaned.indexOf("{");
             if (firstBrace !== -1) {
                 let jsonStr = cleaned.slice(firstBrace);
-                // Attempt basic bracket completion
-                if (!jsonStr.endsWith("}")) {
-                    jsonStr = jsonStr.replace(/,[^,]*$/, "") + '}]}';
+                // 1. Repair unterminated trailing string
+                jsonStr = jsonStr.replace(/"[^"\\]*$/, '""');
+                // 2. Count and close unclosed brackets/braces
+                let openBraces = 0, openBrackets = 0;
+                let inString = false;
+                for (let i = 0; i < jsonStr.length; i++) {
+                    const c = jsonStr[i];
+                    if (c === '"' && (i === 0 || jsonStr[i - 1] !== '\\')) inString = !inString;
+                    if (!inString) {
+                        if (c === '{') openBraces++;
+                        if (c === '}') openBraces--;
+                        if (c === '[') openBrackets++;
+                        if (c === ']') openBrackets--;
+                    }
                 }
+                while (openBrackets > 0) { jsonStr += ']'; openBrackets--; }
+                while (openBraces > 0) { jsonStr += '}'; openBraces--; }
                 return JSON.parse(jsonStr);
             }
         } catch (_) {}
-        throw new ApiError(502, "OpenAI returned invalid JSON");
+        throw new ApiError(502, "OpenAI returned invalid JSON: " + err.message);
     }
 };
 
@@ -254,7 +267,7 @@ Rules: Extract ingredients and concise steps. Return ONLY valid JSON.`;
                     { role: "user", content: userPrompt }
                 ],
                 response_format: { type: "json_object" },
-                max_tokens: 450,
+                max_tokens: 1200,
                 temperature: 0.2
             });
             rawText = completion.choices[0]?.message?.content || "";
@@ -267,7 +280,7 @@ Rules: Extract ingredients and concise steps. Return ONLY valid JSON.`;
                         content: [{ type: "input_text", text: `${systemPrompt}\n\n${userPrompt}` }],
                     },
                 ],
-                max_output_tokens: 450,
+                max_output_tokens: 1200,
                 text: { format: { type: "json_object" } },
             });
             rawText = extractTextFromResponse(response);
@@ -277,7 +290,7 @@ Rules: Extract ingredients and concise steps. Return ONLY valid JSON.`;
             throw new ApiError(502, "OpenAI returned an empty response");
         }
 
-        const parsed = JSON.parse(rawText);
+        const parsed = parseModelJson(rawText);
         return normalizeRecipeResponse(parsed);
     } catch (error) {
         throw new ApiError(502, error?.message || "Failed to extract recipe from caption");
