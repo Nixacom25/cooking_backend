@@ -224,28 +224,28 @@ const extractRecipeFromCaption = async (captionText) => {
     }
 
     const client = await getOpenAIClient();
-    const trimmedCaption = captionText.slice(0, 800);
+    const trimmedCaption = captionText.slice(0, 4000);
 
-    const systemPrompt = `You are RecipeAI UltraFast. Extract recipe details into compact JSON in under 2 seconds. Concise steps (max 3-4 steps).`;
-    const userPrompt = `Caption:
+    const systemPrompt = `You are RecipeAI Pro. Extract complete recipe details into JSON. Extract ALL ingredients with quantities, and ALL step-by-step preparation instructions without omitting details.`;
+    const userPrompt = `Caption/Content:
 ${trimmedCaption}
 
 Output JSON format:
 {
   "status": "success",
   "recipe": {
-    "title": "Title",
+    "title": "Title of Recipe",
     "description": "Short description",
     "prep_time": "10 mins",
     "cook_time": "15 mins",
     "servings": "2",
     "cuisine": "Cuisine",
     "ingredients": [
-      { "name": "Ingredient name", "quantity": "1 piece" }
+      { "name": "Ingredient name", "quantity": "Quantity/Amount" }
     ],
     "instructions": [
-      "1. Step instruction 1",
-      "2. Step instruction 2"
+      "1. Detailed step instruction 1",
+      "2. Detailed step instruction 2"
     ],
     "metadata": {
       "cuisine": "Cuisine",
@@ -254,7 +254,7 @@ Output JSON format:
   },
   "fallback_message": ""
 }
-Rules: Extract ingredients and concise steps. Return ONLY valid JSON.`;
+Rules: Extract all ingredients with quantities and step-by-step instructions. Return ONLY valid JSON.`;
 
     try {
         let rawText = "";
@@ -267,7 +267,7 @@ Rules: Extract ingredients and concise steps. Return ONLY valid JSON.`;
                     { role: "user", content: userPrompt }
                 ],
                 response_format: { type: "json_object" },
-                max_tokens: 1200,
+                max_tokens: 2500,
                 temperature: 0.2
             });
             rawText = completion.choices[0]?.message?.content || "";

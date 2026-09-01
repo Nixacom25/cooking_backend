@@ -25,6 +25,41 @@ export async function webService(url) {
                 return match ? match[1].trim() : null;
             };
 
+            // 1a. Attempt fast JSON-LD extraction from HTML
+            const jsonLdMatches = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+            if (jsonLdMatches) {
+                for (const matchTag of jsonLdMatches) {
+                    try {
+                        const jsonStr = matchTag.replace(/<script[^>]*>/i, '').replace(/<\/script>/i, '').trim();
+                        const json = JSON.parse(jsonStr);
+                        const items = Array.isArray(json) ? json : (json['@graph'] || [json]);
+                        const recipe = items.find(item => 
+                            item && (item['@type'] === 'Recipe' || (Array.isArray(item['@type']) && item['@type'].includes('Recipe')))
+                        );
+                        if (recipe) {
+                            const title = recipe.name || getMeta("og:title") || getMeta("twitter:title") || "";
+                            const description = recipe.description || getMeta("og:description") || "";
+                            const ings = Array.isArray(recipe.recipeIngredient) 
+                                ? recipe.recipeIngredient.join("\n") 
+                                : (recipe.recipeIngredient || "");
+                            const instrs = Array.isArray(recipe.recipeInstructions) 
+                                ? recipe.recipeInstructions.map(i => typeof i === 'string' ? i : i.text || i.description || "").join("\n")
+                                : (recipe.recipeInstructions || "");
+                            const thumbnail = typeof recipe.image === 'string' ? recipe.image : (Array.isArray(recipe.image) ? recipe.image[0] : recipe.image?.url || getMeta("og:image"));
+
+                            const fullContent = `Title: ${title}\nDescription: ${description}\n\nIngredients:\n${ings}\n\nInstructions:\n${instrs}`.trim();
+                            if (fullContent.length > 30) {
+                                return {
+                                    platform: "web",
+                                    description: fullContent,
+                                    thumbnail: typeof thumbnail === 'string' ? thumbnail : null,
+                                };
+                            }
+                        }
+                    } catch (e) {}
+                }
+            }
+
             const title = getMeta("og:title") || getMeta("twitter:title") || (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim() || "");
             const description = getMeta("og:description") || getMeta("description") || getMeta("twitter:description") || "";
             const thumbnail = getMeta("og:image") || getMeta("og:image:secure_url") || getMeta("twitter:image") || null;

@@ -52,6 +52,42 @@ export const main = asyncHandler(async (req, res) => {
 
   // Format matching old AI microservice & Spring Boot backend expectations
   const rawRecipe = aiResponse?.recipe || aiResponse || {};
+
+  // Extract ingredients cleanly, handling objects, arrays, and string items
+  let ingredients = [];
+  const rawIngredients = rawRecipe.ingredients || rawRecipe.recipeIngredient || [];
+  if (Array.isArray(rawIngredients)) {
+    ingredients = rawIngredients.map(ing => {
+      if (typeof ing === 'string') {
+        const trimmed = ing.trim();
+        return trimmed.length > 0 ? { name: trimmed, quantity: '1 unit', icon: '🍳' } : null;
+      }
+      if (ing && typeof ing === 'object') {
+        const name = ing.name || ing.ingredient_name || ing.ingredient || ing.item || '';
+        const quantity = ing.quantity || ing.estimated_quantity || ing.amount || '1 unit';
+        const icon = ing.icon || '🍳';
+        const cleanName = String(name).trim();
+        return cleanName.length > 0 ? { name: cleanName, quantity: String(quantity).trim(), icon: String(icon).trim() } : null;
+      }
+      return null;
+    }).filter(Boolean);
+  }
+
+  // Extract steps cleanly, handling strings, numbers, and step objects
+  let steps = [];
+  const rawSteps = rawRecipe.instructions || rawRecipe.steps || rawRecipe.recipeInstructions || rawRecipe.method || [];
+  if (Array.isArray(rawSteps)) {
+    steps = rawSteps.map(step => {
+      if (typeof step === 'string') return step.trim();
+      if (step && typeof step === 'object') {
+        return String(step.text || step.step || step.instruction || step.description || '').trim();
+      }
+      return '';
+    }).filter(s => s.length > 0);
+  } else if (typeof rawSteps === 'string' && rawSteps.trim().length > 0) {
+    steps = rawSteps.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+  }
+
   const mappedRecipe = {
     name: rawRecipe.title || rawRecipe.name || "Recette sans titre",
     image: rawRecipe.image || data.thumbnail || null,
@@ -62,12 +98,8 @@ export const main = asyncHandler(async (req, res) => {
     tips: rawRecipe.tips || rawRecipe.description || "",
     cuisine: rawRecipe.cuisine || rawRecipe.metadata?.cuisine || "International",
     category: (Array.isArray(rawRecipe.categories) ? rawRecipe.categories[0] : (rawRecipe.category || rawRecipe.metadata?.meal_type)) || "Plat Principal",
-    ingredients: (rawRecipe.ingredients || []).map(ing => ({
-      name: String(ing.name || ing.ingredient_name || '').trim(),
-      quantity: String(ing.quantity || ing.estimated_quantity || '-').trim(),
-      icon: String(ing.icon || '🍳').trim()
-    })),
-    steps: rawRecipe.instructions || rawRecipe.steps || [],
+    ingredients,
+    steps,
     equipment: rawRecipe.equipment || [],
     sourceUrl: url,
     origin: 'IMPORT'

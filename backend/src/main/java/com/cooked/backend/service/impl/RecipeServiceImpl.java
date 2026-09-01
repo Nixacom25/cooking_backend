@@ -478,6 +478,8 @@ public class RecipeServiceImpl implements RecipeService {
             recipe.setSourceUrl(url);
             recipe.setSteps(request.getSteps() != null ? request.getSteps() : new ArrayList<>());
             recipe.setEquipment(request.getEquipment() != null ? request.getEquipment() : new ArrayList<>());
+            recipe.setOrigin(RecipeOrigin.IMPORT);
+            recipe.setCreatedAt(java.time.LocalDateTime.now());
             
             // If it was already permanent, keep it permanent. If not, refresh expiry.
             if (recipe.getExpiresAt() != null) {
@@ -514,13 +516,15 @@ public class RecipeServiceImpl implements RecipeService {
             }
 
             for (com.cooked.backend.dto.request.IngredientPayload payload : request.getIngredients()) {
+                if (payload.getName() == null || payload.getName().trim().isEmpty()) continue;
                 String ingName = payload.getName().toLowerCase().trim();
+                String icon = (payload.getIcon() != null && !payload.getIcon().isBlank()) ? payload.getIcon() : "🍳";
                 Ingredient ingredient;
                 try {
                     ingredient = ingredientRepository.findByName(ingName)
                             .orElseGet(() -> ingredientRepository.save(Ingredient.builder()
                                     .name(ingName)
-                                    .icon(payload.getIcon())
+                                    .icon(icon)
                                     .build()));
                 } catch (Exception e) {
                     // Handle race condition: if another thread saved it just now
@@ -531,7 +535,7 @@ public class RecipeServiceImpl implements RecipeService {
                 saved.getRecipeIngredients().add(RecipeIngredient.builder()
                         .recipe(saved)
                         .ingredient(ingredient)
-                        .quantity((payload.getQuantity() == null || payload.getQuantity().isBlank()) ? "1" : payload.getQuantity())
+                        .quantity((payload.getQuantity() == null || payload.getQuantity().isBlank()) ? "1 unit" : payload.getQuantity())
                         .build());
             }
             saved = recipeRepository.save(saved);
