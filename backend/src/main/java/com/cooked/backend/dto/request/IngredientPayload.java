@@ -1,7 +1,15 @@
 package com.cooked.backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class IngredientPayload {
     @NotBlank(message = "Ingredient name is required")
     private String name;
@@ -10,14 +18,9 @@ public class IngredientPayload {
     private String quantity;
     private Double price;
 
-    public IngredientPayload() {}
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getIcon() { return icon; }
-    public void setIcon(String icon) { this.icon = icon; }
-    public String getQuantity() { return quantity; }
-    public void setQuantity(String quantity) { this.quantity = quantity; }
-    public Double getPrice() { return price; }
-    public void setPrice(Double price) { this.price = price; }
+    public IngredientPayload(String name, String quantity, String icon) {
+        this.name = name;
+        this.quantity = quantity;
+        this.icon = icon;
+    }
 }

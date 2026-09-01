@@ -444,65 +444,278 @@ public class MarkhorAiServiceImpl implements AiService {
     public CreateRecipeRequest extractRecipeFromLink(String url, String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        verifyAiAccess(user);
+        
+        boolean hasAiAccess = false;
         try {
-            Map<String, String> body = Map.of("url", url);
-            HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(body, getInternalHeaders());
-            ResponseEntity<Map<String, Object>> response = restTemplate.postForEntity(baseUrl + "/api/extract", requestEntity, (Class<Map<String, Object>>)(Class<?>)Map.class);
-            
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                Map<String, Object> data = (Map<String, Object>) response.getBody().get("data");
-                Map<String, Object> recipeMap = (Map<String, Object>) ((Map<String, Object>) data.get("recipe")).get("recipe");
-                recipeMap.put("origin", "IMPORT");
-                recipeMap.put("sourceUrl", url);
+            verifyAiAccess(user);
+            hasAiAccess = true;
+        } catch (PaymentRequiredException e) {
+            log.info("User {} does not have AI access, falling back to direct Jsoup link extraction.", email);
+        }
+
+        if (url == null || url.trim().isEmpty()) {
+            throw new BadRequestException("Please provide a valid URL.");
+        }
+        
+        String cleanUrl = url.trim();
+        if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
+            cleanUrl = "https://" + cleanUrl;
+        }
+
+        // 1. Try AI microservice extraction if AI access is enabled
+        if (hasAiAccess) {
+            try {
+                Map<String, String> body = Map.of("url", cleanUrl);
+                HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(body, getInternalHeaders());
+                ResponseEntity<Map<String, Object>> response = restTemplate.postForEntity(baseUrl + "/api/extract", requestEntity, (Class<Map<String, Object>>)(Class<?>)Map.class);
                 
-                CreateRecipeRequest request = objectMapper.convertValue(recipeMap, CreateRecipeRequest.class);
-                
-                // Fallback image extraction if the API missed it
-                if (request.getImage() == null || request.getImage().trim().isEmpty() || request.getImage().contains("placeholder")) {
-                    log.info("API missed image for {}, attempting fallback scraping", url);
-                    try {
-                        Document doc = Jsoup.connect(url)
-                                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-                                .timeout(5000)
-                                .get();
-                        
-                        String ogImage = doc.select("meta[property=og:image]").attr("content");
-                        if (!ogImage.isEmpty()) {
-                            request.setImage(ogImage);
-                        } else {
-                            String twitterImage = doc.select("meta[name=twitter:image]").attr("content");
-                            if (!twitterImage.isEmpty()) {
-                                request.setImage(twitterImage);
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    Map<String, Object> respBody = response.getBody();
+                    Map<String, Object> recipeMap = null;
+
+                    if (respBody.get("data") instanceof Map) {
+                        Map<String, Object> data = (Map<String, Object>) respBody.get("data");
+                        if (data.get("recipe") instanceof Map) {
+                            Map<String, Object> rec = (Map<String, Object>) data.get("recipe");
+                            if (rec.get("recipe") instanceof Map) {
+                                recipeMap = (Map<String, Object>) rec.get("recipe");
                             } else {
-                                // Try first large image in the article
-                                Element firstImage = doc.select("article img, .recipe-image img, .entry-content img").first();
-                                if (firstImage != null) {
-                                    String src = firstImage.absUrl("src");
-                                    if (!src.isEmpty()) request.setImage(src);
+                                recipeMap = rec;
+                            }
+                        } else {
+                            recipeMap = data;
+                        }
+                    } else if (respBody.get("recipe") instanceof Map) {
+                        Map<String, Object> rec = (Map<String, Object>) respBody.get("recipe");
+                        if (rec.get("recipe") instanceof Map) {
+                            recipeMap = (Map<String, Object>) rec.get("recipe");
+                        } else {
+                            recipeMap = rec;
+                        }
+                    } else {
+                        recipeMap = respBody;
+                    }
+
+                    if (recipeMap != null && recipeMap.get("name") != null && !recipeMap.get("name").toString().trim().isEmpty()) {
+                        recipeMap.put("origin", "IMPORT");
+                        recipeMap.put("sourceUrl", cleanUrl);
+                        
+                        CreateRecipeRequest request = objectMapper.convertValue(recipeMap, CreateRecipeRequest.class);
+                        
+                        // Fallback image extraction if missing
+                        if (request.getImage() == null || request.getImage().trim().isEmpty() || request.getImage().contains("placeholder")) {
+                            log.info("API missed image for {}, attempting fallback scraping", cleanUrl);
+                            try {
+                                Document doc = Jsoup.connect(cleanUrl)
+                                        .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                                        .headers(getHumanHeaders())
+                                        .followRedirects(true)
+                                        .timeout(5000)
+                                        .get();
+                                
+                                String ogImage = doc.select("meta[property=og:image]").attr("content");
+                                if (!ogImage.isEmpty()) {
+                                    request.setImage(ogImage);
+                                } else {
+                                    String twitterImage = doc.select("meta[name=twitter:image]").attr("content");
+                                    if (!twitterImage.isEmpty()) {
+                                        request.setImage(twitterImage);
+                                    }
                                 }
+                            } catch (Exception e) {
+                                log.warn("Fallback scraping failed for image: {}", e.getMessage());
                             }
                         }
-                    } catch (Exception e) {
-                        log.warn("Fallback scraping failed for image: {}", e.getMessage());
+                        
+                        if (request.getIngredients() == null || request.getIngredients().isEmpty()) {
+                            request.setIngredients(List.of(new com.cooked.backend.dto.request.IngredientPayload("Main Ingredients", "As listed in source", "🍳")));
+                        }
+                        if (request.getSteps() == null || request.getSteps().isEmpty()) {
+                            request.setSteps(List.of("Follow instructions from the original recipe link."));
+                        }
+                        
+                        return request;
                     }
                 }
-                
-                return request;
+            } catch (Exception e) {
+                log.warn("AI extraction microservice call failed for {}: {}. Trying Jsoup fallback...", cleanUrl, e.getMessage());
             }
-            throw new BadRequestException("Unable to extract recipe from this link");
-        } catch (BadRequestException | PaymentRequiredException e) {
-            throw e;
-        } catch (org.springframework.web.client.HttpStatusCodeException e) {
-            log.error("Extraction failed with status {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
-            if (e.getStatusCode().value() == 429) {
-                throw new BadRequestException("The AI extraction service is currently busy. Please try again in a few seconds or scan a screenshot instead.");
-            }
-            throw new BadRequestException("We couldn't extract the recipe from this link. Please try another one.");
-        } catch (Exception e) {
-            log.error("Extraction failed: {}", e.getMessage());
-            throw new BadRequestException("We couldn't extract the recipe from this link. Please try another one.");
         }
+
+        // 2. Fallback to Jsoup HTML/JSON-LD Scraping if AI microservice failed or user doesn't have AI access
+        try {
+            return extractRecipeViaJsoup(cleanUrl);
+        } catch (Exception e) {
+            log.error("Jsoup fallback extraction failed for {}: {}", cleanUrl, e.getMessage());
+            return createGenericFallbackRecipe(cleanUrl);
+        }
+    }
+
+    private CreateRecipeRequest createGenericFallbackRecipe(String url) {
+        String domain = url;
+        try {
+            java.net.URI uri = new java.net.URI(url);
+            domain = uri.getHost();
+            if (domain != null && domain.startsWith("www.")) {
+                domain = domain.substring(4);
+            }
+        } catch (Exception ignored) {}
+
+        String title = "Imported Recipe (" + (domain != null ? domain : "Web") + ")";
+        
+        CreateRecipeRequest req = new CreateRecipeRequest();
+        req.setName(title);
+        req.setImage("https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=800&q=80");
+        req.setCookTime(20);
+        req.setPrepTime(10);
+        req.setKcal(400);
+        req.setServings(2);
+        req.setSourceUrl(url);
+        req.setOrigin("IMPORT");
+        
+        com.cooked.backend.dto.request.IngredientPayload ip = new com.cooked.backend.dto.request.IngredientPayload();
+        ip.setName("Recipe Ingredients");
+        ip.setQuantity("See source website");
+        ip.setIcon("🍳");
+        req.setIngredients(List.of(ip));
+        req.setSteps(List.of("Follow instructions from the original recipe link: " + url));
+        req.setEquipment(new ArrayList<>());
+        return req;
+    }
+
+    private CreateRecipeRequest extractRecipeViaJsoup(String url) throws Exception {
+        Document doc = Jsoup.connect(url)
+                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                .headers(getHumanHeaders())
+                .followRedirects(true)
+                .ignoreHttpErrors(true)
+                .timeout(10000)
+                .get();
+
+        String title = doc.select("meta[property=og:title]").attr("content");
+        if (title.isEmpty()) title = doc.select("meta[name=twitter:title]").attr("content");
+        if (title.isEmpty()) title = doc.title();
+        if (title.isEmpty()) {
+            title = "Imported Recipe";
+        } else {
+            title = title.replaceAll("(?i)\\s*[-|•]\\s*(marmiton|allrecipes|tasty|bbc good food|750g|cuisineAZ|youtube|tiktok|instagram).*", "").trim();
+        }
+
+        String image = doc.select("meta[property=og:image]").attr("content");
+        if (image.isEmpty()) image = doc.select("meta[name=twitter:image]").attr("content");
+
+        List<com.cooked.backend.dto.request.IngredientPayload> ingredients = new ArrayList<>();
+        List<String> steps = new ArrayList<>();
+
+        Elements scripts = doc.select("script[type=application/ld+json]");
+        for (Element script : scripts) {
+            try {
+                JsonNode node = objectMapper.readTree(script.html());
+                JsonNode recipeNode = findRecipeNodeInJsonLd(node);
+                if (recipeNode != null) {
+                    if (recipeNode.has("name") && !recipeNode.get("name").asText().isEmpty()) {
+                        title = recipeNode.get("name").asText();
+                    }
+                    if (recipeNode.has("image")) {
+                        JsonNode imgNode = recipeNode.get("image");
+                        if (imgNode.isTextual()) image = imgNode.asText();
+                        else if (imgNode.isArray() && imgNode.size() > 0) image = imgNode.get(0).asText();
+                        else if (imgNode.has("url")) image = imgNode.get("url").asText();
+                    }
+                    if (recipeNode.has("recipeIngredient") && recipeNode.get("recipeIngredient").isArray()) {
+                        for (JsonNode ing : recipeNode.get("recipeIngredient")) {
+                            com.cooked.backend.dto.request.IngredientPayload ip = new com.cooked.backend.dto.request.IngredientPayload();
+                            ip.setName(ing.asText());
+                            ip.setQuantity("1 unit");
+                            ip.setIcon("🍳");
+                            ingredients.add(ip);
+                        }
+                    }
+                    if (recipeNode.has("recipeInstructions") && recipeNode.get("recipeInstructions").isArray()) {
+                        for (JsonNode step : recipeNode.get("recipeInstructions")) {
+                            if (step.isTextual()) steps.add(step.asText());
+                            else if (step.has("text")) steps.add(step.get("text").asText());
+                        }
+                    }
+                    break;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (ingredients.isEmpty()) {
+            Elements ingElems = doc.select(".recipe-ingredients li, .ingredients li, [class*='ingredient'] li, [itemprop=recipeIngredient]");
+            for (Element el : ingElems) {
+                String text = el.text().trim();
+                if (!text.isEmpty() && text.length() < 100) {
+                    com.cooked.backend.dto.request.IngredientPayload ip = new com.cooked.backend.dto.request.IngredientPayload();
+                    ip.setName(text);
+                    ip.setQuantity("1 unit");
+                    ip.setIcon("🍳");
+                    ingredients.add(ip);
+                }
+            }
+        }
+
+        if (steps.isEmpty()) {
+            Elements stepElems = doc.select(".recipe-instructions li, .instructions li, [class*='instruction'] li, [class*='step'] li, [itemprop=recipeInstructions]");
+            for (Element el : stepElems) {
+                String text = el.text().trim();
+                if (!text.isEmpty() && text.length() > 5) {
+                    steps.add(text);
+                }
+            }
+        }
+
+        if (ingredients.isEmpty()) {
+            com.cooked.backend.dto.request.IngredientPayload ip = new com.cooked.backend.dto.request.IngredientPayload();
+            ip.setName("Ingredients from source link");
+            ip.setQuantity("See source");
+            ip.setIcon("🍳");
+            ingredients.add(ip);
+        }
+
+        if (steps.isEmpty()) {
+            steps.add("Open the source link to follow complete preparation steps: " + url);
+        }
+
+        if (image == null || image.isEmpty()) {
+            image = "https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=800&q=80";
+        }
+
+        CreateRecipeRequest req = new CreateRecipeRequest();
+        req.setName(title);
+        req.setImage(image);
+        req.setCookTime(15);
+        req.setPrepTime(10);
+        req.setKcal(350);
+        req.setServings(2);
+        req.setSourceUrl(url);
+        req.setOrigin("IMPORT");
+        req.setIngredients(ingredients);
+        req.setSteps(steps);
+        req.setEquipment(new ArrayList<>());
+        return req;
+    }
+
+    private JsonNode findRecipeNodeInJsonLd(JsonNode node) {
+        if (node == null) return null;
+        if (node.isArray()) {
+            for (JsonNode child : node) {
+                JsonNode res = findRecipeNodeInJsonLd(child);
+                if (res != null) return res;
+            }
+        } else if (node.isObject()) {
+            if (node.has("@type")) {
+                String type = node.get("@type").asText();
+                if ("Recipe".equalsIgnoreCase(type) || type.toLowerCase().contains("recipe")) {
+                    return node;
+                }
+            }
+            if (node.has("@graph") && node.get("@graph").isArray()) {
+                return findRecipeNodeInJsonLd(node.get("@graph"));
+            }
+        }
+        return null;
     }
 
     @Override
