@@ -211,25 +211,24 @@ const extractRecipeFromCaption = async (captionText) => {
     }
 
     const client = await getOpenAIClient();
-    const trimmedCaption = captionText.slice(0, 1200);
+    const trimmedCaption = captionText.slice(0, 800);
 
-    const systemPrompt = `You are RecipeAI Pro. Extract recipe details into compact JSON. Keep instructions concise (max 3-4 steps).`;
-    const userPrompt = `Caption/Text:
+    const systemPrompt = `You are RecipeAI UltraFast. Extract recipe details into compact JSON in under 2 seconds. Concise steps (max 3-4 steps).`;
+    const userPrompt = `Caption:
 ${trimmedCaption}
 
 Output JSON format:
 {
   "status": "success",
   "recipe": {
-    "title": "Recipe Title",
+    "title": "Title",
     "description": "Short description",
     "prep_time": "10 mins",
     "cook_time": "15 mins",
-    "total_time": "25 mins",
     "servings": "2",
     "cuisine": "Cuisine",
     "ingredients": [
-      { "name": "Ingredient name", "quantity": "1", "unit": "piece" }
+      { "name": "Ingredient name", "quantity": "1 piece" }
     ],
     "instructions": [
       "1. Step instruction 1",
@@ -237,8 +236,7 @@ Output JSON format:
     ],
     "metadata": {
       "cuisine": "Cuisine",
-      "meal_type": "Dinner",
-      "diet_type": "Healthy"
+      "meal_type": "Dinner"
     }
   },
   "fallback_message": ""
@@ -246,28 +244,35 @@ Output JSON format:
 Rules: Extract ingredients and concise steps. Return ONLY valid JSON.`;
 
     try {
-        const response = await client.responses.create({
-            model: DEFAULT_OPENAI_MODEL,
-            input: [
-                {
-                    role: "user",
-                    content: [
-                        {
-                            type: "input_text",
-                            text: `${systemPrompt}\n\n${userPrompt}`,
-                        },
-                    ],
-                },
-            ],
-            max_output_tokens: 650,
-            text: {
-                format: {
-                    type: "json_object",
-                },
-            },
-        });
+        let rawText = "";
+        // Use fast chat completions if available
+        if (client.chat && client.chat.completions) {
+            const completion = await client.chat.completions.create({
+                model: DEFAULT_OPENAI_MODEL,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt }
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 450,
+                temperature: 0.2
+            });
+            rawText = completion.choices[0]?.message?.content || "";
+        } else {
+            const response = await client.responses.create({
+                model: DEFAULT_OPENAI_MODEL,
+                input: [
+                    {
+                        role: "user",
+                        content: [{ type: "input_text", text: `${systemPrompt}\n\n${userPrompt}` }],
+                    },
+                ],
+                max_output_tokens: 450,
+                text: { format: { type: "json_object" } },
+            });
+            rawText = extractTextFromResponse(response);
+        }
 
-        const rawText = extractTextFromResponse(response);
         if (!rawText) {
             throw new ApiError(502, "OpenAI returned an empty response");
         }
