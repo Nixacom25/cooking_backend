@@ -1,11 +1,13 @@
 package com.cooked.backend.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
 import java.util.List;
 import java.util.UUID;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CreateRecipeRequest {
     @NotBlank(message = "Recipe name is required")
     private String name;

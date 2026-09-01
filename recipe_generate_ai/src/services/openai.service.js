@@ -557,11 +557,19 @@ export const normalizeRecipeForCooked = (r) => {
 
   const name = r.name || r.title || "Delicious Dish";
   const description = r.description || "";
-  const prepTime = r.prepTime || r.prep_time || (r.time_and_servings?.prep_time) || "10 mins";
-  const cookTime = r.cookTime || r.cook_time || (r.time_and_servings?.cook_time) || "20 mins";
-  const totalTime = r.totalTime || r.total_time || (r.time_and_servings?.total_time) || "30 mins";
-  const servings = r.servings || (r.time_and_servings?.servings) || "2";
-  const kcal = r.kcal || r.calories || (r.nutrition?.calories) || "400";
+
+  const rawPrep = r.prepTime || r.prep_time || (r.time_and_servings?.prep_time) || "10";
+  const prepTime = parseInt(String(rawPrep).replace(/\D/g, ""), 10) || 10;
+
+  const rawCook = r.cookTime || r.cook_time || (r.time_and_servings?.cook_time) || "15";
+  const cookTime = parseInt(String(rawCook).replace(/\D/g, ""), 10) || 15;
+
+  const rawKcal = r.kcal || r.calories || (r.nutrition?.calories) || "400";
+  const kcal = parseInt(String(rawKcal).replace(/\D/g, ""), 10) || 400;
+
+  const rawServings = r.servings || (r.time_and_servings?.servings) || "2";
+  const servings = parseInt(String(rawServings).replace(/\D/g, ""), 10) || 2;
+
   const cuisine = r.cuisine || (r.metadata?.cuisine) || "International";
   const categories = Array.isArray(r.categories)
     ? r.categories
@@ -569,10 +577,11 @@ export const normalizeRecipeForCooked = (r) => {
 
   const rawIngs = r.ingredients || [];
   const ingredients = rawIngs.map((i) => {
-    if (typeof i === "string") return { name: i, quantity: "-" };
+    if (typeof i === "string") return { name: i, quantity: "-", icon: "🍳" };
     return {
       name: i.name || i.ingredient_name || i.ingredient || "",
       quantity: i.quantity || i.estimated_quantity || i.amount || "-",
+      icon: i.icon || "🍳",
     };
   });
 
@@ -580,25 +589,19 @@ export const normalizeRecipeForCooked = (r) => {
   const steps = rawSteps.map((s) => (typeof s === "string" ? s : s.description || s.step || ""));
 
   const equipment = Array.isArray(r.equipment) ? r.equipment : [];
-  const tips = typeof r.tips === "string" ? r.tips : "Store leftovers in an airtight container for up to 3 days.";
+  const tips = typeof r.tips === "string" ? r.tips : description || "Store leftovers in an airtight container for up to 3 days.";
 
   return {
     name,
-    title: name,
     description,
     prepTime,
-    prep_time: prepTime,
     cookTime,
-    cook_time: cookTime,
-    totalTime,
-    total_time: totalTime,
-    servings: String(servings),
-    kcal: String(kcal),
+    servings,
+    kcal,
     cuisine,
     categories,
     ingredients,
     steps,
-    instructions: steps,
     equipment,
     tips,
     image: r.image || r.image_url || null,

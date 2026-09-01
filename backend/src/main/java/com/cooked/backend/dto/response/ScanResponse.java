@@ -1,9 +1,11 @@
 package com.cooked.backend.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.cooked.backend.dto.request.CreateRecipeRequest;
 import com.cooked.backend.dto.request.IngredientPayload;
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ScanResponse {
     private boolean success;
     private String user_id;
