@@ -42,10 +42,34 @@ public class SavedIngredientController {
     @Operation(summary = "Search for ingredients")
     @GetMapping("/search")
     public ResponseEntity<List<com.cooked.backend.entity.Ingredient>> searchIngredients(@RequestParam String q) {
-        if (q == null || q.length() < 2) {
+        if (q == null || q.isBlank()) {
             return ResponseEntity.ok(List.of());
         }
-        return ResponseEntity.ok(ingredientRepository.findByNameContainingIgnoreCase(q));
+        String cleanQuery = q.trim();
+        List<com.cooked.backend.entity.Ingredient> list = new java.util.ArrayList<>(ingredientRepository.findByNameContainingIgnoreCase(cleanQuery));
+        String qLower = cleanQuery.toLowerCase();
+        
+        list.sort((a, b) -> {
+            String nameA = a.getName() != null ? a.getName().toLowerCase() : "";
+            String nameB = b.getName() != null ? b.getName().toLowerCase() : "";
+            
+            boolean startsA = nameA.startsWith(qLower);
+            boolean startsB = nameB.startsWith(qLower);
+            if (startsA && !startsB) return -1;
+            if (!startsA && startsB) return 1;
+
+            boolean wordStartsA = java.util.Arrays.stream(nameA.split("\\s+")).anyMatch(w -> w.startsWith(qLower));
+            boolean wordStartsB = java.util.Arrays.stream(nameB.split("\\s+")).anyMatch(w -> w.startsWith(qLower));
+            if (wordStartsA && !wordStartsB) return -1;
+            if (!wordStartsA && wordStartsB) return 1;
+
+            return Integer.compare(nameA.length(), nameB.length());
+        });
+
+        if (list.size() > 20) {
+            list = list.subList(0, 20);
+        }
+        return ResponseEntity.ok(list);
     }
 
     @Operation(summary = "Get all my saved ingredients")
