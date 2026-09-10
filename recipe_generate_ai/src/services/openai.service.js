@@ -15,15 +15,15 @@ const OPENAI_SUPPORTED_IMAGE_TYPES = new Set([
     "image/gif",
     "image/webp",
 ]);
-const MAX_WIDTH = 512;
-const JPEG_QUALITY = 65;
+const MAX_WIDTH = 1024;
+const JPEG_QUALITY = 82;
 const PNG_QUALITY = 75;
 let cachedClient = null;
 
 const singlePassScanAndRecipePrompt = `
 You are RecipeAI Pro — High-Speed Food Vision Engine.
 
-Analyze image(s) and return valid JSON with detected ingredients and 3 fast recipes.
+Analyze image(s) and return valid JSON with detected ingredients and 3 complete recipes.
 
 JSON Structure:
 {
@@ -41,7 +41,7 @@ JSON Structure:
       "total_time": "25 min",
       "servings": "2",
       "ingredients": [ { "name": "Chicken", "quantity": "4 pcs" } ],
-      "instructions": [ "1. Season chicken.", "2. Fry 15 min until golden and serve." ],
+    "instructions": [ "1. Detailed preparation step.", "2. Detailed cooking step.", "3. Detailed finishing step." ],
       "nutrition": { "calories": "450 kcal", "protein": "30g", "carbs": "5g", "fat": "25g" }
     }
   ],
@@ -49,9 +49,14 @@ JSON Structure:
 }
 
 RULES:
-- Identify ALL visible ingredients.
-- Generate 3 distinct recipes.
-- Keep descriptions and instructions (max 2 short steps) extremely concise.
+- Identify every visible food ingredient, but name only what the image supports.
+- Read package labels when possible. A flavored product is one product (for example, strawberry yogurt is yogurt), not separate ingredients inferred from its flavor.
+- Never identify an ingredient from color or shape alone. Do not turn green onions into lettuce or spinach.
+- If the exact ingredient cannot be confirmed, use the most honest broader name and a lower confidence value. Never guess.
+- Generate 3 distinct recipes using only detected ingredients.
+- Include every ingredient used by each recipe with a quantity and unit. Do not hide ingredients in the instructions.
+- Give each recipe 8-12 numbered, practical preparation steps. Include preparation, cooking temperatures and times, doneness checks, assembly, and serving where relevant.
+- Do not merge multiple actions into a short summary step just to save tokens.
 - Return ONLY valid JSON.
 `;
 let cachedPromptTemplate = null;
@@ -304,7 +309,7 @@ const scanWithAI = async (files) => {
         files.map(async (file) => ({
             type: "input_image",
             image_url: await toOpenAiImageDataUrl(file),
-             detail: "low",
+            detail: "high",
         }))
     );
 
@@ -425,6 +430,7 @@ const scanAndGenerateRecipes = async (files) => {
         files.map(async (file) => ({
             type: "input_image",
             image_url: await toOpenAiImageDataUrl(file),
+            detail: "high",
         }))
     );
 
@@ -443,7 +449,7 @@ const scanAndGenerateRecipes = async (files) => {
                     ],
                 },
             ],
-            max_output_tokens: 1600,
+            max_output_tokens: 7000,
             text: {
                 format: {
                     type: "json_object",
@@ -589,17 +595,20 @@ export const normalizeRecipeForCooked = (r) => {
     : [r.meal_type || (r.metadata?.meal_type) || "Main"];
 
   const rawIngs = r.ingredients || [];
-  const ingredients = rawIngs.map((i) => {
+    const ingredients = rawIngs.map((i) => {
     if (typeof i === "string") return { name: i, quantity: "-", icon: "🍳" };
     return {
       name: i.name || i.ingredient_name || i.ingredient || "",
-      quantity: i.quantity || i.estimated_quantity || i.amount || "-",
+            quantity: [i.quantity, i.unit || i.quantity_unit].filter(Boolean).join(" ") || i.estimated_quantity || i.amount || "-",
       icon: i.icon || "🍳",
     };
   });
 
   const rawSteps = r.steps || r.instructions || [];
-  const steps = rawSteps.map((s) => (typeof s === "string" ? s : s.description || s.step || ""));
+    const steps = rawSteps
+        .map((s) => (typeof s === "string" ? s : s.description || s.step || ""))
+        .map((s) => String(s).trim())
+        .filter(Boolean);
 
   const equipment = Array.isArray(r.equipment) ? r.equipment : [];
   const tips = typeof r.tips === "string" ? r.tips : description || "Store leftovers in an airtight container for up to 3 days.";
@@ -630,7 +639,9 @@ User Preferences: ${JSON.stringify(userPreferences)}
 
 STRICT SPEED & FORMAT RULES:
 - Keep recipe description under 20 words.
-- Limit instructions to 4-5 concise steps (max 15 words per step).
+- Write 8-12 numbered, complete preparation steps for every recipe.
+- Include quantities, preparation, cooking temperature and time, doneness checks, assembly, and serving where relevant.
+- Never hide an ingredient or an action inside a vague summary step.
 - Return ONLY valid JSON:
 {
   "recipes": [
@@ -647,10 +658,11 @@ STRICT SPEED & FORMAT RULES:
       "ingredients": [
         { "name": "Tomato", "quantity": "2" }
       ],
-      "steps": [
-        "1. Slice tomatoes.",
-        "2. Cook in pan."
-      ],
+            "steps": [
+                "1. Detailed preparation step.",
+                "2. Detailed cooking step.",
+                "3. Detailed finishing step."
+            ],
       "equipment": ["Pan"],
       "tips": "Pro tip on storage."
     }
@@ -666,7 +678,7 @@ STRICT SPEED & FORMAT RULES:
           content: [{ type: "input_text", text: prompt }],
         },
       ],
-      max_output_tokens: 1000,
+    max_output_tokens: 4500,
       text: { format: { type: "json_object" } },
     });
 
@@ -687,7 +699,9 @@ User Preferences: ${JSON.stringify(userPreferences)}
 
 STRICT SPEED & FORMAT RULES:
 - Keep recipe description under 20 words.
-- Limit instructions to 4 concise steps (max 15 words per step).
+- Write 8-12 numbered, complete preparation steps for every recipe.
+- Include quantities, preparation, cooking temperature and time, doneness checks, assembly, and serving where relevant.
+- Never hide an ingredient or an action inside a vague summary step.
 - Return ONLY valid JSON:
 {
   "recipes": [
@@ -704,10 +718,11 @@ STRICT SPEED & FORMAT RULES:
       "ingredients": [
         { "name": "Olive Oil", "quantity": "1 tbsp" }
       ],
-      "steps": [
-        "1. Prep ingredients.",
-        "2. Cook and serve."
-      ],
+            "steps": [
+                "1. Detailed preparation step.",
+                "2. Detailed cooking step.",
+                "3. Detailed finishing step."
+            ],
       "equipment": ["Bowl"],
       "tips": "Great for meal prep."
     }
@@ -723,7 +738,7 @@ STRICT SPEED & FORMAT RULES:
           content: [{ type: "input_text", text: prompt }],
         },
       ],
-      max_output_tokens: 900,
+    max_output_tokens: 4500,
       text: { format: { type: "json_object" } },
     });
 
