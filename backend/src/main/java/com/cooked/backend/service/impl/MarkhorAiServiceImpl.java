@@ -1056,47 +1056,48 @@ public class MarkhorAiServiceImpl implements AiService {
                 List<com.cooked.backend.entity.Recipe> candidates = recipeRepository.findExploreRecipesByKeywords(
                         kws.get(0), kws.get(1), kws.get(2), kws.get(3), kws.get(4));
 
-                // Score each candidate: count how many keywords appear in its name
+                // Score by meaningful title overlap. A single shared word such as
+                // "chicken" is not enough to borrow another dish's photograph.
                 com.cooked.backend.entity.Recipe bestMatch = null;
-                int bestScore = 0;
+                double bestScore = 0;
+                int bestMatchedWords = 0;
 
                 for (com.cooked.backend.entity.Recipe candidate : candidates) {
                     if (candidate.getImage() == null || candidate.getImage().isEmpty()) continue;
-                    String candidateName = candidate.getName().toLowerCase();
-                    int score = 0;
+                    String candidateName = candidate.getName().toLowerCase(Locale.ROOT);
+                    Set<String> candidateWords = new HashSet<>(Arrays.asList(candidateName.split("\\W+")));
+                    double score = 0;
+                    int matchedWords = 0;
                     for (String kw : keywords) {
-                        if (candidateName.contains(kw)) score++;
+                        if (candidateWords.contains(kw) || candidateName.contains(kw)) {
+                            matchedWords++;
+                            score += kw.length() >= 7 ? 2.0 : 1.0;
+                        }
+                    }
+                    if (matchedWords == keywords.size()) {
+                        score += 4.0;
+                    } else if (matchedWords == 0) {
+                        continue;
                     }
                     if (score > bestScore) {
                         bestScore = score;
+                        bestMatchedWords = matchedWords;
                         bestMatch = candidate;
                     }
                 }
 
-                if (bestMatch != null) {
+                final int minimumMatchedWords = keywords.size() == 1
+                        ? 1
+                        : (int) Math.ceil(keywords.size() * 0.6);
+                if (bestMatch != null && bestMatchedWords >= minimumMatchedWords) {
                     request.setImage(bestMatch.getImage());
                     log.info("Assigned image for '{}' via multi-keyword match (score={}, matched='{}')",
                             name, bestScore, bestMatch.getName());
                     continue; // Move to the next recipe
                 }
 
-                // --- Phase 2: single-keyword fallback (try each keyword individually) ---
-                boolean found = false;
-                for (String keyword : keywords) {
-                    List<com.cooked.backend.entity.Recipe> matches = recipeRepository.findByNameContainingIgnoreCase(keyword);
-                    for (com.cooked.backend.entity.Recipe match : matches) {
-                        if (match.getOrigin() == com.cooked.backend.entity.RecipeOrigin.EXPLORE
-                                && match.getImage() != null && !match.getImage().isEmpty()
-                                && !match.getImage().contains("unsplash") && !match.getImage().contains("splash")) {
-                            request.setImage(match.getImage());
-                            log.info("Assigned image for '{}' via single-keyword fallback (keyword='{}')", name, keyword);
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (found) break;
-                }
-                if (found) continue;
+                // Do not fall back to the first recipe sharing one generic word.
+                // Cuisine/category fallback below is safer than a visibly wrong dish.
             }
 
             // --- Phase 3: cuisine fallback ---

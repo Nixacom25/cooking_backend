@@ -363,6 +363,22 @@ public class AuthServiceImpl implements AuthService {
                                 throw new BadRequestException("Social Authentication failed: " + e.getMessage());
                         }
 
+                        // Apple only returns the name on the first authorization.
+                        // Persist it when it becomes available instead of keeping
+                        // the previous generic "Chef" profile name.
+                        if ("APPLE".equalsIgnoreCase(request.getProvider())
+                                        && request.getFirstname() != null
+                                        && !request.getFirstname().trim().isEmpty()
+                                        && (user.getFirstname() == null
+                                                        || user.getFirstname().trim().isEmpty()
+                                                        || "Chef".equalsIgnoreCase(user.getFirstname().trim()))) {
+                                user.setFirstname(request.getFirstname().trim());
+                                if (request.getLastname() != null && !request.getLastname().trim().isEmpty()) {
+                                        user.setLastname(request.getLastname().trim());
+                                }
+                                userRepository.save(user);
+                        }
+
                         String token = jwtService.generateToken(user.getEmail());
                         activityLogService.logActivity(user, "Login Successful", "User logged in via " + request.getProvider());
                         recordSession(user, token);
