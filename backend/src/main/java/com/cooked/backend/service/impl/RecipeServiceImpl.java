@@ -696,6 +696,10 @@ public class RecipeServiceImpl implements RecipeService {
                         .image((String) obj[1])
                         .recipeCount((Long) obj[2])
                         .build())
+                // Legacy/renamed taxonomy entries (see TaxonomyServiceImpl's name
+                // aliasing) can linger with zero recipes once tagging moved to their
+                // canonical name; hide those instead of showing a misleading "0 recipes".
+                .filter(r -> r.getRecipeCount() > 0)
                 .collect(Collectors.toList());
     }
 
@@ -708,6 +712,7 @@ public class RecipeServiceImpl implements RecipeService {
                         .image((String) obj[1])
                         .recipeCount((Long) obj[2])
                         .build())
+                .filter(r -> r.getRecipeCount() > 0)
                 .collect(Collectors.toList());
     }
 
