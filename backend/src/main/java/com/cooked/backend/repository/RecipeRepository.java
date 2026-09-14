@@ -102,7 +102,11 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r.cuisine.name FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.status = true AND r.cuisine IS NOT NULL")
         List<String> findDistinctCuisines();
 
-    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, (SELECT COUNT(r) FROM Recipe r JOIN r.categories rc WHERE rc.id = c.id AND r.origin = 'EXPLORE' AND r.status = true) FROM RecipeCategory c WHERE c.type = com.cooked.backend.entity.CategoryType.CATEGORY AND c.active = true ORDER BY (SELECT COUNT(r) FROM Recipe r JOIN r.categories rc WHERE rc.id = c.id AND r.origin = 'EXPLORE' AND r.status = true) DESC")
+    // Uses a LEFT JOIN + MEMBER OF + GROUP BY instead of a correlated
+    // subquery with an internal collection JOIN: the latter silently
+    // failed to correlate against the outer RecipeCategory row (always
+    // counted 0), even though recipes do carry real category tags.
+    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, COUNT(r) FROM RecipeCategory c LEFT JOIN Recipe r ON c MEMBER OF r.categories AND r.origin = 'EXPLORE' AND r.status = true WHERE c.type = com.cooked.backend.entity.CategoryType.CATEGORY AND c.active = true GROUP BY c.id, c.name, c.image ORDER BY COUNT(r) DESC")
     List<Object[]> findCategoriesWithCount();
 
     @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, (SELECT COUNT(r) FROM Recipe r WHERE r.cuisine.id = c.id AND r.origin = 'EXPLORE' AND r.status = true) FROM RecipeCategory c WHERE c.type = com.cooked.backend.entity.CategoryType.CUISINE AND c.active = true ORDER BY (SELECT COUNT(r) FROM Recipe r WHERE r.cuisine.id = c.id AND r.origin = 'EXPLORE' AND r.status = true) DESC")
