@@ -37,6 +37,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final com.cooked.backend.service.CloudinaryService cloudinaryService;
     private final RecipeCategoryRepository recipeCategoryRepository;
     private final org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+    private final com.cooked.backend.service.RecipeImageMatchingService recipeImageMatchingService;
 
     @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
     public void onStartup() {
@@ -364,6 +365,7 @@ public class RecipeServiceImpl implements RecipeService {
             }
             saved.setRecipeIngredients(recipeIngredients);
             Recipe finalSaved = recipeRepository.save(saved);
+            recipeImageMatchingService.matchAndAssignImageAsync(finalSaved.getId());
             savedResponses.add(mapToResponse(finalSaved, null));
         }
         

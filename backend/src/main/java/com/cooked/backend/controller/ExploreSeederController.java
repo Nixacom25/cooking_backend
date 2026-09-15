@@ -18,6 +18,7 @@ public class ExploreSeederController {
 
     private final ExploreDataSeederService exploreDataSeederService;
     private final com.cooked.backend.repository.RecipeRepository recipeRepository;
+    private final com.cooked.backend.service.ImageLibraryBackfillService imageLibraryBackfillService;
 
     @Operation(summary = "Seed Explore Recipes")
     @PostMapping("/explore")
@@ -38,6 +39,18 @@ public class ExploreSeederController {
             recipeRepository.deleteByOrigin(com.cooked.backend.entity.RecipeOrigin.EXPLORE);
             exploreDataSeederService.seedExploreData();
             return ResponseEntity.ok(new MessageResponse("Cleared and seeded successfully."));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new MessageResponse("Error: " + e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "Backfill the image library by tagging existing recipe photos")
+    @PostMapping("/image-library-backfill")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
+    public ResponseEntity<?> backfillImageLibrary() {
+        try {
+            int created = imageLibraryBackfillService.backfillFromExistingRecipes();
+            return ResponseEntity.ok(new MessageResponse("Image library backfill complete: " + created + " new entries."));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new MessageResponse("Error: " + e.getMessage()));
         }
