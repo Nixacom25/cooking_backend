@@ -109,7 +109,10 @@ public class KpiService {
                 .map(p -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("id", p.getId());
-                    map.put("customer", p.getUser().getFirstname() + " " + p.getUser().getLastname());
+                    String first = p.getUser().getFirstname() == null ? "" : p.getUser().getFirstname().trim();
+                    String last = p.getUser().getLastname() == null ? "" : p.getUser().getLastname().trim();
+                    String fullName = (first + " " + last).trim();
+                    map.put("customer", fullName.isEmpty() ? "Unknown" : fullName);
                     map.put("store", p.getStore());
                     map.put("product", p.getPlanType() + " Plan");
                     map.put("date", p.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")));

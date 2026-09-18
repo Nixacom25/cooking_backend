@@ -51,6 +51,7 @@ public class SecurityConfig {
                                 "/auth/register",
                                 "/auth/google",
                                 "/auth/apple",
+                                "/auth/apple/callback",
                                 "/auth/verify-email",
                                 "/auth/resend-code",
                                 "/auth/forgot-password",

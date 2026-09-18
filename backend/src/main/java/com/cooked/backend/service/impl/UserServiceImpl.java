@@ -291,13 +291,34 @@ public class UserServiceImpl implements UserService {
         if (user.getRecipes() != null && !user.getRecipes().isEmpty()) {
             // Create a copy of the list to avoid ConcurrentModificationException while modifying user.getRecipes()
             java.util.List<com.cooked.backend.entity.Recipe> userRecipes = new java.util.ArrayList<>(user.getRecipes());
-            
+
+            // Fetch every possible "twin" (same name, any user) in a single query
+            // instead of one query per recipe - accounts with many recipes were
+            // making this loop do dozens/hundreds of round trips and time out.
+            java.util.Set<String> lowerNames = new java.util.HashSet<>();
+            for (com.cooked.backend.entity.Recipe recipe : userRecipes) {
+                if (recipe.getName() != null) {
+                    lowerNames.add(recipe.getName().toLowerCase());
+                }
+            }
+            java.util.Map<String, java.util.List<com.cooked.backend.entity.Recipe>> sameNameByLowerName = new java.util.HashMap<>();
+            if (!lowerNames.isEmpty()) {
+                for (com.cooked.backend.entity.Recipe candidate : recipeRepository.findAllByNameIgnoreCaseIn(lowerNames)) {
+                    if (candidate.getName() == null) continue;
+                    sameNameByLowerName
+                        .computeIfAbsent(candidate.getName().toLowerCase(), k -> new java.util.ArrayList<>())
+                        .add(candidate);
+                }
+            }
+
             for (com.cooked.backend.entity.Recipe recipe : userRecipes) {
                 // Check if this recipe has a duplicate (twin) in the database
-                java.util.List<com.cooked.backend.entity.Recipe> sameNameRecipes = recipeRepository.findAllByNameIgnoreCase(recipe.getName());
+                java.util.List<com.cooked.backend.entity.Recipe> sameNameRecipes = recipe.getName() != null
+                    ? sameNameByLowerName.getOrDefault(recipe.getName().toLowerCase(), java.util.List.of())
+                    : java.util.List.of();
                 boolean hasTwin = false;
                 com.cooked.backend.entity.Recipe twinRecipe = null;
-                
+
                 for (com.cooked.backend.entity.Recipe other : sameNameRecipes) {
                     if (!other.getId().equals(recipe.getId())) {
                         // Check if the other recipe does not belong to the user being deleted
@@ -308,7 +329,7 @@ public class UserServiceImpl implements UserService {
                         }
                     }
                 }
-                
+
                 if (hasTwin) {
                     // This recipe has a twin in the database.
                     // We delete it completely, but first repoint references from other users to the twin.

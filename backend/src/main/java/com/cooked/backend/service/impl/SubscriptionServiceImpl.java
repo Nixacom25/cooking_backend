@@ -233,17 +233,30 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
         userRepository.save(user);
 
-        SubscriptionPlan plan = getPlan();
-        BigDecimal price = isYearly ? plan.getYearlyPrice() : plan.getMonthlyPrice();
-        
-        SubscriptionPayment payment = new SubscriptionPayment();
-        payment.setUser(user);
-        payment.setAmount(price);
-        payment.setPlanType(isYearly ? "YEARLY" : "MONTHLY");
-        payment.setStatus("SUCCESS");
-        payment.setStripePaymentId("iap_" + request.getPlatform() + "_" + (realOriginalTransactionId != null ? realOriginalTransactionId.length() : request.getPurchaseToken().length()));
-        
-        subscriptionPaymentRepository.save(payment);
+        // Real transaction/purchase-token identifier (was previously using
+        // .length() of the id, which is not unique and made every repeat
+        // verification of the same receipt look like a distinct payment).
+        String transactionRef = realOriginalTransactionId != null ? realOriginalTransactionId : request.getPurchaseToken();
+        String paymentId = "iap_" + request.getPlatform() + "_" + transactionRef;
+
+        // The client re-verifies the same receipt on every app resume, so
+        // skip re-recording a payment we've already logged for this exact
+        // transaction - only the subscription/user sync above needs to run
+        // every time.
+        if (!subscriptionPaymentRepository.existsByStripePaymentId(paymentId)) {
+            SubscriptionPlan plan = getPlan();
+            BigDecimal price = isYearly ? plan.getYearlyPrice() : plan.getMonthlyPrice();
+
+            SubscriptionPayment payment = new SubscriptionPayment();
+            payment.setUser(user);
+            payment.setAmount(price);
+            payment.setPlanType(isYearly ? "YEARLY" : "MONTHLY");
+            payment.setStatus("SUCCESS");
+            payment.setStripePaymentId(paymentId);
+            payment.setStore("IOS".equalsIgnoreCase(request.getPlatform()) ? "Apple" : "Google");
+
+            subscriptionPaymentRepository.save(payment);
+        }
 
         activityLogService.logActivity(user, "Subscription Successful",
                 "Your subscription via " + request.getPlatform() + " has been activated.");

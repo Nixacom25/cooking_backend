@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface SubscriptionPaymentRepository extends JpaRepository<SubscriptionPayment, UUID> {
     List<SubscriptionPayment> findAllByUserIdOrderByCreatedAtDesc(UUID userId);
+    boolean existsByStripePaymentId(String stripePaymentId);
 }

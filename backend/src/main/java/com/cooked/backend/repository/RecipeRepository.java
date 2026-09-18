@@ -102,11 +102,16 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r.cuisine.name FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.status = true AND r.cuisine IS NOT NULL")
         List<String> findDistinctCuisines();
 
-    // Uses a LEFT JOIN + MEMBER OF + GROUP BY instead of a correlated
-    // subquery with an internal collection JOIN: the latter silently
-    // failed to correlate against the outer RecipeCategory row (always
-    // counted 0), even though recipes do carry real category tags.
-    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, COUNT(r) FROM RecipeCategory c LEFT JOIN Recipe r ON c MEMBER OF r.categories AND r.origin = 'EXPLORE' AND r.status = true WHERE c.type = com.cooked.backend.entity.CategoryType.CATEGORY AND c.active = true GROUP BY c.id, c.name, c.image ORDER BY COUNT(r) DESC")
+    // Queries FROM the many-to-many owning side (Recipe.categories) and joins
+    // straight across the mapped collection path - the standard, well-worn
+    // way to do this in JPQL. An earlier version tried an ad-hoc
+    // "RecipeCategory c LEFT JOIN Recipe r ON c MEMBER OF r.categories"
+    // join instead; MEMBER OF inside a JOIN ON clause is not something
+    // Hibernate reliably translates, and it silently always counted 0.
+    // Zero-recipe categories are dropped here (INNER JOIN) rather than kept
+    // via LEFT JOIN, since the only caller (getExploreCategories) filters
+    // those out anyway - no point carrying rows nobody displays.
+    @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, COUNT(r) FROM Recipe r JOIN r.categories c WHERE r.origin = 'EXPLORE' AND r.status = true AND c.type = com.cooked.backend.entity.CategoryType.CATEGORY AND c.active = true GROUP BY c.id, c.name, c.image ORDER BY COUNT(r) DESC")
     List<Object[]> findCategoriesWithCount();
 
     @org.springframework.data.jpa.repository.Query("SELECT c.name, c.image, (SELECT COUNT(r) FROM Recipe r WHERE r.cuisine.id = c.id AND r.origin = 'EXPLORE' AND r.status = true) FROM RecipeCategory c WHERE c.type = com.cooked.backend.entity.CategoryType.CUISINE AND c.active = true ORDER BY (SELECT COUNT(r) FROM Recipe r WHERE r.cuisine.id = c.id AND r.origin = 'EXPLORE' AND r.status = true) DESC")
@@ -136,6 +141,9 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
 
 
     java.util.List<Recipe> findAllByNameIgnoreCase(String name);
+
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE LOWER(r.name) IN :lowerNames")
+    java.util.List<Recipe> findAllByNameIgnoreCaseIn(@org.springframework.data.repository.query.Param("lowerNames") java.util.Collection<String> lowerNames);
     @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r FROM Recipe r LEFT JOIN FETCH r.recipeIngredients ri LEFT JOIN FETCH ri.ingredient WHERE r.totalPrice IS NULL")
     java.util.List<Recipe> findByTotalPriceIsNull();
 

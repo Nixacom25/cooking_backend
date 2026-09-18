@@ -118,8 +118,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
-        // Log the exception for internal tracking
+        // Log the full stack trace so unhandled errors are actually diagnosable
+        // from server logs instead of just a bare message.
         System.err.println("CRITICAL_ERROR: " + ex.getMessage());
+        ex.printStackTrace();
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Server error", "BACKEND", "INTERNAL_SERVER_ERROR");
     }
 
