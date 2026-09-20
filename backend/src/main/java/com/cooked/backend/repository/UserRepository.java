@@ -18,6 +18,12 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.subscriptionStatus = :status AND u.createdAt <= :date")
     java.util.List<User> findUsersForDrip(@org.springframework.data.repository.query.Param("date") java.time.LocalDateTime date, @org.springframework.data.repository.query.Param("status") com.cooked.backend.entity.SubscriptionStatus status);
 
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.subscriptionStatus = com.cooked.backend.entity.SubscriptionStatus.TRIAL "
+            + "AND u.trialEndingReminderSent = false AND u.subscriptionExpiresAt BETWEEN :from AND :to")
+    java.util.List<User> findUsersWithTrialEndingSoon(
+            @org.springframework.data.repository.query.Param("from") java.time.LocalDateTime from,
+            @org.springframework.data.repository.query.Param("to") java.time.LocalDateTime to);
+
     Optional<User> findFirstByPhone(String phone);
 
     Optional<User> findByOtpCode(String otpCode);

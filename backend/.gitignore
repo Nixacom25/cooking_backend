@@ -37,3 +37,5 @@ build/
 src/main/resources/google-play-key.json
 src/main/resources/cookedapp-493503-4a35210a993d.json
 src/main/resources/cookedapp-493503-4afa7c77d6ee.json
+src/main/resources/*firebase-adminsdk*.json
+src/main/resources/firebase-fcm-service-account.json

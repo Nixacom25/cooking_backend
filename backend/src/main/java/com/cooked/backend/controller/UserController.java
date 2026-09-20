@@ -1,6 +1,7 @@
 package com.cooked.backend.controller;
 
 import com.cooked.backend.dto.request.CreateUserRequest;
+import com.cooked.backend.dto.request.UpdateFcmTokenRequest;
 import com.cooked.backend.dto.request.UpdatePasswordRequest;
 import com.cooked.backend.dto.request.UpdateUserRequest;
 import com.cooked.backend.dto.request.UpdateUserStatusRequest;
@@ -64,6 +65,13 @@ public class UserController {
     @DeleteMapping("/me")
     public ResponseEntity<MessageResponse> deleteCurrentUser(Authentication authentication) {
         return ResponseEntity.ok(userService.deleteCurrentUser(authentication.getName()));
+    }
+
+    @Operation(summary = "Register FCM push token", description = "Registers/refreshes the current device's Firebase Cloud Messaging token for push notifications")
+    @PostMapping("/fcm-token")
+    public ResponseEntity<MessageResponse> updateFcmToken(Authentication authentication,
+            @Valid @RequestBody UpdateFcmTokenRequest request) {
+        return ResponseEntity.ok(userService.updateFcmToken(authentication.getName(), request.getFcmToken()));
     }
 
     // --- Client Routes (ADMIN) ---

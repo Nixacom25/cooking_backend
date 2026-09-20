@@ -73,6 +73,7 @@ public class SecurityConfig {
                                 "/recipes/top-creators",
                                 "/recipes/trending-ai",
                                 "/share/**",
+                                "/support/submit",
                                 "/.well-known/**",
                                 "/webhooks/**",
                                 "/actuator/**",

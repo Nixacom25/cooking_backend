@@ -279,8 +279,19 @@ public class UserServiceImpl implements UserService {
     public MessageResponse deleteCurrentUser(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        String firstname = user.getFirstname();
         cleanupAndExecuteDelete(user);
+        emailService.sendAccountDeletedEmail(email, firstname);
         return new MessageResponse("Your account and all associated data have been permanently deleted.");
+    }
+
+    @Override
+    public MessageResponse updateFcmToken(String email, String fcmToken) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        user.setFcmToken(fcmToken);
+        userRepository.save(user);
+        return new MessageResponse("Push notification token registered successfully.");
     }
 
     private void cleanupAndExecuteDelete(User user) {

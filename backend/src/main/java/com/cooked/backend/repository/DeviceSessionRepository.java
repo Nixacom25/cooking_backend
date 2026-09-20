@@ -15,4 +15,6 @@ public interface DeviceSessionRepository extends JpaRepository<DeviceSession, UU
     long countByUser(User user);
 
     Optional<DeviceSession> findByToken(String token);
+
+    boolean existsByUserAndDeviceNameAndIpAddress(User user, String deviceName, String ipAddress);
 }

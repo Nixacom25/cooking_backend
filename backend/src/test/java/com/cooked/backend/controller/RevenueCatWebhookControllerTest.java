@@ -6,6 +6,8 @@ import com.cooked.backend.entity.SubscriptionStatus;
 import com.cooked.backend.entity.SubscriptionType;
 import com.cooked.backend.entity.User;
 import com.cooked.backend.repository.UserRepository;
+import com.cooked.backend.service.EmailService;
+import com.cooked.backend.service.PushNotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -22,12 +24,16 @@ import static org.mockito.Mockito.*;
 class RevenueCatWebhookControllerTest {
 
     private UserRepository userRepository;
+    private EmailService emailService;
+    private PushNotificationService pushNotificationService;
     private RevenueCatWebhookController controller;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
-        controller = new RevenueCatWebhookController(userRepository);
+        emailService = mock(EmailService.class);
+        pushNotificationService = mock(PushNotificationService.class);
+        controller = new RevenueCatWebhookController(userRepository, emailService, pushNotificationService);
     }
 
     @Test
@@ -114,5 +120,37 @@ class RevenueCatWebhookControllerTest {
 
         ResponseEntity<?> responseValid = controller.handleWebhook("Bearer my_secret_token", payload);
         assertEquals(HttpStatus.OK, responseValid.getStatusCode());
+    }
+
+    @Test
+    void testBillingIssueEvent_SendsPaymentFailureEmail() {
+        User user = User.builder()
+                .email("billingissue@cookedapp.com")
+                .firstname("Sam")
+                .password("password")
+                .role(Role.CLIENT)
+                .status(Status.ACTIVE)
+                .subscriptionStatus(SubscriptionStatus.ACTIVE)
+                .build();
+
+        when(userRepository.findByEmail("billingissue@cookedapp.com")).thenReturn(Optional.of(user));
+
+        Map<String, Object> payload = Map.of(
+                "event", Map.of(
+                        "type", "BILLING_ISSUE",
+                        "app_user_id", "billingissue@cookedapp.com",
+                        "product_id", "monthly_sub"
+                )
+        );
+
+        ResponseEntity<?> response = controller.handleWebhook(null, payload);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        verify(emailService, times(1))
+                .sendPaymentFailureEmail(eq("billingissue@cookedapp.com"), eq("Sam"), eq("Monthly"), anyString());
+        verify(pushNotificationService, times(1))
+                .sendPush(isNull(), anyString(), anyString(), anyMap());
+        // A billing issue alone doesn't change entitlement - only EXPIRATION/CANCELLATION do.
+        verify(userRepository, never()).save(any());
     }
 }

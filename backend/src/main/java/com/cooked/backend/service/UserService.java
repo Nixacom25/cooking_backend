@@ -45,4 +45,6 @@ public interface UserService {
     MessageResponse deleteCurrentUser(String email);
 
     com.cooked.backend.dto.response.UserStatsResponse getUserStats(UUID id);
+
+    MessageResponse updateFcmToken(String email, String fcmToken);
 }

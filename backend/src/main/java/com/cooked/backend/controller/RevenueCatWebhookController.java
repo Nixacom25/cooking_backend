@@ -4,6 +4,8 @@ import com.cooked.backend.entity.SubscriptionStatus;
 import com.cooked.backend.entity.SubscriptionType;
 import com.cooked.backend.entity.User;
 import com.cooked.backend.repository.UserRepository;
+import com.cooked.backend.service.EmailService;
+import com.cooked.backend.service.PushNotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
@@ -27,12 +29,17 @@ public class RevenueCatWebhookController {
     private static final Logger log = LoggerFactory.getLogger(RevenueCatWebhookController.class);
 
     private final UserRepository userRepository;
+    private final EmailService emailService;
+    private final PushNotificationService pushNotificationService;
 
     @Value("${revenuecat.webhook.secret:}")
     private String webhookSecret;
 
-    public RevenueCatWebhookController(UserRepository userRepository) {
+    public RevenueCatWebhookController(UserRepository userRepository, EmailService emailService,
+            PushNotificationService pushNotificationService) {
         this.userRepository = userRepository;
+        this.emailService = emailService;
+        this.pushNotificationService = pushNotificationService;
     }
 
     @Operation(summary = "Handle RevenueCat Subscription Webhook Event")
@@ -127,6 +134,14 @@ public class RevenueCatWebhookController {
                 user.setSubscriptionStatus(SubscriptionStatus.EXPIRED);
                 userRepository.save(user);
                 log.info("Set subscription EXPIRED for user: {}", user.getEmail());
+            } else if ("BILLING_ISSUE".equalsIgnoreCase(eventType)) {
+                String planName = productId != null && productId.toLowerCase().contains("year") ? "Yearly" : "Monthly";
+                String price = formatPrice(event.get("price"), event.get("currency"));
+                emailService.sendPaymentFailureEmail(user.getEmail(), user.getFirstname(), planName, price);
+                pushNotificationService.sendPush(user.getFcmToken(), "Payment failed",
+                        "We couldn't process your payment for your " + planName + " plan. Update your billing details to avoid losing access.",
+                        Map.of("type", "billing_issue"));
+                log.info("Sent payment-failure email for user: {}", user.getEmail());
             }
 
             return ResponseEntity.ok(Map.of("status", "SUCCESS"));
@@ -134,5 +149,13 @@ public class RevenueCatWebhookController {
             log.error("Error processing RevenueCat webhook: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    private String formatPrice(Object price, Object currency) {
+        if (price == null) {
+            return "your plan price";
+        }
+        String currencyCode = currency != null ? currency.toString() : "USD";
+        return String.format("%.2f %s", ((Number) price).doubleValue(), currencyCode);
     }
 }

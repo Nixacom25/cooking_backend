@@ -238,6 +238,19 @@ public class User implements UserDetails {
     @Builder.Default
     private boolean suggestionsReady = false;
 
+    // Set once the "trial ends tomorrow" reminder email has been sent, so the
+    // hourly scheduler never sends it twice for the same trial.
+    @Column(nullable = false)
+    @org.hibernate.annotations.ColumnDefault("false")
+    @Builder.Default
+    private boolean trialEndingReminderSent = false;
+
+    // Firebase Cloud Messaging registration token for this device, used to
+    // send push notifications. Null/empty means the user hasn't granted
+    // notification permission or hasn't opened the app since it was added.
+    @Column(columnDefinition = "TEXT")
+    private String fcmToken;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -333,6 +346,12 @@ public class User implements UserDetails {
 
     public boolean isSuggestionsReady() { return suggestionsReady; }
     public void setSuggestionsReady(boolean suggestionsReady) { this.suggestionsReady = suggestionsReady; }
+
+    public boolean isTrialEndingReminderSent() { return trialEndingReminderSent; }
+    public void setTrialEndingReminderSent(boolean trialEndingReminderSent) { this.trialEndingReminderSent = trialEndingReminderSent; }
+
+    public String getFcmToken() { return fcmToken; }
+    public void setFcmToken(String fcmToken) { this.fcmToken = fcmToken; }
 
     public String getOtpCode() { return otpCode; }
     public void setOtpCode(String otpCode) { this.otpCode = otpCode; }

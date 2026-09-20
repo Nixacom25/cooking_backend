@@ -60,6 +60,7 @@ public class AuthServiceImpl implements AuthService {
         private final ActivityLogService activityLogService;
         private final DeviceSessionRepository deviceSessionRepository;
         private final RestTemplate restTemplate;
+        private final com.cooked.backend.service.PushNotificationService pushNotificationService;
 
         @Value("${google.client.id:YOUR_GOOGLE_CLIENT_ID}")
         private String googleClientId;
@@ -205,6 +206,7 @@ public class AuthServiceImpl implements AuthService {
                         emailService.sendOtpEmail(user.getEmail(), otp);
                         return new MessageResponse("User registered successfully. Please verify your email.");
                 } else {
+                        emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirstname());
                         String token = jwtService.generateToken(savedUser.getEmail());
                         recordSession(savedUser, token);
                         return AuthResponse.builder()
@@ -241,6 +243,8 @@ public class AuthServiceImpl implements AuthService {
                 user.setResendCount(0);
                 user.setLockoutUntil(null);
                 userRepository.save(user);
+
+                emailService.sendWelcomeEmail(user.getEmail(), user.getFirstname());
 
                 String token = jwtService.generateToken(user.getEmail());
                 return AuthResponse.builder()
@@ -351,6 +355,7 @@ public class AuthServiceImpl implements AuthService {
                                                 @Override
                                                 public void afterCommit() {
                                                     userInitializationService.initializeAccount(savedUser.getId());
+                                                    emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirstname());
                                                 }
                                             }
                                         );
@@ -592,6 +597,9 @@ public class AuthServiceImpl implements AuthService {
                                         deviceName = userAgent.length() > 30 ? userAgent.substring(0, 30) + "..." : userAgent;
                         }
 
+                        boolean knownDevice = deviceSessionRepository
+                                        .existsByUserAndDeviceNameAndIpAddress(user, deviceName, ipAddress);
+
                         DeviceSession session = DeviceSession.builder()
                                         .user(user)
                                         .token(token)
@@ -601,6 +609,20 @@ public class AuthServiceImpl implements AuthService {
                                         .build();
 
                         deviceSessionRepository.save(session);
+
+                        // Only alert once this device/network combo is genuinely new for the
+                        // user - not on every login, or every mobile session would trigger it.
+                        if (!knownDevice) {
+                                String signInTime = LocalDateTime.now()
+                                                .format(java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy 'at' h:mm a"));
+                                // No geo-IP lookup is wired in yet, so the raw IP stands in for
+                                // "location" until one is added.
+                                emailService.sendNewDeviceSignInEmail(user.getEmail(), user.getFirstname(),
+                                                deviceName, ipAddress, signInTime);
+                                pushNotificationService.sendPush(user.getFcmToken(), "New sign-in detected",
+                                                "We noticed a new sign-in from " + deviceName + ". Wasn't you? Secure your account.",
+                                                java.util.Map.of("type", "new_device_signin"));
+                        }
                 } catch (Exception e) {
                         log.warn("Could not record session: {}", e.getMessage());
                 }
