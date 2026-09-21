@@ -112,6 +112,8 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(List.of(
             "https://www.cookedapp.com",
             "https://cookedapp.com",
+            "https://www.admin.cookedapp.com",
+            "https://admin.cookedapp.com",
             "http://localhost:*",
             "http://127.0.0.1:*"
         ));

@@ -15,6 +15,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private static final String[] ALLOWED_ORIGINS = {
         "https://www.cookedapp.com",
         "https://cookedapp.com",
+        "https://www.admin.cookedapp.com",
+        "https://admin.cookedapp.com",
         "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:8080",
