@@ -68,6 +68,8 @@ public class UserServiceImplTest {
                 .email("test@example.com")
                 .firstname("John")
                 .lastname("Doe")
+                .role(com.cooked.backend.entity.Role.ADMIN)
+                .subscriptionStatus(com.cooked.backend.entity.SubscriptionStatus.ACTIVE)
                 .build();
     }
 
