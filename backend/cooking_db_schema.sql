@@ -513,7 +513,7 @@ CREATE TABLE public.users (
     alternative_region character varying(255),
     measurement_system character varying(255),
     CONSTRAINT users_provider_check CHECK (((provider)::text = ANY ((ARRAY['LOCAL'::character varying, 'GOOGLE'::character varying, 'APPLE'::character varying])::text[]))),
-    CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['CLIENT'::character varying, 'ADMIN'::character varying])::text[]))),
+    CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['CLIENT'::character varying, 'ADMIN'::character varying, 'EDITOR'::character varying, 'CREATOR'::character varying])::text[]))),
     CONSTRAINT users_status_check CHECK (((status)::text = ANY ((ARRAY['PENDING_VERIFICATION'::character varying, 'ACTIVE'::character varying, 'BLOCKED'::character varying, 'ARCHIVED'::character varying])::text[])))
 );
 

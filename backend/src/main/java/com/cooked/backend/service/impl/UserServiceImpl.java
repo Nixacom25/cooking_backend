@@ -47,6 +47,7 @@ public class UserServiceImpl implements UserService {
     private final com.cooked.backend.repository.DeviceSessionRepository deviceSessionRepository;
     private final com.cooked.backend.repository.RecipeAssignmentRepository recipeAssignmentRepository;
     private final jakarta.persistence.EntityManager entityManager;
+    private final com.cooked.backend.repository.UserSubscriptionRepository userSubscriptionRepository;
 
     @Override
     public UserResponse getCurrentUser(String email) {
@@ -201,9 +202,25 @@ public class UserServiceImpl implements UserService {
             Role newRole = Role.valueOf(role.toUpperCase());
             user.setRole(newRole);
             
-            // If role is CREATOR, set subscription to INFINITE
+            // If role is CREATOR, set subscription to INFINITE and update UserSubscription
             if (newRole == Role.CREATOR) {
                 user.setSubscriptionStatus(SubscriptionStatus.INFINITE);
+                
+                // Create or update UserSubscription entity (source of truth)
+                com.cooked.backend.entity.UserSubscription subscription = userSubscriptionRepository.findByUserId(user.getId())
+                        .orElseGet(() -> {
+                            com.cooked.backend.entity.UserSubscription newSub = new com.cooked.backend.entity.UserSubscription();
+                            newSub.setUser(user);
+                            newSub.setStartDate(LocalDateTime.now());
+                            return newSub;
+                        });
+                
+                subscription.setStatus(SubscriptionStatus.INFINITE);
+                // Set a far future date for INFINITE subscription
+                subscription.setEndDate(LocalDateTime.now().plusYears(100));
+                subscription.setIsYearly(false);
+                
+                userSubscriptionRepository.save(subscription);
             }
             
             userRepository.save(user);

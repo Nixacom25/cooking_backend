@@ -26,6 +26,46 @@ public class DatabaseMigrationRunner {
         fixAssignmentStatusConstraint();
         ensureAssignmentNewColumns();
         fixRecipeAssignmentForeignKeys();
+        fixUserRoleConstraint();
+    }
+
+    /**
+     * Migration 4: Update the CHECK constraint on users.role to include all role values
+     * (CLIENT, ADMIN, EDITOR, CREATOR) to match the Java enum.
+     */
+    private void fixUserRoleConstraint() {
+        try {
+            // Check if the old constraint still exists with the wrong set of values
+            Integer count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.table_constraints " +
+                "WHERE table_name = 'users' " +
+                "AND constraint_type = 'CHECK' " +
+                "AND constraint_name = 'users_role_check'",
+                Integer.class
+            );
+
+            if (count != null && count > 0) {
+                log.info("[Migration] Dropping old users_role_check constraint...");
+                jdbc.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
+                log.info("[Migration] Old users_role_check constraint dropped successfully.");
+            }
+
+            // Re-add the constraint with ALL current enum values
+            jdbc.execute(
+                "ALTER TABLE users " +
+                "ADD CONSTRAINT users_role_check " +
+                "CHECK (role IN ('CLIENT', 'ADMIN', 'EDITOR', 'CREATOR'))"
+            );
+            log.info("[Migration] users_role_check constraint updated with all role values.");
+
+        } catch (Exception e) {
+            // Constraint already correct or DB doesn't use CHECK constraints (H2 test env) — safe to ignore
+            if (e.getMessage() != null && e.getMessage().contains("already exists")) {
+                log.debug("[Migration] Role CHECK constraint already up to date — skipping.");
+            } else {
+                log.warn("[Migration] Could not update role CHECK constraint: {}", e.getMessage());
+            }
+        }
     }
 
     /**
