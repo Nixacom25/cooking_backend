@@ -1121,6 +1121,17 @@ public class MarkhorAiServiceImpl implements AiService {
                 if (categoryMatches.hasContent()) {
                     request.setImage(categoryMatches.getContent().get(0).getImage());
                     log.info("Assigned image for '{}' via category fallback (category='{}')", name, request.getCategories().get(0));
+                    found = true;
+                }
+            }
+
+            // --- Phase 5: final fallback - assign any random recipe image ---
+            if (!found) {
+                org.springframework.data.domain.Page<com.cooked.backend.entity.Recipe> randomRecipe =
+                        recipeRepository.findRandomPopularRecipes(null, null, org.springframework.data.domain.PageRequest.of(0, 1));
+                if (randomRecipe.hasContent() && randomRecipe.getContent().get(0).getImage() != null) {
+                    request.setImage(randomRecipe.getContent().get(0).getImage());
+                    log.info("Assigned image for '{}' via final random fallback", name);
                 }
             }
         }
