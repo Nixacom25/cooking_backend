@@ -34,8 +34,6 @@ public interface UserService {
 
     MessageResponse updateUserRole(UUID id, String role);
 
-    MessageResponse updateUserStatus(UUID id, String status);
-
     MessageResponse updateUserSubscription(UUID id, String subscriptionStatus);
 
     Page<UserResponse> getAdmins(Pageable pageable);

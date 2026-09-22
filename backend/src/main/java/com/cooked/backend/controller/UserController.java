@@ -149,15 +149,6 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUserRole(id, role));
     }
 
-    @PutMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<MessageResponse> updateUserStatus(
-            @PathVariable UUID id,
-            @RequestBody Map<String, String> request) {
-        String status = request.get("status");
-        return ResponseEntity.ok(userService.updateUserStatus(id, status));
-    }
-
     @PutMapping("/{id}/subscription")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MessageResponse> updateUserSubscription(

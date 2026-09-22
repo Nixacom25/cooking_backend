@@ -215,22 +215,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @org.springframework.transaction.annotation.Transactional
-    public MessageResponse updateUserStatus(UUID id, String status) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
-        try {
-            Status newStatus = Status.valueOf(status.toUpperCase());
-            user.setStatus(newStatus);
-            userRepository.save(user);
-            return new MessageResponse("User status updated successfully");
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException("Invalid status: " + status);
-        }
-    }
-
-    @Override
-    @org.springframework.transaction.annotation.Transactional
     public MessageResponse updateUserSubscription(UUID id, String subscriptionStatus) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
