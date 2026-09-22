@@ -30,6 +30,14 @@ public interface UserService {
 
     MessageResponse deleteClient(UUID id);
 
+    Page<UserResponse> getCreators(Pageable pageable);
+
+    MessageResponse updateUserRole(UUID id, String role);
+
+    MessageResponse updateUserStatus(UUID id, String status);
+
+    MessageResponse updateUserSubscription(UUID id, String subscriptionStatus);
+
     Page<UserResponse> getAdmins(Pageable pageable);
 
     Page<UserResponse> getEditors(Pageable pageable);

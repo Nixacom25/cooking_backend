@@ -77,6 +77,13 @@ public class SubscriptionRequiredFilter extends OncePerRequestFilter {
     }
 
     private boolean hasActiveSubscription(User user) {
+        // Creators, Admins, and Editors always have infinite subscription
+        if (user.getRole() == com.cooked.backend.entity.Role.CREATOR || 
+            user.getRole() == com.cooked.backend.entity.Role.ADMIN || 
+            user.getRole() == com.cooked.backend.entity.Role.EDITOR) {
+            return true;
+        }
+
         SubscriptionStatus status = user.getSubscriptionStatus();
         LocalDateTime expiresAt = user.getSubscriptionExpiresAt();
 
@@ -86,6 +93,11 @@ public class SubscriptionRequiredFilter extends OncePerRequestFilter {
             if (expiresAt != null) {
                 return expiresAt.isAfter(LocalDateTime.now());
             }
+            return true;
+        }
+
+        // Allow if INFINITE
+        if (status == SubscriptionStatus.INFINITE) {
             return true;
         }
 

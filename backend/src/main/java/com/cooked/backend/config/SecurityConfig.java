@@ -87,9 +87,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(subscriptionRequiredFilter, JwtAuthenticationFilter.class)
-                // Force HTTPS in production (comment out for local development)
-                // .requiresChannel(channel -> channel.anyRequest().requiresSecure());
+                .addFilterAfter(subscriptionRequiredFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

@@ -6,5 +6,6 @@ public enum SubscriptionStatus {
     ACTIVE,
     EXPIRED,
     CANCELLED,
+    INFINITE,
     PREMIUM // Keep for legacy if needed
 }

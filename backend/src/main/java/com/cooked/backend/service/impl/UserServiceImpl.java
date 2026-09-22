@@ -65,12 +65,22 @@ public class UserServiceImpl implements UserService {
         SubscriptionStatus status = user.getSubscriptionStatus();
         LocalDateTime expiresAt = user.getSubscriptionExpiresAt();
 
+        // Creators and Admins always have infinite subscription
+        if (user.getRole() == Role.CREATOR || user.getRole() == Role.ADMIN || user.getRole() == Role.EDITOR) {
+            return true;
+        }
+
         // Allow if status is ACTIVE or TRIAL
         if (status == SubscriptionStatus.ACTIVE || status == SubscriptionStatus.TRIAL) {
             // Check expiration date if set
             if (expiresAt != null) {
                 return expiresAt.isAfter(LocalDateTime.now());
             }
+            return true;
+        }
+
+        // Allow if INFINITE
+        if (status == SubscriptionStatus.INFINITE) {
             return true;
         }
 
@@ -173,6 +183,72 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         cleanupAndExecuteDelete(user);
         return new MessageResponse("Client deleted successfully");
+    }
+
+    @Override
+    public Page<UserResponse> getCreators(Pageable pageable) {
+        return userRepository.findAllByRole(Role.CREATOR, pageable)
+                .map(userMapper::toResponse);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public MessageResponse updateUserRole(UUID id, String role) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        try {
+            Role newRole = Role.valueOf(role.toUpperCase());
+            user.setRole(newRole);
+            
+            // If role is CREATOR, set subscription to INFINITE
+            if (newRole == Role.CREATOR) {
+                user.setSubscriptionStatus(SubscriptionStatus.INFINITE);
+            }
+            
+            userRepository.save(user);
+            return new MessageResponse("User role updated successfully");
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid role: " + role);
+        }
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public MessageResponse updateUserStatus(UUID id, String status) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        try {
+            Status newStatus = Status.valueOf(status.toUpperCase());
+            user.setStatus(newStatus);
+            userRepository.save(user);
+            return new MessageResponse("User status updated successfully");
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid status: " + status);
+        }
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public MessageResponse updateUserSubscription(UUID id, String subscriptionStatus) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        try {
+            SubscriptionStatus newStatus = SubscriptionStatus.valueOf(subscriptionStatus.toUpperCase());
+            user.setSubscriptionStatus(newStatus);
+            
+            // If subscription is INFINITE, ensure role is CREATOR
+            if (newStatus == SubscriptionStatus.INFINITE && user.getRole() != Role.CREATOR) {
+                user.setRole(Role.CREATOR);
+            }
+            
+            userRepository.save(user);
+            return new MessageResponse("User subscription updated successfully");
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid subscription status: " + subscriptionStatus);
+        }
     }
 
     @Override

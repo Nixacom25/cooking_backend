@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.http.MediaType;
 
 import java.util.UUID;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/user")
@@ -117,6 +118,53 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MessageResponse> deleteClient(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.deleteClient(id));
+    }
+
+    // --- Creator Management Routes (ADMIN) ---
+
+    @Operation(summary = "Get all creators")
+    @GetMapping("/creators")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<UserResponse>> getCreators(
+            @Parameter(description = "Page number", example = "0") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size", example = "10") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Sort format: property,asc|desc", example = "createdAt,desc") @RequestParam(defaultValue = "createdAt,desc") String sort) {
+
+        String[] sortParams = sort.split(",");
+        org.springframework.data.domain.Sort.Direction direction = sortParams.length > 1
+                && sortParams[1].equalsIgnoreCase("asc") ? org.springframework.data.domain.Sort.Direction.ASC
+                        : org.springframework.data.domain.Sort.Direction.DESC;
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
+                org.springframework.data.domain.Sort.by(direction, sortParams[0]));
+
+        return ResponseEntity.ok(userService.getCreators(pageable));
+    }
+
+    @PostMapping("/user/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> updateUserRole(
+            @PathVariable UUID id,
+            @RequestBody Map<String, String> request) {
+        String role = request.get("role");
+        return ResponseEntity.ok(userService.updateUserRole(id, role));
+    }
+
+    @PutMapping("/user/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> updateUserStatus(
+            @PathVariable UUID id,
+            @RequestBody Map<String, String> request) {
+        String status = request.get("status");
+        return ResponseEntity.ok(userService.updateUserStatus(id, status));
+    }
+
+    @PutMapping("/user/{id}/subscription")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> updateUserSubscription(
+            @PathVariable UUID id,
+            @RequestBody Map<String, String> request) {
+        String subscriptionStatus = request.get("subscriptionStatus");
+        return ResponseEntity.ok(userService.updateUserSubscription(id, subscriptionStatus));
     }
 
     // --- Admin Routes (ADMIN) ---
