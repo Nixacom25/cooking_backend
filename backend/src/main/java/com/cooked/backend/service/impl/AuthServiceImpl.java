@@ -206,7 +206,7 @@ public class AuthServiceImpl implements AuthService {
                         emailService.sendOtpEmail(user.getEmail(), otp);
                         return new MessageResponse("User registered successfully. Please verify your email.");
                 } else {
-                        emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirstname());
+                        // Welcome email will be sent after onboarding completion
                         String token = jwtService.generateToken(savedUser.getEmail());
                         recordSession(savedUser, token);
                         return AuthResponse.builder()
@@ -244,8 +244,7 @@ public class AuthServiceImpl implements AuthService {
                 user.setLockoutUntil(null);
                 userRepository.save(user);
 
-                emailService.sendWelcomeEmail(user.getEmail(), user.getFirstname());
-
+                // Welcome email will be sent after onboarding completion
                 String token = jwtService.generateToken(user.getEmail());
                 return AuthResponse.builder()
                                 .token(token)
@@ -355,7 +354,7 @@ public class AuthServiceImpl implements AuthService {
                                                 @Override
                                                 public void afterCommit() {
                                                     userInitializationService.initializeAccount(savedUser.getId());
-                                                    emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirstname());
+                                                    // Welcome email will be sent after onboarding completion
                                                 }
                                             }
                                         );

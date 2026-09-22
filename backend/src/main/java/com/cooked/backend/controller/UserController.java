@@ -225,4 +225,11 @@ public class UserController {
             @Valid @RequestBody UpdateUserStatusRequest request) {
         return ResponseEntity.ok(userService.updateUserStatus(id, request));
     }
+
+    // --- Send Welcome Email ---
+
+    @PostMapping("/send-welcome-email")
+    public ResponseEntity<MessageResponse> sendWelcomeEmail(Authentication authentication) {
+        return ResponseEntity.ok(userService.sendWelcomeEmail(authentication.getName()));
+    }
 }

@@ -396,6 +396,14 @@ public class UserServiceImpl implements UserService {
         return new MessageResponse("Push notification token registered successfully.");
     }
 
+    @Override
+    public MessageResponse sendWelcomeEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        emailService.sendWelcomeEmail(user.getEmail(), user.getFirstname());
+        return new MessageResponse("Welcome email sent successfully");
+    }
+
     private void cleanupAndExecuteDelete(User user) {
         // Delete any recipe assignments where this user is assignedToUser or assignedByUser
         recipeAssignmentRepository.deleteByUserId(user.getId());
