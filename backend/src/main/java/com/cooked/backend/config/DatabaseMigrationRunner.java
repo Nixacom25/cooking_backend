@@ -28,6 +28,7 @@ public class DatabaseMigrationRunner {
         fixRecipeAssignmentForeignKeys();
         fixUserRoleConstraint();
         fixUserSubscriptionStatusConstraint();
+        fixUserSubscriptionsStatusConstraint();
     }
 
     /**
@@ -208,6 +209,45 @@ public class DatabaseMigrationRunner {
                 log.debug("[Migration] Subscription status CHECK constraint already up to date — skipping.");
             } else {
                 log.warn("[Migration] Could not update subscription status CHECK constraint: {}", e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Migration 6: Update the CHECK constraint on user_subscriptions.status to include all subscription status values
+     * (FREE, TRIAL, ACTIVE, EXPIRED, CANCELLED, INFINITE, PREMIUM) to match the Java enum.
+     */
+    private void fixUserSubscriptionsStatusConstraint() {
+        try {
+            // Check if the old constraint still exists with the wrong set of values
+            Integer count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.table_constraints " +
+                "WHERE table_name = 'user_subscriptions' " +
+                "AND constraint_type = 'CHECK' " +
+                "AND constraint_name = 'user_subscriptions_status_check'",
+                Integer.class
+            );
+
+            if (count != null && count > 0) {
+                log.info("[Migration] Dropping old user_subscriptions_status_check constraint...");
+                jdbc.execute("ALTER TABLE user_subscriptions DROP CONSTRAINT IF EXISTS user_subscriptions_status_check");
+                log.info("[Migration] Old user_subscriptions_status_check constraint dropped successfully.");
+            }
+
+            // Re-add the constraint with ALL current enum values
+            jdbc.execute(
+                "ALTER TABLE user_subscriptions " +
+                "ADD CONSTRAINT user_subscriptions_status_check " +
+                "CHECK (status IN ('FREE', 'TRIAL', 'ACTIVE', 'EXPIRED', 'CANCELLED', 'INFINITE', 'PREMIUM'))"
+            );
+            log.info("[Migration] user_subscriptions_status_check constraint updated with all subscription status values.");
+
+        } catch (Exception e) {
+            // Constraint already correct or DB doesn't use CHECK constraints (H2 test env) — safe to ignore
+            if (e.getMessage() != null && e.getMessage().contains("already exists")) {
+                log.debug("[Migration] User subscriptions status CHECK constraint already up to date — skipping.");
+            } else {
+                log.warn("[Migration] Could not update user subscriptions status CHECK constraint: {}", e.getMessage());
             }
         }
     }
