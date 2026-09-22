@@ -306,12 +306,7 @@ public class AuthServiceImpl implements AuthService {
                                 String email = socialInfo.getEmail();
 
                                 user = userRepository.findByEmail(email).orElseGet(() -> {
-                                        if (!request.isSignup()) {
-                                                log.warn("Social Login failed: Account {} not found and isSignup is false", email);
-                                                throw new BadRequestException("Account not found, please sign up.");
-                                        }
-
-                                        log.info("Creating new user for social signup via login endpoint: {}", email);
+                                        log.info("Creating new user for social login (auto-registration): {}", email);
                                         
                                         String firstname = (socialInfo.getFirstname() != null && !socialInfo.getFirstname().isEmpty()) 
                                             ? socialInfo.getFirstname().trim() 
