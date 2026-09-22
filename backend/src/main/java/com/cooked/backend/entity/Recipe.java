@@ -20,7 +20,6 @@ import java.util.UUID;
     @Index(name = "idx_recipe_origin", columnList = "origin"),
     @Index(name = "idx_recipe_status", columnList = "status"),
     @Index(name = "idx_recipe_is_public", columnList = "is_public"),
-    @Index(name = "idx_recipe_category", columnList = "category_id"),
     @Index(name = "idx_recipe_cuisine", columnList = "cuisine_id")
 })
 public class Recipe {
