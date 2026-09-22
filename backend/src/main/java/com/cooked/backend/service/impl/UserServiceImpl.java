@@ -400,7 +400,15 @@ public class UserServiceImpl implements UserService {
     public MessageResponse sendWelcomeEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        // Only send welcome email if it hasn't been sent yet
+        if (user.isWelcomeEmailSent()) {
+            return new MessageResponse("Welcome email already sent");
+        }
+        
         emailService.sendWelcomeEmail(user.getEmail(), user.getFirstname());
+        user.setWelcomeEmailSent(true);
+        userRepository.save(user);
         return new MessageResponse("Welcome email sent successfully");
     }
 

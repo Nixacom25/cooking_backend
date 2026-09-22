@@ -245,6 +245,13 @@ public class User implements UserDetails {
     @Builder.Default
     private boolean trialEndingReminderSent = false;
 
+    // Set once the welcome email has been sent, so it's only sent once after
+    // onboarding completion rather than immediately upon account creation.
+    @Column(nullable = false)
+    @org.hibernate.annotations.ColumnDefault("false")
+    @Builder.Default
+    private boolean welcomeEmailSent = false;
+
     // Firebase Cloud Messaging registration token for this device, used to
     // send push notifications. Null/empty means the user hasn't granted
     // notification permission or hasn't opened the app since it was added.
@@ -349,6 +356,9 @@ public class User implements UserDetails {
 
     public boolean isTrialEndingReminderSent() { return trialEndingReminderSent; }
     public void setTrialEndingReminderSent(boolean trialEndingReminderSent) { this.trialEndingReminderSent = trialEndingReminderSent; }
+
+    public boolean isWelcomeEmailSent() { return welcomeEmailSent; }
+    public void setWelcomeEmailSent(boolean welcomeEmailSent) { this.welcomeEmailSent = welcomeEmailSent; }
 
     public String getFcmToken() { return fcmToken; }
     public void setFcmToken(String fcmToken) { this.fcmToken = fcmToken; }
