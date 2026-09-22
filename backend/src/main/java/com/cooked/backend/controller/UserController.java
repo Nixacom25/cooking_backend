@@ -140,7 +140,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getCreators(pageable));
     }
 
-    @PostMapping("/user/{id}/role")
+    @PostMapping("/{id}/role")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MessageResponse> updateUserRole(
             @PathVariable UUID id,
@@ -149,7 +149,7 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUserRole(id, role));
     }
 
-    @PutMapping("/user/{id}/status")
+    @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MessageResponse> updateUserStatus(
             @PathVariable UUID id,
@@ -158,7 +158,7 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUserStatus(id, status));
     }
 
-    @PutMapping("/user/{id}/subscription")
+    @PutMapping("/{id}/subscription")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MessageResponse> updateUserSubscription(
             @PathVariable UUID id,
