@@ -16,10 +16,10 @@ public class AsyncConfig implements AsyncConfigurer {
     @Override
     public Executor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        // Configuration for 50k users expected traffic
-        executor.setCorePoolSize(10); // Minimum threads kept alive
-        executor.setMaxPoolSize(50);  // Maximum threads to handle spikes
-        executor.setQueueCapacity(10000); // Queue up to 10k background tasks before rejecting
+        // Optimized configuration for 50k+ users
+        executor.setCorePoolSize(20); // Increased from 10 to 20
+        executor.setMaxPoolSize(100);  // Increased from 50 to 100
+        executor.setQueueCapacity(50000); // Increased from 10k to 50k
         executor.setThreadNamePrefix("AsyncWorker-");
         executor.initialize();
         return executor;

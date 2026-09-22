@@ -1,6 +1,7 @@
 package com.cooked.backend.config;
 
 import com.cooked.backend.security.JwtAuthenticationFilter;
+import com.cooked.backend.security.SubscriptionRequiredFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,10 +34,13 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
+    private final SubscriptionRequiredFilter subscriptionRequiredFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, UserDetailsService userDetailsService) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, UserDetailsService userDetailsService,
+                          SubscriptionRequiredFilter subscriptionRequiredFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.userDetailsService = userDetailsService;
+        this.subscriptionRequiredFilter = subscriptionRequiredFilter;
     }
 
     @Bean
@@ -82,7 +86,10 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(subscriptionRequiredFilter, JwtAuthenticationFilter.class)
+                // Force HTTPS in production (comment out for local development)
+                // .requiresChannel(channel -> channel.anyRequest().requiresSecure());
 
         return http.build();
     }

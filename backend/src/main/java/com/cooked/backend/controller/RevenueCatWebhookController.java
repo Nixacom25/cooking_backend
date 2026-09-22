@@ -35,11 +35,19 @@ public class RevenueCatWebhookController {
     @Value("${revenuecat.webhook.secret:}")
     private String webhookSecret;
 
+    // Valid product IDs
+    private static final String MONTHLY_PRODUCT_ID = "monthly_sub";
+    private static final String YEARLY_PRODUCT_ID = "yearly_sub";
+
     public RevenueCatWebhookController(UserRepository userRepository, EmailService emailService,
             PushNotificationService pushNotificationService) {
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.pushNotificationService = pushNotificationService;
+    }
+
+    private boolean isValidProduct(String productId) {
+        return MONTHLY_PRODUCT_ID.equals(productId) || YEARLY_PRODUCT_ID.equals(productId);
     }
 
     @Operation(summary = "Handle RevenueCat Subscription Webhook Event")
@@ -79,6 +87,12 @@ public class RevenueCatWebhookController {
 
             log.info("RevenueCat Event: type={}, appUserId={}, productId={}", eventType, appUserId, productId);
 
+            // Validate product ID
+            if (productId != null && !isValidProduct(productId)) {
+                log.warn("Invalid product ID in webhook: {}", productId);
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid product ID"));
+            }
+
             if (appUserId == null || appUserId.isEmpty()) {
                 log.warn("RevenueCat event missing app_user_id");
                 return ResponseEntity.ok(Map.of("status", "IGNORED_MISSING_USER_ID"));
@@ -107,7 +121,22 @@ public class RevenueCatWebhookController {
                 "UNCANCELLATION".equalsIgnoreCase(eventType) ||
                 "NON_RENEWING_PURCHASE".equalsIgnoreCase(eventType)) {
 
-                user.setSubscriptionStatus(SubscriptionStatus.ACTIVE);
+                // Check if this is a trial (INITIAL_PURCHASE may be trial)
+                Boolean isTrial = null;
+                if ("INITIAL_PURCHASE".equalsIgnoreCase(eventType)) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> product = (Map<String, Object>) event.get("product");
+                    if (product != null) {
+                        isTrial = (Boolean) product.get("is_trial");
+                    }
+                }
+
+                // Set status based on trial detection
+                if (isTrial != null && isTrial) {
+                    user.setSubscriptionStatus(SubscriptionStatus.TRIAL);
+                } else {
+                    user.setSubscriptionStatus(SubscriptionStatus.ACTIVE);
+                }
 
                 if (productId != null && productId.toLowerCase().contains("year")) {
                     user.setSubscriptionType(SubscriptionType.YEARLY);
@@ -128,7 +157,7 @@ public class RevenueCatWebhookController {
                 }
 
                 userRepository.save(user);
-                log.info("Activated subscription for user: {}", user.getEmail());
+                log.info("Activated subscription (status: {}) for user: {}", user.getSubscriptionStatus(), user.getEmail());
 
             } else if ("EXPIRATION".equalsIgnoreCase(eventType) || "CANCELLATION".equalsIgnoreCase(eventType)) {
                 user.setSubscriptionStatus(SubscriptionStatus.EXPIRED);

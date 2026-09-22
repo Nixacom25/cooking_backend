@@ -8,9 +8,11 @@ import com.cooked.backend.dto.response.MessageResponse;
 import com.cooked.backend.dto.response.UserResponse;
 import com.cooked.backend.entity.Role;
 import com.cooked.backend.entity.Status;
+import com.cooked.backend.entity.SubscriptionStatus;
 import com.cooked.backend.entity.User;
 import com.cooked.backend.exception.BadRequestException;
 import com.cooked.backend.exception.EmailAlreadyExistsException;
+import com.cooked.backend.exception.PaymentRequiredException;
 import com.cooked.backend.exception.ResourceNotFoundException;
 import com.cooked.backend.mapper.UserMapper;
 import com.cooked.backend.repository.UserRepository;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 import com.cooked.backend.service.CloudinaryService;
 import com.cooked.backend.service.EmailService;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.io.IOException;
 import org.springframework.web.multipart.MultipartFile;
@@ -49,7 +52,30 @@ public class UserServiceImpl implements UserService {
     public UserResponse getCurrentUser(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Check subscription status
+        if (!hasActiveSubscription(user)) {
+            throw new PaymentRequiredException("Active subscription required to access the application");
+        }
+
         return userMapper.toResponse(user);
+    }
+
+    private boolean hasActiveSubscription(User user) {
+        SubscriptionStatus status = user.getSubscriptionStatus();
+        LocalDateTime expiresAt = user.getSubscriptionExpiresAt();
+
+        // Allow if status is ACTIVE or TRIAL
+        if (status == SubscriptionStatus.ACTIVE || status == SubscriptionStatus.TRIAL) {
+            // Check expiration date if set
+            if (expiresAt != null) {
+                return expiresAt.isAfter(LocalDateTime.now());
+            }
+            return true;
+        }
+
+        // Deny if FREE, EXPIRED, or CANCELLED
+        return false;
     }
 
     @Override
