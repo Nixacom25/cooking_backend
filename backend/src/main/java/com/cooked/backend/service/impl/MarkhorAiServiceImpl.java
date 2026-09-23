@@ -527,11 +527,14 @@ public class MarkhorAiServiceImpl implements AiService {
                             }
                         }
                         
+                        // Validate that we have actual recipe content before returning
                         if (request.getIngredients() == null || request.getIngredients().isEmpty()) {
-                            request.setIngredients(List.of(new com.cooked.backend.dto.request.IngredientPayload("Main Ingredients", "As listed in source", "🍳")));
+                            log.warn("AI extraction returned recipe with no ingredients for {}", cleanUrl);
+                            throw new BadRequestException("We couldn't extract complete recipe ingredients from this link.");
                         }
                         if (request.getSteps() == null || request.getSteps().isEmpty()) {
-                            request.setSteps(List.of("Follow instructions from the original recipe link."));
+                            log.warn("AI extraction returned recipe with no steps for {}", cleanUrl);
+                            throw new BadRequestException("We couldn't extract complete recipe instructions from this link.");
                         }
                         
                         return request;
@@ -547,40 +550,10 @@ public class MarkhorAiServiceImpl implements AiService {
             return extractRecipeViaJsoup(cleanUrl);
         } catch (Exception e) {
             log.error("Jsoup fallback extraction failed for {}: {}", cleanUrl, e.getMessage());
-            return createGenericFallbackRecipe(cleanUrl);
+            // Instead of creating a generic fallback recipe with fake ingredients,
+            // throw an exception to trigger the fallback page on mobile
+            throw new BadRequestException("We couldn't extract a complete recipe from this link. The page didn't contain enough recipe information for Cooked to import it correctly.");
         }
-    }
-
-    private CreateRecipeRequest createGenericFallbackRecipe(String url) {
-        String domain = url;
-        try {
-            java.net.URI uri = new java.net.URI(url);
-            domain = uri.getHost();
-            if (domain != null && domain.startsWith("www.")) {
-                domain = domain.substring(4);
-            }
-        } catch (Exception ignored) {}
-
-        String title = "Imported Recipe (" + (domain != null ? domain : "Web") + ")";
-        
-        CreateRecipeRequest req = new CreateRecipeRequest();
-        req.setName(title);
-        req.setImage("https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=800&q=80");
-        req.setCookTime(20);
-        req.setPrepTime(10);
-        req.setKcal(400);
-        req.setServings(2);
-        req.setSourceUrl(url);
-        req.setOrigin("IMPORT");
-        
-        com.cooked.backend.dto.request.IngredientPayload ip = new com.cooked.backend.dto.request.IngredientPayload();
-        ip.setName("Recipe Ingredients");
-        ip.setQuantity("See source website");
-        ip.setIcon("🍳");
-        req.setIngredients(List.of(ip));
-        req.setSteps(List.of("Follow instructions from the original recipe link: " + url));
-        req.setEquipment(new ArrayList<>());
-        return req;
     }
 
     private CreateRecipeRequest extractRecipeViaJsoup(String url) throws Exception {
@@ -666,16 +639,15 @@ public class MarkhorAiServiceImpl implements AiService {
             }
         }
 
+        // Validate that we have actual recipe content before returning
         if (ingredients.isEmpty()) {
-            com.cooked.backend.dto.request.IngredientPayload ip = new com.cooked.backend.dto.request.IngredientPayload();
-            ip.setName("Ingredients from source link");
-            ip.setQuantity("See source");
-            ip.setIcon("🍳");
-            ingredients.add(ip);
+            log.warn("Jsoup extraction found no ingredients for {}", url);
+            throw new BadRequestException("We couldn't extract recipe ingredients from this link. The page didn't contain enough recipe information.");
         }
 
         if (steps.isEmpty()) {
-            steps.add("Open the source link to follow complete preparation steps: " + url);
+            log.warn("Jsoup extraction found no steps for {}", url);
+            throw new BadRequestException("We couldn't extract recipe instructions from this link. The page didn't contain enough recipe information.");
         }
 
         if (image == null || image.isEmpty()) {

@@ -468,6 +468,43 @@ public class EmailServiceImpl implements EmailService {
                 String.format(TRIAL_ENDS_TEMPLATE, BUTTON_STYLE, LOGO_URL, name, planName, price, MANAGE_SUBSCRIPTION_URL));
     }
 
+    @Async
+    @Override
+    public void sendCriticalErrorAlert(String teamEmail, String errorId, String errorType, String errorMessage, String userId, String userEmail, String platform, String osVersion, String appVersion, String context) {
+        String userInfo = "";
+        if (userId != null || userEmail != null) {
+            userInfo = "<p><strong>User Information:</strong></p><ul>";
+            if (userId != null) userInfo += "<li>User ID: " + userId + "</li>";
+            if (userEmail != null) userInfo += "<li>Email: " + userEmail + "</li>";
+            userInfo += "</ul>";
+        }
+
+        String deviceInfo = "<p><strong>Device Information:</strong></p><ul>";
+        deviceInfo += "<li>Platform: " + (platform != null ? platform : "Unknown") + "</li>";
+        deviceInfo += "<li>OS Version: " + (osVersion != null ? osVersion : "Unknown") + "</li>";
+        deviceInfo += "<li>App Version: " + (appVersion != null ? appVersion : "Unknown") + "</li>";
+        deviceInfo += "</ul>";
+
+        String contextInfo = "";
+        if (context != null && !context.isBlank()) {
+            contextInfo = "<p><strong>Context:</strong></p><pre>" + context + "</pre>";
+        }
+
+        String errorEmailBody = """
+            <h2>🚨 Critical Error Alert</h2>
+            <p><strong>Error ID:</strong> %s</p>
+            <p><strong>Error Type:</strong> %s</p>
+            <p><strong>Error Message:</strong> %s</p>
+            %s
+            %s
+            %s
+            <hr>
+            <p><em>Please investigate this error immediately in the admin interface.</em></p>
+        """.formatted(errorId, errorType, errorMessage, userInfo, deviceInfo, contextInfo);
+
+        sendHtmlEmail(teamEmail, "🚨 CRITICAL ERROR: " + errorType, errorEmailBody);
+    }
+
     private String displayName(String firstName) {
         return firstName == null || firstName.isBlank() ? "there" : firstName.trim();
     }
