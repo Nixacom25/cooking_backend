@@ -29,6 +29,7 @@ public class DatabaseMigrationRunner {
         fixUserRoleConstraint();
         fixUserSubscriptionStatusConstraint();
         fixUserSubscriptionsStatusConstraint();
+        updateSupportTicketSchema();
     }
 
     /**
@@ -249,6 +250,31 @@ public class DatabaseMigrationRunner {
             } else {
                 log.warn("[Migration] Could not update user subscriptions status CHECK constraint: {}", e.getMessage());
             }
+        }
+    }
+
+    /**
+     * Migration 7: Add new columns to support_tickets table for detailed user information
+     */
+    private void updateSupportTicketSchema() {
+        addColumnIfMissing("support_tickets", "user_id", "VARCHAR(255)");
+        addColumnIfMissing("support_tickets", "platform", "VARCHAR(50)");
+        addColumnIfMissing("support_tickets", "app_version", "VARCHAR(50)");
+        addColumnIfMissing("support_tickets", "category", "VARCHAR(100)");
+        
+        // Update default status from "OPEN" to "NEW" for better workflow
+        try {
+            Integer count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM support_tickets WHERE status = 'OPEN'",
+                Integer.class
+            );
+            if (count != null && count > 0) {
+                log.info("[Migration] Updating support_tickets status from OPEN to NEW...");
+                jdbc.execute("UPDATE support_tickets SET status = 'NEW' WHERE status = 'OPEN'");
+                log.info("[Migration] Support tickets status updated successfully.");
+            }
+        } catch (Exception e) {
+            log.debug("[Migration] Status update skipped: {}", e.getMessage());
         }
     }
 }
