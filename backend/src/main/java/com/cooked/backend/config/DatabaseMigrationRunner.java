@@ -30,6 +30,10 @@ public class DatabaseMigrationRunner {
         fixUserSubscriptionStatusConstraint();
         fixUserSubscriptionsStatusConstraint();
         updateSupportTicketSchema();
+        createCriticalErrorsTable();
+        createNotificationCampaignsTable();
+        addUserLastActiveColumn();
+        addRevenueCatCustomerIdColumn();
     }
 
     /**
@@ -276,5 +280,111 @@ public class DatabaseMigrationRunner {
         } catch (Exception e) {
             log.debug("[Migration] Status update skipped: {}", e.getMessage());
         }
+    }
+
+    /**
+     * Migration 8: Create critical_errors table for monitoring
+     */
+    private void createCriticalErrorsTable() {
+        try {
+            // Check if table exists
+            Integer count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'critical_errors'",
+                Integer.class
+            );
+
+            if (count == null || count == 0) {
+                log.info("[Migration] Creating critical_errors table...");
+                jdbc.execute("""
+                    CREATE TABLE critical_errors (
+                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        error_type VARCHAR(100) NOT NULL,
+                        error_message TEXT NOT NULL,
+                        stack_trace TEXT,
+                        user_id VARCHAR(255),
+                        user_email VARCHAR(255),
+                        platform VARCHAR(50),
+                        os_version VARCHAR(100),
+                        app_version VARCHAR(50),
+                        context TEXT,
+                        status VARCHAR(20) DEFAULT 'NEW',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """);
+                log.info("[Migration] critical_errors table created successfully.");
+            } else {
+                log.debug("[Migration] critical_errors table already exists — skipping.");
+            }
+        } catch (Exception e) {
+            log.warn("[Migration] Could not create critical_errors table: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Migration 9: Create notification_campaigns table for push notification management
+     */
+    private void createNotificationCampaignsTable() {
+        try {
+            // Check if table exists
+            Integer count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'notification_campaigns'",
+                Integer.class
+            );
+
+            if (count == null || count == 0) {
+                log.info("[Migration] Creating notification_campaigns table...");
+                jdbc.execute("""
+                    CREATE TABLE notification_campaigns (
+                        id BIGSERIAL PRIMARY KEY,
+                        title VARCHAR(255) NOT NULL,
+                        body TEXT NOT NULL,
+                        image_url TEXT,
+                        deep_link VARCHAR(500),
+                        target_type VARCHAR(50) NOT NULL,
+                        target_user_ids TEXT,
+                        target_segment VARCHAR(50),
+                        scheduled_for TIMESTAMP,
+                        sent_at TIMESTAMP,
+                        status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+                        created_by VARCHAR(255),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        total_recipients INTEGER,
+                        sent_count INTEGER DEFAULT 0,
+                        failed_count INTEGER DEFAULT 0,
+                        opened_count INTEGER DEFAULT 0,
+                        clicked_count INTEGER DEFAULT 0,
+                        CONSTRAINT notification_campaigns_target_type_check 
+                            CHECK (target_type IN ('ALL_USERS', 'TARGETED_USERS', 'TARGETED_SEGMENT', 'PREMIUM_USERS', 'FREE_USERS')),
+                        CONSTRAINT notification_campaigns_target_segment_check 
+                            CHECK (target_segment IN ('ACTIVE_USERS', 'INACTIVE_USERS', 'NEW_USERS', 'TRIAL_USERS', 'PAID_USERS', 'CHURNED_USERS')),
+                        CONSTRAINT notification_campaigns_status_check 
+                            CHECK (status IN ('DRAFT', 'SCHEDULED', 'SENDING', 'SENT', 'FAILED', 'CANCELLED'))
+                    )
+                """);
+                jdbc.execute("CREATE INDEX idx_notification_campaigns_status ON notification_campaigns(status)");
+                jdbc.execute("CREATE INDEX idx_notification_campaigns_scheduled_for ON notification_campaigns(scheduled_for)");
+                jdbc.execute("CREATE INDEX idx_notification_campaigns_created_by ON notification_campaigns(created_by)");
+                log.info("[Migration] notification_campaigns table created successfully.");
+            } else {
+                log.debug("[Migration] notification_campaigns table already exists — skipping.");
+            }
+        } catch (Exception e) {
+            log.warn("[Migration] Could not create notification_campaigns table: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Migration 10: Add last_active column to users table for user segmentation
+     */
+    private void addUserLastActiveColumn() {
+        addColumnIfMissing("users", "last_active", "TIMESTAMP");
+    }
+
+    /**
+     * Migration 11: Add revenue_cat_customer_id column to users table for RevenueCat integration
+     */
+    private void addRevenueCatCustomerIdColumn() {
+        addColumnIfMissing("users", "revenue_cat_customer_id", "TEXT");
     }
 }

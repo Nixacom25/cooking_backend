@@ -82,6 +82,14 @@ public class UserController {
         return ResponseEntity.ok(new MessageResponse("Last active timestamp updated"));
     }
 
+    @Operation(summary = "Sync subscription data from RevenueCat", description = "Syncs subscription data from RevenueCat mobile SDK with backend")
+    @PostMapping("/sync-subscription")
+    public ResponseEntity<MessageResponse> syncSubscription(Authentication authentication,
+            @RequestBody Map<String, Object> subscriptionData) {
+        userService.syncSubscription(authentication.getName(), subscriptionData);
+        return ResponseEntity.ok(new MessageResponse("Subscription data synced successfully"));
+    }
+
     // --- Client Routes (ADMIN) ---
 
     @Operation(summary = "Get clients")

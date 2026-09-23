@@ -74,6 +74,10 @@ public class User implements UserDetails {
     @Column(columnDefinition = "TEXT")
     private String iapReceiptData;
 
+    // RevenueCat customer ID for subscription synchronization
+    @Column(columnDefinition = "TEXT")
+    private String revenueCatCustomerId;
+
     @ElementCollection
     @CollectionTable(name = "user_dietary_preferences", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "preference")
@@ -252,6 +256,9 @@ public class User implements UserDetails {
     @Builder.Default
     private boolean welcomeEmailSent = false;
 
+    // Track last active time for user segmentation in notification campaigns
+    private LocalDateTime lastActive;
+
     // Firebase Cloud Messaging registration token for this device, used to
     // send push notifications. Null/empty means the user hasn't granted
     // notification permission or hasn't opened the app since it was added.
@@ -363,6 +370,9 @@ public class User implements UserDetails {
     public String getFcmToken() { return fcmToken; }
     public void setFcmToken(String fcmToken) { this.fcmToken = fcmToken; }
 
+    public LocalDateTime getLastActive() { return lastActive; }
+    public void setLastActive(LocalDateTime lastActive) { this.lastActive = lastActive; }
+
     public String getOtpCode() { return otpCode; }
     public void setOtpCode(String otpCode) { this.otpCode = otpCode; }
     public LocalDateTime getOtpExpiration() { return otpExpiration; }
@@ -388,6 +398,9 @@ public class User implements UserDetails {
 
     public String getIapReceiptData() { return iapReceiptData; }
     public void setIapReceiptData(String iapReceiptData) { this.iapReceiptData = iapReceiptData; }
+
+    public String getRevenueCatCustomerId() { return revenueCatCustomerId; }
+    public void setRevenueCatCustomerId(String revenueCatCustomerId) { this.revenueCatCustomerId = revenueCatCustomerId; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

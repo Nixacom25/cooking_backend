@@ -56,5 +56,7 @@ public interface UserService {
 
     void updateLastActive(String email);
 
+    void syncSubscription(String email, Map<String, Object> subscriptionData);
+
     MessageResponse sendWelcomeEmail(String email);
 }

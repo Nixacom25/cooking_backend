@@ -406,6 +406,61 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void syncSubscription(String email, Map<String, Object> subscriptionData) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Boolean isActive = (Boolean) subscriptionData.get("isActive");
+        String expirationDateStr = (String) subscriptionData.get("expirationDate");
+        String productId = (String) subscriptionData.get("productId");
+        String revenueCatCustomerId = (String) subscriptionData.get("revenueCatCustomerId");
+
+        // Update RevenueCat customer ID
+        if (revenueCatCustomerId != null && !revenueCatCustomerId.isEmpty()) {
+            user.setRevenueCatCustomerId(revenueCatCustomerId);
+        }
+
+        // Update subscription status based on RevenueCat data
+        if (isActive != null && isActive) {
+            user.setSubscriptionStatus(SubscriptionStatus.ACTIVE);
+            
+            // Set expiration date if available
+            if (expirationDateStr != null && !expirationDateStr.isEmpty()) {
+                try {
+                    LocalDateTime expirationDate = LocalDateTime.parse(expirationDateStr);
+                    user.setSubscriptionExpiresAt(expirationDate);
+                } catch (Exception e) {
+                    log.warn("Failed to parse expiration date: {}", expirationDateStr);
+                }
+            }
+
+            // Set subscription type based on product ID
+            if (productId != null) {
+                if (productId.toLowerCase().contains("year")) {
+                    user.setSubscriptionType(SubscriptionType.YEARLY);
+                } else if (productId.toLowerCase().contains("month")) {
+                    user.setSubscriptionType(SubscriptionType.MONTHLY);
+                }
+            }
+        } else {
+            // Check if subscription is expired
+            if (expirationDateStr != null && !expirationDateStr.isEmpty()) {
+                try {
+                    LocalDateTime expirationDate = LocalDateTime.parse(expirationDateStr);
+                    if (expirationDate.isBefore(LocalDateTime.now())) {
+                        user.setSubscriptionStatus(SubscriptionStatus.EXPIRED);
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to parse expiration date: {}", expirationDateStr);
+                }
+            }
+        }
+
+        userRepository.save(user);
+        log.info("Synced subscription data for user: {}", email);
+    }
+
+    @Override
     public MessageResponse sendWelcomeEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
