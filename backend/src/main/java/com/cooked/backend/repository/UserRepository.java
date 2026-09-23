@@ -48,7 +48,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     java.util.List<User> findPublicCreators();
 
     // Notification campaign targeting methods
-    java.util.List<User> findAllById(java.util.List<UUID> userIds);
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.id IN :userIds")
+    java.util.List<User> findAllByUserIds(@org.springframework.data.repository.query.Param("userIds") java.util.List<UUID> userIds);
     
     java.util.List<User> findBySubscriptionStatusNotNull();
     
