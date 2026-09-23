@@ -9,6 +9,7 @@ import com.cooked.backend.dto.response.UserResponse;
 import com.cooked.backend.entity.Role;
 import com.cooked.backend.entity.Status;
 import com.cooked.backend.entity.SubscriptionStatus;
+import com.cooked.backend.entity.SubscriptionType;
 import com.cooked.backend.entity.User;
 import com.cooked.backend.exception.BadRequestException;
 import com.cooked.backend.exception.EmailAlreadyExistsException;
@@ -18,6 +19,7 @@ import com.cooked.backend.mapper.UserMapper;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,8 +30,10 @@ import com.cooked.backend.service.EmailService;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.io.IOException;
+import java.util.Map;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {

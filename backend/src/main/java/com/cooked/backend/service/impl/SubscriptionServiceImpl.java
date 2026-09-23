@@ -323,6 +323,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Override
     public boolean isPremium(User user) {
+        // Creators, Admins, and Editors always have premium access
+        if (user.getRole() == com.cooked.backend.entity.Role.CREATOR || 
+            user.getRole() == com.cooked.backend.entity.Role.ADMIN || 
+            user.getRole() == com.cooked.backend.entity.Role.EDITOR) {
+            return true;
+        }
+        
         if (user.getSubscriptionStatus() == SubscriptionStatus.EXPIRED) {
             return false;
         }
@@ -335,6 +342,14 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     public boolean hasAiAccess(User user) {
         log.info("[hasAiAccess] Checking access for user: {} (ID: {})", user.getEmail(), user.getId());
+        
+        // Creators, Admins, and Editors always have infinite access
+        if (user.getRole() == com.cooked.backend.entity.Role.CREATOR || 
+            user.getRole() == com.cooked.backend.entity.Role.ADMIN || 
+            user.getRole() == com.cooked.backend.entity.Role.EDITOR) {
+            log.info("[hasAiAccess] Access GRANTED via role: {}", user.getRole());
+            return true;
+        }
         
         // 1. Check UserSubscription entity (Source of Truth)
         UserSubscription sub = userSubscriptionRepository.findByUserId(user.getId()).orElse(null);

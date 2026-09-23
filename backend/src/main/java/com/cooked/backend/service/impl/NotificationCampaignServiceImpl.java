@@ -311,7 +311,13 @@ public class NotificationCampaignServiceImpl implements NotificationCampaignServ
                 return getUsersBySegment(campaign.getTargetSegment());
                 
             case PREMIUM_USERS:
-                return userRepository.findBySubscriptionStatusNotNull();
+                // Creators, Admins, and Editors should not be included in PREMIUM_USERS segment
+                // as they have special access, not actual paid subscriptions
+                return userRepository.findBySubscriptionStatusNotNull().stream()
+                    .filter(user -> user.getRole() != com.cooked.backend.entity.Role.CREATOR && 
+                                 user.getRole() != com.cooked.backend.entity.Role.ADMIN && 
+                                 user.getRole() != com.cooked.backend.entity.Role.EDITOR)
+                    .collect(java.util.stream.Collectors.toList());
                 
             case FREE_USERS:
                 return userRepository.findBySubscriptionStatusNull();
@@ -334,7 +340,13 @@ public class NotificationCampaignServiceImpl implements NotificationCampaignServ
             case TRIAL_USERS:
                 return userRepository.findBySubscriptionStatus("TRIAL");
             case PAID_USERS:
-                return userRepository.findBySubscriptionStatusNotNull();
+                // Creators, Admins, and Editors should not be included in PAID_USERS segment
+                // as they have special access, not actual paid subscriptions
+                return userRepository.findBySubscriptionStatusNotNull().stream()
+                    .filter(user -> user.getRole() != com.cooked.backend.entity.Role.CREATOR && 
+                                 user.getRole() != com.cooked.backend.entity.Role.ADMIN && 
+                                 user.getRole() != com.cooked.backend.entity.Role.EDITOR)
+                    .collect(java.util.stream.Collectors.toList());
             case CHURNED_USERS:
                 return userRepository.findBySubscriptionStatus("CANCELLED");
             default:
