@@ -461,6 +461,21 @@ public class RecipeServiceImpl implements RecipeService {
         // 1. Extract from AI
         CreateRecipeRequest request = aiService.extractRecipeFromLink(url, userEmail);
 
+        // 2. Validate that the extracted recipe has meaningful content
+        // Don't save placeholder/guess recipes - throw error instead
+        boolean hasIngredients = request.getIngredients() != null && !request.getIngredients().isEmpty();
+        boolean hasSteps = request.getSteps() != null && !request.getSteps().isEmpty();
+        boolean hasRealName = request.getName() != null && 
+                            !request.getName().trim().isEmpty() && 
+                            !request.getName().trim().toLowerCase().contains("title of recipe") &&
+                            !request.getName().trim().toLowerCase().contains("recipe title");
+        
+        if (!hasIngredients || !hasSteps || !hasRealName) {
+            throw new com.cooked.backend.exception.BadRequestException(
+                "We couldn't find the complete recipe. The link didn't contain enough recipe information for Cooked to import it correctly."
+            );
+        }
+
         // 2. Map to Entity as a Suggestion with Duplicate Handling
         String recipeName = request.getName().trim();
         Optional<Recipe> existingRecipe = recipeRepository.findByUserIdAndName(user.getId(), recipeName);
