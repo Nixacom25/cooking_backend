@@ -427,9 +427,20 @@ public class EmailServiceImpl implements EmailService {
 
     @Async
     @Override
-    public void sendSupportNotificationToTeam(String teamEmail, String ticketNumber, String subject, String fromName, String fromEmail, String message) {
+    public void sendSupportNotificationToTeam(String teamEmail, String ticketNumber, String subject, String fromName, String fromEmail, String message, String userId, String platform, String appVersion, String category) {
+        String additionalInfo = "";
+        if (userId != null || platform != null || appVersion != null || category != null) {
+            additionalInfo = "<p><strong>Additional Information:</strong></p><ul>";
+            if (userId != null) additionalInfo += "<li>User ID: " + userId + "</li>";
+            if (platform != null) additionalInfo += "<li>Platform: " + platform + "</li>";
+            if (appVersion != null) additionalInfo += "<li>App Version: " + appVersion + "</li>";
+            if (category != null) additionalInfo += "<li>Category: " + category + "</li>";
+            additionalInfo += "</ul>";
+        }
+        
+        String enhancedMessage = message + additionalInfo;
         sendHtmlEmail(teamEmail, "New support request: " + subject,
-                String.format(SUPPORT_TEAM_NOTIFICATION_TEMPLATE, ticketNumber, fromName, fromEmail, subject, message),
+                String.format(SUPPORT_TEAM_NOTIFICATION_TEMPLATE, ticketNumber, fromName, fromEmail, subject, enhancedMessage),
                 fromEmail);
     }
 

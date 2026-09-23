@@ -11,9 +11,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * A support/feedback submission from the public website contact form.
- * There is no admin reply UI yet - the confirmation email's reply-to lets a
- * human answer over ordinary email threading instead.
+ * A support/feedback submission from the public website contact form or mobile app.
+ * Updated to include detailed user information for better support tracking.
  */
 @Data
 @Builder
@@ -41,12 +40,24 @@ public class SupportTicket {
 
     @Column(nullable = false)
     @Builder.Default
-    private String status = "OPEN";
+    private String status = "NEW";
 
     /** Where the submission came from: WEB or MOBILE. */
     @Column(nullable = false)
     @Builder.Default
     private String source = "WEB";
+
+    /** User ID (for mobile app submissions when user is logged in) */
+    private String userId;
+
+    /** Device/Platform information (e.g., "iOS", "Android", "Web") */
+    private String platform;
+
+    /** App version (for mobile app submissions) */
+    private String appVersion;
+
+    /** Category for better organization (Account, Payment, Scan, Import, Recipe, Shopping, Other) */
+    private String category;
 
     @CreationTimestamp
     @Column(updatable = false)

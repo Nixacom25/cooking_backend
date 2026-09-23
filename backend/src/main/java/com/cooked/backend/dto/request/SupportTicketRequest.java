@@ -25,4 +25,16 @@ public class SupportTicketRequest {
 
     /** "WEB" or "MOBILE" - defaults to WEB when omitted (the marketing site doesn't send it). */
     private String source;
+
+    /** User ID (for mobile app submissions when user is logged in) */
+    private String userId;
+
+    /** Device/Platform information (e.g., "iOS", "Android", "Web") */
+    private String platform;
+
+    /** App version (for mobile app submissions) */
+    private String appVersion;
+
+    /** Category for better organization (Account, Payment, Scan, Import, Recipe, Shopping, Other) */
+    private String category;
 }

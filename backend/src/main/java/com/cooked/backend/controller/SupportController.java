@@ -48,6 +48,10 @@ public class SupportController {
                 .subject(request.getSubject().trim())
                 .message(request.getMessage().trim())
                 .source(source)
+                .userId(request.getUserId())
+                .platform(request.getPlatform())
+                .appVersion(request.getAppVersion())
+                .category(request.getCategory())
                 .build();
 
         SupportTicket saved = supportTicketRepository.save(ticket);
@@ -55,7 +59,8 @@ public class SupportController {
 
         emailService.sendSupportRequestReceivedEmail(saved.getEmail(), saved.getName(), ticketNumber, saved.getSubject());
         emailService.sendSupportNotificationToTeam(supportTeamEmail, ticketNumber, saved.getSubject(),
-                saved.getName(), saved.getEmail(), saved.getMessage());
+                saved.getName(), saved.getEmail(), saved.getMessage(), saved.getUserId(), saved.getPlatform(), 
+                saved.getAppVersion(), saved.getCategory());
 
         return ResponseEntity.ok(new MessageResponse("Your request has been received. We'll get back to you soon."));
     }
