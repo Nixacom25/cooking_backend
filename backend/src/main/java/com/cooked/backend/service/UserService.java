@@ -54,5 +54,7 @@ public interface UserService {
 
     MessageResponse updateFcmToken(String email, String fcmToken);
 
+    void updateLastActive(String email);
+
     MessageResponse sendWelcomeEmail(String email);
 }

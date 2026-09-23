@@ -75,6 +75,13 @@ public class UserController {
         return ResponseEntity.ok(userService.updateFcmToken(authentication.getName(), request.getFcmToken()));
     }
 
+    @Operation(summary = "Update last active timestamp", description = "Updates the user's last active timestamp for notification targeting")
+    @PostMapping("/last-active")
+    public ResponseEntity<MessageResponse> updateLastActive(Authentication authentication) {
+        userService.updateLastActive(authentication.getName());
+        return ResponseEntity.ok(new MessageResponse("Last active timestamp updated"));
+    }
+
     // --- Client Routes (ADMIN) ---
 
     @Operation(summary = "Get clients")

@@ -4,6 +4,8 @@ import com.cooked.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,4 +46,21 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r.user FROM Recipe r WHERE r.isPublic = true")
     java.util.List<User> findPublicCreators();
+
+    // Notification campaign targeting methods
+    java.util.List<User> findAllById(java.util.List<UUID> userIds);
+    
+    java.util.List<User> findBySubscriptionStatusNotNull();
+    
+    java.util.List<User> findBySubscriptionStatusNull();
+    
+    java.util.List<User> findBySubscriptionStatus(String status);
+    
+    java.util.List<User> findByLastActiveAfter(LocalDateTime date);
+    
+    java.util.List<User> findByLastActiveBefore(LocalDateTime date);
+    
+    java.util.List<User> findByCreatedAtAfter(LocalDateTime date);
+    
+    java.util.List<User> findByEmailIn(java.util.List<String> emails);
 }

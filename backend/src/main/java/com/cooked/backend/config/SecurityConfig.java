@@ -81,7 +81,9 @@ public class SecurityConfig {
                                 "/.well-known/**",
                                 "/webhooks/**",
                                 "/actuator/**",
-                                "/ws/**")
+                                "/ws/**",
+                                "/notification-campaigns/*/open",
+                                "/notification-campaigns/*/click")
                         .permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

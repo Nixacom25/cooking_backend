@@ -398,6 +398,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void updateLastActive(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        user.setLastActive(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
+    @Override
     public MessageResponse sendWelcomeEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
