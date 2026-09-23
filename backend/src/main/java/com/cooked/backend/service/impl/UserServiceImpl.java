@@ -75,17 +75,12 @@ public class UserServiceImpl implements UserService {
             return true;
         }
 
-        // Allow if status is ACTIVE or TRIAL
-        if (status == SubscriptionStatus.ACTIVE || status == SubscriptionStatus.TRIAL) {
-            // Check expiration date if set
-            if (expiresAt != null) {
+        // Allow if status is ACTIVE, TRIAL, PREMIUM, or INFINITE
+        if (status == SubscriptionStatus.ACTIVE || status == SubscriptionStatus.TRIAL || status == SubscriptionStatus.PREMIUM || status == SubscriptionStatus.INFINITE) {
+            // Check expiration date if set (INFINITE should have no expiration or far future)
+            if (expiresAt != null && status != SubscriptionStatus.INFINITE) {
                 return expiresAt.isAfter(LocalDateTime.now());
             }
-            return true;
-        }
-
-        // Allow if INFINITE
-        if (status == SubscriptionStatus.INFINITE) {
             return true;
         }
 

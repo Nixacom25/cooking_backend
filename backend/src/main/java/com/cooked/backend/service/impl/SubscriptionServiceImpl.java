@@ -336,7 +336,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         if (user.getSubscriptionExpiresAt() != null && user.getSubscriptionExpiresAt().isBefore(LocalDateTime.now())) {
             return false;
         }
-        return user.getSubscriptionStatus() == SubscriptionStatus.ACTIVE;
+        return user.getSubscriptionStatus() == SubscriptionStatus.ACTIVE || user.getSubscriptionStatus() == SubscriptionStatus.INFINITE;
     }
 
     @Override
@@ -356,11 +356,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         if (sub != null) {
             log.info("[hasAiAccess] UserSubscription found: status={}, endDate={}", sub.getStatus(), sub.getEndDate());
             
-            if (sub.getStatus() == SubscriptionStatus.ACTIVE || sub.getStatus() == SubscriptionStatus.TRIAL || sub.getStatus() == SubscriptionStatus.PREMIUM) {
+            if (sub.getStatus() == SubscriptionStatus.ACTIVE || sub.getStatus() == SubscriptionStatus.TRIAL || sub.getStatus() == SubscriptionStatus.PREMIUM || sub.getStatus() == SubscriptionStatus.INFINITE) {
                 // Safety buffer of 5 minutes to avoid strict edge cases
                 LocalDateTime nowWithBuffer = LocalDateTime.now().minusMinutes(5);
                 if (sub.getEndDate() == null || sub.getEndDate().isAfter(nowWithBuffer)) {
-                    log.info("[hasAiAccess] Access GRANTED via UserSubscription (Active/Trial/Premium)");
+                    log.info("[hasAiAccess] Access GRANTED via UserSubscription (Active/Trial/Premium/Infinite)");
                     return true;
                 } else {
                     log.warn("[hasAiAccess] UserSubscription is EXPIRED (endDate: {})", sub.getEndDate());
@@ -383,7 +383,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         log.info("[hasAiAccess] Checking User entity fields: status={}, expiresAt={}", user.getSubscriptionStatus(), user.getSubscriptionExpiresAt());
         if (user.getSubscriptionStatus() == SubscriptionStatus.ACTIVE || 
             user.getSubscriptionStatus() == SubscriptionStatus.TRIAL ||
-            user.getSubscriptionStatus() == SubscriptionStatus.PREMIUM) {
+            user.getSubscriptionStatus() == SubscriptionStatus.PREMIUM ||
+            user.getSubscriptionStatus() == SubscriptionStatus.INFINITE) {
             
             if (user.getSubscriptionExpiresAt() == null || user.getSubscriptionExpiresAt().isAfter(LocalDateTime.now())) {
                 log.info("[hasAiAccess] Access GRANTED via User entity fields");
@@ -571,7 +572,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public void syncAllActiveSubscriptions() {
         log.info("Starting daily active subscription sync task");
         List<UserSubscription> activeSubs = userSubscriptionRepository.findAllByStatusIn(
-                List.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL));
+                List.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL, SubscriptionStatus.INFINITE));
         
         for (UserSubscription sub : activeSubs) {
             User user = sub.getUser();
