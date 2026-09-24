@@ -613,9 +613,14 @@ public class AuthServiceImpl implements AuthService {
                                 // "location" until one is added.
                                 emailService.sendNewDeviceSignInEmail(user.getEmail(), user.getFirstname(),
                                                 deviceName, ipAddress, signInTime);
-                                pushNotificationService.sendPush(user.getFcmToken(), "New sign-in detected",
-                                                "We noticed a new sign-in from " + deviceName + ". Wasn't you? Secure your account.",
-                                                java.util.Map.of("type", "new_device_signin"));
+                                // Security alerts only respect the master push switch, not a
+                                // per-category one - always on unless the user has disabled
+                                // push notifications entirely.
+                                if (user.isPushEnabled()) {
+                                        pushNotificationService.sendPush(user.getFcmToken(), "New sign-in detected",
+                                                        "We noticed a new sign-in from " + deviceName + ". Wasn't you? Secure your account.",
+                                                        java.util.Map.of("type", "new_device_signin"));
+                                }
                         }
                 } catch (Exception e) {
                         log.warn("Could not record session: {}", e.getMessage());

@@ -176,9 +176,14 @@ public class RevenueCatWebhookController {
                 String planName = productId != null && productId.toLowerCase().contains("year") ? "Yearly" : "Monthly";
                 String price = formatPrice(event.get("price"), event.get("currency"));
                 emailService.sendPaymentFailureEmail(user.getEmail(), user.getFirstname(), planName, price);
-                pushNotificationService.sendPush(user.getFcmToken(), "Payment failed",
-                        "We couldn't process your payment for your " + planName + " plan. Update your billing details to avoid losing access.",
-                        Map.of("type", "billing_issue"));
+                // Billing alerts only respect the master push switch, not the
+                // reminders/news sub-toggles - losing access to the app is
+                // account-critical, not optional marketing.
+                if (user.isPushEnabled()) {
+                    pushNotificationService.sendPush(user.getFcmToken(), "Payment failed",
+                            "We couldn't process your payment for your " + planName + " plan. Update your billing details to avoid losing access.",
+                            Map.of("type", "billing_issue"));
+                }
                 log.info("Sent payment-failure email for user: {}", user.getEmail());
             }
 

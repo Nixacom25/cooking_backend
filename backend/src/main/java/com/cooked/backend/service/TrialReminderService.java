@@ -57,9 +57,11 @@ public class TrialReminderService {
             String price = isYearly ? yearlyPrice : monthlyPrice;
 
             emailService.sendTrialEndsTomorrowEmail(user.getEmail(), user.getFirstname(), planName, price);
-            pushNotificationService.sendPush(user.getFcmToken(), "Your trial ends tomorrow",
-                    "Your " + planName + " trial (" + price + ") ends tomorrow. Keep cooking without interruption.",
-                    java.util.Map.of("type", "trial_ends_tomorrow"));
+            if (user.isPushEnabled() && user.isPushRemindersEnabled()) {
+                pushNotificationService.sendPush(user.getFcmToken(), "Your trial ends tomorrow",
+                        "Your " + planName + " trial (" + price + ") ends tomorrow. Keep cooking without interruption.",
+                        java.util.Map.of("type", "trial_ends_tomorrow"));
+            }
 
             user.setTrialEndingReminderSent(true);
             userRepository.save(user);

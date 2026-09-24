@@ -265,6 +265,27 @@ public class User implements UserDetails {
     @Column(columnDefinition = "TEXT")
     private String fcmToken;
 
+    // User-controlled push notification categories (Profile > Settings >
+    // Notifications in the app). All default true so existing users keep
+    // receiving everything they already get today until they opt out.
+    // Security/billing alerts (new sign-in, payment failed) only respect the
+    // master pushEnabled switch, not a per-category one - see the call sites
+    // in AuthServiceImpl/RevenueCatWebhookController.
+    @Column(nullable = false)
+    @org.hibernate.annotations.ColumnDefault("true")
+    @Builder.Default
+    private boolean pushEnabled = true;
+
+    @Column(nullable = false)
+    @org.hibernate.annotations.ColumnDefault("true")
+    @Builder.Default
+    private boolean pushRemindersEnabled = true;
+
+    @Column(nullable = false)
+    @org.hibernate.annotations.ColumnDefault("true")
+    @Builder.Default
+    private boolean pushNewsOffersEnabled = true;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -369,6 +390,15 @@ public class User implements UserDetails {
 
     public String getFcmToken() { return fcmToken; }
     public void setFcmToken(String fcmToken) { this.fcmToken = fcmToken; }
+
+    public boolean isPushEnabled() { return pushEnabled; }
+    public void setPushEnabled(boolean pushEnabled) { this.pushEnabled = pushEnabled; }
+
+    public boolean isPushRemindersEnabled() { return pushRemindersEnabled; }
+    public void setPushRemindersEnabled(boolean pushRemindersEnabled) { this.pushRemindersEnabled = pushRemindersEnabled; }
+
+    public boolean isPushNewsOffersEnabled() { return pushNewsOffersEnabled; }
+    public void setPushNewsOffersEnabled(boolean pushNewsOffersEnabled) { this.pushNewsOffersEnabled = pushNewsOffersEnabled; }
 
     public LocalDateTime getLastActive() { return lastActive; }
     public void setLastActive(LocalDateTime lastActive) { this.lastActive = lastActive; }

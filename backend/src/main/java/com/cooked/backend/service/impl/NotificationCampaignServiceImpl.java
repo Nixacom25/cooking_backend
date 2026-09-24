@@ -243,7 +243,8 @@ public class NotificationCampaignServiceImpl implements NotificationCampaignServ
             int failedCount = 0;
             
             for (User user : targetUsers) {
-                if (user.getFcmToken() != null && !user.getFcmToken().isBlank()) {
+                if (user.getFcmToken() != null && !user.getFcmToken().isBlank()
+                        && user.isPushEnabled() && user.isPushNewsOffersEnabled()) {
                     try {
                         java.util.Map<String, String> data = new java.util.HashMap<>();
                         data.put("campaignId", campaign.getId().toString());

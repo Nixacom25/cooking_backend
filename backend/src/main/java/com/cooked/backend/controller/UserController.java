@@ -56,6 +56,12 @@ public class UserController {
         return ResponseEntity.ok(userService.updatePassword(authentication.getName(), request));
     }
 
+    @PutMapping("/notification-preferences")
+    public ResponseEntity<UserResponse> updateNotificationPreferences(Authentication authentication,
+            @Valid @RequestBody com.cooked.backend.dto.request.UpdateNotificationPreferencesRequest request) {
+        return ResponseEntity.ok(userService.updateNotificationPreferences(authentication.getName(), request));
+    }
+
     @Operation(summary = "Upload Profile Photo", description = "Uploads a profile picture for the authenticated user")
     @PostMapping(value = "/profile-photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MessageResponse> uploadProfilePhoto(Authentication authentication,

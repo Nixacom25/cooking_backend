@@ -161,6 +161,27 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserResponse updateNotificationPreferences(String email,
+            com.cooked.backend.dto.request.UpdateNotificationPreferencesRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (request.getPushEnabled() != null) {
+            user.setPushEnabled(request.getPushEnabled());
+        }
+        if (request.getPushRemindersEnabled() != null) {
+            user.setPushRemindersEnabled(request.getPushRemindersEnabled());
+        }
+        if (request.getPushNewsOffersEnabled() != null) {
+            user.setPushNewsOffersEnabled(request.getPushNewsOffersEnabled());
+        }
+
+        userRepository.save(user);
+
+        return userMapper.toResponse(user);
+    }
+
+    @Override
     public Page<UserResponse> getClients(Pageable pageable) {
         return userRepository.findAllByRole(Role.CLIENT, pageable)
                 .map(userMapper::toResponse);

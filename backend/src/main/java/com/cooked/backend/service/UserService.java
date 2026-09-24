@@ -22,6 +22,9 @@ public interface UserService {
 
     MessageResponse updatePassword(String email, UpdatePasswordRequest request);
 
+    UserResponse updateNotificationPreferences(String email,
+            com.cooked.backend.dto.request.UpdateNotificationPreferencesRequest request);
+
     MessageResponse uploadProfilePhoto(String email, org.springframework.web.multipart.MultipartFile file);
 
     Page<UserResponse> getClients(Pageable pageable);

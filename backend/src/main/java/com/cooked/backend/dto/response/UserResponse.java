@@ -46,6 +46,9 @@ public class UserResponse {
     private String revenueCatCustomerId;
     private LocalDateTime createdAt;
     private boolean suggestionsReady;
+    private boolean pushEnabled;
+    private boolean pushRemindersEnabled;
+    private boolean pushNewsOffersEnabled;
 
     public UserResponse() {}
 
@@ -128,4 +131,10 @@ public class UserResponse {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public boolean isSuggestionsReady() { return suggestionsReady; }
     public void setSuggestionsReady(boolean suggestionsReady) { this.suggestionsReady = suggestionsReady; }
+    public boolean isPushEnabled() { return pushEnabled; }
+    public void setPushEnabled(boolean pushEnabled) { this.pushEnabled = pushEnabled; }
+    public boolean isPushRemindersEnabled() { return pushRemindersEnabled; }
+    public void setPushRemindersEnabled(boolean pushRemindersEnabled) { this.pushRemindersEnabled = pushRemindersEnabled; }
+    public boolean isPushNewsOffersEnabled() { return pushNewsOffersEnabled; }
+    public void setPushNewsOffersEnabled(boolean pushNewsOffersEnabled) { this.pushNewsOffersEnabled = pushNewsOffersEnabled; }
 }
