@@ -75,7 +75,7 @@ public class RecipeAssignmentController {
     public ResponseEntity<Page<RecipeAssignmentResponse>> getAllAssignments(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("assignedDate").descending());
+        Pageable pageable = PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size), Sort.by("assignedDate").descending());
         return ResponseEntity.ok(assignmentService.getAllAssignments(pageable));
     }
 
@@ -86,7 +86,7 @@ public class RecipeAssignmentController {
             @PathVariable AssignmentStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("assignedDate").descending());
+        Pageable pageable = PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size), Sort.by("assignedDate").descending());
         return ResponseEntity.ok(assignmentService.getAssignmentsByStatus(status, pageable));
     }
 
@@ -97,7 +97,7 @@ public class RecipeAssignmentController {
             @RequestParam AssignmentStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("assignedDate").descending());
+        Pageable pageable = PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size), Sort.by("assignedDate").descending());
         return ResponseEntity.ok(assignmentService.getAssignmentsByStatus(status, pageable));
     }
 
@@ -109,7 +109,7 @@ public class RecipeAssignmentController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size,
             Authentication auth) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("assignedDate").descending());
+        Pageable pageable = PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size), Sort.by("assignedDate").descending());
         return ResponseEntity.ok(assignmentService.getMyAssignments(auth.getName(), pageable));
     }
 

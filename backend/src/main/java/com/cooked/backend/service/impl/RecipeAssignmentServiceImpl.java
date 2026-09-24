@@ -157,6 +157,9 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Stagiaire introuvable"));
 
         int requestedCount = request.getCount();
+        if (requestedCount < 1) {
+            throw new BadRequestException("Le nombre de recettes à attribuer doit être d'au moins 1.");
+        }
         long availableCount = recipeRepository.countUnassignedUnmodifiedRecipes();
 
         if (requestedCount > availableCount) {

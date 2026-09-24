@@ -78,7 +78,7 @@ public class SupportController {
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size), Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<SupportTicket> tickets = (status == null || status.isBlank())
                 ? supportTicketRepository.findAllByOrderByCreatedAtDesc(pageable)
                 : supportTicketRepository.findAllByStatusOrderByCreatedAtDesc(status.toUpperCase(), pageable);

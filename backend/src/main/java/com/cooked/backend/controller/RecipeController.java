@@ -130,7 +130,7 @@ public class RecipeController {
             @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size),
                 org.springframework.data.domain.Sort.by("createdAt").descending());
         return ResponseEntity.ok(recipeService.getExploreRecipes(cuisine, category, pageable));
     }
@@ -158,7 +158,7 @@ public class RecipeController {
     public ResponseEntity<org.springframework.data.domain.Page<com.cooked.backend.dto.response.CreatorResponse>> getTopCreators(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size));
         return ResponseEntity.ok(recipeService.getTopCreators(pageable));
     }
 
@@ -170,7 +170,7 @@ public class RecipeController {
             @RequestParam(defaultValue = "10") int size,
             @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
         String email = userDetails != null ? userDetails.getUsername() : null;
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size));
         return ResponseEntity.ok(recipeService.getPopularRecipes(category, email, pageable));
     }
 
@@ -192,7 +192,7 @@ public class RecipeController {
             Authentication auth,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size));
         return ResponseEntity.ok(recipeService.getRecentImports(auth.getName(), pageable));
     }
 

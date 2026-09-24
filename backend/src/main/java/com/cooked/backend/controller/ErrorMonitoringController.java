@@ -76,7 +76,12 @@ public class ErrorMonitoringController {
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        // Callers that only want the total count (e.g. the admin bell's
+        // unread-critical-errors badge) legitimately ask for size=0, but
+        // Spring's PageRequest rejects page < 0 or size < 1 - clamp instead
+        // of crashing; totalElements is accurate regardless of page size.
+        Pageable pageable = PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page),
+                com.cooked.backend.util.PaginationUtils.clampSize(size), Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<CriticalError> errors = (status == null || status.isBlank())
                 ? criticalErrorRepository.findAllByOrderByCreatedAtDesc(pageable)
                 : criticalErrorRepository.findAllByStatusOrderByCreatedAtDesc(status.toUpperCase(), pageable);

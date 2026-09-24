@@ -924,8 +924,15 @@ public class RecipeServiceImpl implements RecipeService {
     @Transactional
     @org.springframework.cache.annotation.CacheEvict(value = {"exploreRecipes", "popularRecipes", "explore_cuisines", "explore_categories"}, allEntries = true)
     public RecipeCategory createCategory(String name, String image, org.springframework.web.multipart.MultipartFile imageFile, CategoryType type, Boolean active) {
-        if (recipeCategoryRepository.findByNameAndType(name, type).isPresent()) {
-            throw new BadRequestException(type + " with name " + name + " already exists");
+        // Run through the same alias normalization recipe tagging uses
+        // (getOrCreateCategory), or an admin-created category can land on a
+        // different row than the one recipes actually get linked to (e.g.
+        // creating "Breakfast" here while recipes get tagged onto its canon-
+        // ical name "Healthy Breakfasts") - it would show "active" in the
+        // admin list while never receiving any recipes.
+        String normalizedName = taxonomyService.normalizeCategoryName(name, type);
+        if (recipeCategoryRepository.findByNameAndType(normalizedName, type).isPresent()) {
+            throw new BadRequestException(type + " with name " + normalizedName + " already exists");
         }
         String finalImage = image;
         if (imageFile != null && !imageFile.isEmpty()) {
@@ -936,7 +943,7 @@ public class RecipeServiceImpl implements RecipeService {
             }
         }
         RecipeCategory category = RecipeCategory.builder()
-                .name(name)
+                .name(normalizedName)
                 .image(finalImage)
                 .type(type)
                 .active(active != null ? active : true)
@@ -953,9 +960,12 @@ public class RecipeServiceImpl implements RecipeService {
         
         java.util.List<String> changedFields = new java.util.ArrayList<>();
 
-        if (name != null && !name.isBlank() && !name.equals(category.getName())) {
-            changedFields.add("name");
-            category.setName(name);
+        if (name != null && !name.isBlank()) {
+            String normalizedName = taxonomyService.normalizeCategoryName(name, type != null ? type : category.getType());
+            if (!normalizedName.equals(category.getName())) {
+                changedFields.add("name");
+                category.setName(normalizedName);
+            }
         }
         
         boolean imageChanged = false;

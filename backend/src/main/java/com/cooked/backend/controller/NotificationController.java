@@ -33,7 +33,7 @@ public class NotificationController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             Authentication auth) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size));
         return ResponseEntity.ok(notificationService.getUserNotifications(auth.getName(), pageable));
     }
 

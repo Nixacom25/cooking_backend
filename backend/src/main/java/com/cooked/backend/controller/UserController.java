@@ -104,7 +104,7 @@ public class UserController {
         org.springframework.data.domain.Sort.Direction direction = sortParams.length > 1
                 && sortParams[1].equalsIgnoreCase("asc") ? org.springframework.data.domain.Sort.Direction.ASC
                         : org.springframework.data.domain.Sort.Direction.DESC;
-        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size),
                 org.springframework.data.domain.Sort.by(direction, sortParams[0]));
 
         return ResponseEntity.ok(userService.getClients(pageable));
@@ -149,7 +149,7 @@ public class UserController {
         org.springframework.data.domain.Sort.Direction direction = sortParams.length > 1
                 && sortParams[1].equalsIgnoreCase("asc") ? org.springframework.data.domain.Sort.Direction.ASC
                         : org.springframework.data.domain.Sort.Direction.DESC;
-        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size),
                 org.springframework.data.domain.Sort.by(direction, sortParams[0]));
 
         return ResponseEntity.ok(userService.getCreators(pageable));
@@ -187,7 +187,7 @@ public class UserController {
         org.springframework.data.domain.Sort.Direction direction = sortParams.length > 1
                 && sortParams[1].equalsIgnoreCase("asc") ? org.springframework.data.domain.Sort.Direction.ASC
                         : org.springframework.data.domain.Sort.Direction.DESC;
-        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size),
                 org.springframework.data.domain.Sort.by(direction, sortParams[0]));
 
         return ResponseEntity.ok(userService.getAdmins(pageable));
@@ -199,7 +199,7 @@ public class UserController {
     public ResponseEntity<Page<UserResponse>> getEditors(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "200") int size) {
-        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size),
                 org.springframework.data.domain.Sort.by("firstname").ascending());
         return ResponseEntity.ok(userService.getEditors(pageable));
     }

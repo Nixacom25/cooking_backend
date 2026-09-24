@@ -70,10 +70,9 @@ public class TaxonomyServiceImpl implements TaxonomyService {
     );
 
     @Override
-    @Transactional
-    public RecipeCategory getOrCreateCategory(String name, CategoryType type) {
-        if (name == null || name.isBlank()) return null;
-        
+    public String normalizeCategoryName(String name, CategoryType type) {
+        if (name == null || name.isBlank()) return name;
+
         String normalizedName = name.trim();
         if (type == CategoryType.CATEGORY) {
             if (normalizedName.equalsIgnoreCase("Breakfast")) normalizedName = "Healthy Breakfasts";
@@ -119,10 +118,17 @@ public class TaxonomyServiceImpl implements TaxonomyService {
             if (normalizedName.equalsIgnoreCase("Japanese Fusion")) normalizedName = "Japanese";
             if (normalizedName.equalsIgnoreCase("Wast African")) normalizedName = "West African";
         }
-        
-        final String finalName = normalizedName;
+        return normalizedName;
+    }
+
+    @Override
+    @Transactional
+    public RecipeCategory getOrCreateCategory(String name, CategoryType type) {
+        if (name == null || name.isBlank()) return null;
+
+        final String finalName = normalizeCategoryName(name, type);
         String mappedImage = (type == CategoryType.CUISINE) ? CUISINE_IMAGES.get(finalName) : CATEGORY_IMAGES.get(finalName);
-        
+
         return recipeCategoryRepository.findByNameAndType(finalName, type)
                 .orElseGet(() -> recipeCategoryRepository.save(RecipeCategory.builder()
                         .name(finalName)

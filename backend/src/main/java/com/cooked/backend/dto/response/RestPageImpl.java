@@ -1,5 +1,6 @@
 package com.cooked.backend.dto.response;
 
+import com.cooked.backend.util.PaginationUtils;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -16,7 +17,7 @@ public class RestPageImpl<T> extends PageImpl<T> {
                         @JsonProperty("number") int number,
                         @JsonProperty("size") int size,
                         @JsonProperty("totalElements") Long totalElements) {
-        super(content, PageRequest.of(number, size), totalElements);
+        super(content, PageRequest.of(PaginationUtils.clampPage(number), PaginationUtils.clampSize(size)), totalElements);
     }
 
     public RestPageImpl(org.springframework.data.domain.Page<T> page) {

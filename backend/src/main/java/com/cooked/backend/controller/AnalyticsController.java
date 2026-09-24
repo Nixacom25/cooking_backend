@@ -48,7 +48,7 @@ public class AnalyticsController {
         org.springframework.data.domain.Sort.Direction direction = sortParams.length > 1
                 && sortParams[1].equalsIgnoreCase("asc") ? org.springframework.data.domain.Sort.Direction.ASC
                         : org.springframework.data.domain.Sort.Direction.DESC;
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size),
                 org.springframework.data.domain.Sort.by(direction, sortParams[0]));
 
         return ResponseEntity.ok(analyticsService.getTransactions(pageable));
@@ -65,7 +65,7 @@ public class AnalyticsController {
         org.springframework.data.domain.Sort.Direction direction = sortParams.length > 1
                 && sortParams[1].equalsIgnoreCase("asc") ? org.springframework.data.domain.Sort.Direction.ASC
                         : org.springframework.data.domain.Sort.Direction.DESC;
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size),
                 org.springframework.data.domain.Sort.by(direction, sortParams[0]));
 
         return ResponseEntity.ok(analyticsService.getActiveSubscriptions(pageable));

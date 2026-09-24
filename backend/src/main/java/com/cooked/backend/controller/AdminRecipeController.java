@@ -38,7 +38,7 @@ public class AdminRecipeController {
             @RequestParam(required = false) String name,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("updatedAt").ascending());
+        Pageable pageable = PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size), Sort.by("updatedAt").ascending());
         return ResponseEntity.ok(recipeService.getAdminRecipes(origin, name, pageable));
     }
 
