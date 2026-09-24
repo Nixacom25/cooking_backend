@@ -43,6 +43,7 @@ public class UserResponse {
     private String subscriptionStatus;
     private String subscriptionType;
     private LocalDateTime subscriptionExpiresAt;
+    private String revenueCatCustomerId;
     private LocalDateTime createdAt;
     private boolean suggestionsReady;
 
@@ -121,6 +122,8 @@ public class UserResponse {
     public void setSubscriptionType(String subscriptionType) { this.subscriptionType = subscriptionType; }
     public LocalDateTime getSubscriptionExpiresAt() { return subscriptionExpiresAt; }
     public void setSubscriptionExpiresAt(LocalDateTime subscriptionExpiresAt) { this.subscriptionExpiresAt = subscriptionExpiresAt; }
+    public String getRevenueCatCustomerId() { return revenueCatCustomerId; }
+    public void setRevenueCatCustomerId(String revenueCatCustomerId) { this.revenueCatCustomerId = revenueCatCustomerId; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public boolean isSuggestionsReady() { return suggestionsReady; }

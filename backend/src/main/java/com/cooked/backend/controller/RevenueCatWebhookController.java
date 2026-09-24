@@ -119,7 +119,13 @@ public class RevenueCatWebhookController {
                 "RENEWAL".equalsIgnoreCase(eventType) ||
                 "PRODUCT_CHANGE".equalsIgnoreCase(eventType) ||
                 "UNCANCELLATION".equalsIgnoreCase(eventType) ||
-                "NON_RENEWING_PURCHASE".equalsIgnoreCase(eventType)) {
+                "NON_RENEWING_PURCHASE".equalsIgnoreCase(eventType) ||
+                // TRANSFER's app_user_id is the receiving account, and
+                // SUBSCRIPTION_EXTENDED grants extra time (goodwill/support) -
+                // both carry a fresh expiration_at_ms, so they activate the
+                // same as a purchase/renewal.
+                "TRANSFER".equalsIgnoreCase(eventType) ||
+                "SUBSCRIPTION_EXTENDED".equalsIgnoreCase(eventType)) {
 
                 // Check if this is a trial (INITIAL_PURCHASE may be trial)
                 Boolean isTrial = null;
@@ -159,10 +165,13 @@ public class RevenueCatWebhookController {
                 userRepository.save(user);
                 log.info("Activated subscription (status: {}) for user: {}", user.getSubscriptionStatus(), user.getEmail());
 
-            } else if ("EXPIRATION".equalsIgnoreCase(eventType) || "CANCELLATION".equalsIgnoreCase(eventType)) {
+            } else if ("EXPIRATION".equalsIgnoreCase(eventType) || "CANCELLATION".equalsIgnoreCase(eventType) ||
+                    // A pause (Google Play only) and a refund both revoke
+                    // access the same way an expiration does.
+                    "SUBSCRIPTION_PAUSED".equalsIgnoreCase(eventType) || "REFUND".equalsIgnoreCase(eventType)) {
                 user.setSubscriptionStatus(SubscriptionStatus.EXPIRED);
                 userRepository.save(user);
-                log.info("Set subscription EXPIRED for user: {}", user.getEmail());
+                log.info("Set subscription EXPIRED for user: {} (event: {})", user.getEmail(), eventType);
             } else if ("BILLING_ISSUE".equalsIgnoreCase(eventType)) {
                 String planName = productId != null && productId.toLowerCase().contains("year") ? "Yearly" : "Monthly";
                 String price = formatPrice(event.get("price"), event.get("currency"));
