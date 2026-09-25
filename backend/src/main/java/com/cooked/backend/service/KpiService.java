@@ -12,16 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.EntityManager;
-import org.springframework.transaction.annotation.Transactional;
-import com.cooked.backend.entity.User;
-import com.cooked.backend.entity.Role;
-import com.cooked.backend.entity.Status;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.UUID;
-import java.util.Random;
 import java.util.LinkedHashMap;
 
 @Service
@@ -30,52 +22,13 @@ public class KpiService {
     private final AnalyticsEventRepository analyticsEventRepository;
     private final UserRepository userRepository;
     private final SubscriptionPaymentRepository paymentRepository;
-    private final EntityManager entityManager;
 
-    public KpiService(AnalyticsEventRepository analyticsEventRepository, 
+    public KpiService(AnalyticsEventRepository analyticsEventRepository,
                       UserRepository userRepository,
-                      SubscriptionPaymentRepository paymentRepository,
-                      EntityManager entityManager) {
+                      SubscriptionPaymentRepository paymentRepository) {
         this.analyticsEventRepository = analyticsEventRepository;
         this.userRepository = userRepository;
         this.paymentRepository = paymentRepository;
-        this.entityManager = entityManager;
-    }
-
-    @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
-    @Transactional
-    public void initMocks() {
-        if (paymentRepository.count() == 0) {
-            System.out.println("Generating Mock Subscription Payments...");
-            User mockUser = new User();
-            mockUser.setFirstname("Mock");
-            mockUser.setLastname("User");
-            mockUser.setEmail("mock" + UUID.randomUUID().toString().substring(0, 8) + "@test.com");
-            mockUser.setPassword("password");
-            mockUser.setRole(Role.CLIENT);
-            mockUser.setStatus(Status.ACTIVE);
-            mockUser.setSubscriptionStatus(SubscriptionStatus.PREMIUM);
-            mockUser = userRepository.save(mockUser);
-
-            Random random = new Random();
-            for (int i = 0; i < 50; i++) {
-                SubscriptionPayment payment = new SubscriptionPayment();
-                payment.setUser(mockUser);
-                payment.setAmount(random.nextBoolean() ? new BigDecimal("9.99") : new BigDecimal("99.99"));
-                payment.setPlanType(payment.getAmount().doubleValue() < 20 ? "MONTHLY" : "YEARLY");
-                payment.setStatus(random.nextInt(10) > 1 ? "SUCCESS" : "FAILED");
-                payment.setStore(random.nextBoolean() ? "Google" : "Apple");
-                payment.setStripePaymentId("pi_mock_" + UUID.randomUUID().toString().substring(0, 8));
-                paymentRepository.save(payment);
-                
-                // Backdate manually using native query to bypass @CreationTimestamp
-                int minusDays = random.nextInt(180);
-                entityManager.createNativeQuery("UPDATE subscription_payments SET created_at = :date WHERE id = :id")
-                    .setParameter("date", LocalDateTime.now().minusDays(minusDays))
-                    .setParameter("id", payment.getId())
-                    .executeUpdate();
-            }
-        }
     }
 
     public Map<String, Object> getGlobalKpis() {

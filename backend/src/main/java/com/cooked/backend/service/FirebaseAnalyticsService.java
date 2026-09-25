@@ -91,19 +91,10 @@ public class FirebaseAnalyticsService {
             System.err.println("Firebase Analytics traffic fetch failed: " + e.getMessage() + ". Falling back to app database metrics.");
         }
 
-        if (labels.isEmpty()) {
-            long totalUsers = userRepository.count();
-            LocalDate today = LocalDate.now();
-            Random rand = new Random(today.hashCode());
-            for (int i = 6; i >= 0; i--) {
-                LocalDate date = today.minusDays(i);
-                labels.add(date.format(DateTimeFormatter.ofPattern("MMM dd")));
-                int base = Math.max(8, (int)(totalUsers * 0.35));
-                int dailyUsers = base + rand.nextInt(Math.max(10, (int)(totalUsers * 0.25) + 1));
-                activeUsers.add(dailyUsers);
-            }
-        }
-
+        // No synthetic fallback here on purpose: if GA4 isn't configured or
+        // the call fails, return an honestly-empty series rather than
+        // numbers invented from the user count - the frontend should show
+        // "no data" rather than a fabricated trend line.
         response.put("labels", labels);
         response.put("activeUsers", activeUsers);
         return response;
@@ -147,11 +138,8 @@ public class FirebaseAnalyticsService {
             } catch (Exception ex) {
                 System.err.println("Database events query error: " + ex.getMessage());
             }
-
-            if (labels.isEmpty()) {
-                labels = Arrays.asList("PAYWALL_VIEW", "RECIPE_SEARCH", "FAVORITE_ADDED", "CHECKOUT_STARTED", "SUBSCRIPTION_SUCCESS");
-                data = Arrays.asList(142, 98, 65, 41, 29);
-            }
+            // No hardcoded fallback here on purpose - an empty result means
+            // genuinely no tracked events yet, not a display bug to paper over.
         }
 
         response.put("labels", labels);
@@ -178,11 +166,7 @@ public class FirebaseAnalyticsService {
                 platformLabels.add(row.getDimensionValues(0).getValue());
                 platformData.add(Integer.parseInt(row.getMetricValues(0).getValue()));
             }
-        } catch (Exception e) { /* Ignore & fallback */ }
-        if (platformLabels.isEmpty()) {
-            platformLabels = Arrays.asList("iOS", "Android", "Web");
-            platformData = Arrays.asList(58, 38, 4);
-        }
+        } catch (Exception e) { /* GA4 unavailable - leave empty, no fabricated split */ }
         platforms.put("labels", platformLabels);
         platforms.put("data", platformData);
         overview.put("platforms", platforms);
@@ -205,11 +189,7 @@ public class FirebaseAnalyticsService {
                 countryLabels.add(row.getDimensionValues(0).getValue());
                 countryData.add(Integer.parseInt(row.getMetricValues(0).getValue()));
             }
-        } catch (Exception e) { /* Ignore & fallback */ }
-        if (countryLabels.isEmpty()) {
-            countryLabels = Arrays.asList("France", "Sénégal", "Côte d'Ivoire", "Canada", "Belgique");
-            countryData = Arrays.asList(425, 270, 165, 95, 55);
-        }
+        } catch (Exception e) { /* GA4 unavailable - leave empty, no fabricated countries */ }
         countries.put("labels", countryLabels);
         countries.put("data", countryData);
         overview.put("countries", countries);
@@ -224,10 +204,8 @@ public class FirebaseAnalyticsService {
                 .count();
         } catch (Exception e) { newUsers30Days = Math.max(1, (long)(totalUsers * 0.3)); }
         long returningUsers = Math.max(0, totalUsers - newUsers30Days);
-        if (newUsers30Days == 0 && returningUsers == 0) {
-            newUsers30Days = 185;
-            returningUsers = 430;
-        }
+        // A genuinely new app with few/no users in the last 30 days is a
+        // real state, not a bug to mask with invented numbers.
         acquisition.put("labels", Arrays.asList("Nouveaux Utilisateurs", "Utilisateurs Récurrents"));
         acquisition.put("data", Arrays.asList(newUsers30Days, returningUsers));
         overview.put("userAcquisition", acquisition);
@@ -250,11 +228,7 @@ public class FirebaseAnalyticsService {
                 screenLabels.add(row.getDimensionValues(0).getValue());
                 screenData.add(Integer.parseInt(row.getMetricValues(0).getValue()));
             }
-        } catch (Exception e) { /* Ignore & fallback */ }
-        if (screenLabels.isEmpty()) {
-            screenLabels = Arrays.asList("Accueil & Exploration", "Fiche Recette", "Paywall Premium", "Favoris & Collections", "Profil & Réglages");
-            screenData = Arrays.asList(1420, 980, 520, 340, 210);
-        }
+        } catch (Exception e) { /* GA4 unavailable - leave empty, no fabricated screens */ }
         topScreens.put("labels", screenLabels);
         topScreens.put("data", screenData);
         overview.put("topScreens", topScreens);
@@ -314,15 +288,18 @@ public class FirebaseAnalyticsService {
                 engagement.put("sessionsPerUser", String.format("%.1f sessions/semaine", sessionsPerUser));
                 engagementFromGa4 = true;
             }
-        } catch (Exception e) { /* Ignore & fallback */ }
+        } catch (Exception e) { /* GA4 unavailable - leave unset below, no fabricated engagement numbers */ }
         if (!engagementFromGa4) {
-            engagement.put("avgSessionDuration", "4 min 28s");
-            engagement.put("sessionsPerUser", "3.4 sessions/semaine");
-            engagement.put("engagementRate", "83.6%");
+            engagement.put("avgSessionDuration", "N/A");
+            engagement.put("sessionsPerUser", "N/A");
+            engagement.put("engagementRate", "N/A");
         }
-        // Estimated pending a GA4 Cohort report implementation - not a live metric.
-        engagement.put("retentionDay7", "42.1%");
-        engagement.put("retentionDay30", "28.5%");
+        // Day-7/30 retention needs GA4's Cohort report API (a materially
+        // different request shape - cohortSpec) which isn't implemented yet.
+        // Reporting "N/A" here is honest; a specific-looking percentage
+        // would not be, since it was never actually computed from anything.
+        engagement.put("retentionDay7", "N/A");
+        engagement.put("retentionDay30", "N/A");
         overview.put("userEngagement", engagement);
 
         // 7. Traffic Sources & Acquisition Channels - real GA4 default
@@ -345,11 +322,7 @@ public class FirebaseAnalyticsService {
                 sourceLabels.add(row.getDimensionValues(0).getValue());
                 sourceData.add(Integer.parseInt(row.getMetricValues(0).getValue()));
             }
-        } catch (Exception e) { /* Ignore & fallback */ }
-        if (sourceLabels.isEmpty()) {
-            sourceLabels = Arrays.asList("Google Play Store", "Apple App Store", "Recherche Directe", "Réseaux Sociaux", "Parrainage / Liens");
-            sourceData = Arrays.asList(45, 35, 12, 5, 3);
-        }
+        } catch (Exception e) { /* GA4 unavailable - leave empty, no fabricated traffic sources */ }
         sources.put("labels", sourceLabels);
         sources.put("data", sourceData);
         overview.put("trafficSources", sources);

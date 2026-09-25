@@ -4,10 +4,12 @@ import com.cooked.backend.repository.SubscriptionPaymentRepository;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.entity.SubscriptionPayment;
 import com.cooked.backend.entity.Role;
+import com.cooked.backend.entity.SubscriptionStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.time.format.DateTimeFormatter;
@@ -45,9 +47,11 @@ public class AnalyticsService {
         });
     }
 
+    private static final List<SubscriptionStatus> ACTIVE_STATUSES =
+            List.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL, SubscriptionStatus.INFINITE);
+
     public Page<Map<String, Object>> getActiveSubscriptions(Pageable pageable) {
-        // Here we just fetch users who have a PREMIUM status
-        return userRepository.findAllByRole(Role.CLIENT, pageable)
+        return userRepository.findAllByRoleAndSubscriptionStatusIn(Role.CLIENT, ACTIVE_STATUSES, pageable)
             .map(u -> {
                 Map<String, Object> map = new HashMap<>();
                 map.put("id", u.getId());
