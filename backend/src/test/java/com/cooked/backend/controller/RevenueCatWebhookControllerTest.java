@@ -5,6 +5,7 @@ import com.cooked.backend.entity.Status;
 import com.cooked.backend.entity.SubscriptionStatus;
 import com.cooked.backend.entity.SubscriptionType;
 import com.cooked.backend.entity.User;
+import com.cooked.backend.repository.SubscriptionPaymentRepository;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.service.EmailService;
 import com.cooked.backend.service.PushNotificationService;
@@ -26,6 +27,7 @@ class RevenueCatWebhookControllerTest {
     private UserRepository userRepository;
     private EmailService emailService;
     private PushNotificationService pushNotificationService;
+    private SubscriptionPaymentRepository subscriptionPaymentRepository;
     private RevenueCatWebhookController controller;
 
     @BeforeEach
@@ -33,7 +35,9 @@ class RevenueCatWebhookControllerTest {
         userRepository = mock(UserRepository.class);
         emailService = mock(EmailService.class);
         pushNotificationService = mock(PushNotificationService.class);
-        controller = new RevenueCatWebhookController(userRepository, emailService, pushNotificationService);
+        subscriptionPaymentRepository = mock(SubscriptionPaymentRepository.class);
+        controller = new RevenueCatWebhookController(userRepository, emailService, pushNotificationService,
+                subscriptionPaymentRepository);
     }
 
     @Test
@@ -69,6 +73,79 @@ class RevenueCatWebhookControllerTest {
         assertEquals(SubscriptionType.YEARLY, savedUser.getSubscriptionType());
         assertNotNull(savedUser.getSubscriptionExpiresAt());
         assertEquals("trans_12345", savedUser.getOriginalTransactionId());
+    }
+
+    @Test
+    void testInitialPurchaseEvent_RecordsSubscriptionPayment() {
+        User user = User.builder()
+                .email("payer@cookedapp.com")
+                .password("password")
+                .role(Role.CLIENT)
+                .status(Status.ACTIVE)
+                .subscriptionStatus(SubscriptionStatus.FREE)
+                .build();
+
+        when(userRepository.findByEmail("payer@cookedapp.com")).thenReturn(Optional.of(user));
+        when(subscriptionPaymentRepository.existsByStripePaymentId("rc_evt_1")).thenReturn(false);
+
+        Map<String, Object> payload = Map.of(
+                "event", Map.of(
+                        "id", "evt_1",
+                        "type", "INITIAL_PURCHASE",
+                        "app_user_id", "payer@cookedapp.com",
+                        "product_id", "yearly_sub",
+                        "price", 59.99,
+                        "currency", "USD",
+                        "store", "APP_STORE",
+                        "expiration_at_ms", 1750000000000L
+                )
+        );
+
+        ResponseEntity<?> response = controller.handleWebhook(null, payload);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        ArgumentCaptor<com.cooked.backend.entity.SubscriptionPayment> paymentCaptor =
+                ArgumentCaptor.forClass(com.cooked.backend.entity.SubscriptionPayment.class);
+        verify(subscriptionPaymentRepository, times(1)).save(paymentCaptor.capture());
+
+        com.cooked.backend.entity.SubscriptionPayment saved = paymentCaptor.getValue();
+        assertEquals(0, saved.getAmount().compareTo(java.math.BigDecimal.valueOf(59.99)));
+        assertEquals("YEARLY", saved.getPlanType());
+        assertEquals("SUCCESS", saved.getStatus());
+        assertEquals("Apple", saved.getStore());
+        assertEquals("rc_evt_1", saved.getStripePaymentId());
+    }
+
+    @Test
+    void testInitialPurchaseEvent_SkipsDuplicatePaymentOnRetry() {
+        User user = User.builder()
+                .email("retry@cookedapp.com")
+                .password("password")
+                .role(Role.CLIENT)
+                .status(Status.ACTIVE)
+                .subscriptionStatus(SubscriptionStatus.FREE)
+                .build();
+
+        when(userRepository.findByEmail("retry@cookedapp.com")).thenReturn(Optional.of(user));
+        when(subscriptionPaymentRepository.existsByStripePaymentId("rc_evt_2")).thenReturn(true);
+
+        Map<String, Object> payload = Map.of(
+                "event", Map.of(
+                        "id", "evt_2",
+                        "type", "RENEWAL",
+                        "app_user_id", "retry@cookedapp.com",
+                        "product_id", "monthly_sub",
+                        "price", 9.99,
+                        "currency", "USD",
+                        "store", "PLAY_STORE"
+                )
+        );
+
+        ResponseEntity<?> response = controller.handleWebhook(null, payload);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        // Already recorded for this event id (a RevenueCat retry) - must not double-count.
+        verify(subscriptionPaymentRepository, never()).save(any());
     }
 
     @Test

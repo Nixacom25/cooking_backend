@@ -1,8 +1,10 @@
 package com.cooked.backend.controller;
 
+import com.cooked.backend.entity.SubscriptionPayment;
 import com.cooked.backend.entity.SubscriptionStatus;
 import com.cooked.backend.entity.SubscriptionType;
 import com.cooked.backend.entity.User;
+import com.cooked.backend.repository.SubscriptionPaymentRepository;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.service.EmailService;
 import com.cooked.backend.service.PushNotificationService;
@@ -15,11 +17,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -31,6 +35,7 @@ public class RevenueCatWebhookController {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final PushNotificationService pushNotificationService;
+    private final SubscriptionPaymentRepository subscriptionPaymentRepository;
 
     @Value("${revenuecat.webhook.secret:}")
     private String webhookSecret;
@@ -39,11 +44,21 @@ public class RevenueCatWebhookController {
     private static final String MONTHLY_PRODUCT_ID = "monthly_sub";
     private static final String YEARLY_PRODUCT_ID = "yearly_sub";
 
+    // The only RevenueCat event types that represent an actual charge to the
+    // customer - PRODUCT_CHANGE/TRANSFER/UNCANCELLATION/SUBSCRIPTION_EXTENDED
+    // all activate/extend access without money changing hands at that
+    // moment, so they're excluded here even though they share the
+    // activation branch below.
+    private static final Set<String> REVENUE_EVENT_TYPES = Set.of(
+            "INITIAL_PURCHASE", "RENEWAL", "NON_RENEWING_PURCHASE");
+
     public RevenueCatWebhookController(UserRepository userRepository, EmailService emailService,
-            PushNotificationService pushNotificationService) {
+            PushNotificationService pushNotificationService,
+            SubscriptionPaymentRepository subscriptionPaymentRepository) {
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.pushNotificationService = pushNotificationService;
+        this.subscriptionPaymentRepository = subscriptionPaymentRepository;
     }
 
     private boolean isValidProduct(String productId) {
@@ -165,6 +180,16 @@ public class RevenueCatWebhookController {
                 userRepository.save(user);
                 log.info("Activated subscription (status: {}) for user: {}", user.getSubscriptionStatus(), user.getEmail());
 
+                // Record the actual transaction so "In-App Purchases &
+                // Transactions" in the admin dashboard reflects real revenue
+                // instead of staying empty - this is the only place in the
+                // whole app that a genuine purchase (as opposed to the
+                // client-trusted /user/sync-subscription status sync) gets
+                // written to subscription_payments.
+                if (REVENUE_EVENT_TYPES.contains(eventType.toUpperCase())) {
+                    recordPaymentFromEvent(event, eventType, user, productId);
+                }
+
             } else if ("EXPIRATION".equalsIgnoreCase(eventType) || "CANCELLATION".equalsIgnoreCase(eventType) ||
                     // A pause (Google Play only) and a refund both revoke
                     // access the same way an expiration does.
@@ -200,5 +225,50 @@ public class RevenueCatWebhookController {
         }
         String currencyCode = currency != null ? currency.toString() : "USD";
         return String.format("%.2f %s", ((Number) price).doubleValue(), currencyCode);
+    }
+
+    // RevenueCat retries webhook deliveries, so this must be idempotent -
+    // dedup on the event's own id, which is stable across retries of the
+    // same event (unlike transaction_id, which can repeat across renewals
+    // of the same subscription).
+    private void recordPaymentFromEvent(Map<String, Object> event, String eventType, User user, String productId) {
+        try {
+            Object eventId = event.get("id");
+            if (eventId == null) {
+                log.warn("RevenueCat {} event for user {} has no event id, skipping payment record",
+                        eventType, user.getEmail());
+                return;
+            }
+            String paymentRef = "rc_" + eventId;
+            if (subscriptionPaymentRepository.existsByStripePaymentId(paymentRef)) {
+                return;
+            }
+
+            Object priceObj = event.get("price");
+            BigDecimal amount = priceObj instanceof Number
+                    ? BigDecimal.valueOf(((Number) priceObj).doubleValue())
+                    : BigDecimal.ZERO;
+
+            Object storeObj = event.get("store");
+            String store = "PLAY_STORE".equalsIgnoreCase(String.valueOf(storeObj)) ? "Google"
+                    : "APP_STORE".equalsIgnoreCase(String.valueOf(storeObj)) ? "Apple"
+                    : storeObj != null ? storeObj.toString() : "Google";
+
+            SubscriptionPayment payment = new SubscriptionPayment();
+            payment.setUser(user);
+            payment.setAmount(amount);
+            payment.setPlanType(productId != null && productId.toLowerCase().contains("year") ? "YEARLY" : "MONTHLY");
+            payment.setStatus("SUCCESS");
+            payment.setStripePaymentId(paymentRef);
+            payment.setStore(store);
+            subscriptionPaymentRepository.save(payment);
+            log.info("Recorded {} payment ({} {}) for user: {}", eventType, amount, store, user.getEmail());
+        } catch (Exception e) {
+            // A payment-record failure shouldn't fail the whole webhook -
+            // the subscription activation above already succeeded and must
+            // not be rolled back over a bookkeeping issue.
+            log.error("Failed to record payment from RevenueCat {} event for user {}: {}",
+                    eventType, user.getEmail(), e.getMessage());
+        }
     }
 }

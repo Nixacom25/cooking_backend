@@ -44,10 +44,7 @@ public class CookbookServiceImpl implements CookbookService {
 
         Set<com.cooked.backend.entity.Recipe> recipes = Collections.emptySet();
         if (request.getRecipeIds() != null && !request.getRecipeIds().isEmpty()) {
-            recipes = request.getRecipeIds().stream()
-                    .map(id -> recipeRepository.findById(id)
-                            .orElseThrow(() -> new ResourceNotFoundException("Recipe not found with ID: " + id)))
-                    .collect(Collectors.toSet());
+            recipes = fetchRecipesByIds(request.getRecipeIds());
         }
 
         Cookbook cb = Cookbook.builder()
@@ -85,11 +82,7 @@ public class CookbookServiceImpl implements CookbookService {
         }
 
         if (request.getRecipeIds() != null) {
-            Set<com.cooked.backend.entity.Recipe> recipes = request.getRecipeIds().stream()
-                    .map(rid -> recipeRepository.findById(rid)
-                            .orElseThrow(() -> new ResourceNotFoundException("Recipe not found with ID: " + rid)))
-                    .collect(Collectors.toSet());
-            cb.setRecipes(recipes);
+            cb.setRecipes(fetchRecipesByIds(request.getRecipeIds()));
         }
 
         Cookbook updatedCb = cookbookRepository.save(cb);
@@ -143,6 +136,20 @@ public class CookbookServiceImpl implements CookbookService {
         cookbook.setPinned(!cookbook.isPinned());
         Cookbook saved = cookbookRepository.save(cookbook);
         return mapToResponse(saved);
+    }
+
+    // One batched IN(...) query instead of one findById() round trip per
+    // recipe - create/update used to scale linearly with recipe count,
+    // which is exactly what made saving a cookbook with several recipes
+    // attached feel slow.
+    private Set<com.cooked.backend.entity.Recipe> fetchRecipesByIds(List<UUID> ids) {
+        List<com.cooked.backend.entity.Recipe> found = recipeRepository.findAllById(ids);
+        if (found.size() != new java.util.HashSet<>(ids).size()) {
+            Set<UUID> foundIds = found.stream().map(com.cooked.backend.entity.Recipe::getId).collect(Collectors.toSet());
+            UUID missing = ids.stream().filter(id -> !foundIds.contains(id)).findFirst().orElse(null);
+            throw new ResourceNotFoundException("Recipe not found with ID: " + missing);
+        }
+        return new java.util.HashSet<>(found);
     }
 
     private CookbookResponse mapToResponse(Cookbook cookbook) {

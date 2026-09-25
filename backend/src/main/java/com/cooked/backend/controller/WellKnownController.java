@@ -48,7 +48,7 @@ public class WellKnownController {
                 "    \"details\": [\n" +
                 "      {\n" +
                 "        \"appID\": \"" + iosTeamId + "." + iosBundleId + "\",\n" +
-                "        \"paths\": [ \"/share/recipes/*\" ]\n" +
+                "        \"paths\": [ \"/share/recipes/*\", \"/open\", \"/manage-subscription\", \"/security\" ]\n" +
                 "      }\n" +
                 "    ]\n" +
                 "  }\n" +

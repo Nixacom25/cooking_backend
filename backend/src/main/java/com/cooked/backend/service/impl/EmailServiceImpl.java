@@ -27,6 +27,8 @@ public class EmailServiceImpl implements EmailService {
         <html>
         <head>
             <meta charset="UTF-8">
+            <meta name="color-scheme" content="light">
+            <meta name="supported-color-schemes" content="light">
             <style>
                 body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F9FAFB; color: #1F2937; margin: 0; padding: 0; }
                 .container { max-width: 600px; margin: 40px auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB; }
@@ -70,6 +72,8 @@ public class EmailServiceImpl implements EmailService {
         <html>
         <head>
             <meta charset="UTF-8">
+            <meta name="color-scheme" content="light">
+            <meta name="supported-color-schemes" content="light">
             <style>
                 body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F9FAFB; color: #1F2937; margin: 0; padding: 0; }
                 .container { max-width: 600px; margin: 40px auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB; }
@@ -108,16 +112,26 @@ public class EmailServiceImpl implements EmailService {
         """;
 
     private static final String LOGO_URL = "https://res.cloudinary.com/davj7mdjj/image/upload/v1776889984/ai-recipe-app/branding/rz2853c3krx8s55ary25.png";
-    private static final String APP_HOME_URL = "https://cookedapp.com";
-    private static final String MANAGE_SUBSCRIPTION_URL = "https://cookedapp.com/manage-subscription";
+    // link.cookedapp.com is the domain this backend actually serves (see
+    // WellKnownController's apple-app-site-association "paths" and
+    // ShareController, which already use it) - a bare cookedapp.com link
+    // opens the marketing site in a browser instead of the app, since that
+    // domain's Universal Link association isn't controlled here.
+    private static final String APP_HOME_URL = "https://link.cookedapp.com/open";
+    private static final String MANAGE_SUBSCRIPTION_URL = "https://link.cookedapp.com/manage-subscription";
+    private static final String SECURITY_URL = "https://link.cookedapp.com/security";
 
-    private static final String BUTTON_STYLE = ".btn { display: inline-block; background-color: #C83A2D; color: #FFFFFF !important; text-decoration: none; font-weight: 700; font-size: 15px; padding: 14px 32px; border-radius: 999px; margin: 10px 0 20px; }";
+    // The app's actual brand red (see mobile/lib/core/theme/app_theme.dart
+    // AppColors.light.accent) - was a different, unbranded red before.
+    private static final String BUTTON_STYLE = ".btn { display: inline-block; background-color: #C31E26; color: #FFFFFF !important; text-decoration: none; font-weight: 700; font-size: 15px; padding: 14px 32px; border-radius: 999px; margin: 10px 0 20px; }";
 
     private static final String WELCOME_TEMPLATE = """
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="UTF-8">
+            <meta name="color-scheme" content="light">
+            <meta name="supported-color-schemes" content="light">
             <style>
                 body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F9FAFB; color: #1F2937; margin: 0; padding: 0; }
                 .container { max-width: 600px; margin: 40px auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB; }
@@ -158,6 +172,8 @@ public class EmailServiceImpl implements EmailService {
         <html>
         <head>
             <meta charset="UTF-8">
+            <meta name="color-scheme" content="light">
+            <meta name="supported-color-schemes" content="light">
             <style>
                 body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F9FAFB; color: #1F2937; margin: 0; padding: 0; }
                 .container { max-width: 600px; margin: 40px auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB; }
@@ -197,6 +213,8 @@ public class EmailServiceImpl implements EmailService {
         <html>
         <head>
             <meta charset="UTF-8">
+            <meta name="color-scheme" content="light">
+            <meta name="supported-color-schemes" content="light">
             <style>
                 body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F9FAFB; color: #1F2937; margin: 0; padding: 0; }
                 .container { max-width: 600px; margin: 40px auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB; }
@@ -244,6 +262,8 @@ public class EmailServiceImpl implements EmailService {
         <html>
         <head>
             <meta charset="UTF-8">
+            <meta name="color-scheme" content="light">
+            <meta name="supported-color-schemes" content="light">
             <style>
                 body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F9FAFB; color: #1F2937; margin: 0; padding: 0; }
                 .container { max-width: 600px; margin: 40px auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB; }
@@ -288,6 +308,8 @@ public class EmailServiceImpl implements EmailService {
         <html>
         <head>
             <meta charset="UTF-8">
+            <meta name="color-scheme" content="light">
+            <meta name="supported-color-schemes" content="light">
             <style>
                 body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F9FAFB; color: #1F2937; margin: 0; padding: 0; }
                 .container { max-width: 600px; margin: 40px auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB; }
@@ -334,6 +356,8 @@ public class EmailServiceImpl implements EmailService {
         <html>
         <head>
             <meta charset="UTF-8">
+            <meta name="color-scheme" content="light">
+            <meta name="supported-color-schemes" content="light">
             <style>
                 body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F9FAFB; color: #1F2937; margin: 0; padding: 0; }
                 .container { max-width: 600px; margin: 40px auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB; }
@@ -406,7 +430,7 @@ public class EmailServiceImpl implements EmailService {
                 String.format(NEW_DEVICE_TEMPLATE, BUTTON_STYLE, LOGO_URL, name,
                         device == null || device.isBlank() ? "Unknown device" : device,
                         location == null || location.isBlank() ? "Unknown location" : location,
-                        dateTime, APP_HOME_URL));
+                        dateTime, SECURITY_URL));
     }
 
     private static final String SUPPORT_TEAM_NOTIFICATION_TEMPLATE = """
