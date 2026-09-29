@@ -6,6 +6,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -42,6 +44,20 @@ public class AppLinkController {
     @GetMapping("/security")
     public ResponseEntity<Void> security() {
         return redirectTo(MARKETING_SITE);
+    }
+
+    @Operation(summary = "Redeem a gift (gift email button fallback)")
+    @GetMapping("/redeem")
+    public ResponseEntity<Void> redeem(@RequestParam(required = false) String code) {
+        return redirectTo(UriComponentsBuilder.fromUriString(MARKETING_SITE + "/redeem")
+                .queryParamIfPresent("code", java.util.Optional.ofNullable(code))
+                .build().encode().toUriString());
+    }
+
+    @Operation(summary = "Gift Cooked (share link fallback)")
+    @GetMapping("/gift")
+    public ResponseEntity<Void> gift() {
+        return redirectTo(MARKETING_SITE + "/gift");
     }
 
     private ResponseEntity<Void> redirectTo(String url) {

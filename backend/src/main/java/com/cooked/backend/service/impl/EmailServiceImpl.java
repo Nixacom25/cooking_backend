@@ -303,6 +303,51 @@ public class EmailServiceImpl implements EmailService {
         </html>
         """;
 
+    private static final String GIFT_CODE_TEMPLATE = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="color-scheme" content="light">
+            <meta name="supported-color-schemes" content="light">
+            <style>
+                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F9FAFB; color: #1F2937; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 40px auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB; }
+                .header { background-color: #FFFFFF; padding: 30px; text-align: center; border-bottom: 1px solid #E5E7EB; }
+                .content { padding: 40px; text-align: center; }
+                .code { display: inline-block; background: #FEF2F2; border: 1px dashed #C31E26; border-radius: 12px; padding: 16px 24px; margin: 10px 0 20px; font-family: 'Courier New', monospace; font-size: 22px; font-weight: 700; letter-spacing: 2px; color: #C31E26; }
+                .footer { padding: 30px; text-align: center; font-size: 13px; color: #6B7280; background-color: #F9FAFB; border-top: 1px solid #F3F4F6; }
+                h1 { font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #111827; }
+                p { line-height: 1.6; margin-bottom: 16px; font-size: 15px; }
+                .muted { font-size: 13px; color: #6B7280; }
+                .team { font-weight: 700; color: #111827; margin-top: 25px; }
+                .coordinates { color: #9CA3AF; margin-top: 5px; }
+                %s
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header"><img src="%s" alt="Cooked" style="height: 45px;"></div>
+                <div class="content">
+                    <h1>🎁 Your Cooked gift is ready</h1>
+                    <p>Hi %s,</p>
+                    <p>Thanks for gifting <strong>%s of Cooked Premium</strong>! Forward this email (or just the code below) to your friend.</p>
+                    <div class="code">%s</div>
+                    <p>To redeem, your friend opens the link below, or goes to <strong>Profile &rarr; Redeem a gift</strong> in the Cooked app and enters the code.</p>
+                    <a class="btn" href="%s">Redeem the gift</a>
+                    <p class="muted">Each code can be used once. Purchase is not refundable.</p>
+                    <p class="team">The Cooked Team</p>
+                </div>
+                <div class="footer">
+                    <p><strong>Cooked</strong></p>
+                    <p class="coordinates">contact@cookedapp.com</p>
+                    <p>&copy; 2026 Cooked. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """;
+
     private static final String PAYMENT_FAILURE_TEMPLATE = """
         <!DOCTYPE html>
         <html>
@@ -482,6 +527,14 @@ public class EmailServiceImpl implements EmailService {
         String name = displayName(firstName);
         sendHtmlEmail(to, "Action needed: Your Cooked payment didn't go through",
                 String.format(PAYMENT_FAILURE_TEMPLATE, BUTTON_STYLE, LOGO_URL, name, planName, price, MANAGE_SUBSCRIPTION_URL));
+    }
+
+    @Async
+    @Override
+    public void sendGiftCodeEmail(String to, String firstName, String planLabel, String code, String redeemUrl) {
+        String name = displayName(firstName);
+        sendHtmlEmail(to, "Your Cooked gift code (" + planLabel + ")",
+                String.format(GIFT_CODE_TEMPLATE, BUTTON_STYLE, LOGO_URL, name, planLabel, code, redeemUrl));
     }
 
     @Async

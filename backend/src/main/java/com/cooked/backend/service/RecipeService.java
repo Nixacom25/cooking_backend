@@ -48,6 +48,8 @@ public interface RecipeService {
         
         RecipeResponse togglePin(UUID id, String userEmail);
 
+        com.cooked.backend.dto.response.SavingsResponse getMySavings(String userEmail);
+
         org.springframework.data.domain.Page<RecipeResponse> getAdminRecipes(
                 com.cooked.backend.entity.RecipeOrigin origin,
                 String name,

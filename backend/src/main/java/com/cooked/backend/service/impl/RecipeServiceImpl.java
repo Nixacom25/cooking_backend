@@ -141,8 +141,7 @@ public class RecipeServiceImpl implements RecipeService {
                     .sourceUrl(request.getSourceUrl())
                     .steps(request.getSteps() != null ? request.getSteps() : new java.util.ArrayList<>())
                     .equipment(request.getEquipment() != null ? request.getEquipment() : new java.util.ArrayList<>())
-                    .origin(request.getOrigin() != null ? RecipeOrigin.valueOf(request.getOrigin().toUpperCase()) : 
-                            (request.getSourceUrl() != null && !request.getSourceUrl().isBlank() ? RecipeOrigin.IMPORT : RecipeOrigin.MANUAL))
+                    .origin(resolveCreateOrigin(request, recipeName))
                     .build();
         }
 
@@ -598,6 +597,68 @@ public class RecipeServiceImpl implements RecipeService {
         return mapToResponse(saved, user);
     }
 
+    /**
+     * The client can't be trusted to label a recipe as SCAN: a copy of a public
+     * Explore recipe (same name + image) is always stored as EXPLORE so it can
+     * never inflate the user's savings.
+     */
+    private RecipeOrigin resolveCreateOrigin(CreateRecipeRequest request, String recipeName) {
+        RecipeOrigin origin;
+        if (request.getOrigin() != null) {
+            try {
+                origin = RecipeOrigin.valueOf(request.getOrigin().trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException("Invalid recipe origin: " + request.getOrigin());
+            }
+        } else {
+            origin = request.getSourceUrl() != null && !request.getSourceUrl().isBlank()
+                    ? RecipeOrigin.IMPORT : RecipeOrigin.MANUAL;
+        }
+        if (origin == RecipeOrigin.SCAN && request.getImage() != null
+                && recipeRepository.existsByNameAndImageAndOriginAndIsPublicTrue(recipeName, request.getImage(), RecipeOrigin.EXPLORE)) {
+            return RecipeOrigin.EXPLORE;
+        }
+        return origin;
+    }
+
+    // Same formula as the mobile recipe detail "Estimated savings" card.
+    private static double estimatedSavings(Recipe r) {
+        int servings = (r.getServings() != null && r.getServings() > 0) ? r.getServings() : 2;
+        double pricePerServing = (r.getTotalPrice() != null && r.getTotalPrice() > 0)
+                ? r.getTotalPrice() / servings
+                : 3.50;
+        double restaurantPerServing = Math.max(pricePerServing * 2.5 + 5.0, 14.75);
+        return (restaurantPerServing - pricePerServing) * servings;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.cooked.backend.dto.response.SavingsResponse getMySavings(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        List<com.cooked.backend.dto.response.SavingsResponse.Item> items = new ArrayList<>();
+        Set<String> seenNames = new HashSet<>();
+        double total = 0.0;
+        for (Recipe recipe : recipeRepository.findSavingsScanRecipes(user.getId())) {
+            double savings = estimatedSavings(recipe);
+            total += savings;
+            String name = recipe.getName() != null ? recipe.getName().trim() : "";
+            boolean isCopy = !seenNames.add(name.toLowerCase());
+            items.add(com.cooked.backend.dto.response.SavingsResponse.Item.builder()
+                    .recipe(mapToResponse(recipe, user))
+                    .savings(Math.round(savings * 100.0) / 100.0)
+                    .displayName(isCopy ? "(Copy) " + name : name)
+                    .build());
+        }
+
+        return com.cooked.backend.dto.response.SavingsResponse.builder()
+                .totalSaved(Math.round(total * 100.0) / 100.0)
+                .recipeCount(items.size())
+                .recipes(items)
+                .build();
+    }
+
     private Recipe cloneRecipeForUser(Recipe original, User user) {
         Recipe clone = Recipe.builder()
                 .user(user)
@@ -613,7 +674,8 @@ public class RecipeServiceImpl implements RecipeService {
                 .steps(new ArrayList<>(original.getSteps()))
                 .equipment(new ArrayList<>(original.getEquipment()))
                 .isPublic(false) // Cloned recipes are private for the user
-                .origin(RecipeOrigin.SCAN)
+                // Saved from Explore: must never be treated as a scan (no savings).
+                .origin(RecipeOrigin.EXPLORE)
                 .sourceUrl(original.getSourceUrl())
                 .build();
 

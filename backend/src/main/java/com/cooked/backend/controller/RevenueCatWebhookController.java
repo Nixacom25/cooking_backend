@@ -1,5 +1,6 @@
 package com.cooked.backend.controller;
 
+import com.cooked.backend.entity.GiftPlan;
 import com.cooked.backend.entity.SubscriptionPayment;
 import com.cooked.backend.entity.SubscriptionStatus;
 import com.cooked.backend.entity.SubscriptionType;
@@ -7,6 +8,7 @@ import com.cooked.backend.entity.User;
 import com.cooked.backend.repository.SubscriptionPaymentRepository;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.service.EmailService;
+import com.cooked.backend.service.GiftService;
 import com.cooked.backend.service.PushNotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -36,6 +39,7 @@ public class RevenueCatWebhookController {
     private final EmailService emailService;
     private final PushNotificationService pushNotificationService;
     private final SubscriptionPaymentRepository subscriptionPaymentRepository;
+    private final GiftService giftService;
 
     @Value("${revenuecat.webhook.secret:}")
     private String webhookSecret;
@@ -54,7 +58,9 @@ public class RevenueCatWebhookController {
 
     public RevenueCatWebhookController(UserRepository userRepository, EmailService emailService,
             PushNotificationService pushNotificationService,
-            SubscriptionPaymentRepository subscriptionPaymentRepository) {
+            SubscriptionPaymentRepository subscriptionPaymentRepository,
+            GiftService giftService) {
+        this.giftService = giftService;
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.pushNotificationService = pushNotificationService;
@@ -102,6 +108,13 @@ public class RevenueCatWebhookController {
 
             log.info("RevenueCat Event: type={}, appUserId={}, productId={}", eventType, appUserId, productId);
 
+            // Gift cards are consumables bought for someone else: they must
+            // never activate the buyer's own subscription. Handled separately.
+            Optional<GiftPlan> giftPlan = GiftPlan.fromProductId(productId);
+            if (giftPlan.isPresent()) {
+                return handleGiftEvent(event, eventType, appUserId, giftPlan.get());
+            }
+
             // Validate product ID
             if (productId != null && !isValidProduct(productId)) {
                 log.warn("Invalid product ID in webhook: {}", productId);
@@ -113,14 +126,7 @@ public class RevenueCatWebhookController {
                 return ResponseEntity.ok(Map.of("status", "IGNORED_MISSING_USER_ID"));
             }
 
-            // Attempt to find user by email or UUID
-            Optional<User> userOpt = userRepository.findByEmail(appUserId);
-            if (userOpt.isEmpty()) {
-                try {
-                    UUID userId = UUID.fromString(appUserId);
-                    userOpt = userRepository.findById(userId);
-                } catch (IllegalArgumentException ignored) {}
-            }
+            Optional<User> userOpt = resolveUser(event, appUserId);
 
             if (userOpt.isEmpty()) {
                 log.warn("User not found for RevenueCat app_user_id: {}", appUserId);
@@ -216,6 +222,90 @@ public class RevenueCatWebhookController {
         } catch (Exception e) {
             log.error("Error processing RevenueCat webhook: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Finds our user from a RevenueCat event: app_user_id is our user id (the
+     * app calls Purchases.logIn with it), with fallbacks for email, the
+     * RevenueCat id synced by older app versions, and the event's aliases.
+     */
+    private Optional<User> resolveUser(Map<String, Object> event, String appUserId) {
+        List<String> candidates = new java.util.ArrayList<>();
+        if (appUserId != null) candidates.add(appUserId);
+        Object original = event.get("original_app_user_id");
+        if (original != null) candidates.add(original.toString());
+        Object aliases = event.get("aliases");
+        if (aliases instanceof List<?> list) {
+            list.forEach(a -> { if (a != null) candidates.add(a.toString()); });
+        }
+
+        for (String id : candidates) {
+            try {
+                Optional<User> byId = userRepository.findById(UUID.fromString(id));
+                if (byId.isPresent()) return byId;
+            } catch (IllegalArgumentException ignored) {}
+            Optional<User> byEmail = userRepository.findByEmail(id);
+            if (byEmail.isPresent()) return byEmail;
+            Optional<User> byRcId = userRepository.findFirstByRevenueCatCustomerId(id);
+            if (byRcId.isPresent()) return byRcId;
+        }
+        return Optional.empty();
+    }
+
+    private ResponseEntity<?> handleGiftEvent(Map<String, Object> event, String eventType, String appUserId, GiftPlan plan) {
+        Object transactionObj = event.get("transaction_id");
+        String transactionId = transactionObj != null ? transactionObj.toString() : null;
+
+        if ("REFUND".equalsIgnoreCase(eventType)) {
+            giftService.voidForRefund(transactionId);
+            return ResponseEntity.ok(Map.of("status", "GIFT_REFUNDED"));
+        }
+        if (!"NON_RENEWING_PURCHASE".equalsIgnoreCase(eventType) && !"INITIAL_PURCHASE".equalsIgnoreCase(eventType)) {
+            return ResponseEntity.ok(Map.of("status", "GIFT_EVENT_IGNORED"));
+        }
+
+        Object eventId = event.get("id");
+        if (eventId == null) {
+            log.warn("RevenueCat gift event has no id, cannot process idempotently");
+            return ResponseEntity.badRequest().body(Map.of("error", "Missing event id"));
+        }
+
+        Optional<User> userOpt = resolveUser(event, appUserId);
+        if (userOpt.isEmpty()) {
+            // Non-2xx so RevenueCat retries: the purchase is paid, the code must not be lost.
+            log.error("Gift purchase {} for unknown RevenueCat user {}", eventId, appUserId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "USER_NOT_FOUND"));
+        }
+        User user = userOpt.get();
+
+        String store = storeName(event.get("store"));
+        giftService.createFromPurchase(user, plan, "rc_" + eventId, transactionId, store);
+        recordPayment(event, user, "GIFT_" + plan.name(), store);
+        return ResponseEntity.ok(Map.of("status", "GIFT_CREATED"));
+    }
+
+    private String storeName(Object storeObj) {
+        return "PLAY_STORE".equalsIgnoreCase(String.valueOf(storeObj)) ? "Google"
+                : "APP_STORE".equalsIgnoreCase(String.valueOf(storeObj)) ? "Apple"
+                : storeObj != null ? storeObj.toString() : "Google";
+    }
+
+    private void recordPayment(Map<String, Object> event, User user, String planType, String store) {
+        try {
+            String paymentRef = "rc_" + event.get("id");
+            if (subscriptionPaymentRepository.existsByStripePaymentId(paymentRef)) return;
+            Object priceObj = event.get("price");
+            SubscriptionPayment payment = new SubscriptionPayment();
+            payment.setUser(user);
+            payment.setAmount(priceObj instanceof Number n ? BigDecimal.valueOf(n.doubleValue()) : BigDecimal.ZERO);
+            payment.setPlanType(planType);
+            payment.setStatus("SUCCESS");
+            payment.setStripePaymentId(paymentRef);
+            payment.setStore(store);
+            subscriptionPaymentRepository.save(payment);
+        } catch (Exception e) {
+            log.error("Failed to record gift payment for user {}: {}", user.getEmail(), e.getMessage());
         }
     }
 

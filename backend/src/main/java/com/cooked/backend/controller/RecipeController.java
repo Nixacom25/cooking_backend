@@ -105,6 +105,12 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.getMyRecipes(auth.getName()));
     }
 
+    @Operation(summary = "Get my savings (computed from scanned recipes only)")
+    @GetMapping("/savings")
+    public ResponseEntity<com.cooked.backend.dto.response.SavingsResponse> getMySavings(Authentication auth) {
+        return ResponseEntity.ok(recipeService.getMySavings(auth.getName()));
+    }
+
     @Operation(summary = "Get a specific Recipe")
     @GetMapping("/{id}")
     public ResponseEntity<RecipeResponse> getRecipe(@PathVariable UUID id, Authentication auth) {

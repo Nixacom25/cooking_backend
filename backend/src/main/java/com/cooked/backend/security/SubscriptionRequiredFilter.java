@@ -119,6 +119,9 @@ public class SubscriptionRequiredFilter extends OncePerRequestFilter {
                 path.startsWith("/recipes/trending-ai") ||
                 path.startsWith("/share") ||
                 path.startsWith("/support/submit") ||
+                path.startsWith("/gifts/") ||
+                path.equals("/redeem") ||
+                path.equals("/gift") ||
                 path.startsWith("/.well-known") ||
                 path.startsWith("/webhooks") ||
                 path.startsWith("/actuator") ||

@@ -18,6 +18,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Map;
 import java.util.Optional;
+import com.cooked.backend.entity.GiftPlan;
+import com.cooked.backend.service.GiftService;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -28,6 +30,7 @@ class RevenueCatWebhookControllerTest {
     private EmailService emailService;
     private PushNotificationService pushNotificationService;
     private SubscriptionPaymentRepository subscriptionPaymentRepository;
+    private GiftService giftService;
     private RevenueCatWebhookController controller;
 
     @BeforeEach
@@ -36,8 +39,9 @@ class RevenueCatWebhookControllerTest {
         emailService = mock(EmailService.class);
         pushNotificationService = mock(PushNotificationService.class);
         subscriptionPaymentRepository = mock(SubscriptionPaymentRepository.class);
+        giftService = mock(GiftService.class);
         controller = new RevenueCatWebhookController(userRepository, emailService, pushNotificationService,
-                subscriptionPaymentRepository);
+                subscriptionPaymentRepository, giftService);
     }
 
     @Test
@@ -229,5 +233,68 @@ class RevenueCatWebhookControllerTest {
                 .sendPush(isNull(), anyString(), anyString(), anyMap());
         // A billing issue alone doesn't change entitlement - only EXPIRATION/CANCELLATION do.
         verify(userRepository, never()).save(any());
+    }
+    @Test
+    void testGiftPurchase_CreatesCodeWithoutActivatingBuyer() {
+        User buyer = User.builder()
+                .email("buyer@cookedapp.com")
+                .password("password")
+                .role(Role.CLIENT)
+                .status(Status.ACTIVE)
+                .subscriptionStatus(SubscriptionStatus.FREE)
+                .build();
+        when(userRepository.findByEmail("buyer@cookedapp.com")).thenReturn(Optional.of(buyer));
+
+        Map<String, Object> payload = Map.of(
+                "event", Map.of(
+                        "id", "evt_gift_1",
+                        "type", "NON_RENEWING_PURCHASE",
+                        "app_user_id", "buyer@cookedapp.com",
+                        "product_id", "gift_1_year",
+                        "transaction_id", "tx_gift_1",
+                        "price", 39.99,
+                        "store", "APP_STORE"
+                )
+        );
+
+        ResponseEntity<?> response = controller.handleWebhook(null, payload);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        verify(giftService).createFromPurchase(buyer, GiftPlan.ONE_YEAR, "rc_evt_gift_1", "tx_gift_1", "Apple");
+        verify(userRepository, never()).save(any());
+        assertEquals(SubscriptionStatus.FREE, buyer.getSubscriptionStatus());
+    }
+
+    @Test
+    void testGiftPurchase_UnknownUserIsRetried() {
+        Map<String, Object> payload = Map.of(
+                "event", Map.of(
+                        "id", "evt_gift_2",
+                        "type", "NON_RENEWING_PURCHASE",
+                        "app_user_id", "$RCAnonymousID:abc",
+                        "product_id", "gift_3_months"
+                )
+        );
+
+        ResponseEntity<?> response = controller.handleWebhook(null, payload);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        verifyNoInteractions(giftService);
+    }
+
+    @Test
+    void testGiftRefund_VoidsCode() {
+        Map<String, Object> payload = Map.of(
+                "event", Map.of(
+                        "id", "evt_gift_3",
+                        "type", "REFUND",
+                        "app_user_id", "buyer@cookedapp.com",
+                        "product_id", "gift_1_year",
+                        "transaction_id", "tx_gift_1"
+                )
+        );
+
+        ResponseEntity<?> response = controller.handleWebhook(null, payload);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(giftService).voidForRefund("tx_gift_1");
     }
 }

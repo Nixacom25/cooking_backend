@@ -25,6 +25,20 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
         List<Recipe> findAllByUserIdAndOriginNot(UUID userId, com.cooked.backend.entity.RecipeOrigin origin);
         
+        // SCAN recipes that really come from a scan. Excludes copies of public
+        // Explore recipes that older app/backend versions saved as SCAN (same
+        // name + image as a public EXPLORE recipe), so they never count as savings.
+        @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.user.id = :userId " +
+                        "AND r.origin = com.cooked.backend.entity.RecipeOrigin.SCAN " +
+                        "AND (r.isDeleted IS NULL OR r.isDeleted = false) " +
+                        "AND NOT EXISTS (SELECT 1 FROM Recipe e WHERE e.origin = com.cooked.backend.entity.RecipeOrigin.EXPLORE " +
+                        "AND e.isPublic = true AND e.id <> r.id AND e.name = r.name AND e.image = r.image) " +
+                        "ORDER BY r.createdAt DESC")
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
+        List<Recipe> findSavingsScanRecipes(@org.springframework.data.repository.query.Param("userId") UUID userId);
+
+        boolean existsByNameAndImageAndOriginAndIsPublicTrue(String name, String image, com.cooked.backend.entity.RecipeOrigin origin);
+
         Optional<Recipe> findFirstByUserIdAndOriginNotInOrderByCreatedAtAsc(UUID userId, List<com.cooked.backend.entity.RecipeOrigin> origins);
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
         List<Recipe> findAllByUserIdAndOriginOrderByCreatedAtDesc(UUID userId, com.cooked.backend.entity.RecipeOrigin origin);

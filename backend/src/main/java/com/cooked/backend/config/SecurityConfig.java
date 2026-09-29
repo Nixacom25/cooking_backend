@@ -80,6 +80,8 @@ public class SecurityConfig {
                                 "/open",
                                 "/manage-subscription",
                                 "/security",
+                                "/redeem",
+                                "/gift",
                                 "/support/submit",
                                 "/.well-known/**",
                                 "/webhooks/**",
