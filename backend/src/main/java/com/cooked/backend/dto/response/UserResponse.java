@@ -47,6 +47,12 @@ public class UserResponse {
     private LocalDateTime createdAt;
     private boolean suggestionsReady;
     private boolean pushEnabled;
+    /**
+     * False only for an account that was created but never finished
+     * onboarding (left at the subscription step): it never had a
+     * subscription and never reached the end of onboarding.
+     */
+    private boolean onboardingCompleted = true;
     private boolean pushRemindersEnabled;
     private boolean pushNewsOffersEnabled;
 
@@ -133,6 +139,8 @@ public class UserResponse {
     public void setSuggestionsReady(boolean suggestionsReady) { this.suggestionsReady = suggestionsReady; }
     public boolean isPushEnabled() { return pushEnabled; }
     public void setPushEnabled(boolean pushEnabled) { this.pushEnabled = pushEnabled; }
+    public boolean isOnboardingCompleted() { return onboardingCompleted; }
+    public void setOnboardingCompleted(boolean onboardingCompleted) { this.onboardingCompleted = onboardingCompleted; }
     public boolean isPushRemindersEnabled() { return pushRemindersEnabled; }
     public void setPushRemindersEnabled(boolean pushRemindersEnabled) { this.pushRemindersEnabled = pushRemindersEnabled; }
     public boolean isPushNewsOffersEnabled() { return pushNewsOffersEnabled; }

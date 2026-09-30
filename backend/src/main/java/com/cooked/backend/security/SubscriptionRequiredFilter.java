@@ -34,7 +34,7 @@ public class SubscriptionRequiredFilter extends OncePerRequestFilter {
 
         // Skip subscription check for public endpoints
         String path = request.getRequestURI();
-        if (isPublicEndpoint(path)) {
+        if (isPublicEndpoint(path) || !requiresSubscription(request.getMethod(), path)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -100,6 +100,28 @@ public class SubscriptionRequiredFilter extends OncePerRequestFilter {
         return false;
     }
 
+    /**
+     * Only these actions need an active subscription. Everything else stays
+     * available to a signed-in user whose subscription lapsed: reading their
+     * data, deleting their own content, and managing their account. The app
+     * shows the paywall when one of these returns SUBSCRIPTION_REQUIRED.
+     * New premium endpoints must be added here.
+     */
+    static boolean requiresSubscription(String method, String path) {
+        if (method == null) return false;
+        switch (method.toUpperCase()) {
+            case "GET", "HEAD", "OPTIONS", "DELETE":
+                return false;
+            default:
+                break;
+        }
+        return path.startsWith("/recipes")          // scan, import, AI generation, save
+                || path.startsWith("/cookbooks")     // create / edit cookbooks
+                || path.startsWith("/grocery-items") // add / tick grocery items
+                || path.startsWith("/ingredients")   // saved ingredients
+                || path.startsWith("/meal-plans");
+    }
+
     private boolean isPublicEndpoint(String path) {
         return path.equals("/") ||
                 path.startsWith("/auth/") ||
@@ -119,6 +141,11 @@ public class SubscriptionRequiredFilter extends OncePerRequestFilter {
                 path.startsWith("/recipes/trending-ai") ||
                 path.startsWith("/share") ||
                 path.startsWith("/support/submit") ||
+                // A signed-in user without a subscription must still load
+                // their profile (to be shown the paywall), sync a purchase
+                // they just made, and delete their account (App Store rule).
+                path.equals("/user/me") ||
+                path.startsWith("/user/sync-subscription") ||
                 path.startsWith("/gifts/") ||
                 path.equals("/redeem") ||
                 path.equals("/gift") ||
