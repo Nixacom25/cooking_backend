@@ -423,7 +423,7 @@ public class EmailServiceImpl implements EmailService {
                     <h1>Your Cooked free trial ends tomorrow</h1>
                     <p>Hi %s,</p>
                     <p>Your Cooked free trial ends tomorrow.</p>
-                    <p>After your trial ends, your %s subscription will automatically begin at %s.</p>
+                    <p>After your trial ends, your %s subscription will automatically begin%s.</p>
                     <p>If you'd like to continue using Cooked, there's nothing you need to do.</p>
                     <p>You can manage or cancel your subscription through your subscription settings.</p>
                     <a class="btn" href="%s">Manage Subscription</a>
@@ -542,7 +542,8 @@ public class EmailServiceImpl implements EmailService {
     public void sendTrialEndsTomorrowEmail(String to, String firstName, String planName, String price) {
         String name = displayName(firstName);
         sendHtmlEmail(to, "Your Cooked free trial ends tomorrow",
-                String.format(TRIAL_ENDS_TEMPLATE, BUTTON_STYLE, LOGO_URL, name, planName, price, MANAGE_SUBSCRIPTION_URL));
+                String.format(TRIAL_ENDS_TEMPLATE, BUTTON_STYLE, LOGO_URL, name, planName,
+                        price != null && !price.isBlank() ? " at " + price : "", MANAGE_SUBSCRIPTION_URL));
     }
 
     @Async

@@ -78,6 +78,11 @@ public class User implements UserDetails {
     @Column(columnDefinition = "TEXT")
     private String revenueCatCustomerId;
 
+    // Localized store price of the user's plan as shown by the App Store /
+    // Play Store (e.g. "$29.99/year", "29,99 €/year"), reported by the app.
+    // Used in reminders instead of a hardcoded price.
+    private String planPriceLabel;
+
     @ElementCollection
     @CollectionTable(name = "user_dietary_preferences", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "preference")
@@ -430,6 +435,8 @@ public class User implements UserDetails {
     public void setIapReceiptData(String iapReceiptData) { this.iapReceiptData = iapReceiptData; }
 
     public String getRevenueCatCustomerId() { return revenueCatCustomerId; }
+    public String getPlanPriceLabel() { return planPriceLabel; }
+    public void setPlanPriceLabel(String planPriceLabel) { this.planPriceLabel = planPriceLabel; }
     public void setRevenueCatCustomerId(String revenueCatCustomerId) { this.revenueCatCustomerId = revenueCatCustomerId; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }

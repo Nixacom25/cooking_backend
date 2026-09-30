@@ -63,9 +63,11 @@ public class PaywallService {
         // Forced English as per user request
         variant.setTitle(isOffer ? "Special comeback offer" : "Start your 3-day FREE trial to continue.");
         variant.setSubtitle(isOffer ? "This is your last chance!" : "Unlock all Cooked features");
-        variant.setMonthlyPriceLabel(isOffer ? "$9.99 / month" : "$9.99 / month");
-        variant.setYearlyPriceLabel(isOffer ? "$19.99 / year" : "$2.49 / mo"); 
-        variant.setCtaText(isOffer ? "Unlock Premium for $19.99" : "Subscribe now");
+        // No prices here: the app shows the real App Store / Play Store
+        // prices (localized) straight from the store via RevenueCat.
+        variant.setMonthlyPriceLabel(null);
+        variant.setYearlyPriceLabel(null);
+        variant.setCtaText(isOffer ? "Unlock Premium" : "Subscribe now");
         variant.setDiscountLabel(isOffer ? "LIMITED OFFER: 33% OFF" : "");
         variant.setFeaturesJson("[\"Unlimited AI Generation\", \"Unlimited Ingredient Scan\", \"TikTok/IG Recipe Import\"]");
         

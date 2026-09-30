@@ -436,6 +436,11 @@ public class UserServiceImpl implements UserService {
         String revenueCatCustomerId = (String) subscriptionData.get("revenueCatCustomerId");
 
         // Update RevenueCat customer ID
+        Object priceLabel = subscriptionData.get("priceLabel");
+        if (priceLabel instanceof String label && !label.isBlank() && label.length() <= 40) {
+            user.setPlanPriceLabel(label.trim());
+        }
+
         if (revenueCatCustomerId != null && !revenueCatCustomerId.isEmpty()) {
             user.setRevenueCatCustomerId(revenueCatCustomerId);
         }

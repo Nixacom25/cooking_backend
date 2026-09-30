@@ -1,13 +1,10 @@
 package com.cooked.backend.service;
 
 import com.cooked.backend.entity.User;
-import com.cooked.backend.entity.UserSubscription;
 import com.cooked.backend.repository.UserRepository;
-import com.cooked.backend.repository.UserSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -25,15 +22,8 @@ public class TrialReminderService {
     private static final Logger log = LoggerFactory.getLogger(TrialReminderService.class);
 
     private final UserRepository userRepository;
-    private final UserSubscriptionRepository userSubscriptionRepository;
     private final EmailService emailService;
     private final PushNotificationService pushNotificationService;
-
-    @Value("${subscription.monthly.price:$9.99/month}")
-    private String monthlyPrice;
-
-    @Value("${subscription.yearly.price:$59.99/year}")
-    private String yearlyPrice;
 
     @Scheduled(cron = "0 15 * * * ?")
     public void sendTrialEndingReminders() {
@@ -48,18 +38,22 @@ public class TrialReminderService {
         log.info("Sending trial-ends-tomorrow reminder to {} user(s)", endingSoon.size());
 
         for (User user : endingSoon) {
-            boolean isYearly = userSubscriptionRepository.findByUserId(user.getId())
-                    .map(UserSubscription::getIsYearly)
-                    .map(Boolean::booleanValue)
-                    .orElse(false);
-
-            String planName = isYearly ? "Yearly" : "Monthly";
-            String price = isYearly ? yearlyPrice : monthlyPrice;
+            // Only the yearly plan has a free trial (monthly is paid from day
+            // one), so a trial always converts to yearly. The legacy
+            // UserSubscription.isYearly flag defaulted to false at sign-up and
+            // is never updated by RevenueCat purchases - reading it made every
+            // reminder say "Monthly".
+            String planName = "Yearly";
+            // Real store price reported by the app (localized); never a
+            // hardcoded amount. Omitted when unknown.
+            String price = user.getPlanPriceLabel();
 
             emailService.sendTrialEndsTomorrowEmail(user.getEmail(), user.getFirstname(), planName, price);
             if (user.isPushEnabled() && user.isPushRemindersEnabled()) {
-                pushNotificationService.sendPush(user.getFcmToken(), "Your trial ends tomorrow",
-                        "Your " + planName + " trial (" + price + ") ends tomorrow. Keep cooking without interruption.",
+                pushNotificationService.sendPush(user.getFcmToken(), "Your free trial ends tomorrow",
+                        "Your 3-day free trial ends tomorrow, then your " + planName + " plan"
+                                + (price != null ? " (" + price + ")" : "")
+                                + " starts. Keep cooking without interruption.",
                         java.util.Map.of("type", "trial_ends_tomorrow"));
             }
 
