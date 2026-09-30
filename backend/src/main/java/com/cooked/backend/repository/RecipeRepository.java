@@ -89,6 +89,9 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         org.springframework.data.domain.Page<Recipe> findByUserIdAndOriginOrderByCreatedAtDesc(
                         UUID userId, com.cooked.backend.entity.RecipeOrigin origin, org.springframework.data.domain.Pageable pageable);
 
+        org.springframework.data.domain.Page<Recipe> findByUserIdAndOriginAndIsDeletedFalseOrderByCreatedAtDesc(
+                        UUID userId, com.cooked.backend.entity.RecipeOrigin origin, org.springframework.data.domain.Pageable pageable);
+
         @org.springframework.data.jpa.repository.Modifying
         @org.springframework.transaction.annotation.Transactional
         int deleteByOriginAndExpiresAtBefore(com.cooked.backend.entity.RecipeOrigin origin, java.time.LocalDateTime now);

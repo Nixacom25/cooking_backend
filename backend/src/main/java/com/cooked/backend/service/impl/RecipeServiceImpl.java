@@ -114,6 +114,8 @@ public class RecipeServiceImpl implements RecipeService {
         
         if (existingRecipe.isPresent()) {
             recipe = existingRecipe.get();
+            // Saving again a recipe the user had deleted restores it.
+            recipe.setDeleted(false);
             // Update existing recipe fields if necessary (optional, but good for refresh)
             if (request.getImage() != null) recipe.setImage(request.getImage());
             if (request.getCookTime() != null) recipe.setCookTime(request.getCookTime());
@@ -245,6 +247,9 @@ public class RecipeServiceImpl implements RecipeService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return recipeRepository.findAllByUserIdAndOriginNot(user.getId(), RecipeOrigin.SUGGESTED).stream()
+                // Deleting is a soft delete: without this filter a deleted
+                // recipe came back on the next refresh.
+                .filter(recipe -> !recipe.isDeleted())
                 .map(recipe -> mapToResponse(recipe, user))
                 .collect(Collectors.toList());
     }
@@ -447,7 +452,7 @@ public class RecipeServiceImpl implements RecipeService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         // Return all recipes with origin IMPORT, whether validated or not
-        return recipeRepository.findByUserIdAndOriginOrderByCreatedAtDesc(user.getId(), RecipeOrigin.IMPORT, pageable)
+        return recipeRepository.findByUserIdAndOriginAndIsDeletedFalseOrderByCreatedAtDesc(user.getId(), RecipeOrigin.IMPORT, pageable)
                 .map(recipe -> mapToResponse(recipe, user));
     }
 
@@ -482,6 +487,7 @@ public class RecipeServiceImpl implements RecipeService {
 
         if (existingRecipe.isPresent()) {
             recipe = existingRecipe.get();
+            recipe.setDeleted(false); // re-importing a deleted recipe restores it
             // Update fields if it's already an IMPORT or SUGGESTED or SCAN
             recipe.setImage(request.getImage());
             recipe.setCookTime(request.getCookTime());
@@ -573,7 +579,13 @@ public class RecipeServiceImpl implements RecipeService {
                 // Check for duplicate by name for this user to avoid multiple clones
                 Optional<Recipe> existing = recipeRepository.findByUserIdAndName(user.getId(), recipe.getName());
                 if (existing.isPresent()) {
-                    return mapToResponse(existing.get(), user);
+                    Recipe mine = existing.get();
+                    if (mine.isDeleted()) {
+                        // Saving it again from Explore restores the copy.
+                        mine.setDeleted(false);
+                        mine = recipeRepository.save(mine);
+                    }
+                    return mapToResponse(mine, user);
                 }
                 
                 Recipe clone = cloneRecipeForUser(recipe, user);
