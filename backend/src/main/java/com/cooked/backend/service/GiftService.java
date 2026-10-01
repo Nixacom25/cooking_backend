@@ -17,4 +17,13 @@ public interface GiftService {
     List<GiftCodeResponse> getMyGifts(String userEmail);
 
     GiftRedeemResponse redeem(String userEmail, String rawCode);
+
+    /** Plans sold on the website, with their server-side prices. */
+    java.util.List<java.util.Map<String, Object>> webPlans();
+
+    /** Validates the website form and returns a Stripe Checkout URL. */
+    String startWebCheckout(String plan, String purchaserEmail, String recipientEmail, String senderName, String clientKey);
+
+    /** Stripe confirmed payment (verified webhook): create + email the code. Idempotent. */
+    void createFromWebPurchase(com.fasterxml.jackson.databind.JsonNode checkoutSession);
 }

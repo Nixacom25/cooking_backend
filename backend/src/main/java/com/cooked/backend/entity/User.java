@@ -136,6 +136,9 @@ public class User implements UserDetails {
     private String spiceLevel;
     @Column(columnDefinition = "TEXT")
     private String cookingSkill;
+    /** App language picked by the user, e.g. "US English", "FR Français". */
+    @Column(length = 40)
+    private String language;
     @Column(columnDefinition = "TEXT")
     private String cookingTimePreference;
     @Column(columnDefinition = "TEXT")
@@ -342,6 +345,8 @@ public class User implements UserDetails {
     public void setSpiceLevel(String spiceLevel) { this.spiceLevel = spiceLevel; }
     public String getCookingSkill() { return cookingSkill; }
     public void setCookingSkill(String cookingSkill) { this.cookingSkill = cookingSkill; }
+    public String getLanguage() { return language; }
+    public void setLanguage(String language) { this.language = language; }
     public String getCookingTimePreference() { return cookingTimePreference; }
     public void setCookingTimePreference(String cookingTimePreference) { this.cookingTimePreference = cookingTimePreference; }
     public String getCookingFrequency() { return cookingFrequency; }

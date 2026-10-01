@@ -57,7 +57,9 @@ public class BackendApplication {
 					"ALTER TABLE grocery_items ALTER COLUMN quantity TYPE TEXT",
 					"ALTER TABLE activities ALTER COLUMN title TYPE TEXT",
 					"ALTER TABLE trending_dishes ALTER COLUMN name TYPE TEXT",
-					"ALTER TABLE subscription_payments ALTER COLUMN stripe_payment_id TYPE TEXT"
+					"ALTER TABLE subscription_payments ALTER COLUMN stripe_payment_id TYPE TEXT",
+					// Website gifts have no buyer account.
+					"ALTER TABLE gift_codes ALTER COLUMN purchaser_id DROP NOT NULL"
 				};
 
 				for (String sql : tablesToFix) {

@@ -52,6 +52,23 @@ public class AiServiceImpl implements AiService {
     private final SubscriptionService subscriptionService;
     private final com.cooked.backend.repository.IngredientRepository ingredientRepository;
 
+    /**
+     * Makes the AI write user-facing text in the app language the user picked
+     * (profile "language", e.g. "FR Français"). JSON keys stay in English so
+     * parsing is unchanged; English users get the prompt as before.
+     */
+    static String languageInstruction(User user) {
+        String language = user != null && user.getLanguage() != null
+                ? user.getLanguage().trim().toUpperCase()
+                : "";
+        String name;
+        if (language.startsWith("FR")) name = "French";
+        else if (language.startsWith("ES")) name = "Spanish";
+        else return "";
+        return " LANGUAGE: Write every human-readable value (recipe name, ingredient names, quantities/units, steps, tips, reasons) in "
+                + name + ". Keep the JSON keys exactly as specified, in English.";
+    }
+
     private void verifyAiAccess(User user) {
         if (!subscriptionService.hasAiAccess(user)) {
             throw new PaymentRequiredException("AI access requires a premium subscription or active trial period.");
@@ -82,7 +99,7 @@ public class AiServiceImpl implements AiService {
                         String.join(", ", user.getDietaryPreferences()),
                         RECIPE_JSON_FORMAT);
 
-                String responseJson = sanitizeJson(callOpenAiVision(url, visionPrompt));
+                String responseJson = sanitizeJson(callOpenAiVision(url, visionPrompt + languageInstruction(user)));
                 CreateRecipeRequest req = objectMapper.readValue(responseJson, CreateRecipeRequest.class);
                 req.setSourceUrl(url);
                 return req;
@@ -115,7 +132,7 @@ public class AiServiceImpl implements AiService {
                     doc.title(),
                     RECIPE_JSON_FORMAT);
 
-            String responseJson = sanitizeJson(callOpenAi("Extract recipe from link", scrapingPrompt, "gpt-4o"));
+            String responseJson = sanitizeJson(callOpenAi("Extract recipe from link", scrapingPrompt + languageInstruction(user), "gpt-4o"));
             CreateRecipeRequest req = objectMapper.readValue(responseJson, CreateRecipeRequest.class);
             req.setSourceUrl(url);
             return req;
@@ -186,7 +203,7 @@ public class AiServiceImpl implements AiService {
                     String.join(", ", user.getAllergies()),
                     String.join(", ", user.getDietaryPreferences()));
 
-            String responseJson = sanitizeJson(callOpenAiVision(imageUrl, detectionPrompt));
+            String responseJson = sanitizeJson(callOpenAiVision(imageUrl, detectionPrompt + languageInstruction(user)));
             AiIngredientDetectionResponse res = objectMapper.readValue(responseJson, AiIngredientDetectionResponse.class);
             if (res.getAllowed_ingredients() != null) {
                 for (com.cooked.backend.dto.request.IngredientPayload p : res.getAllowed_ingredients()) {
@@ -237,7 +254,7 @@ public class AiServiceImpl implements AiService {
                     user.getGroceryBudget() != null ? user.getGroceryBudget() : "Any",
                     RECIPE_JSON_FORMAT);
 
-            String recipesJson = sanitizeJson(callOpenAi("Generate recipes", generationPrompt, model));
+            String recipesJson = sanitizeJson(callOpenAi("Generate recipes", generationPrompt + languageInstruction(user), model));
             JsonNode recipesNode = objectMapper.readTree(recipesJson);
             return objectMapper.convertValue(recipesNode.path("recipes"), new TypeReference<List<CreateRecipeRequest>>() {});
         } catch (Exception e) {
@@ -269,7 +286,7 @@ public class AiServiceImpl implements AiService {
                     user.getGroceryBudget() != null ? user.getGroceryBudget() : "Any",
                     RECIPE_JSON_FORMAT);
 
-            String recipesJson = sanitizeJson(callOpenAi("Generate initial recipes", generationPrompt));
+            String recipesJson = sanitizeJson(callOpenAi("Generate initial recipes", generationPrompt + languageInstruction(user)));
             JsonNode recipesNode = objectMapper.readTree(recipesJson);
             return objectMapper.convertValue(recipesNode.path("recipes"), new TypeReference<List<CreateRecipeRequest>>() {});
         } catch (Exception e) {
@@ -325,7 +342,7 @@ public class AiServiceImpl implements AiService {
                     String.join(", ", user.getAllergies()),
                     String.join(", ", user.getDietaryPreferences()));
 
-            String responseJson = sanitizeJson(callOpenAi("Categorize ingredients", categorizationPrompt, "gpt-4o-mini"));
+            String responseJson = sanitizeJson(callOpenAi("Categorize ingredients", categorizationPrompt + languageInstruction(user), "gpt-4o-mini"));
             AiIngredientDetectionResponse categorization = objectMapper.readValue(responseJson, AiIngredientDetectionResponse.class);
 
             List<String> allowedNames = categorization.getAllowed_ingredients().stream()

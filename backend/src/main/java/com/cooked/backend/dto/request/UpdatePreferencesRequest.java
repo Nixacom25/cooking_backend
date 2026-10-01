@@ -24,6 +24,7 @@ public class UpdatePreferencesRequest {
     private java.util.Map<String, Integer> flavorDna;
     private String spiceLevel;
     private String cookingSkill;
+    private String language;
     private String cookingTimePreference;
     private String cookingFrequency;
     private String cookingTarget;

@@ -1,5 +1,7 @@
 package com.cooked.backend.service.impl;
 
+import org.springframework.web.util.HtmlUtils;
+
 import com.cooked.backend.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
@@ -303,6 +305,107 @@ public class EmailServiceImpl implements EmailService {
         </html>
         """;
 
+    private static final String GIFT_RECEIPT_TEMPLATE = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="color-scheme" content="light">
+            <meta name="supported-color-schemes" content="light">
+            <style>
+                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F9FAFB; color: #1F2937; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 40px auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB; }
+                .header { background-color: #FFFFFF; padding: 30px; text-align: center; border-bottom: 1px solid #E5E7EB; }
+                .content { padding: 40px; text-align: center; }
+                .code { display: inline-block; background: #FEF2F2; border: 1px dashed #C31E26; border-radius: 12px; padding: 16px 24px; margin: 10px 0 20px; font-family: 'Courier New', monospace; font-size: 22px; font-weight: 700; letter-spacing: 2px; color: #C31E26; }
+                .steps { text-align: left; background: #F9FAFB; border-radius: 12px; padding: 16px 20px; margin: 10px 0 20px; font-size: 14px; }
+                .steps li { margin: 6px 0; }
+                .footer { padding: 30px; text-align: center; font-size: 13px; color: #6B7280; background-color: #F9FAFB; border-top: 1px solid #F3F4F6; }
+                h1 { font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #111827; }
+                p { line-height: 1.6; margin-bottom: 16px; font-size: 15px; }
+                .muted { font-size: 13px; color: #6B7280; }
+                .team { font-weight: 700; color: #111827; margin-top: 25px; }
+                .coordinates { color: #9CA3AF; margin-top: 5px; }
+                %s
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header"><img src="%s" alt="Cooked" style="height: 45px;"></div>
+                <div class="content">
+                    <h1>Thank you for your gift 🎁</h1>
+                    <p>Your <strong>%s of Cooked Premium</strong> gift is paid. We've emailed it to <strong>%s</strong>.</p>
+                    <p>Here is the code too, in case you'd rather give it yourself:</p>
+                    <div class="code">%s</div>
+                    <ol class="steps">
+                        <li>Download <strong>Cooked</strong> on the App Store or Google Play.</li>
+                        <li>Create your account.</li>
+                        <li>On the subscription screen, tap <strong>"Do you have a referral code?"</strong> and enter the code.</li>
+                    </ol>
+                    <a class="btn" href="%s">Redeem link</a>
+                    <p class="muted">Each code can be used once. Purchase is not refundable.</p>
+                    <p class="team">The Cooked Team</p>
+                </div>
+                <div class="footer">
+                    <p><strong>Cooked</strong></p>
+                    <p class="coordinates">contact@cookedapp.com</p>
+                    <p>&copy; 2026 Cooked. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """;
+
+    private static final String GIFT_RECEIVED_TEMPLATE = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="color-scheme" content="light">
+            <meta name="supported-color-schemes" content="light">
+            <style>
+                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F9FAFB; color: #1F2937; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 40px auto; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB; }
+                .header { background-color: #FFFFFF; padding: 30px; text-align: center; border-bottom: 1px solid #E5E7EB; }
+                .content { padding: 40px; text-align: center; }
+                .code { display: inline-block; background: #FEF2F2; border: 1px dashed #C31E26; border-radius: 12px; padding: 16px 24px; margin: 10px 0 20px; font-family: 'Courier New', monospace; font-size: 22px; font-weight: 700; letter-spacing: 2px; color: #C31E26; }
+                .steps { text-align: left; background: #F9FAFB; border-radius: 12px; padding: 16px 20px; margin: 10px 0 20px; font-size: 14px; }
+                .steps li { margin: 6px 0; }
+                .footer { padding: 30px; text-align: center; font-size: 13px; color: #6B7280; background-color: #F9FAFB; border-top: 1px solid #F3F4F6; }
+                h1 { font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #111827; }
+                p { line-height: 1.6; margin-bottom: 16px; font-size: 15px; }
+                .muted { font-size: 13px; color: #6B7280; }
+                .team { font-weight: 700; color: #111827; margin-top: 25px; }
+                .coordinates { color: #9CA3AF; margin-top: 5px; }
+                %s
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header"><img src="%s" alt="Cooked" style="height: 45px;"></div>
+                <div class="content">
+                    <h1>You've been gifted Cooked 🎁</h1>
+                    <p><strong>%s</strong> gifted you <strong>%s of Cooked Premium</strong>.</p>
+                    <div class="code">%s</div>
+                    <ol class="steps">
+                        <li>Download <strong>Cooked</strong> on the App Store or Google Play.</li>
+                        <li>Create your account.</li>
+                        <li>On the subscription screen, tap <strong>"Do you have a referral code?"</strong> and enter the code.</li>
+                    </ol>
+                    <a class="btn" href="%s">Redeem my gift</a>
+                    <p class="muted">This code can be used once.</p>
+                    <p class="team">The Cooked Team</p>
+                </div>
+                <div class="footer">
+                    <p><strong>Cooked</strong></p>
+                    <p class="coordinates">contact@cookedapp.com</p>
+                    <p>&copy; 2026 Cooked. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """;
+
     private static final String GIFT_CODE_TEMPLATE = """
         <!DOCTYPE html>
         <html>
@@ -333,7 +436,7 @@ public class EmailServiceImpl implements EmailService {
                     <p>Hi %s,</p>
                     <p>Thanks for gifting <strong>%s of Cooked Premium</strong>! Forward this email (or just the code below) to your friend.</p>
                     <div class="code">%s</div>
-                    <p>To redeem, your friend opens the link below, or goes to <strong>Profile &rarr; Redeem a gift</strong> in the Cooked app and enters the code.</p>
+                    <p>To redeem, your friend opens the link below, or enters the code in the Cooked app on the subscription screen, under <strong>"Do you have a referral code?"</strong>.</p>
                     <a class="btn" href="%s">Redeem the gift</a>
                     <p class="muted">Each code can be used once. Purchase is not refundable.</p>
                     <p class="team">The Cooked Team</p>
@@ -535,6 +638,23 @@ public class EmailServiceImpl implements EmailService {
         String name = displayName(firstName);
         sendHtmlEmail(to, "Your Cooked gift code (" + planLabel + ")",
                 String.format(GIFT_CODE_TEMPLATE, BUTTON_STYLE, LOGO_URL, name, planLabel, code, redeemUrl));
+    }
+
+    @Async
+    @Override
+    public void sendGiftPurchaseReceiptEmail(String to, String planLabel, String code, String recipientEmail, String redeemUrl) {
+        String recipient = recipientEmail != null ? HtmlUtils.htmlEscape(recipientEmail) : "your friend";
+        sendHtmlEmail(to, "Your Cooked gift (" + planLabel + ") - receipt",
+                String.format(GIFT_RECEIPT_TEMPLATE, BUTTON_STYLE, LOGO_URL, planLabel, recipient, code, redeemUrl));
+    }
+
+    @Async
+    @Override
+    public void sendGiftReceivedEmail(String to, String senderName, String planLabel, String code, String redeemUrl) {
+        // Sender name is typed on the website: escape it, never inject raw HTML.
+        String from = senderName != null && !senderName.isBlank() ? HtmlUtils.htmlEscape(senderName.trim()) : "A friend";
+        sendHtmlEmail(to, from.equals("A friend") ? "You've been gifted Cooked 🎁" : senderName.trim() + " gifted you Cooked 🎁",
+                String.format(GIFT_RECEIVED_TEMPLATE, BUTTON_STYLE, LOGO_URL, from, planLabel, code, redeemUrl));
     }
 
     @Async

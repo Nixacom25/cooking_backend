@@ -82,6 +82,8 @@ public class SecurityConfig {
                                 "/security",
                                 "/redeem",
                                 "/gift",
+                                "/gifts/plans",
+                                "/gifts/checkout",
                                 "/support/submit",
                                 "/.well-known/**",
                                 "/webhooks/**",

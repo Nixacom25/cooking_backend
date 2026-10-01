@@ -47,6 +47,17 @@ public class GiftServiceImpl implements GiftService {
     private final ActivityLogService activityLogService;
     private final RevenueCatApiClient revenueCatApiClient;
     private final ProxyManager<byte[]> proxyManager;
+    private final com.cooked.backend.service.StripeClient stripeClient;
+
+    /**
+     * One shared test code (QA). Usable once per account, grants 3 days only.
+     * Set GIFT_TEST_CODE empty to disable it.
+     */
+    @org.springframework.beans.factory.annotation.Value("${gift.test-code:}")
+    private String testCode;
+
+    private static final java.util.regex.Pattern EMAIL =
+            java.util.regex.Pattern.compile("^[A-Za-z0-9._%+'-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
     @Override
     @Transactional
@@ -120,6 +131,9 @@ public class GiftServiceImpl implements GiftService {
         }
 
         String code = normalize(rawCode);
+        if (testCode != null && !testCode.isBlank() && code.equals(normalize(testCode))) {
+            return redeemTestCode(user);
+        }
         GiftCode gift = giftCodeRepository.findByCodeForUpdate(code)
                 .orElseThrow(() -> new BadRequestException("This gift code is not valid."));
 
@@ -165,6 +179,127 @@ public class GiftServiceImpl implements GiftService {
                 .months(plan.getMonths())
                 .premiumUntil(premiumUntil)
                 .build();
+    }
+
+    /** QA test code: 3 days of Premium, once per account. */
+    private GiftRedeemResponse redeemTestCode(User user) {
+        String ref = "test_" + user.getId();
+        if (giftCodeRepository.existsByPurchaseRef(ref)) {
+            throw new BadRequestException("This test code was already used on this account.");
+        }
+        revenueCatApiClient.grantPromotionalEntitlement(user.getId().toString(), "three_day");
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime premiumUntil = now.plusDays(3);
+        if (user.getSubscriptionStatus() != SubscriptionStatus.INFINITE
+                && (user.getSubscriptionExpiresAt() == null || user.getSubscriptionExpiresAt().isBefore(premiumUntil))) {
+            user.setSubscriptionStatus(SubscriptionStatus.ACTIVE);
+            user.setSubscriptionExpiresAt(premiumUntil);
+            userRepository.save(user);
+        }
+        // Record the use (unique purchase_ref blocks a second use).
+        giftCodeRepository.save(GiftCode.builder()
+                .code("TEST" + user.getId().toString().replace("-", "").substring(0, 28))
+                .plan(GiftPlan.ONE_MONTH)
+                .status(GiftCodeStatus.REDEEMED)
+                .purchaseRef(ref)
+                .store("TEST")
+                .redeemedBy(user)
+                .redeemedAt(now)
+                .build());
+        log.info("Test gift code used by {}", user.getEmail());
+        return GiftRedeemResponse.builder().planLabel("3-day test").months(0).premiumUntil(premiumUntil).build();
+    }
+
+    @Override
+    public List<java.util.Map<String, Object>> webPlans() {
+        return java.util.Arrays.stream(GiftPlan.values())
+                .filter(GiftPlan::isSoldOnWeb)
+                .map(p -> java.util.Map.<String, Object>of(
+                        "plan", p.name(),
+                        "label", p.getLabel(),
+                        "priceCents", p.getWebPriceCents(),
+                        "currency", "USD"))
+                .toList();
+    }
+
+    @Override
+    public String startWebCheckout(String planName, String purchaserEmail, String recipientEmail,
+                                   String senderName, String clientKey) {
+        // Throttle checkout creation per client (anti-abuse of Stripe sessions).
+        BucketConfiguration limit = BucketConfiguration.builder()
+                .addLimit(Bandwidth.classic(10, Refill.intervally(10, Duration.ofMinutes(10))))
+                .build();
+        if (!proxyManager.builder()
+                .build(("gift-checkout-" + clientKey).getBytes(StandardCharsets.UTF_8), limit)
+                .tryConsume(1)) {
+            throw new BadRequestException("Too many attempts. Please try again in a few minutes.");
+        }
+
+        GiftPlan plan = GiftPlan.webPlan(planName)
+                .orElseThrow(() -> new BadRequestException("Please choose a gift plan."));
+        String buyer = cleanEmail(purchaserEmail, "Please enter your email.");
+        String recipient = cleanEmail(recipientEmail, "Please enter your friend's email.");
+        // No control characters (the name ends up in an email subject).
+        String sender = senderName == null ? null : senderName.replaceAll("\\p{Cntrl}", "").trim();
+        if (sender != null && sender.length() > 60) sender = sender.substring(0, 60);
+
+        return stripeClient.createGiftCheckout(plan, buyer, recipient, sender);
+    }
+
+    @Override
+    @Transactional
+    public void createFromWebPurchase(com.fasterxml.jackson.databind.JsonNode session) {
+        String sessionId = session.path("id").asText("");
+        String ref = "stripe_" + sessionId;
+        if (sessionId.isBlank() || giftCodeRepository.existsByPurchaseRef(ref)) return; // retried webhook
+
+        com.fasterxml.jackson.databind.JsonNode meta = session.path("metadata");
+        if (!"gift".equals(meta.path("type").asText())) return;
+        if (!"paid".equals(session.path("payment_status").asText())) return;
+
+        GiftPlan plan = GiftPlan.webPlan(meta.path("plan").asText(null))
+                .orElseThrow(() -> new IllegalStateException("Unknown gift plan in session " + sessionId));
+        // Defense in depth: the amount actually paid must match our price.
+        if (session.path("amount_total").asLong(-1) != plan.getWebPriceCents()) {
+            log.error("Gift session {} paid {} instead of {}", sessionId,
+                    session.path("amount_total").asLong(-1), plan.getWebPriceCents());
+            return;
+        }
+
+        String buyer = session.path("customer_details").path("email").asText(null);
+        if (buyer == null || buyer.isBlank()) buyer = session.path("customer_email").asText(null);
+        String recipient = meta.path("recipient_email").asText(null);
+        String sender = meta.path("sender_name").asText(null);
+
+        GiftCode gift = giftCodeRepository.save(GiftCode.builder()
+                .code(generateUniqueCode())
+                .plan(plan)
+                .purchaser(buyer != null ? userRepository.findByEmail(buyer).orElse(null) : null)
+                .purchaserEmail(buyer)
+                .recipientEmail(recipient)
+                .senderName(sender)
+                .purchaseRef(ref)
+                .transactionId(session.path("payment_intent").asText(null))
+                .store("Stripe")
+                .build());
+        log.info("Created web gift code {} ({})", gift.getId(), plan);
+
+        String url = redeemUrl(gift.getCode());
+        if (buyer != null) {
+            emailService.sendGiftPurchaseReceiptEmail(buyer, plan.getLabel(), gift.getCode(), recipient, url);
+        }
+        if (recipient != null && !recipient.equalsIgnoreCase(buyer)) {
+            emailService.sendGiftReceivedEmail(recipient, sender, plan.getLabel(), gift.getCode(), url);
+        }
+    }
+
+    private String cleanEmail(String raw, String message) {
+        String email = raw == null ? "" : raw.trim().toLowerCase();
+        if (email.length() > 254 || !EMAIL.matcher(email).matches()) {
+            throw new BadRequestException(message);
+        }
+        return email;
     }
 
     private User findUser(String email) {

@@ -123,6 +123,10 @@ public class UserServiceImpl implements UserService {
         user.setFlavorDna(request.getFlavorDna());
         user.setSpiceLevel(request.getSpiceLevel());
         user.setCookingSkill(request.getCookingSkill());
+        // Optional: older app versions don't send it, keep the stored value.
+        if (request.getLanguage() != null && !request.getLanguage().isBlank()) {
+            user.setLanguage(request.getLanguage().trim());
+        }
         user.setCookingTimePreference(request.getCookingTimePreference());
         user.setCookingFrequency(request.getCookingFrequency());
         user.setCookingTarget(request.getCookingTarget());

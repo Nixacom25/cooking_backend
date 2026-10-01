@@ -34,9 +34,16 @@ public class GiftCode {
     @Builder.Default
     private GiftCodeStatus status = GiftCodeStatus.AVAILABLE;
 
+    /** Buyer's account when bought in the app; null for website purchases. */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "purchaser_id", nullable = false)
+    @JoinColumn(name = "purchaser_id")
     private User purchaser;
+
+    /** Website purchases: who paid, who receives it, optional sender name. */
+    private String purchaserEmail;
+    private String recipientEmail;
+    @Column(length = 60)
+    private String senderName;
 
     /** Idempotency key from the store event (RevenueCat event id). */
     @Column(name = "purchase_ref", nullable = false, unique = true)
