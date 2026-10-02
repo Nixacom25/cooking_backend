@@ -75,6 +75,36 @@ class GiftWebPurchaseTest {
     }
 
     @Test
+    void multiGiftOrderCreatesOneCodePerGiftForTheBuyer() throws Exception {
+        JsonNode order = new ObjectMapper().readTree("""
+            {"id":"cs_4","payment_status":"paid","amount_total":2997,
+             "customer_details":{"email":"buyer@mail.com"},
+             "metadata":{"type":"gift","plan":"ONE_MONTH","quantity":"3"}}
+            """);
+        service.createFromWebPurchase(order);
+
+        ArgumentCaptor<GiftCode> saved = ArgumentCaptor.forClass(GiftCode.class);
+        verify(giftRepo, times(3)).save(saved.capture());
+        assertEquals(3, saved.getAllValues().stream().map(GiftCode::getCode).distinct().count());
+        assertEquals("stripe_cs_4", saved.getAllValues().get(0).getPurchaseRef());
+        // No recipient on the order: each code goes to the buyer to pass along.
+        verify(email, times(3)).sendGiftPurchaseReceiptEmail(eq("buyer@mail.com"), eq("1 Month"), anyString(), isNull(), anyString());
+        verify(email, never()).sendGiftReceivedEmail(anyString(), any(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void multiGiftOrderMustPayForEveryGift() throws Exception {
+        JsonNode order = new ObjectMapper().readTree("""
+            {"id":"cs_5","payment_status":"paid","amount_total":999,
+             "customer_details":{"email":"buyer@mail.com"},
+             "metadata":{"type":"gift","plan":"ONE_MONTH","quantity":"3"}}
+            """);
+        service.createFromWebPurchase(order);
+        verify(giftRepo, never()).save(any());
+        verifyNoInteractions(email);
+    }
+
+    @Test
     void onlyMonthAndYearAreSoldOnTheWeb() {
         assertEquals(999, GiftPlan.webPlan("ONE_MONTH").orElseThrow().getWebPriceCents());
         assertEquals(2999, GiftPlan.webPlan("one_year").orElseThrow().getWebPriceCents());

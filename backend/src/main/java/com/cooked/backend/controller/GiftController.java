@@ -46,8 +46,18 @@ public class GiftController {
                 body.get("purchaserEmail"),
                 body.get("recipientEmail"),
                 body.get("senderName"),
+                parseQuantity(body.get("quantity")),
                 clientKey(request));
         return ResponseEntity.ok(Map.of("url", url));
+    }
+
+    /** Number of gift codes to buy (1-10, default 1). */
+    private static int parseQuantity(String raw) {
+        try {
+            return raw == null || raw.isBlank() ? 1 : Integer.parseInt(raw.trim());
+        } catch (NumberFormatException e) {
+            return -1; // rejected by the service
+        }
     }
 
     private static String clientKey(jakarta.servlet.http.HttpServletRequest request) {

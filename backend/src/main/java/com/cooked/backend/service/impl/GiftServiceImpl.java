@@ -31,6 +31,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GiftServiceImpl implements GiftService {
 
+    /** Most gift codes one website order can buy (matches the site's stepper). */
+    static final int MAX_GIFTS_PER_ORDER = 10;
+
     public static final String REDEEM_URL = "https://link.cookedapp.com/redeem";
 
     // No 0/O, 1/I/L: codes are read and typed by humans.
@@ -225,7 +228,7 @@ public class GiftServiceImpl implements GiftService {
 
     @Override
     public String startWebCheckout(String planName, String purchaserEmail, String recipientEmail,
-                                   String senderName, String clientKey) {
+                                   String senderName, int quantity, String clientKey) {
         // Throttle checkout creation per client (anti-abuse of Stripe sessions).
         BucketConfiguration limit = BucketConfiguration.builder()
                 .addLimit(Bandwidth.classic(10, Refill.intervally(10, Duration.ofMinutes(10))))
@@ -238,13 +241,19 @@ public class GiftServiceImpl implements GiftService {
 
         GiftPlan plan = GiftPlan.webPlan(planName)
                 .orElseThrow(() -> new BadRequestException("Please choose a gift plan."));
+        if (quantity < 1 || quantity > MAX_GIFTS_PER_ORDER) {
+            throw new BadRequestException("You can buy between 1 and " + MAX_GIFTS_PER_ORDER + " gifts at a time.");
+        }
         String buyer = cleanEmail(purchaserEmail, "Please enter your email.");
-        String recipient = cleanEmail(recipientEmail, "Please enter your friend's email.");
+        // Optional: without it, the codes are emailed to the buyer to pass along.
+        String recipient = recipientEmail == null || recipientEmail.isBlank()
+                ? null
+                : cleanEmail(recipientEmail, "Please enter a valid email for your friend.");
         // No control characters (the name ends up in an email subject).
         String sender = senderName == null ? null : senderName.replaceAll("\\p{Cntrl}", "").trim();
         if (sender != null && sender.length() > 60) sender = sender.substring(0, 60);
 
-        return stripeClient.createGiftCheckout(plan, buyer, recipient, sender);
+        return stripeClient.createGiftCheckout(plan, quantity, buyer, recipient, sender);
     }
 
     @Override
@@ -260,10 +269,16 @@ public class GiftServiceImpl implements GiftService {
 
         GiftPlan plan = GiftPlan.webPlan(meta.path("plan").asText(null))
                 .orElseThrow(() -> new IllegalStateException("Unknown gift plan in session " + sessionId));
+        int quantity = meta.path("quantity").asInt(1);
+        if (quantity < 1 || quantity > MAX_GIFTS_PER_ORDER) {
+            log.error("Gift session {} has an invalid quantity {}", sessionId, quantity);
+            return;
+        }
         // Defense in depth: the amount actually paid must match our price.
-        if (session.path("amount_total").asLong(-1) != plan.getWebPriceCents()) {
+        long expected = plan.getWebPriceCents() * (long) quantity;
+        if (session.path("amount_total").asLong(-1) != expected) {
             log.error("Gift session {} paid {} instead of {}", sessionId,
-                    session.path("amount_total").asLong(-1), plan.getWebPriceCents());
+                    session.path("amount_total").asLong(-1), expected);
             return;
         }
 
@@ -272,25 +287,29 @@ public class GiftServiceImpl implements GiftService {
         String recipient = meta.path("recipient_email").asText(null);
         String sender = meta.path("sender_name").asText(null);
 
-        GiftCode gift = giftCodeRepository.save(GiftCode.builder()
-                .code(generateUniqueCode())
-                .plan(plan)
-                .purchaser(buyer != null ? userRepository.findByEmail(buyer).orElse(null) : null)
-                .purchaserEmail(buyer)
-                .recipientEmail(recipient)
-                .senderName(sender)
-                .purchaseRef(ref)
-                .transactionId(session.path("payment_intent").asText(null))
-                .store("Stripe")
-                .build());
-        log.info("Created web gift code {} ({})", gift.getId(), plan);
+        User purchaser = buyer != null ? userRepository.findByEmail(buyer).orElse(null) : null;
+        for (int i = 0; i < quantity; i++) {
+            GiftCode gift = giftCodeRepository.save(GiftCode.builder()
+                    .code(generateUniqueCode())
+                    .plan(plan)
+                    .purchaser(purchaser)
+                    .purchaserEmail(buyer)
+                    .recipientEmail(recipient)
+                    .senderName(sender)
+                    // First code keeps the session ref (idempotency check above).
+                    .purchaseRef(i == 0 ? ref : ref + "_" + (i + 1))
+                    .transactionId(session.path("payment_intent").asText(null))
+                    .store("Stripe")
+                    .build());
+            log.info("Created web gift code {} ({}, {}/{})", gift.getId(), plan, i + 1, quantity);
 
-        String url = redeemUrl(gift.getCode());
-        if (buyer != null) {
-            emailService.sendGiftPurchaseReceiptEmail(buyer, plan.getLabel(), gift.getCode(), recipient, url);
-        }
-        if (recipient != null && !recipient.equalsIgnoreCase(buyer)) {
-            emailService.sendGiftReceivedEmail(recipient, sender, plan.getLabel(), gift.getCode(), url);
+            String url = redeemUrl(gift.getCode());
+            if (buyer != null) {
+                emailService.sendGiftPurchaseReceiptEmail(buyer, plan.getLabel(), gift.getCode(), recipient, url);
+            }
+            if (recipient != null && !recipient.equalsIgnoreCase(buyer)) {
+                emailService.sendGiftReceivedEmail(recipient, sender, plan.getLabel(), gift.getCode(), url);
+            }
         }
     }
 

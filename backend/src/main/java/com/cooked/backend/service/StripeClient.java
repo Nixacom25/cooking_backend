@@ -57,7 +57,8 @@ public class StripeClient {
      *
      * @return the Checkout URL to redirect the buyer to
      */
-    public String createGiftCheckout(GiftPlan plan, String purchaserEmail, String recipientEmail, String senderName) {
+    public String createGiftCheckout(GiftPlan plan, int quantity, String purchaserEmail, String recipientEmail,
+                                     String senderName) {
         if (!isConfigured()) {
             throw new IllegalStateException("Stripe is not configured (STRIPE_SECRET_KEY)");
         }
@@ -66,13 +67,16 @@ public class StripeClient {
         form.add("customer_email", purchaserEmail);
         form.add("success_url", siteUrl + "/gift/success");
         form.add("cancel_url", siteUrl + "/gift?canceled=1");
-        form.add("line_items[0][quantity]", "1");
+        form.add("line_items[0][quantity]", String.valueOf(quantity));
         form.add("line_items[0][price_data][currency]", "usd");
         form.add("line_items[0][price_data][unit_amount]", String.valueOf(plan.getWebPriceCents()));
         form.add("line_items[0][price_data][product_data][name]", "Cooked Premium gift - " + plan.getLabel());
         form.add("metadata[type]", "gift");
         form.add("metadata[plan]", plan.name());
-        form.add("metadata[recipient_email]", recipientEmail);
+        form.add("metadata[quantity]", String.valueOf(quantity));
+        if (recipientEmail != null) {
+            form.add("metadata[recipient_email]", recipientEmail);
+        }
         if (senderName != null && !senderName.isBlank()) {
             form.add("metadata[sender_name]", senderName);
         }
