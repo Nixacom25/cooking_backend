@@ -95,12 +95,39 @@ public class MarkhorAiServiceImpl implements AiService {
                             return performBingSearch(query);
                         } catch (Exception e5) {
                             log.error("All search engines failed on Render: {}", e5.getMessage());
-                            return Collections.emptyList();
+                            return siteSearchLinks(query);
                         }
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Last resort when every search engine blocks our server IP: search pages of
+     * major recipe sites. The app opens them in its WebView (the phone isn't
+     * blocked), the user picks a recipe there and imports the page they're on.
+     */
+    static List<Map<String, String>> siteSearchLinks(String query) {
+        String q = URLEncoder.encode(query.trim(), StandardCharsets.UTF_8);
+        String[][] sites = {
+                {"BBC Good Food", "https://www.bbcgoodfood.com/search?q=" + q},
+                {"Epicurious", "https://www.epicurious.com/search?q=" + q},
+                {"Delish", "https://www.delish.com/search/?q=" + q},
+                {"Allrecipes", "https://www.allrecipes.com/search?q=" + q},
+                {"Simply Recipes", "https://www.simplyrecipes.com/search?q=" + q},
+                {"Serious Eats", "https://www.seriouseats.com/search?q=" + q},
+                {"Food Network", "https://www.foodnetwork.com/search/" + q + "-"},
+                {"Tasty", "https://tasty.co/search?q=" + q},
+        };
+        List<Map<String, String>> results = new ArrayList<>();
+        for (String[] site : sites) {
+            results.add(Map.of(
+                    "title", query.trim() + " recipes on " + site[0],
+                    "url", site[1],
+                    "snippet", "Browse " + site[0] + ", open a recipe, then tap Import to Cooked."));
+        }
+        return results;
     }
 
     private Map<String, String> getHumanHeaders() {
@@ -564,7 +591,29 @@ public class MarkhorAiServiceImpl implements AiService {
                 .ignoreHttpErrors(true)
                 .timeout(10000)
                 .get();
+        return extractRecipeFromDocument(doc, url);
+    }
 
+    /**
+     * Import from a page the app already loaded in its WebView. Sites such as
+     * Allrecipes (People Inc / Dotdash Meredith) refuse server-side fetches
+     * (HTTP 402) but render fine on the phone, so the app sends the page HTML
+     * and we read its schema.org Recipe data here. Falls back to the normal
+     * link import when the HTML has no usable recipe.
+     */
+    @Override
+    public CreateRecipeRequest extractRecipeFromPage(String url, String html, String email) {
+        if (html != null && !html.isBlank() && url != null && !url.isBlank()) {
+            try {
+                return extractRecipeFromDocument(Jsoup.parse(html, url.trim()), url.trim());
+            } catch (Exception e) {
+                log.warn("Page HTML extraction failed for {}: {}. Falling back to link import.", url, e.getMessage());
+            }
+        }
+        return extractRecipeFromLink(url, email);
+    }
+
+    private CreateRecipeRequest extractRecipeFromDocument(Document doc, String url) throws Exception {
         String title = doc.select("meta[property=og:title]").attr("content");
         if (title.isEmpty()) title = doc.select("meta[name=twitter:title]").attr("content");
         if (title.isEmpty()) title = doc.title();
@@ -678,9 +727,15 @@ public class MarkhorAiServiceImpl implements AiService {
             }
         } else if (node.isObject()) {
             if (node.has("@type")) {
-                String type = node.get("@type").asText();
-                if ("Recipe".equalsIgnoreCase(type) || type.toLowerCase().contains("recipe")) {
-                    return node;
+                // "@type" is a string or, on many sites (e.g. Allrecipes), an array like ["Recipe", "NewsArticle"]
+                JsonNode typeNode = node.get("@type");
+                List<String> types = new ArrayList<>();
+                if (typeNode.isArray()) typeNode.forEach(t -> types.add(t.asText()));
+                else types.add(typeNode.asText());
+                for (String type : types) {
+                    if (type.toLowerCase().contains("recipe")) {
+                        return node;
+                    }
                 }
             }
             if (node.has("@graph") && node.get("@graph").isArray()) {

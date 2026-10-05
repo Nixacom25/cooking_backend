@@ -13,7 +13,6 @@ import com.cooked.backend.entity.SubscriptionType;
 import com.cooked.backend.entity.User;
 import com.cooked.backend.exception.BadRequestException;
 import com.cooked.backend.exception.EmailAlreadyExistsException;
-import com.cooked.backend.exception.PaymentRequiredException;
 import com.cooked.backend.exception.ResourceNotFoundException;
 import com.cooked.backend.mapper.UserMapper;
 import com.cooked.backend.repository.UserRepository;
@@ -58,34 +57,11 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Check subscription status
-        if (!hasActiveSubscription(user)) {
-            throw new PaymentRequiredException("Active subscription required to access the application");
-        }
-
+        // No subscription check here: a signed-in user whose subscription
+        // lapsed must still load their profile so the app can route them
+        // and show the paywall. Premium actions are gated by
+        // SubscriptionRequiredFilter (which also lets /user/me through).
         return userMapper.toResponse(user);
-    }
-
-    private boolean hasActiveSubscription(User user) {
-        SubscriptionStatus status = user.getSubscriptionStatus();
-        LocalDateTime expiresAt = user.getSubscriptionExpiresAt();
-
-        // Creators and Admins always have infinite subscription
-        if (user.getRole() == Role.CREATOR || user.getRole() == Role.ADMIN || user.getRole() == Role.EDITOR) {
-            return true;
-        }
-
-        // Allow if status is ACTIVE, TRIAL, PREMIUM, or INFINITE
-        if (status == SubscriptionStatus.ACTIVE || status == SubscriptionStatus.TRIAL || status == SubscriptionStatus.PREMIUM || status == SubscriptionStatus.INFINITE) {
-            // Check expiration date if set (INFINITE should have no expiration or far future)
-            if (expiresAt != null && status != SubscriptionStatus.INFINITE) {
-                return expiresAt.isAfter(LocalDateTime.now());
-            }
-            return true;
-        }
-
-        // Deny if FREE, EXPIRED, or CANCELLED
-        return false;
     }
 
     @Override

@@ -459,11 +459,19 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     @Transactional
     public RecipeResponse importAndSaveAsSuggestion(String url, String userEmail) {
+        return importAndSaveAsSuggestion(url, null, userEmail);
+    }
+
+    @Override
+    @Transactional
+    public RecipeResponse importAndSaveAsSuggestion(String url, String html, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // 1. Extract from AI
-        CreateRecipeRequest request = aiService.extractRecipeFromLink(url, userEmail);
+        // 1. Extract (from the page HTML the app captured when provided, else from the link)
+        CreateRecipeRequest request = (html != null && !html.isBlank())
+                ? aiService.extractRecipeFromPage(url, html, userEmail)
+                : aiService.extractRecipeFromLink(url, userEmail);
 
         // 2. Validate that the extracted recipe has meaningful content
         // Don't save placeholder/guess recipes - throw error instead

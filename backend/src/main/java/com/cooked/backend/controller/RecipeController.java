@@ -41,7 +41,8 @@ public class RecipeController {
         if (url == null || url.isBlank()) {
             throw new com.cooked.backend.exception.BadRequestException("URL is required");
         }
-        return ResponseEntity.ok(recipeService.importAndSaveAsSuggestion(url, auth.getName()));
+        // Optional: HTML of the page as loaded in the app's WebView (see extractRecipeFromPage)
+        return ResponseEntity.ok(recipeService.importAndSaveAsSuggestion(url, payload.get("html"), auth.getName()));
     }
 
     @Operation(summary = "Detect Ingredients from Image (AI)")

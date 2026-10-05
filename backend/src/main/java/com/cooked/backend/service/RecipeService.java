@@ -36,6 +36,8 @@ public interface RecipeService {
 
         RecipeResponse importAndSaveAsSuggestion(String url, String userEmail);
 
+        RecipeResponse importAndSaveAsSuggestion(String url, String html, String userEmail);
+
         String getShareLink(UUID id, String userEmail);
         
         List<RecipeResponse> generateAndSaveSuggestedRecipes(com.cooked.backend.dto.request.AiRecipeGenerationRequest request, String userEmail);

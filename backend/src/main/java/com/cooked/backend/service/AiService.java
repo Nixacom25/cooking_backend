@@ -12,6 +12,11 @@ import java.util.Map;
 public interface AiService {
     CreateRecipeRequest extractRecipeFromLink(String url, String email);
 
+    /** Import from page HTML captured by the app (for sites that block server fetches). */
+    default CreateRecipeRequest extractRecipeFromPage(String url, String html, String email) {
+        return extractRecipeFromLink(url, email);
+    }
+
     AiIngredientDetectionResponse detectIngredients(MultipartFile file, String email);
 
     List<CreateRecipeRequest> generateRecipes(AiRecipeGenerationRequest request, String email);
