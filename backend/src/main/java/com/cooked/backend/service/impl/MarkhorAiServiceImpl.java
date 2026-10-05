@@ -48,6 +48,14 @@ public class MarkhorAiServiceImpl implements AiService {
         "facile", "rapide", "healthy", "sain"
     ));
 
+    /** Shared pool for the parallel web-search engines (daemon threads). */
+    private static final java.util.concurrent.ExecutorService SEARCH_POOL =
+            java.util.concurrent.Executors.newFixedThreadPool(10, r -> {
+                Thread t = new Thread(r, "web-search");
+                t.setDaemon(true);
+                return t;
+            });
+
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final UserRepository userRepository;
@@ -74,33 +82,40 @@ public class MarkhorAiServiceImpl implements AiService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         verifyAiAccess(user);
 
-        // Sequential multi-engine search for maximum reliability on Render
+        // All engines in parallel, first non-empty answer wins, hard 12 s
+        // budget: the app gives up after 30 s, and engines run one after the
+        // other could take ~50 s when Render's IP is blocked.
+        List<java.util.concurrent.Callable<List<Map<String, String>>>> engines = List.of(
+                () -> performGoogleSearch(query),
+                () -> performDuckDuckGoSearch(query),
+                () -> performQwantLiteSearch(query),
+                () -> performMojeekSearch(query),
+                () -> performBingSearch(query));
+        java.util.concurrent.CompletionService<List<Map<String, String>>> done =
+                new java.util.concurrent.ExecutorCompletionService<>(SEARCH_POOL);
+        List<java.util.concurrent.Future<List<Map<String, String>>>> futures = new ArrayList<>();
+        for (var engine : engines) futures.add(done.submit(engine));
+        long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(12);
         try {
-            return performGoogleSearch(query);
-        } catch (Exception e1) {
-            log.warn("Google search failed, trying DuckDuckGo: {}", e1.getMessage());
-            try {
-                return performDuckDuckGoSearch(query);
-            } catch (Exception e2) {
-                log.warn("DuckDuckGo search failed, trying Qwant Lite: {}", e2.getMessage());
+            for (int i = 0; i < engines.size(); i++) {
+                long left = deadline - System.nanoTime();
+                if (left <= 0) break;
+                java.util.concurrent.Future<List<Map<String, String>>> f = done.poll(left, java.util.concurrent.TimeUnit.NANOSECONDS);
+                if (f == null) break;
                 try {
-                    return performQwantLiteSearch(query);
-                } catch (Exception e3) {
-                    log.warn("Qwant search failed, trying Mojeek: {}", e3.getMessage());
-                    try {
-                        return performMojeekSearch(query);
-                    } catch (Exception e4) {
-                        log.warn("Mojeek search failed, trying Bing: {}", e4.getMessage());
-                        try {
-                            return performBingSearch(query);
-                        } catch (Exception e5) {
-                            log.error("All search engines failed on Render: {}", e5.getMessage());
-                            return siteSearchLinks(query);
-                        }
-                    }
+                    List<Map<String, String>> res = f.get();
+                    if (res != null && !res.isEmpty()) return res;
+                } catch (java.util.concurrent.ExecutionException e) {
+                    log.warn("Search engine failed: {}", e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
                 }
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            futures.forEach(f -> f.cancel(true));
         }
+        log.warn("No search engine answered for '{}' within the budget, returning recipe-site search links", query);
+        return siteSearchLinks(query);
     }
 
     /**
