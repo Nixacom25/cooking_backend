@@ -57,6 +57,8 @@ public interface UserService {
 
     com.cooked.backend.dto.response.UserStatsResponse getUserStats(UUID id);
 
+    UserResponse getUserById(UUID id);
+
     MessageResponse updateFcmToken(String email, String fcmToken);
 
     void updateLastActive(String email);

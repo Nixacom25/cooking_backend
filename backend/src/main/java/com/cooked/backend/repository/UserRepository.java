@@ -18,6 +18,13 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     long countBySubscriptionStatus(com.cooked.backend.entity.SubscriptionStatus status);
 
+    long countByRoleAndSubscriptionStatusIn(com.cooked.backend.entity.Role role,
+            java.util.Collection<com.cooked.backend.entity.SubscriptionStatus> statuses);
+
+    long countByRoleAndSubscriptionStatusInAndSubscriptionType(com.cooked.backend.entity.Role role,
+            java.util.Collection<com.cooked.backend.entity.SubscriptionStatus> statuses,
+            com.cooked.backend.entity.SubscriptionType type);
+
     @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.subscriptionStatus = :status AND u.createdAt <= :date")
     java.util.List<User> findUsersForDrip(@org.springframework.data.repository.query.Param("date") java.time.LocalDateTime date, @org.springframework.data.repository.query.Param("status") com.cooked.backend.entity.SubscriptionStatus status);
 
