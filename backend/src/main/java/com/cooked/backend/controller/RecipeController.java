@@ -5,7 +5,9 @@ import com.cooked.backend.dto.request.CreateRecipeRequest;
 import com.cooked.backend.dto.response.AiIngredientDetectionResponse;
 import com.cooked.backend.dto.response.MessageResponse;
 import com.cooked.backend.dto.response.RecipeResponse;
+import com.cooked.backend.entity.ProductEventType;
 import com.cooked.backend.service.AiService;
+import com.cooked.backend.service.ProductEventTracker;
 import com.cooked.backend.service.RecipeService;
 import com.cooked.backend.service.TrendingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,6 +34,7 @@ public class RecipeController {
     private final RecipeService recipeService;
     private final AiService aiService;
     private final TrendingService trendingService;
+    private final ProductEventTracker eventTracker;
 
     @Operation(summary = "Import Recipe via Link (AI)")
     @PostMapping("/import")
@@ -42,7 +45,9 @@ public class RecipeController {
             throw new com.cooked.backend.exception.BadRequestException("URL is required");
         }
         // Optional: HTML of the page as loaded in the app's WebView (see extractRecipeFromPage)
-        return ResponseEntity.ok(recipeService.importAndSaveAsSuggestion(url, payload.get("html"), auth.getName()));
+        String html = payload.get("html");
+        return ResponseEntity.ok(eventTracker.track(ProductEventType.IMPORT, auth.getName(), importSource(url),
+                () -> recipeService.importAndSaveAsSuggestion(url, html, auth.getName()), r -> 1));
     }
 
     @Operation(summary = "Detect Ingredients from Image (AI)")
@@ -68,7 +73,8 @@ public class RecipeController {
     public ResponseEntity<com.cooked.backend.dto.response.ScanResponse> scanRecipeViaImage(
             @RequestParam("file") MultipartFile file,
             Authentication auth) {
-        return ResponseEntity.ok(aiService.scan(file, auth.getName()));
+        return ResponseEntity.ok(eventTracker.track(ProductEventType.SCAN, auth.getName(), "photo",
+                () -> aiService.scan(file, auth.getName()), ProductEventCounts::recipes));
     }
 
     @Operation(summary = "Scan Typed Ingredients (AI)")
@@ -80,7 +86,8 @@ public class RecipeController {
         if (ingredients == null || ingredients.isEmpty()) {
             throw new com.cooked.backend.exception.BadRequestException("Ingredients list is required");
         }
-        return ResponseEntity.ok(aiService.scanTyped(ingredients, auth.getName()));
+        return ResponseEntity.ok(eventTracker.track(ProductEventType.SCAN, auth.getName(), "typed",
+                () -> aiService.scanTyped(ingredients, auth.getName()), ProductEventCounts::recipes));
     }
 
     @Operation(summary = "Validate Typed Ingredients directly via DB")
@@ -184,7 +191,28 @@ public class RecipeController {
     @Operation(summary = "Search recipes on the web")
     @GetMapping("/web-search")
     public ResponseEntity<List<Map<String, String>>> searchWeb(@RequestParam String query, Authentication auth) {
-        return ResponseEntity.ok(aiService.searchWeb(query, auth.getName()));
+        return ResponseEntity.ok(eventTracker.track(ProductEventType.WEB_SEARCH, auth.getName(),
+                query == null ? null : query.toLowerCase(),
+                () -> aiService.searchWeb(query, auth.getName()), List::size));
+    }
+
+    /** Import source for analytics: the site's domain (no path, no query string). */
+    static String importSource(String url) {
+        try {
+            String u = url.trim();
+            if (!u.contains("://")) u = "https://" + u;
+            String host = java.net.URI.create(u).getHost();
+            return host == null ? null : host.toLowerCase().replaceFirst("^www\\.", "");
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /** Result counters used by the event tracker. */
+    private static final class ProductEventCounts {
+        static int recipes(com.cooked.backend.dto.response.ScanResponse r) {
+            return r.getRecipes() == null ? 0 : r.getRecipes().size();
+        }
     }
 
     @Operation(summary = "Get daily AI trending dishes")

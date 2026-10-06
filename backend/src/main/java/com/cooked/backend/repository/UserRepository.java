@@ -77,4 +77,34 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     java.util.List<User> findByCreatedAtAfter(LocalDateTime date);
     
     java.util.List<User> findByEmailIn(java.util.List<String> emails);
+
+    // --- Admin analytics: sign-ups (acquisition screen).
+    interface DayCount {
+        java.time.LocalDate getDay();
+        Long getTotal();
+    }
+
+    interface LabelCount {
+        String getLabel();
+        Long getTotal();
+    }
+
+    @org.springframework.data.jpa.repository.Query("select cast(u.createdAt as LocalDate) as day, count(u) as total from User u "
+            + "where u.role = :role and u.createdAt >= :from group by cast(u.createdAt as LocalDate)")
+    java.util.List<DayCount> countSignupsByDay(
+            @org.springframework.data.repository.query.Param("role") com.cooked.backend.entity.Role role,
+            @org.springframework.data.repository.query.Param("from") LocalDateTime from);
+
+    @org.springframework.data.jpa.repository.Query("select count(u) from User u where u.role = :role and u.createdAt >= :from and u.createdAt < :to")
+    long countSignupsBetween(
+            @org.springframework.data.repository.query.Param("role") com.cooked.backend.entity.Role role,
+            @org.springframework.data.repository.query.Param("from") LocalDateTime from,
+            @org.springframework.data.repository.query.Param("to") LocalDateTime to);
+
+    /** "How did you hear about Cooked?" answers of users who signed up since [from]. */
+    @org.springframework.data.jpa.repository.Query("select u.discoverySource as label, count(u) as total from User u "
+            + "where u.role = :role and u.createdAt >= :from group by u.discoverySource order by count(u) desc")
+    java.util.List<LabelCount> countSignupsBySource(
+            @org.springframework.data.repository.query.Param("role") com.cooked.backend.entity.Role role,
+            @org.springframework.data.repository.query.Param("from") LocalDateTime from);
 }
