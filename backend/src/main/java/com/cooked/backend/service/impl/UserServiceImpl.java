@@ -51,6 +51,7 @@ public class UserServiceImpl implements UserService {
     private final com.cooked.backend.repository.RecipeAssignmentRepository recipeAssignmentRepository;
     private final jakarta.persistence.EntityManager entityManager;
     private final com.cooked.backend.repository.UserSubscriptionRepository userSubscriptionRepository;
+    private final com.cooked.backend.service.UserActivityRecorder activityRecorder;
 
     @Override
     public UserResponse getCurrentUser(String email) {
@@ -410,6 +411,12 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         user.setLastActive(LocalDateTime.now());
         userRepository.save(user);
+        try {
+            activityRecorder.recordToday(user.getId());
+        } catch (RuntimeException e) {
+            // Analytics only: a lost day (e.g. concurrent duplicate) must not fail the ping.
+            log.debug("Activity day not recorded for {}: {}", user.getId(), e.getMessage());
+        }
     }
 
     @Override
