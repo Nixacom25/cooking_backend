@@ -18,6 +18,8 @@ public class DashboardController {
         this.kpiService = kpiService;
     }
 
+    // Revenue, ARPU and customer names: admins only.
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/kpi/global")
     public ResponseEntity<Map<String, Object>> getGlobalKpis() {
         return ResponseEntity.ok(kpiService.getGlobalKpis());

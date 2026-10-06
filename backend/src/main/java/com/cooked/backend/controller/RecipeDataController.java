@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/recipe-data")
+// Admin import pipeline (create / edit / bulk delete): never public.
+@org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class RecipeDataController {
