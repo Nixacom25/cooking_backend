@@ -1,6 +1,7 @@
 package com.cooked.backend.controller;
 
 import com.cooked.backend.dto.response.AcquisitionResponse;
+import com.cooked.backend.dto.response.EngagementResponse;
 import com.cooked.backend.dto.response.ProductAnalyticsResponse;
 import com.cooked.backend.service.AdminAnalyticsService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,5 +34,11 @@ public class AdminAnalyticsController {
     @GetMapping("/acquisition")
     public ResponseEntity<AcquisitionResponse> acquisition(@RequestParam(defaultValue = "30") int days) {
         return ResponseEntity.ok(analyticsService.acquisition(days));
+    }
+
+    @Operation(summary = "Active users: DAU / WAU / MAU and daily series (days: 1-90, default 30)")
+    @GetMapping("/engagement")
+    public ResponseEntity<EngagementResponse> engagement(@RequestParam(defaultValue = "30") int days) {
+        return ResponseEntity.ok(analyticsService.engagement(days));
     }
 }

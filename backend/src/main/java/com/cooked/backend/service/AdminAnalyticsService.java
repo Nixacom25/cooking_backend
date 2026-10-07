@@ -1,6 +1,7 @@
 package com.cooked.backend.service;
 
 import com.cooked.backend.dto.response.AcquisitionResponse;
+import com.cooked.backend.dto.response.EngagementResponse;
 import com.cooked.backend.dto.response.ProductAnalyticsResponse;
 
 /** Read-only product and acquisition analytics for the admin backoffice. */
@@ -13,4 +14,7 @@ public interface AdminAnalyticsService {
 
     /** Sign-ups and discovery sources over the last [days] days (clamped to 1..{@value #MAX_DAYS}). */
     AcquisitionResponse acquisition(int days);
+
+    /** Daily / weekly / monthly active users over the last [days] days (clamped to 1..{@value #MAX_DAYS}). */
+    EngagementResponse engagement(int days);
 }

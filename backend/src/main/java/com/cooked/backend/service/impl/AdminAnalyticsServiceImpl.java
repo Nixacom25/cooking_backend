@@ -1,6 +1,7 @@
 package com.cooked.backend.service.impl;
 
 import com.cooked.backend.dto.response.AcquisitionResponse;
+import com.cooked.backend.dto.response.EngagementResponse;
 import com.cooked.backend.dto.response.ProductAnalyticsResponse;
 import com.cooked.backend.dto.response.ProductAnalyticsResponse.DailyCounts;
 import com.cooked.backend.dto.response.ProductAnalyticsResponse.LabelStats;
@@ -11,6 +12,7 @@ import com.cooked.backend.entity.RecipeOrigin;
 import com.cooked.backend.entity.Role;
 import com.cooked.backend.repository.ProductEventRepository;
 import com.cooked.backend.repository.RecipeRepository;
+import com.cooked.backend.repository.UserActivityDayRepository;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.service.AdminAnalyticsService;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +39,7 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
     private final ProductEventRepository eventRepository;
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
+    private final UserActivityDayRepository activityRepository;
 
     @Override
     public ProductAnalyticsResponse product(int days) {
@@ -46,6 +49,11 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
     @Override
     public AcquisitionResponse acquisition(int days) {
         return acquisitionAt(clamp(days), LocalDateTime.now());
+    }
+
+    @Override
+    public EngagementResponse engagement(int days) {
+        return engagementAt(clamp(days), LocalDate.now());
     }
 
     static int clamp(int days) {
@@ -98,6 +106,45 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
                         .map(s -> new AcquisitionResponse.SourceCount(sourceLabel(s.getLabel()), nz(s.getTotal())))
                         .toList())
                 .build();
+    }
+
+    EngagementResponse engagementAt(int days, LocalDate today) {
+        LocalDate end = today.plusDays(1);              // exclusive
+        LocalDate from = end.minusDays(days);
+        LocalDate prevFrom = from.minusDays(days);
+        List<AcquisitionResponse.DayCount> daily = daySeries(from, days, activityRepository.countByDay(from, end));
+        List<AcquisitionResponse.DayCount> dailyPrev = daySeries(prevFrom, days, activityRepository.countByDay(prevFrom, from));
+
+        return EngagementResponse.builder()
+                .days(days)
+                .trackingSince(activityRepository.firstDay())
+                .totalUsers(userRepository.countByRole(Role.CLIENT))
+                .activeUsers(activityRepository.countDistinctUsers(from, end))
+                .activeUsersPrev(activityRepository.countDistinctUsers(prevFrom, from))
+                .dau(average(daily))
+                .dauPrev(average(dailyPrev))
+                .wau(activityRepository.countDistinctUsers(end.minusDays(7), end))
+                .wauPrev(activityRepository.countDistinctUsers(end.minusDays(14), end.minusDays(7)))
+                .mau(activityRepository.countDistinctUsers(end.minusDays(30), end))
+                .mauPrev(activityRepository.countDistinctUsers(end.minusDays(60), end.minusDays(30)))
+                .daily(daily)
+                .dailyPrev(dailyPrev)
+                .build();
+    }
+
+    static List<AcquisitionResponse.DayCount> daySeries(LocalDate firstDay, int days, List<UserActivityDayRepository.DayCount> rows) {
+        Map<LocalDate, Long> byDay = new LinkedHashMap<>();
+        rows.forEach(r -> byDay.merge(r.getDay(), nz(r.getTotal()), Long::sum));
+        List<AcquisitionResponse.DayCount> series = new ArrayList<>(days);
+        for (int i = 0; i < days; i++) {
+            LocalDate d = firstDay.plusDays(i);
+            series.add(new AcquisitionResponse.DayCount(d.toString(), byDay.getOrDefault(d, 0L)));
+        }
+        return series;
+    }
+
+    private static double average(List<AcquisitionResponse.DayCount> series) {
+        return series.isEmpty() ? 0 : round(series.stream().mapToLong(AcquisitionResponse.DayCount::getTotal).average().orElse(0));
     }
 
     static List<TypeStats> summaries(List<ProductEventRepository.TypeSummary> rows) {

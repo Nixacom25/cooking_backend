@@ -33,6 +33,14 @@ class AdminAnalyticsServiceImplTest {
     }
 
     @Test
+    void activitySeriesIsZeroFilled() {
+        var series = AdminAnalyticsServiceImpl.daySeries(LocalDate.of(2026, 10, 1), 7, List.of());
+        assertEquals(7, series.size());
+        assertEquals("2026-10-07", series.get(6).getDate());
+        assertTrue(series.stream().allMatch(d -> d.getTotal() == 0));
+    }
+
+    @Test
     void discoverySourcesAreReadable() {
         assertEquals("Not answered", AdminAnalyticsServiceImpl.sourceLabel(null));
         assertEquals("Friend referral", AdminAnalyticsServiceImpl.sourceLabel("FRIEND_REFERRAL"));
