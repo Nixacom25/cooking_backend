@@ -41,6 +41,19 @@ class AdminAnalyticsServiceImplTest {
     }
 
     @Test
+    void sameLookingSourcesAreMerged() {
+        java.util.function.BiFunction<String, Long, com.cooked.backend.repository.UserRepository.LabelCount> lc = (l, n) -> new com.cooked.backend.repository.UserRepository.LabelCount() {
+            public String getLabel() { return l; }
+            public Long getTotal() { return n; }
+        };
+        var merged = AdminAnalyticsServiceImpl.mergeSources(List.of(lc.apply(null, 20L), lc.apply("", 11L), lc.apply("TIKTOK", 3L), lc.apply("tiktok", 2L)));
+        assertEquals(2, merged.size());
+        assertEquals("Not answered", merged.get(0).getSource());
+        assertEquals(31L, merged.get(0).getTotal());
+        assertEquals(5L, merged.get(1).getTotal());
+    }
+
+    @Test
     void discoverySourcesAreReadable() {
         assertEquals("Not answered", AdminAnalyticsServiceImpl.sourceLabel(null));
         assertEquals("Friend referral", AdminAnalyticsServiceImpl.sourceLabel("FRIEND_REFERRAL"));

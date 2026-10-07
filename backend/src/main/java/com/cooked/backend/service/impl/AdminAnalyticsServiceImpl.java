@@ -135,9 +135,7 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
                 .newUsers(total)
                 .newUsersPrev(userRepository.countSignupsBetween(Role.CLIENT, prevFrom, from))
                 .signupsDaily(series)
-                .bySource(userRepository.countSignupsBySource(Role.CLIENT, from).stream()
-                        .map(s -> new AcquisitionResponse.SourceCount(sourceLabel(s.getLabel()), nz(s.getTotal())))
-                        .toList())
+                .bySource(mergeSources(userRepository.countSignupsBySource(Role.CLIENT, from)))
                 .build();
     }
 
@@ -242,6 +240,16 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
             else if (r.getOrigin() == RecipeOrigin.IMPORT) c.setFromImports(c.getFromImports() + nz(r.getTotal()));
         }
         return new ArrayList<>(byDay.values());
+    }
+
+    /** Labels that read the same (null / blank → "Not answered", "TIKTOK" / "tiktok") are merged, biggest first. */
+    static List<AcquisitionResponse.SourceCount> mergeSources(List<UserRepository.LabelCount> rows) {
+        Map<String, Long> merged = new LinkedHashMap<>();
+        rows.forEach(r -> merged.merge(sourceLabel(r.getLabel()), nz(r.getTotal()), Long::sum));
+        return merged.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .map(e -> new AcquisitionResponse.SourceCount(e.getKey(), e.getValue()))
+                .toList();
     }
 
     static String sourceLabel(String raw) {
