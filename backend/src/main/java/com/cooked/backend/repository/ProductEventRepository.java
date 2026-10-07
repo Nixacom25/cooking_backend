@@ -97,6 +97,37 @@ public interface ProductEventRepository extends JpaRepository<ProductEvent, UUID
 
     long countByTypeAndSuccessFalseAndCreatedAtGreaterThanEqual(ProductEventType type, LocalDateTime from);
 
+    // --- Same aggregates restricted to a user segment (admin analytics filters) ---
+
+    @Query("select e.type as type, count(e) as total, "
+            + "sum(case when e.success = true then 1 else 0 end) as successes, "
+            + "avg(e.durationMs) as avgDurationMs, count(distinct e.userId) as users "
+            + "from ProductEvent e where e.createdAt >= :from and e.userId in :users group by e.type")
+    List<TypeSummary> summaryByTypeForUsers(@Param("from") LocalDateTime from, @Param("users") java.util.Collection<UUID> users);
+
+    @Query("select cast(e.createdAt as LocalDate) as day, e.type as type, e.success as success, count(e) as total "
+            + "from ProductEvent e where e.createdAt >= :from and e.userId in :users "
+            + "group by cast(e.createdAt as LocalDate), e.type, e.success")
+    List<DayTypeCount> dailyCountsForUsers(@Param("from") LocalDateTime from, @Param("users") java.util.Collection<UUID> users);
+
+    @Query("select e.detail as label, count(e) as total, "
+            + "sum(case when e.success = false then 1 else 0 end) as failures "
+            + "from ProductEvent e where e.type = :type and e.createdAt >= :from and e.detail is not null and e.userId in :users "
+            + "group by e.detail order by count(e) desc")
+    List<LabelCount> topDetailsForUsers(@Param("type") ProductEventType type, @Param("from") LocalDateTime from,
+                                        @Param("users") java.util.Collection<UUID> users, Pageable page);
+
+    @Query("select e.detail as label, count(e) as total, count(e) as failures "
+            + "from ProductEvent e where e.type = com.cooked.backend.entity.ProductEventType.WEB_SEARCH "
+            + "and e.success = true and e.resultCount = 0 and e.createdAt >= :from and e.detail is not null and e.userId in :users "
+            + "group by e.detail order by count(e) desc")
+    List<LabelCount> zeroResultSearchesForUsers(@Param("from") LocalDateTime from, @Param("users") java.util.Collection<UUID> users, Pageable page);
+
+    @Query("select e.type as type, e.failureReason as reason, count(e) as total "
+            + "from ProductEvent e where e.success = false and e.createdAt >= :from and e.failureReason is not null and e.userId in :users "
+            + "group by e.type, e.failureReason order by count(e) desc")
+    List<ReasonCount> topFailureReasonsForUsers(@Param("from") LocalDateTime from, @Param("users") java.util.Collection<UUID> users, Pageable page);
+
     @Query("select min(e.createdAt) from ProductEvent e")
     LocalDateTime firstEventAt();
 }

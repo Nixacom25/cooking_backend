@@ -35,4 +35,26 @@ public class ActivityController {
     public ResponseEntity<Page<ActivityLogResponse>> getEditorActivities(Pageable pageable) {
         return ResponseEntity.ok(activityLogService.getActivitiesByRole(com.cooked.backend.entity.Role.EDITOR, pageable));
     }
+
+    @Operation(summary = "Audit log: intern activity with filters (person = email, area = entity type, action = title, days, q)")
+    @GetMapping("/editors/search")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<ActivityLogResponse>> searchEditorActivities(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String person,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String area,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String action,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Integer days,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String q,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int size) {
+        var pageable = org.springframework.data.domain.PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size));
+        return ResponseEntity.ok(activityLogService.searchEditorActivities(new com.cooked.backend.dto.request.AdminAuditFilter(person, area, action, days, q), pageable));
+    }
+
+    @Operation(summary = "Audit log filter options (people, areas, actions)")
+    @GetMapping("/editors/options")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<com.cooked.backend.dto.response.AuditOptionsResponse> editorActivityOptions() {
+        return ResponseEntity.ok(activityLogService.editorActivityOptions());
+    }
 }

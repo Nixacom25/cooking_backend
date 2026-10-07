@@ -103,6 +103,22 @@ class ProductAnalyticsQueriesTest {
         assertEquals("TIKTOK", users.countSignupsBySource(Role.CLIENT, from).get(0).getLabel());
     }
 
+    @Test
+    void segmentQueriesOnlyCountTheGivenUsers() {
+        LocalDateTime from = now.minusDays(30);
+        var everyone = List.of(alice.getId());
+        var nobody = List.of(new java.util.UUID(0L, 0L));
+        assertEquals(events.summaryByType(from).size(), events.summaryByTypeForUsers(from, everyone).size());
+        assertEquals(0, events.summaryByTypeForUsers(from, nobody).size());
+        assertEquals(events.dailyCounts(from).size(), events.dailyCountsForUsers(from, everyone).size());
+        assertEquals(2, events.topDetailsForUsers(ProductEventType.IMPORT, from, everyone, PageRequest.of(0, 5)).size());
+        assertEquals(1, events.zeroResultSearchesForUsers(from, everyone, PageRequest.of(0, 5)).size());
+        assertEquals(1, events.topFailureReasonsForUsers(from, everyone, PageRequest.of(0, 5)).size());
+        assertEquals(0, events.topFailureReasonsForUsers(from, nobody, PageRequest.of(0, 5)).size());
+        assertEquals(1, recipes.countCreatedByDayAndOriginForUsers(from, List.of(RecipeOrigin.SCAN), everyone).size());
+        assertEquals(0, recipes.countCreatedByDayAndOriginForUsers(from, List.of(RecipeOrigin.SCAN), nobody).size());
+    }
+
     private void event(ProductEventType type, boolean ok, String detail, Integer results, String reason, LocalDateTime at) {
         ProductEvent e = em.persist(ProductEvent.builder().type(type).success(ok).detail(detail).resultCount(results)
                 .failureReason(reason).durationMs(100).userId(alice.getId()).build());

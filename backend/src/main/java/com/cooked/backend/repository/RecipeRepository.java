@@ -9,7 +9,7 @@ import java.util.UUID;
 import java.util.List;
 
 @Repository
-public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
+public interface RecipeRepository extends JpaRepository<Recipe, UUID>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<Recipe> {
         Optional<Recipe> findByUserIdAndName(UUID userId, String name);
         long countByUserId(UUID userId);
         long countByUserIdAndOrigin(UUID userId, com.cooked.backend.entity.RecipeOrigin origin);
@@ -200,6 +200,14 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
         com.cooked.backend.entity.RecipeOrigin getOrigin();
         Long getTotal();
     }
+
+    @org.springframework.data.jpa.repository.Query("select cast(r.createdAt as LocalDate) as day, r.origin as origin, count(r) as total "
+            + "from Recipe r where r.createdAt >= :from and r.origin in :origins and r.user.id in :users "
+            + "group by cast(r.createdAt as LocalDate), r.origin")
+    List<DayOriginCount> countCreatedByDayAndOriginForUsers(
+            @org.springframework.data.repository.query.Param("from") java.time.LocalDateTime from,
+            @org.springframework.data.repository.query.Param("origins") java.util.Collection<com.cooked.backend.entity.RecipeOrigin> origins,
+            @org.springframework.data.repository.query.Param("users") java.util.Collection<UUID> users);
 
     @org.springframework.data.jpa.repository.Query("select cast(r.createdAt as LocalDate) as day, r.origin as origin, count(r) as total "
             + "from Recipe r where r.createdAt >= :from and r.origin in :origins "

@@ -26,6 +26,12 @@ public interface UserActivityDayRepository extends JpaRepository<UserActivityDay
     @Query("SELECT COUNT(DISTINCT a.userId) FROM UserActivityDay a WHERE a.day >= :from AND a.day < :to")
     long countDistinctUsers(@Param("from") LocalDate from, @Param("to") LocalDate to);
 
+    @Query("SELECT a.day AS day, COUNT(a) AS total FROM UserActivityDay a WHERE a.day >= :from AND a.day < :to AND a.userId IN :users GROUP BY a.day")
+    List<DayCount> countByDayForUsers(@Param("from") LocalDate from, @Param("to") LocalDate to, @Param("users") java.util.Collection<java.util.UUID> users);
+
+    @Query("SELECT COUNT(DISTINCT a.userId) FROM UserActivityDay a WHERE a.day >= :from AND a.day < :to AND a.userId IN :users")
+    long countDistinctUsersForUsers(@Param("from") LocalDate from, @Param("to") LocalDate to, @Param("users") java.util.Collection<java.util.UUID> users);
+
     @Query("SELECT MIN(a.day) FROM UserActivityDay a")
     LocalDate firstDay();
 }

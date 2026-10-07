@@ -13,5 +13,11 @@ public interface ActivityLogService {
 
     Page<ActivityLogResponse> getActivitiesByRole(com.cooked.backend.entity.Role role, Pageable pageable);
 
+    /** Intern activity with the Audit log filters, newest first. */
+    Page<ActivityLogResponse> searchEditorActivities(com.cooked.backend.dto.request.AdminAuditFilter filter, Pageable pageable);
+
+    /** People, areas and actions present in the intern activity (filter options). */
+    com.cooked.backend.dto.response.AuditOptionsResponse editorActivityOptions();
+
     void logDetailedEditorActivity(User editor, java.util.List<String> changedFields, String entityType, String entityName, String parentEntityName, java.util.UUID entityId);
 }

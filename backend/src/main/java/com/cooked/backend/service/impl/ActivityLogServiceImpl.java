@@ -52,6 +52,25 @@ public class ActivityLogServiceImpl implements ActivityLogService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public Page<ActivityLogResponse> searchEditorActivities(com.cooked.backend.dto.request.AdminAuditFilter filter, Pageable pageable) {
+        return activityLogRepository.findAll(
+                com.cooked.backend.repository.spec.AuditSpecs.of(com.cooked.backend.entity.Role.EDITOR, filter, java.time.LocalDateTime.now()), pageable)
+                .map(this::mapToResponse);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public com.cooked.backend.dto.response.AuditOptionsResponse editorActivityOptions() {
+        var role = com.cooked.backend.entity.Role.EDITOR;
+        var people = activityLogRepository.findPeopleByRole(role).stream()
+                .map(r -> new com.cooked.backend.dto.response.AuditOptionsResponse.Person((String) r[0],
+                        (((r[1] == null ? "" : r[1]) + " " + (r[2] == null ? "" : r[2])).trim())))
+                .toList();
+        return new com.cooked.backend.dto.response.AuditOptionsResponse(people, activityLogRepository.findAreasByRole(role), activityLogRepository.findActionsByRole(role));
+    }
+
+    @Override
     public void logDetailedEditorActivity(User editor, java.util.List<String> changedFields, String entityType, String entityName, String parentEntityName, java.util.UUID entityId) {
         if (changedFields == null || changedFields.isEmpty()) {
             return;

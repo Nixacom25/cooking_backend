@@ -1,5 +1,9 @@
 package com.cooked.backend.service.impl;
 
+import java.util.UUID;
+import com.cooked.backend.entity.User;
+import com.cooked.backend.repository.spec.AdminUserSpecs;
+import com.cooked.backend.dto.request.AnalyticsSegment;
 import com.cooked.backend.dto.response.AcquisitionResponse;
 import com.cooked.backend.dto.response.EngagementResponse;
 import com.cooked.backend.dto.response.ProductFailuresResponse;
@@ -48,6 +52,11 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
     }
 
     @Override
+    public ProductAnalyticsResponse product(int days, AnalyticsSegment segment) {
+        return productAt(clamp(days), LocalDateTime.now(), usersOf(segment));
+    }
+
+    @Override
     public AcquisitionResponse acquisition(int days) {
         return acquisitionAt(clamp(days), LocalDateTime.now());
     }
@@ -56,6 +65,20 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
     public EngagementResponse engagement(int days) {
         return engagementAt(clamp(days), LocalDate.now());
     }
+
+    @Override
+    public EngagementResponse engagement(int days, AnalyticsSegment segment) {
+        return engagementAt(clamp(days), LocalDate.now(), usersOf(segment));
+    }
+
+    /** Ids of the users in a segment, or null for "everyone" (never an empty list: IN () is invalid). */
+    List<UUID> usersOf(AnalyticsSegment segment) {
+        if (segment == null || segment.all()) return null;
+        List<UUID> ids = userRepository.findAll(AdminUserSpecs.of(segment.toUserFilter(), LocalDateTime.now())).stream().map(User::getId).toList();
+        return ids.isEmpty() ? List.of(NOBODY) : ids;
+    }
+
+    private static final UUID NOBODY = new UUID(0L, 0L);
 
     @Override
     public ProductFailuresResponse failures(ProductEventType type, int days, int page, int size) {
@@ -94,23 +117,33 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
     }
 
     ProductAnalyticsResponse productAt(int days, LocalDateTime now) {
+        return productAt(days, now, null);
+    }
+
+    /** [users] null = everyone, else only their events. */
+    ProductAnalyticsResponse productAt(int days, LocalDateTime now, List<UUID> users) {
         LocalDate firstDay = now.toLocalDate().minusDays(days - 1L);
         LocalDateTime from = firstDay.atStartOfDay();
         PageRequest top = PageRequest.of(0, TOP);
+        boolean all = users == null;
+        List<RecipeOrigin> origins = List.of(RecipeOrigin.SCAN, RecipeOrigin.IMPORT);
 
         return ProductAnalyticsResponse.builder()
                 .days(days)
                 .trackingSince(eventRepository.firstEventAt())
-                .summaries(summaries(eventRepository.summaryByType(from)))
-                .daily(daily(firstDay, days, eventRepository.dailyCounts(from)))
-                .importSources(labels(eventRepository.topDetails(ProductEventType.IMPORT, from, top)))
-                .topSearches(labels(eventRepository.topDetails(ProductEventType.WEB_SEARCH, from, top)))
-                .zeroResultSearches(labels(eventRepository.zeroResultSearches(from, top)))
-                .failureReasons(eventRepository.topFailureReasons(from, top).stream()
+                .summaries(summaries(all ? eventRepository.summaryByType(from) : eventRepository.summaryByTypeForUsers(from, users)))
+                .daily(daily(firstDay, days, all ? eventRepository.dailyCounts(from) : eventRepository.dailyCountsForUsers(from, users)))
+                .importSources(labels(all ? eventRepository.topDetails(ProductEventType.IMPORT, from, top)
+                        : eventRepository.topDetailsForUsers(ProductEventType.IMPORT, from, users, top)))
+                .topSearches(labels(all ? eventRepository.topDetails(ProductEventType.WEB_SEARCH, from, top)
+                        : eventRepository.topDetailsForUsers(ProductEventType.WEB_SEARCH, from, users, top)))
+                .zeroResultSearches(labels(all ? eventRepository.zeroResultSearches(from, top) : eventRepository.zeroResultSearchesForUsers(from, users, top)))
+                .failureReasons((all ? eventRepository.topFailureReasons(from, top) : eventRepository.topFailureReasonsForUsers(from, users, top)).stream()
                         .map(r -> new ProductAnalyticsResponse.FailureReason(r.getType(), r.getReason(), nz(r.getTotal())))
                         .toList())
-                .recipesCreated(recipesCreated(firstDay, days,
-                        recipeRepository.countCreatedByDayAndOrigin(from, List.of(RecipeOrigin.SCAN, RecipeOrigin.IMPORT))))
+                .recipesCreated(recipesCreated(firstDay, days, all
+                        ? recipeRepository.countCreatedByDayAndOrigin(from, origins)
+                        : recipeRepository.countCreatedByDayAndOriginForUsers(from, origins, users)))
                 .build();
     }
 
@@ -140,24 +173,34 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
     }
 
     EngagementResponse engagementAt(int days, LocalDate today) {
+        return engagementAt(days, today, null);
+    }
+
+    /** [users] null = everyone. */
+    EngagementResponse engagementAt(int days, LocalDate today, List<UUID> users) {
         LocalDate end = today.plusDays(1);              // exclusive
         LocalDate from = end.minusDays(days);
         LocalDate prevFrom = from.minusDays(days);
-        List<AcquisitionResponse.DayCount> daily = daySeries(from, days, activityRepository.countByDay(from, end));
-        List<AcquisitionResponse.DayCount> dailyPrev = daySeries(prevFrom, days, activityRepository.countByDay(prevFrom, from));
+        boolean all = users == null;
+        java.util.function.BiFunction<LocalDate, LocalDate, List<UserActivityDayRepository.DayCount>> byDay =
+                (a, b) -> all ? activityRepository.countByDay(a, b) : activityRepository.countByDayForUsers(a, b, users);
+        java.util.function.ToLongBiFunction<LocalDate, LocalDate> distinct =
+                (a, b) -> all ? activityRepository.countDistinctUsers(a, b) : activityRepository.countDistinctUsersForUsers(a, b, users);
+        List<AcquisitionResponse.DayCount> daily = daySeries(from, days, byDay.apply(from, end));
+        List<AcquisitionResponse.DayCount> dailyPrev = daySeries(prevFrom, days, byDay.apply(prevFrom, from));
 
         return EngagementResponse.builder()
                 .days(days)
                 .trackingSince(activityRepository.firstDay())
-                .totalUsers(userRepository.countByRole(Role.CLIENT))
-                .activeUsers(activityRepository.countDistinctUsers(from, end))
-                .activeUsersPrev(activityRepository.countDistinctUsers(prevFrom, from))
+                .totalUsers(all ? userRepository.countByRole(Role.CLIENT) : users.stream().filter(id -> !NOBODY.equals(id)).count())
+                .activeUsers(distinct.applyAsLong(from, end))
+                .activeUsersPrev(distinct.applyAsLong(prevFrom, from))
                 .dau(average(daily))
                 .dauPrev(average(dailyPrev))
-                .wau(activityRepository.countDistinctUsers(end.minusDays(7), end))
-                .wauPrev(activityRepository.countDistinctUsers(end.minusDays(14), end.minusDays(7)))
-                .mau(activityRepository.countDistinctUsers(end.minusDays(30), end))
-                .mauPrev(activityRepository.countDistinctUsers(end.minusDays(60), end.minusDays(30)))
+                .wau(distinct.applyAsLong(end.minusDays(7), end))
+                .wauPrev(distinct.applyAsLong(end.minusDays(14), end.minusDays(7)))
+                .mau(distinct.applyAsLong(end.minusDays(30), end))
+                .mauPrev(distinct.applyAsLong(end.minusDays(60), end.minusDays(30)))
                 .daily(daily)
                 .dailyPrev(dailyPrev)
                 .build();

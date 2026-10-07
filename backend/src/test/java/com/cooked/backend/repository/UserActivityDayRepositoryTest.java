@@ -36,5 +36,8 @@ class UserActivityDayRepositoryTest {
         assertEquals(2L, repo.countDistinctUsers(d.minusDays(6), d.plusDays(1)));
         assertEquals(1L, repo.countDistinctUsers(d.minusDays(29), d.minusDays(6)));
         assertEquals(d.minusDays(20), repo.firstDay());
+        // restricted to a segment
+        assertEquals(1L, repo.countDistinctUsersForUsers(d.minusDays(6), d.plusDays(1), java.util.List.of(b)));
+        assertEquals(1, repo.countByDayForUsers(d.minusDays(6), d.plusDays(1), java.util.List.of(b)).size());
     }
 }

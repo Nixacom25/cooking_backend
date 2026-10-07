@@ -849,6 +849,13 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<RecipeResponse> getAdminRecipes(com.cooked.backend.dto.request.AdminRecipeFilter filter, Pageable pageable) {
+        return recipeRepository.findAll(com.cooked.backend.repository.spec.AdminRecipeSpecs.of(filter), pageable)
+                .map(recipe -> mapToResponse(recipe, null));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public RecipeResponse getAdminRecipeById(UUID id) {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));

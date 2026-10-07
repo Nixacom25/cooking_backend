@@ -28,8 +28,11 @@ public class AdminAnalyticsController {
 
     @Operation(summary = "Scan / import / web-search metrics (days: 1-90, default 30)")
     @GetMapping("/product")
-    public ResponseEntity<ProductAnalyticsResponse> product(@RequestParam(defaultValue = "30") int days) {
-        return ResponseEntity.ok(analyticsService.product(days));
+    public ResponseEntity<ProductAnalyticsResponse> product(@RequestParam(defaultValue = "30") int days,
+                                                            @RequestParam(required = false) String platform,
+                                                            @RequestParam(required = false) String subscription,
+                                                            @RequestParam(required = false) String source) {
+        return ResponseEntity.ok(analyticsService.product(days, new com.cooked.backend.dto.request.AnalyticsSegment(platform, subscription, source)));
     }
 
     @Operation(summary = "Sign-ups and discovery sources (days: 1-90, default 30)")
@@ -40,8 +43,11 @@ public class AdminAnalyticsController {
 
     @Operation(summary = "Active users: DAU / WAU / MAU and daily series (days: 1-90, default 30)")
     @GetMapping("/engagement")
-    public ResponseEntity<EngagementResponse> engagement(@RequestParam(defaultValue = "30") int days) {
-        return ResponseEntity.ok(analyticsService.engagement(days));
+    public ResponseEntity<EngagementResponse> engagement(@RequestParam(defaultValue = "30") int days,
+                                                         @RequestParam(required = false) String platform,
+                                                         @RequestParam(required = false) String subscription,
+                                                         @RequestParam(required = false) String source) {
+        return ResponseEntity.ok(analyticsService.engagement(days, new com.cooked.backend.dto.request.AnalyticsSegment(platform, subscription, source)));
     }
 
     @Operation(summary = "Failed imports, newest first (days: 1-90, default 7; size: 1-100)")

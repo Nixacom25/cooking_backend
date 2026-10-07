@@ -57,6 +57,11 @@ public interface RecipeService {
                 String name,
                 org.springframework.data.domain.Pageable pageable);
 
+        /** Admin Recipes table with every filter (cuisine, visibility, image). */
+        org.springframework.data.domain.Page<RecipeResponse> getAdminRecipes(
+                com.cooked.backend.dto.request.AdminRecipeFilter filter,
+                org.springframework.data.domain.Pageable pageable);
+
         RecipeResponse updateAdminRecipe(UUID id, String recipeJson, org.springframework.web.multipart.MultipartFile image);
 
         void deleteAdminRecipe(UUID id, String userEmail);
