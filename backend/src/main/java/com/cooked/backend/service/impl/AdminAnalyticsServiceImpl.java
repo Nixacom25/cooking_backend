@@ -123,8 +123,9 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
                 if (!ids.isEmpty()) {
                     for (Object[] row : userRepository.findDeviceNames(ids)) {
                         String name = row[1] == null ? "" : row[1].toString().toLowerCase(java.util.Locale.ROOT);
-                        String p = name.startsWith("ios") ? "iOS" : name.startsWith("android") ? "Android" : "Web / other";
-                        platform.merge((UUID) row[0], p, (a, b) -> a.equals("Web / other") ? b : a);
+                        String p = name.startsWith("ios") ? "iOS" : name.startsWith("android") ? "Android"
+                                : name.equals(AdminUserSpecs.MOBILE_APP) ? "App (OS not reported)" : "Web / other";
+                        platform.merge((UUID) row[0], p, (a, b) -> a.equals("Web / other") || a.startsWith("App") ? b : a);
                     }
                 }
                 yield m -> platform.getOrDefault(m.id(), "Unknown");

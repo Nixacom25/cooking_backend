@@ -575,8 +575,14 @@ public class AuthServiceImpl implements AuthService {
                         String userAgent = request.getHeader("User-Agent");
                         String ipAddress = request.getRemoteAddr();
                         String deviceName = "Unknown Device";
+                        // The mobile app (Dart user agent) reports its OS in a header.
+                        String clientPlatform = request.getHeader("X-Client-Platform");
 
-                        if (userAgent != null) {
+                        if ("ios".equalsIgnoreCase(clientPlatform)) {
+                                deviceName = "iOS App";
+                        } else if ("android".equalsIgnoreCase(clientPlatform)) {
+                                deviceName = "Android App";
+                        } else if (userAgent != null) {
                                 if (userAgent.contains("iPhone") || userAgent.contains("iPad"))
                                         deviceName = "iOS Device";
                                 else if (userAgent.contains("Android"))

@@ -4,7 +4,7 @@ package com.cooked.backend.dto.request;
  * Filters of the admin Users table. Every field is optional (null = no filter).
  *
  * @param q            name, email, user id or RevenueCat id (contains, case-insensitive)
- * @param platform     IOS, ANDROID or WEB (any login session from that platform)
+ * @param platform     IOS, ANDROID, APP (mobile app, OS not reported) or WEB (any login session from that platform)
  * @param subscription a SubscriptionStatus name (FREE, TRIAL, ACTIVE…)
  * @param signupDays   signed up in the last N days
  * @param source       discovery source, as answered in onboarding

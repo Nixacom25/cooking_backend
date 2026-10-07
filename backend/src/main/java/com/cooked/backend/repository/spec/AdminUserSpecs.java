@@ -19,6 +19,9 @@ import java.util.Locale;
 /** Builds the admin Users query from {@link AdminUserFilter}; unknown enum values match nothing. */
 public final class AdminUserSpecs {
 
+    /** Device name recorded for app logins without an OS header (older builds), lower-cased. */
+    public static final String MOBILE_APP = "cooked mobile app";
+
     private AdminUserSpecs() {
     }
 
@@ -45,17 +48,17 @@ public final class AdminUserSpecs {
             }
 
             if (notBlank(f.platform())) {
-                String prefix = switch (f.platform().trim().toUpperCase(Locale.ROOT)) {
-                    case "IOS" -> "ios";
-                    case "ANDROID" -> "android";
-                    default -> null;
-                };
+                String platform = f.platform().trim().toUpperCase(Locale.ROOT);
                 Subquery<Long> sessions = query.subquery(Long.class);
                 var s = sessions.from(DeviceSession.class);
-                Predicate onPlatform = prefix != null
-                        ? cb.like(cb.lower(s.get("deviceName")), prefix + "%")
-                        : cb.and(cb.notLike(cb.lower(cb.coalesce(s.get("deviceName"), "")), "ios%"),
-                                 cb.notLike(cb.lower(cb.coalesce(s.get("deviceName"), "")), "android%"));
+                var name = cb.lower(cb.coalesce(s.get("deviceName"), ""));
+                Predicate onPlatform = switch (platform) {
+                    case "IOS" -> cb.like(name, "ios%");
+                    case "ANDROID" -> cb.like(name, "android%");
+                    // Mobile app builds that don't report their OS yet.
+                    case "APP" -> cb.equal(name, MOBILE_APP);
+                    default -> cb.and(cb.notLike(name, "ios%"), cb.notLike(name, "android%"), cb.notEqual(name, MOBILE_APP));
+                };
                 sessions.select(cb.literal(1L)).where(cb.equal(s.get("user"), root), onPlatform);
                 and.add(cb.exists(sessions));
             }

@@ -41,6 +41,8 @@ class AdminUserSpecsTest {
                 .status(AmbassadorStatus.ACTIVE).build());
         em.persist(DeviceSession.builder().user(ios).deviceName("iOS Device").token("t1").lastActive(now).build());
         em.persist(DeviceSession.builder().user(android).deviceName("Android Device").token("t2").lastActive(now).build());
+        User app = em.persist(User.builder().email("app@test.com").password("x").role(Role.CLIENT).status(Status.ACTIVE).build());
+        em.persist(DeviceSession.builder().user(app).deviceName("Cooked Mobile App").token("t3").lastActive(now).build());
         em.flush();
         em.getEntityManager().createQuery("update User u set u.createdAt = :at where u.email = 'bob@test.com'")
                 .setParameter("at", now.minusDays(100)).executeUpdate();
@@ -57,7 +59,7 @@ class AdminUserSpecsTest {
 
     @Test
     void clientsOnlyByDefault() {
-        assertEquals(List.of("amb@test.com", "ana@test.com", "bob@test.com"), emails(none()));
+        assertEquals(List.of("amb@test.com", "ana@test.com", "app@test.com", "bob@test.com"), emails(none()));
     }
 
     @Test
@@ -66,9 +68,10 @@ class AdminUserSpecsTest {
         assertEquals(List.of("ana@test.com"), emails(new AdminUserFilter(null, "IOS", null, null, null, null, null, null)));
         assertEquals(List.of("bob@test.com"), emails(new AdminUserFilter(null, "android", null, null, null, null, null, null)));
         assertEquals(List.of(), emails(new AdminUserFilter(null, "WEB", null, null, null, null, null, null)));
+        assertEquals(List.of("app@test.com"), emails(new AdminUserFilter(null, "APP", null, null, null, null, null, null)));
         assertEquals(List.of("bob@test.com"), emails(new AdminUserFilter(null, null, "active", null, null, null, null, null)));
         assertEquals(List.of(), emails(new AdminUserFilter(null, null, "NOPE", null, null, null, null, null)));
-        assertEquals(List.of("amb@test.com", "ana@test.com"), emails(new AdminUserFilter(null, null, null, 30, null, null, null, null)));
+        assertEquals(List.of("amb@test.com", "ana@test.com", "app@test.com"), emails(new AdminUserFilter(null, null, null, 30, null, null, null, null)));
         assertEquals(List.of("bob@test.com"), emails(new AdminUserFilter(null, null, null, null, "instagram", null, null, null)));
         assertEquals(List.of("bob@test.com"), emails(new AdminUserFilter(null, null, null, null, null, "BLOCKED", null, null)));
         assertEquals(List.of("ana@test.com"), emails(new AdminUserFilter(null, null, null, null, null, null, true, null)));
