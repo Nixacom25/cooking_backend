@@ -48,6 +48,10 @@ public class WorkspaceSettings {
     @Column(nullable = false)
     private boolean anomalyCards;
 
+    /** Day-3 / day-7 nudges to free users (off until turned on in Settings). */
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean dripEnabled;
+
     private LocalDate lastDailySummaryOn;
     private LocalDate lastWeeklyReviewOn;
 

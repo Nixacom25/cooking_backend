@@ -16,4 +16,5 @@ public class UpdateWorkspaceSettingsRequest {
     @Size(max = 300)
     private String slackWebhookUrl;
     private Boolean anomalyCards;
+    private Boolean dripEnabled;
 }

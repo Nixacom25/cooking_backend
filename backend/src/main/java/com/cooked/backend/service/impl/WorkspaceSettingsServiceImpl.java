@@ -58,6 +58,7 @@ public class WorkspaceSettingsServiceImpl implements WorkspaceSettingsService {
         if (r.getDailySummary() != null) s.setDailySummary(r.getDailySummary());
         if (r.getWeeklyReview() != null) s.setWeeklyReview(r.getWeeklyReview());
         if (r.getAnomalyCards() != null) s.setAnomalyCards(r.getAnomalyCards());
+        if (r.getDripEnabled() != null) s.setDripEnabled(r.getDripEnabled());
         if (r.getSlackWebhookUrl() != null) {
             String url = r.getSlackWebhookUrl().trim();
             if (!url.isEmpty() && !url.startsWith(SLACK_PREFIX)) throw new BadRequestException("Slack webhook must start with " + SLACK_PREFIX);
@@ -90,6 +91,7 @@ public class WorkspaceSettingsServiceImpl implements WorkspaceSettingsService {
                 .slackConfigured(url != null)
                 .slackWebhookHint(url == null ? null : SLACK_PREFIX + "…/" + url.substring(Math.max(SLACK_PREFIX.length(), url.length() - 4)))
                 .anomalyCards(s.isAnomalyCards())
+                .dripEnabled(s.isDripEnabled())
                 .lastDailySummaryOn(s.getLastDailySummaryOn()).lastWeeklyReviewOn(s.getLastWeeklyReviewOn())
                 .supportEmail(supportEmail)
                 .build();

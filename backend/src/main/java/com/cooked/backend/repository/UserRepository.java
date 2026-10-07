@@ -25,9 +25,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             java.util.Collection<com.cooked.backend.entity.SubscriptionStatus> statuses,
             com.cooked.backend.entity.SubscriptionType type);
 
-    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.subscriptionStatus = :status AND u.createdAt <= :date")
-    java.util.List<User> findUsersForDrip(@org.springframework.data.repository.query.Param("date") java.time.LocalDateTime date, @org.springframework.data.repository.query.Param("status") com.cooked.backend.entity.SubscriptionStatus status);
-
     @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.subscriptionStatus = com.cooked.backend.entity.SubscriptionStatus.TRIAL "
             + "AND u.trialEndingReminderSent = false AND u.subscriptionExpiresAt BETWEEN :from AND :to")
     java.util.List<User> findUsersWithTrialEndingSoon(
@@ -46,6 +43,13 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             org.springframework.data.domain.Pageable pageable);
             
     long countByRole(com.cooked.backend.entity.Role role);
+
+    /** Clients still on the free plan who signed up in [from, to) — one day's cohort. */
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.role = com.cooked.backend.entity.Role.CLIENT "
+            + "AND u.subscriptionStatus = :status AND u.createdAt >= :from AND u.createdAt < :to")
+    java.util.List<User> findDripCohort(@org.springframework.data.repository.query.Param("status") com.cooked.backend.entity.SubscriptionStatus status,
+                                        @org.springframework.data.repository.query.Param("from") java.time.LocalDateTime from,
+                                        @org.springframework.data.repository.query.Param("to") java.time.LocalDateTime to);
 
     @org.springframework.data.jpa.repository.Query("select u.email from User u where u.role = :role and u.email is not null")
     java.util.List<String> findEmailsByRole(@org.springframework.data.repository.query.Param("role") com.cooked.backend.entity.Role role);

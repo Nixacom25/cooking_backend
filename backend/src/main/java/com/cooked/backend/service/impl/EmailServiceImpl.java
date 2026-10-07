@@ -705,6 +705,17 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    public void sendDripEmail(String to, String firstName, String title, String body) {
+        String html = "<div style=\"font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#141414\">"
+                + "<p>Hi " + escape(displayName(firstName)) + ",</p>"
+                + "<h2 style=\"margin:0 0 12px\">" + escape(title) + "</h2>"
+                + "<p style=\"font-size:15px;line-height:1.5\">" + escape(body) + "</p>"
+                + "<p><a href=\"https://cookedapp.com\" style=\"display:inline-block;padding:12px 20px;border-radius:999px;background:#C4161C;color:#fff;text-decoration:none;font-weight:600\">Open Cooked</a></p>"
+                + "</div>";
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.DRIP, to, title, html);
+    }
+
+    @Override
     public void sendAdminSummaryEmail(String to, String subject, String title, java.util.List<String[]> rows) {
         StringBuilder table = new StringBuilder();
         for (String[] r : rows) {

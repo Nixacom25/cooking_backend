@@ -41,8 +41,8 @@ public final class AutomationCatalog {
                     List.of("Collect yesterday's / last week's key figures", "Email every admin", "Post to Slack (if connected)"), "AdminSummaryJob.sendDueSummaries", EmailTemplate.ADMIN_SUMMARY,
                     "Turn on in Settings → Your alerts."),
             new Automation("drip_funnel", "Free users drip", Kind.SCHEDULED, "Daily at 10:00",
-                    List.of("Free users at day 3: -20% offer", "Free users at day 7: last chance"), "DripFunnelService.processDripCampaigns", null,
-                    "Runs, but only logs: no push or email is sent yet."),
+                    List.of("Free users who signed up 3 / 7 days ago", "Push (or email without a push token), once per step"), "DripFunnelService.processDripCampaigns", EmailTemplate.DRIP,
+                    "Off until turned on in Settings → Your alerts."),
             new Automation("scheduled_campaigns", "Scheduled push campaigns", Kind.SCHEDULED, "Every minute",
                     List.of("Send push campaigns whose time has come"), null, null,
                     "Polls every minute; runs are not logged (see Notifications for sends).")

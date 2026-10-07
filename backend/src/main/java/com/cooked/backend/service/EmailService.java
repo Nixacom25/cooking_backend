@@ -15,6 +15,9 @@ public interface EmailService {
     /** Website gift: the gift itself, sent to the friend. */
     void sendGiftReceivedEmail(String to, String senderName, String planLabel, String code, String redeemUrl);
     void sendTrialEndsTomorrowEmail(String to, String firstName, String planName, String price);
+    /** Free-user nudge (drip funnel) when no push token is registered. */
+    void sendDripEmail(String to, String firstName, String title, String body);
+
     /** Key figures for admins; rows are {label, value}. */
     void sendAdminSummaryEmail(String to, String subject, String title, java.util.List<String[]> rows);
 

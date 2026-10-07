@@ -21,6 +21,7 @@ public class WorkspaceSettingsResponse {
     /** "https://hooks.slack.com/…/abcd" — the secret part is never returned. */
     private String slackWebhookHint;
     private boolean anomalyCards;
+    private boolean dripEnabled;
     private LocalDate lastDailySummaryOn;
     private LocalDate lastWeeklyReviewOn;
     /** Where critical alerts are emailed. */
