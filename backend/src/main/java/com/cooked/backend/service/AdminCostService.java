@@ -18,6 +18,9 @@ public interface AdminCostService {
 
     ProviderCostDetailResponse provider(String provider, int days);
 
+    /** USD spent on providers in the "AI & APIs" category over the last [days] days, and the [days] before: {current, previous}. */
+    double[] aiSpend(int days);
+
     List<CostEntryResponse> entries();
 
     CostEntryResponse addEntry(CreateCostRequest request, String adminEmail);

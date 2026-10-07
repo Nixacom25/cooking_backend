@@ -4,6 +4,8 @@ import com.cooked.backend.dto.request.CreateCostRequest;
 import com.cooked.backend.dto.request.UpdateProviderBudgetRequest;
 import com.cooked.backend.dto.response.CostEntryResponse;
 import com.cooked.backend.dto.response.CostOverviewResponse;
+import com.cooked.backend.dto.response.FeatureCostResponse;
+import com.cooked.backend.service.FeatureCostService;
 import com.cooked.backend.dto.response.ProviderCostDetailResponse;
 import com.cooked.backend.service.AdminCostService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,11 +31,18 @@ import java.util.UUID;
 public class AdminCostController {
 
     private final AdminCostService costService;
+    private final FeatureCostService featureCostService;
 
     @Operation(summary = "Totals, daily spend, categories, providers and alerts (days: 1-90, default 30)")
     @GetMapping("/overview")
     public ResponseEntity<CostOverviewResponse> overview(@RequestParam(defaultValue = "30") int days) {
         return ResponseEntity.ok(costService.overview(days));
+    }
+
+    @Operation(summary = "Estimated cost per feature: AI spend split by weighted call volume (days: 1-45)")
+    @GetMapping("/features")
+    public ResponseEntity<FeatureCostResponse> features(@RequestParam(defaultValue = "30") int days) {
+        return ResponseEntity.ok(featureCostService.features(days));
     }
 
     @Operation(summary = "One provider: daily spend and line items")

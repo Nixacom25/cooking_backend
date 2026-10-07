@@ -143,6 +143,16 @@ public class AdminCostServiceImpl implements AdminCostService {
     }
 
     @Override
+    public double[] aiSpend(int days) {
+        Window w = new Window(clamp(days), LocalDate.now());
+        Ledger ledger = ledger(w);
+        Map<String, CostCategory> overrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        budgetRepository.findAll().forEach(b -> { if (b.getCategory() != null) overrides.put(b.getProvider(), b.getCategory()); });
+        Predicate<String> ai = p -> overrides.getOrDefault(p, ledger.categories.getOrDefault(p, CostCategory.OTHER)) == CostCategory.AI_APIS;
+        return new double[] {round(ledger.total(w.from, w.today, ai)), round(ledger.total(w.prevFrom, w.from.minusDays(1), ai))};
+    }
+
+    @Override
     public List<CostEntryResponse> entries() {
         return entryRepository.findAllByOrderByStartDateDesc().stream().map(AdminCostServiceImpl::toResponse).toList();
     }
