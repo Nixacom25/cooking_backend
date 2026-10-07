@@ -116,6 +116,14 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Some of the provided information is invalid or missing.", "VALIDATION", "CONSTRAINT_VIOLATION");
     }
 
+    /** Keeps the status chosen by the code (429 limit reached, 503 not configured, 502 upstream failure…). */
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatus(org.springframework.web.server.ResponseStatusException ex) {
+        HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+        return buildErrorResponse(status == null ? HttpStatus.INTERNAL_SERVER_ERROR : status,
+                ex.getReason() == null ? "Request failed." : ex.getReason(), "BACKEND", status == null ? "ERROR" : status.name());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
         // Log the full stack trace so unhandled errors are actually diagnosable
