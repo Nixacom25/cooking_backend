@@ -193,6 +193,12 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID>, org.sprin
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(r) FROM Recipe r WHERE (r.isDeleted IS NULL OR r.isDeleted = false) AND r.lastModifiedBy IS NULL AND r.id NOT IN (SELECT ra.recipe.id FROM RecipeAssignment ra)")
     long countUnassignedUnmodifiedRecipes();
 
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE (r.isDeleted IS NULL OR r.isDeleted = false) AND r.lastModifiedBy IS NULL AND r.origin = :origin AND r.id NOT IN (SELECT ra.recipe.id FROM RecipeAssignment ra)")
+    List<Recipe> findUnassignedUnmodifiedRecipesByOrigin(@org.springframework.data.repository.query.Param("origin") com.cooked.backend.entity.RecipeOrigin origin, org.springframework.data.domain.Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(r) FROM Recipe r WHERE (r.isDeleted IS NULL OR r.isDeleted = false) AND r.lastModifiedBy IS NULL AND r.origin = :origin AND r.id NOT IN (SELECT ra.recipe.id FROM RecipeAssignment ra)")
+    long countUnassignedUnmodifiedRecipesByOrigin(@org.springframework.data.repository.query.Param("origin") com.cooked.backend.entity.RecipeOrigin origin);
+
     // --- Admin analytics: recipes created per day and origin (history that
     // exists before product events were recorded).
     interface DayOriginCount {

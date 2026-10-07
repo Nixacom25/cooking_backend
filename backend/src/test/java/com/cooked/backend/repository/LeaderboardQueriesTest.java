@@ -41,6 +41,24 @@ class LeaderboardQueriesTest {
         assertEquals(1, recentValidated);
     }
 
+    @Autowired private RecipeRepository recipes;
+
+    @Test
+    void unassignedRecipesBySource() {
+        User admin = em.persist(User.builder().email("a2@test.com").password("x").role(Role.ADMIN).status(Status.ACTIVE).build());
+        User intern = em.persist(User.builder().email("i2@test.com").password("x").role(Role.EDITOR).status(Status.ACTIVE).build());
+        em.persist(Recipe.builder().name("Free import").origin(RecipeOrigin.IMPORT).build());
+        em.persist(Recipe.builder().name("Free explore").origin(RecipeOrigin.EXPLORE).build());
+        Recipe taken = em.persist(Recipe.builder().name("Taken import").origin(RecipeOrigin.IMPORT).build());
+        em.persist(RecipeAssignment.builder().recipe(taken).assignedByUser(admin).assignedToUser(intern).status(AssignmentStatus.ASSIGNED)
+                .batchLabel("Chicken").priority("HIGH").build());
+        em.flush();
+
+        assertEquals(1, recipes.countUnassignedUnmodifiedRecipesByOrigin(RecipeOrigin.IMPORT));
+        assertEquals("Free import", recipes.findUnassignedUnmodifiedRecipesByOrigin(RecipeOrigin.IMPORT, org.springframework.data.domain.PageRequest.of(0, 5)).get(0).getName());
+        assertEquals(2, recipes.countUnassignedUnmodifiedRecipes());
+    }
+
     private void assign(User by, User to, AssignmentStatus status, LocalDateTime at) {
         Recipe r = em.persist(Recipe.builder().name("R " + at).build());
         RecipeAssignment a = em.persist(RecipeAssignment.builder().recipe(r).assignedByUser(by).assignedToUser(to).status(status).build());

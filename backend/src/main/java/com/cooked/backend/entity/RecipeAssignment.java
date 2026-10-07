@@ -74,4 +74,12 @@ public class RecipeAssignment {
     @Column(name = "revision_count")
     @Builder.Default
     private Integer revisionCount = 0;
+
+    /** Optional batch name given by the admin when assigning (e.g. "Chicken & poultry"). */
+    @Column(name = "batch_label", length = 120)
+    private String batchLabel;
+
+    /** NORMAL, HIGH or URGENT (null = NORMAL). */
+    @Column(name = "priority", length = 16)
+    private String priority;
 }

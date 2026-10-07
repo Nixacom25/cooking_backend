@@ -31,6 +31,7 @@ import java.util.UUID;
 @Tag(name = "Support", description = "Public support/feedback submissions")
 public class SupportController {
 
+    private final com.cooked.backend.service.SupportTriageService supportTriageService;
     private final SupportTicketRepository supportTicketRepository;
     private final EmailService emailService;
 
@@ -83,6 +84,14 @@ public class SupportController {
                 ? supportTicketRepository.findAllByOrderByCreatedAtDesc(pageable)
                 : supportTicketRepository.findAllByStatusOrderByCreatedAtDesc(status.toUpperCase(), pageable);
         return ResponseEntity.ok(tickets);
+    }
+
+    @Operation(summary = "Assign a ticket to an admin and / or set its priority (NORMAL, HIGH, URGENT)")
+    @PutMapping("/tickets/{id}/triage")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SupportTicket> triageTicket(@PathVariable UUID id,
+                                                      @Valid @RequestBody com.cooked.backend.dto.request.TicketTriageRequest body) {
+        return ResponseEntity.ok(supportTriageService.triage(id, body));
     }
 
     @Operation(summary = "Update a ticket's status (admin only)")

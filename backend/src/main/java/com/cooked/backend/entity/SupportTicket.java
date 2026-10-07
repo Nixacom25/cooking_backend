@@ -59,6 +59,14 @@ public class SupportTicket {
     /** Category for better organization (Account, Payment, Scan, Import, Recipe, Shopping, Other) */
     private String category;
 
+    /** Admin in charge (email), null = unassigned. */
+    @Column(length = 160)
+    private String assignee;
+
+    /** NORMAL, HIGH or URGENT (null = NORMAL, older tickets). */
+    @Column(length = 16)
+    private String priority;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

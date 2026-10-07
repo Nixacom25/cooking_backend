@@ -20,4 +20,15 @@ public class BatchAssignmentRequest {
 
     @Min(value = 1, message = "Le nombre de recettes doit être supérieur ou égal à 1")
     private int count;
+
+    /** Only recipes from this source (optional). */
+    private com.cooked.backend.entity.RecipeOrigin origin;
+
+    /** Optional batch name. */
+    @jakarta.validation.constraints.Size(max = 120)
+    private String batchLabel;
+
+    /** NORMAL, HIGH or URGENT (optional). */
+    @jakarta.validation.constraints.Pattern(regexp = "NORMAL|HIGH|URGENT", message = "priority must be NORMAL, HIGH or URGENT")
+    private String priority;
 }

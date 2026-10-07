@@ -28,4 +28,6 @@ public interface RecipeAssignmentService {
     List<StagiaireLeaderboardResponse> getStagiairesLeaderboard(Integer days);
     List<RecipeAssignmentResponse> assignBatchByCount(com.cooked.backend.dto.request.BatchAssignmentRequest request, String adminEmail);
     long getAvailableUnassignedCount();
+    /** Same, limited to recipes from one source (null = all). */
+    long getAvailableUnassignedCount(com.cooked.backend.entity.RecipeOrigin origin);
 }

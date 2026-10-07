@@ -26,4 +26,6 @@ public class RecipeAssignmentResponse {
     private List<String> errorCategories;
     private String feedbackComment;
     private Integer revisionCount;
+    private String batchLabel;
+    private String priority;
 }

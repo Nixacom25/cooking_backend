@@ -149,6 +149,11 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
     }
 
     @Override
+    public long getAvailableUnassignedCount(RecipeOrigin origin) {
+        return origin == null ? getAvailableUnassignedCount() : recipeRepository.countUnassignedUnmodifiedRecipesByOrigin(origin);
+    }
+
+    @Override
     @Transactional
     public List<RecipeAssignmentResponse> assignBatchByCount(com.cooked.backend.dto.request.BatchAssignmentRequest request, String adminEmail) {
         User admin = userRepository.findByEmail(adminEmail)
@@ -160,13 +165,18 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
         if (requestedCount < 1) {
             throw new BadRequestException("Le nombre de recettes à attribuer doit être d'au moins 1.");
         }
-        long availableCount = recipeRepository.countUnassignedUnmodifiedRecipes();
+        RecipeOrigin origin = request.getOrigin();
+        long availableCount = getAvailableUnassignedCount(origin);
 
         if (requestedCount > availableCount) {
             throw new BadRequestException("Impossible d'attribuer " + requestedCount + " recettes : seulement " + availableCount + " recette(s) non attribuée(s) disponible(s).");
         }
 
-        List<Recipe> availableRecipes = recipeRepository.findUnassignedUnmodifiedRecipes(org.springframework.data.domain.PageRequest.of(0, requestedCount));
+        var firstN = org.springframework.data.domain.PageRequest.of(0, requestedCount);
+        List<Recipe> availableRecipes = origin == null
+                ? recipeRepository.findUnassignedUnmodifiedRecipes(firstN)
+                : recipeRepository.findUnassignedUnmodifiedRecipesByOrigin(origin, firstN);
+        String batchLabel = request.getBatchLabel() == null || request.getBatchLabel().isBlank() ? null : request.getBatchLabel().trim();
         List<RecipeAssignmentResponse> results = new ArrayList<>();
 
         for (Recipe recipe : availableRecipes) {
@@ -177,6 +187,8 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
                     .frequency(AssignmentFrequency.NONE)
                     .status(AssignmentStatus.ASSIGNED)
                     .revisionCount(0)
+                    .batchLabel(batchLabel)
+                    .priority(request.getPriority())
                     .build();
 
             RecipeAssignment saved = assignmentRepository.save(assignment);
@@ -528,6 +540,8 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
                 .errorCategories(a.getErrorCategories())
                 .feedbackComment(a.getFeedbackComment())
                 .revisionCount(a.getRevisionCount())
+                .batchLabel(a.getBatchLabel())
+                .priority(a.getPriority())
                 .build();
     }
 
