@@ -2,6 +2,7 @@ package com.cooked.backend.repository;
 
 import com.cooked.backend.entity.ProductEvent;
 import com.cooked.backend.entity.ProductEventType;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -73,6 +74,27 @@ public interface ProductEventRepository extends JpaRepository<ProductEvent, UUID
             + "from ProductEvent e where e.success = false and e.createdAt >= :from and e.failureReason is not null "
             + "group by e.type, e.failureReason order by count(e) desc")
     List<ReasonCount> topFailureReasons(@Param("from") LocalDateTime from, Pageable page);
+
+    interface FailureRow {
+        UUID getId();
+        String getDetail();
+        String getReason();
+        Integer getDurationMs();
+        LocalDateTime getCreatedAt();
+        String getEmail();
+        String getFirstname();
+        String getLastname();
+    }
+
+    /** Failed events of a type, newest first, with the user's name (one query per page). */
+    @Query(value = "select e.id as id, e.detail as detail, e.failureReason as reason, e.durationMs as durationMs, "
+            + "e.createdAt as createdAt, u.email as email, u.firstname as firstname, u.lastname as lastname "
+            + "from ProductEvent e left join User u on u.id = e.userId "
+            + "where e.type = :type and e.success = false and e.createdAt >= :from order by e.createdAt desc",
+            countQuery = "select count(e) from ProductEvent e where e.type = :type and e.success = false and e.createdAt >= :from")
+    Page<FailureRow> failures(@Param("type") ProductEventType type, @Param("from") LocalDateTime from, Pageable page);
+
+    long countByTypeAndSuccessFalseAndCreatedAtGreaterThanEqual(ProductEventType type, LocalDateTime from);
 
     @Query("select min(e.createdAt) from ProductEvent e")
     LocalDateTime firstEventAt();

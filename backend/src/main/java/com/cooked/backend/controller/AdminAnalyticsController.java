@@ -2,6 +2,8 @@ package com.cooked.backend.controller;
 
 import com.cooked.backend.dto.response.AcquisitionResponse;
 import com.cooked.backend.dto.response.EngagementResponse;
+import com.cooked.backend.dto.response.ProductFailuresResponse;
+import com.cooked.backend.entity.ProductEventType;
 import com.cooked.backend.dto.response.ProductAnalyticsResponse;
 import com.cooked.backend.service.AdminAnalyticsService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,5 +42,13 @@ public class AdminAnalyticsController {
     @GetMapping("/engagement")
     public ResponseEntity<EngagementResponse> engagement(@RequestParam(defaultValue = "30") int days) {
         return ResponseEntity.ok(analyticsService.engagement(days));
+    }
+
+    @Operation(summary = "Failed imports, newest first (days: 1-90, default 7; size: 1-100)")
+    @GetMapping("/import-failures")
+    public ResponseEntity<ProductFailuresResponse> importFailures(@RequestParam(defaultValue = "7") int days,
+                                                                  @RequestParam(defaultValue = "0") int page,
+                                                                  @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(analyticsService.failures(ProductEventType.IMPORT, days, page, size));
     }
 }

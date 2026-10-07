@@ -2,6 +2,7 @@ package com.cooked.backend.service.impl;
 
 import com.cooked.backend.dto.response.AcquisitionResponse;
 import com.cooked.backend.dto.response.EngagementResponse;
+import com.cooked.backend.dto.response.ProductFailuresResponse;
 import com.cooked.backend.dto.response.ProductAnalyticsResponse;
 import com.cooked.backend.dto.response.ProductAnalyticsResponse.DailyCounts;
 import com.cooked.backend.dto.response.ProductAnalyticsResponse.LabelStats;
@@ -54,6 +55,37 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
     @Override
     public EngagementResponse engagement(int days) {
         return engagementAt(clamp(days), LocalDate.now());
+    }
+
+    @Override
+    public ProductFailuresResponse failures(ProductEventType type, int days, int page, int size) {
+        int d = clamp(days);
+        int p = Math.max(0, page);
+        int s = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
+        LocalDate today = LocalDate.now();
+        var rows = eventRepository.failures(type, today.minusDays(d - 1L).atStartOfDay(), PageRequest.of(p, s));
+        return ProductFailuresResponse.builder()
+                .days(d)
+                .failuresToday(eventRepository.countByTypeAndSuccessFalseAndCreatedAtGreaterThanEqual(type, today.atStartOfDay()))
+                .totalElements(rows.getTotalElements())
+                .totalPages(rows.getTotalPages())
+                .page(p)
+                .size(s)
+                .items(rows.getContent().stream().map(AdminAnalyticsServiceImpl::failureItem).toList())
+                .build();
+    }
+
+    static ProductFailuresResponse.Item failureItem(ProductEventRepository.FailureRow r) {
+        String name = ((r.getFirstname() == null ? "" : r.getFirstname()) + " " + (r.getLastname() == null ? "" : r.getLastname())).trim();
+        return ProductFailuresResponse.Item.builder()
+                .id(r.getId())
+                .source(r.getDetail())
+                .reason(r.getReason())
+                .durationMs(r.getDurationMs())
+                .createdAt(r.getCreatedAt())
+                .userName(name.isEmpty() ? null : name)
+                .userEmail(r.getEmail())
+                .build();
     }
 
     static int clamp(int days) {

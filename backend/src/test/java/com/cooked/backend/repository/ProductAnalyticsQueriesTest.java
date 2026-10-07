@@ -65,6 +65,17 @@ class ProductAnalyticsQueriesTest {
     }
 
     @Test
+    void failedEventsPageWithUser() {
+        var page = events.failures(ProductEventType.IMPORT, now.minusDays(30), PageRequest.of(0, 20));
+        assertEquals(1, page.getTotalElements());
+        var row = page.getContent().get(0);
+        assertEquals("allrecipes.com", row.getDetail());
+        assertEquals("Blocked", row.getReason());
+        assertEquals("alice@test.com", row.getEmail());
+        assertEquals(0, events.countByTypeAndSuccessFalseAndCreatedAtGreaterThanEqual(ProductEventType.IMPORT, now));
+    }
+
+    @Test
     void topDetailsZeroResultsAndReasons() {
         LocalDateTime from = now.minusDays(30);
         List<ProductEventRepository.LabelCount> sources = events.topDetails(ProductEventType.IMPORT, from, PageRequest.of(0, 10));
