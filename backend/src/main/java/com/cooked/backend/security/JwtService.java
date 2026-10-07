@@ -48,6 +48,15 @@ public class JwtService {
                 .compact();
     }
 
+    /** True when the token carries the "mfa" claim (admin confirmed a 2FA code). */
+    public boolean hasMfa(String token) {
+        try {
+            return Boolean.TRUE.equals(extractClaim(token, c -> c.get("mfa", Boolean.class)));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String email = extractEmail(token);
         return (email.equals(userDetails.getUsername())) && !isTokenBlacklisted(token);

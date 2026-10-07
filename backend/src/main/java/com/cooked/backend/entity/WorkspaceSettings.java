@@ -48,6 +48,10 @@ public class WorkspaceSettings {
     @Column(nullable = false)
     private boolean anomalyCards;
 
+    /** Admins must confirm a code sent by email before using /api/admin (admin-v2 only). */
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean require2fa;
+
     /** Day-3 / day-7 nudges to free users (off until turned on in Settings). */
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean dripEnabled;

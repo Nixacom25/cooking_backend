@@ -22,6 +22,7 @@ public class WorkspaceSettingsResponse {
     private String slackWebhookHint;
     private boolean anomalyCards;
     private boolean dripEnabled;
+    private boolean require2fa;
     private LocalDate lastDailySummaryOn;
     private LocalDate lastWeeklyReviewOn;
     /** Where critical alerts are emailed. */

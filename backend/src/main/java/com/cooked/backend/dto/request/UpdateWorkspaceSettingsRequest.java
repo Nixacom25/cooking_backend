@@ -17,4 +17,5 @@ public class UpdateWorkspaceSettingsRequest {
     private String slackWebhookUrl;
     private Boolean anomalyCards;
     private Boolean dripEnabled;
+    private Boolean require2fa;
 }

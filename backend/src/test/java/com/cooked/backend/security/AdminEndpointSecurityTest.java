@@ -8,6 +8,7 @@ import com.cooked.backend.controller.AdminIntegrationController;
 import com.cooked.backend.controller.AskCookedController;
 import com.cooked.backend.controller.AdminAutomationController;
 import com.cooked.backend.controller.AdminSettingsController;
+import com.cooked.backend.controller.AdminTwoFactorController;
 import com.cooked.backend.controller.AdminDashboardController;
 import com.cooked.backend.controller.AdminRevenueController;
 import com.cooked.backend.controller.DashboardController;
@@ -32,7 +33,7 @@ class AdminEndpointSecurityTest {
 
     @Test
     void adminControllersRequireAdminOnTheClass() {
-        for (Class<?> c : new Class<?>[] {RecipeDataController.class, AdminRevenueController.class, AdminAnalyticsController.class, AdminCostController.class, AdminTrendsController.class, AdminIntegrationController.class, AskCookedController.class, AdminAutomationController.class, AdminSettingsController.class}) {
+        for (Class<?> c : new Class<?>[] {RecipeDataController.class, AdminRevenueController.class, AdminAnalyticsController.class, AdminCostController.class, AdminTrendsController.class, AdminIntegrationController.class, AskCookedController.class, AdminAutomationController.class, AdminSettingsController.class, AdminTwoFactorController.class}) {
             PreAuthorize p = c.getAnnotation(PreAuthorize.class);
             assertNotNull(p, c.getSimpleName() + " must be @PreAuthorize");
             assertEquals(ADMIN, p.value(), c.getSimpleName());
