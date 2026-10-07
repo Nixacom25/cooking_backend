@@ -2,6 +2,7 @@ package com.cooked.backend.security;
 
 import com.cooked.backend.config.SecurityConfig;
 import com.cooked.backend.controller.AdminAnalyticsController;
+import com.cooked.backend.controller.AdminCostController;
 import com.cooked.backend.controller.AdminDashboardController;
 import com.cooked.backend.controller.AdminRevenueController;
 import com.cooked.backend.controller.DashboardController;
@@ -26,7 +27,7 @@ class AdminEndpointSecurityTest {
 
     @Test
     void adminControllersRequireAdminOnTheClass() {
-        for (Class<?> c : new Class<?>[] {RecipeDataController.class, AdminRevenueController.class, AdminAnalyticsController.class}) {
+        for (Class<?> c : new Class<?>[] {RecipeDataController.class, AdminRevenueController.class, AdminAnalyticsController.class, AdminCostController.class}) {
             PreAuthorize p = c.getAnnotation(PreAuthorize.class);
             assertNotNull(p, c.getSimpleName() + " must be @PreAuthorize");
             assertEquals(ADMIN, p.value(), c.getSimpleName());
