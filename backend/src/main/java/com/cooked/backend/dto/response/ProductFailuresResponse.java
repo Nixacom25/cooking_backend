@@ -31,6 +31,7 @@ public class ProductFailuresResponse {
         private String reason;
         private Integer durationMs;
         private LocalDateTime createdAt;
+        private UUID userId;
         private String userName;
         private String userEmail;
     }

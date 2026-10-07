@@ -83,6 +83,7 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
                 .reason(r.getReason())
                 .durationMs(r.getDurationMs())
                 .createdAt(r.getCreatedAt())
+                .userId(r.getUserId())
                 .userName(name.isEmpty() ? null : name)
                 .userEmail(r.getEmail())
                 .build();

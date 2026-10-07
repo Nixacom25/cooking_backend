@@ -72,6 +72,7 @@ class ProductAnalyticsQueriesTest {
         assertEquals("allrecipes.com", row.getDetail());
         assertEquals("Blocked", row.getReason());
         assertEquals("alice@test.com", row.getEmail());
+        assertEquals(alice.getId(), row.getUserId());
         assertEquals(0, events.countByTypeAndSuccessFalseAndCreatedAtGreaterThanEqual(ProductEventType.IMPORT, now));
     }
 
