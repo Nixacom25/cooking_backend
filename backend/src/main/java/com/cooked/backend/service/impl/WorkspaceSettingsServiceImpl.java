@@ -60,6 +60,7 @@ public class WorkspaceSettingsServiceImpl implements WorkspaceSettingsService {
         if (r.getAnomalyCards() != null) s.setAnomalyCards(r.getAnomalyCards());
         if (r.getDripEnabled() != null) s.setDripEnabled(r.getDripEnabled());
         if (r.getRequire2fa() != null) s.setRequire2fa(r.getRequire2fa());
+        if (r.getAmbassadorCommissionPercent() != null) s.setAmbassadorCommissionPercent(r.getAmbassadorCommissionPercent());
         if (r.getSlackWebhookUrl() != null) {
             String url = r.getSlackWebhookUrl().trim();
             if (!url.isEmpty() && !url.startsWith(SLACK_PREFIX)) throw new BadRequestException("Slack webhook must start with " + SLACK_PREFIX);
@@ -94,6 +95,7 @@ public class WorkspaceSettingsServiceImpl implements WorkspaceSettingsService {
                 .anomalyCards(s.isAnomalyCards())
                 .dripEnabled(s.isDripEnabled())
                 .require2fa(s.isRequire2fa())
+                .ambassadorCommissionPercent(s.getAmbassadorCommissionPercent() == null ? java.math.BigDecimal.valueOf(20) : s.getAmbassadorCommissionPercent())
                 .lastDailySummaryOn(s.getLastDailySummaryOn()).lastWeeklyReviewOn(s.getLastWeeklyReviewOn())
                 .supportEmail(supportEmail)
                 .build();

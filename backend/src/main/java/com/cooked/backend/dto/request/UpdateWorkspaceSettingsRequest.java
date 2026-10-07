@@ -18,4 +18,6 @@ public class UpdateWorkspaceSettingsRequest {
     private Boolean anomalyCards;
     private Boolean dripEnabled;
     private Boolean require2fa;
+    @jakarta.validation.constraints.DecimalMin("0") @jakarta.validation.constraints.DecimalMax("100")
+    private java.math.BigDecimal ambassadorCommissionPercent;
 }

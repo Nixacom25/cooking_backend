@@ -267,6 +267,11 @@ public class User implements UserDetails {
     // Track last active time for user segmentation in notification campaigns
     private LocalDateTime lastActive;
 
+    /** Ambassador whose code this user entered in onboarding (referral attribution). */
+    private java.util.UUID referredByAmbassadorId;
+
+    private LocalDateTime referredAt;
+
     // Firebase Cloud Messaging registration token for this device, used to
     // send push notifications. Null/empty means the user hasn't granted
     // notification permission or hasn't opened the app since it was added.
@@ -411,6 +416,10 @@ public class User implements UserDetails {
     public void setPushNewsOffersEnabled(boolean pushNewsOffersEnabled) { this.pushNewsOffersEnabled = pushNewsOffersEnabled; }
 
     public LocalDateTime getLastActive() { return lastActive; }
+    public java.util.UUID getReferredByAmbassadorId() { return referredByAmbassadorId; }
+    public void setReferredByAmbassadorId(java.util.UUID referredByAmbassadorId) { this.referredByAmbassadorId = referredByAmbassadorId; }
+    public LocalDateTime getReferredAt() { return referredAt; }
+    public void setReferredAt(LocalDateTime referredAt) { this.referredAt = referredAt; }
     public void setLastActive(LocalDateTime lastActive) { this.lastActive = lastActive; }
 
     public String getOtpCode() { return otpCode; }

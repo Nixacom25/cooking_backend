@@ -12,6 +12,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GiftRedeemResponse {
+    /** GIFT (premium unlocked) or AMBASSADOR (referral code applied, nothing unlocked). */
+    @lombok.Builder.Default
+    private String kind = "GIFT";
+    /** For AMBASSADOR: who referred the user. */
+    private String ambassadorName;
     private String planLabel;
     private int months;
     private LocalDateTime premiumUntil;

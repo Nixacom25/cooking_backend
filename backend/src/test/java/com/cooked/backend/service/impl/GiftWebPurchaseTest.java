@@ -36,7 +36,7 @@ class GiftWebPurchaseTest {
         when(giftRepo.save(any(GiftCode.class))).thenAnswer(inv -> inv.getArgument(0));
         service = new GiftServiceImpl(giftRepo, users, email, mock(ActivityLogService.class),
                 mock(RevenueCatApiClient.class), mock(io.github.bucket4j.distributed.proxy.ProxyManager.class),
-                mock(StripeClient.class));
+                mock(StripeClient.class), mock(com.cooked.backend.service.AmbassadorService.class));
     }
 
     private JsonNode session(String id, String plan, long amount) throws Exception {

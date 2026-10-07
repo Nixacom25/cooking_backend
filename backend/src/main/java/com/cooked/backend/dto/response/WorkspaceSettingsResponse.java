@@ -23,6 +23,7 @@ public class WorkspaceSettingsResponse {
     private boolean anomalyCards;
     private boolean dripEnabled;
     private boolean require2fa;
+    private java.math.BigDecimal ambassadorCommissionPercent;
     private LocalDate lastDailySummaryOn;
     private LocalDate lastWeeklyReviewOn;
     /** Where critical alerts are emailed. */

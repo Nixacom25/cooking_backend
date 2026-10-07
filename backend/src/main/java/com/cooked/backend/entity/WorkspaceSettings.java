@@ -52,6 +52,10 @@ public class WorkspaceSettings {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean require2fa;
 
+    /** Default commission (% of referred users' revenue) for new ambassadors. */
+    @Column(precision = 5, scale = 2, columnDefinition = "numeric(5,2) default 20")
+    private java.math.BigDecimal ambassadorCommissionPercent;
+
     /** Day-3 / day-7 nudges to free users (off until turned on in Settings). */
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean dripEnabled;
@@ -61,6 +65,7 @@ public class WorkspaceSettings {
 
     public static WorkspaceSettings defaults() {
         return WorkspaceSettings.builder().id(SINGLETON_ID).workspaceName("Cooked").timezone("America/Toronto")
-                .criticalAlertsEmail(true).dailySummary(false).weeklyReview(false).anomalyCards(true).build();
+                .criticalAlertsEmail(true).dailySummary(false).weeklyReview(false).anomalyCards(true)
+                .ambassadorCommissionPercent(java.math.BigDecimal.valueOf(20)).build();
     }
 }

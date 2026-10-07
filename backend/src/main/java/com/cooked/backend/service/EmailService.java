@@ -15,6 +15,9 @@ public interface EmailService {
     /** Website gift: the gift itself, sent to the friend. */
     void sendGiftReceivedEmail(String to, String senderName, String planLabel, String code, String redeemUrl);
     void sendTrialEndsTomorrowEmail(String to, String firstName, String planName, String price);
+    /** Answer to a website creator / ambassador application. */
+    void sendCreatorDecisionEmail(String to, String name, String title, String body);
+
     /** Free-user nudge (drip funnel) when no push token is registered. */
     void sendDripEmail(String to, String firstName, String title, String body);
 

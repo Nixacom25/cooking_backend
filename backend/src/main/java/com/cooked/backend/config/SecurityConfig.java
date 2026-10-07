@@ -93,6 +93,9 @@ public class SecurityConfig {
                         .permitAll()
                         // Website blog: published articles, read-only
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/public/articles", "/public/articles/*").permitAll()
+                        // Website creator / ambassador applications (create only, rate limited) and ambassador links
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/public/creator-applications").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/r/*").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())

@@ -51,6 +51,7 @@ public class GiftServiceImpl implements GiftService {
     private final RevenueCatApiClient revenueCatApiClient;
     private final ProxyManager<byte[]> proxyManager;
     private final com.cooked.backend.service.StripeClient stripeClient;
+    private final com.cooked.backend.service.AmbassadorService ambassadorService;
 
     /**
      * One shared test code (QA). Usable once per account, grants 3 days only.
@@ -133,12 +134,25 @@ public class GiftServiceImpl implements GiftService {
             throw new BadRequestException("Too many attempts. Please try again in a few minutes.");
         }
 
-        String code = normalize(rawCode);
+        String code;
+        try {
+            code = normalize(rawCode);
+        } catch (BadRequestException notAGiftCode) {
+            // Not shaped like a gift code: it may be an ambassador code (e.g. GRACE15).
+            return ambassadorService.attachReferral(user, rawCode)
+                    .map(a -> GiftRedeemResponse.builder().kind("AMBASSADOR").ambassadorName(a.getName()).build())
+                    .orElseThrow(() -> new BadRequestException("This code is not valid."));
+        }
         if (testCode != null && !testCode.isBlank() && code.equals(normalize(testCode))) {
             return redeemTestCode(user);
         }
-        GiftCode gift = giftCodeRepository.findByCodeForUpdate(code)
-                .orElseThrow(() -> new BadRequestException("This gift code is not valid."));
+        GiftCode gift = giftCodeRepository.findByCodeForUpdate(code).orElse(null);
+        if (gift == null) {
+            // Same field in onboarding ("Do you have a referral code?"): ambassador codes are accepted too.
+            return ambassadorService.attachReferral(user, rawCode)
+                    .map(a -> GiftRedeemResponse.builder().kind("AMBASSADOR").ambassadorName(a.getName()).build())
+                    .orElseThrow(() -> new BadRequestException("This code is not valid."));
+        }
 
         if (gift.getStatus() == GiftCodeStatus.REDEEMED) {
             throw new BadRequestException("This gift code has already been used.");

@@ -16,7 +16,8 @@ public enum EmailTemplate {
     TRIAL_ENDS_TOMORROW("Trial ending reminder", "Trial ends in 1 day (hourly job)", true),
     CRITICAL_ERROR_ALERT("Critical error alert", "Critical crash reported by the app", false),
     ADMIN_SUMMARY("Admin summary", "Daily 8 AM summary / Monday review (Settings)", false),
-    DRIP("Free users drip", "Free user at day 3 / day 7 without a push token (Settings)", true);
+    DRIP("Free users drip", "Free user at day 3 / day 7 without a push token (Settings)", true),
+    CREATOR_DECISION("Creator application decision", "Application approved, rejected or more info requested", false);
 
     private final String label;
     private final String trigger;

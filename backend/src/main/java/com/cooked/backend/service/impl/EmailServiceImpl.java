@@ -705,6 +705,16 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    public void sendCreatorDecisionEmail(String to, String name, String title, String body) {
+        String html = "<div style=\"font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#141414\">"
+                + "<p>Hi " + escape(displayName(name)) + ",</p>"
+                + "<h2 style=\"margin:0 0 12px\">" + escape(title) + "</h2>"
+                + "<p style=\"font-size:15px;line-height:1.6;white-space:pre-line\">" + escape(body) + "</p>"
+                + "<p style=\"color:#66625C;font-size:13px\">— The Cooked team</p></div>";
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.CREATOR_DECISION, to, title, html);
+    }
+
+    @Override
     public void sendDripEmail(String to, String firstName, String title, String body) {
         String html = "<div style=\"font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#141414\">"
                 + "<p>Hi " + escape(displayName(firstName)) + ",</p>"
