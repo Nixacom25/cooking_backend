@@ -3,6 +3,7 @@ package com.cooked.backend.controller;
 import com.cooked.backend.dto.request.AmbassadorRequest;
 import com.cooked.backend.dto.response.*;
 import com.cooked.backend.entity.CreatorApplicationStatus;
+import com.cooked.backend.service.AdminCreatorService;
 import com.cooked.backend.service.AmbassadorService;
 import com.cooked.backend.service.CreatorApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,6 +29,7 @@ public class AdminAmbassadorController {
 
     private final AmbassadorService ambassadors;
     private final CreatorApplicationService applications;
+    private final AdminCreatorService creators;
 
     @Operation(summary = "Ambassadors with clicks, code sign-ups, trials, paid, revenue and commission (days: 1-90)")
     @GetMapping("/ambassadors")
@@ -54,6 +56,12 @@ public class AdminAmbassadorController {
     @PostMapping("/ambassadors/{id}/payouts/{month}/paid")
     public ResponseEntity<AmbassadorDetailResponse> markPaid(@PathVariable UUID id, @PathVariable String month, Authentication auth) {
         return ResponseEntity.ok(ambassadors.markPaid(id, month, auth.getName()));
+    }
+
+    @Operation(summary = "A recipe creator: public recipes, publishing trend, grocery-list uses, top recipes")
+    @GetMapping("/creators/{id}")
+    public ResponseEntity<CreatorDetailResponse> creator(@PathVariable UUID id) {
+        return ResponseEntity.ok(creators.detail(id));
     }
 
     @GetMapping("/creator-applications")

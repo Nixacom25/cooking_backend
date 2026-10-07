@@ -11,4 +11,5 @@ public interface AmbassadorRepository extends JpaRepository<Ambassador, UUID> {
     Optional<Ambassador> findByCodeIgnoreCase(String code);
     boolean existsByCodeIgnoreCase(String code);
     List<Ambassador> findAllByOrderByCreatedAtDesc();
+    Optional<Ambassador> findFirstByEmailIgnoreCase(String email);
 }
