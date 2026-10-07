@@ -346,6 +346,7 @@ public class AdminCostServiceImpl implements AdminCostService {
                     .provider(b != null ? b.getProvider() : key)
                     .category(category.getLabel())
                     .source(src.size() > 1 ? "MIXED" : src.isEmpty() ? "MANUAL" : src.iterator().next())
+                    .today(round(ledger.total(w.today, w.today, only)))
                     .monthToDate(round(ledger.total(w.monthStart, w.today, only)))
                     .projectedMonth(round(projected))
                     .periodTotal(round(ledger.total(w.from, w.today, only)))

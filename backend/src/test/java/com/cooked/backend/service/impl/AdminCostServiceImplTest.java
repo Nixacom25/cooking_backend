@@ -66,6 +66,7 @@ class AdminCostServiceImplTest {
         CostOverviewResponse.ProviderRow openAi = o.getProviders().stream().filter(p -> p.getProvider().equals("OpenAI")).findFirst().orElseThrow();
         assertEquals(31.0, openAi.getProjectedMonth(), 0.01);          // 10 so far → 10 × 31 / 10
         assertEquals("SYNCED", openAi.getSource());
+        assertEquals(5.0, openAi.getToday(), 0.01);
         assertEquals(14, openAi.getCreditDaysLeft());                  // $20 at 10/7 per day
         assertEquals("HEALTHY", openAi.getStatus());
 

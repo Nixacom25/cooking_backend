@@ -59,6 +59,7 @@ public class CostOverviewResponse {
         private String category;
         /** MANUAL (cost entries), SYNCED (billing API) or MIXED. */
         private String source;
+        private double today;
         private double monthToDate;
         private double projectedMonth;
         private double periodTotal;
