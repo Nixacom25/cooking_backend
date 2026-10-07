@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 public class EmailServiceImpl implements EmailService {
 
     private final org.springframework.web.client.RestTemplate restTemplate;
+    private final com.cooked.backend.service.IntegrationEventRecorder integrationEvents;
  
     @org.springframework.beans.factory.annotation.Value("${spring.mail.from}")
     private String senderEmail;
@@ -545,20 +546,20 @@ public class EmailServiceImpl implements EmailService {
     @Async
     @Override
     public void sendOtpEmail(String to, String otp) {
-        sendHtmlEmail(to, "Verify your account", String.format(OTP_TEMPLATE, otp));
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.OTP, to, "Verify your account", String.format(OTP_TEMPLATE, otp));
     }
 
     @Async
     @Override
     public void sendAccountUpdateEmail(String to, String message) {
-        sendHtmlEmail(to, "Account Security Update", String.format(ACCOUNT_UPDATE_TEMPLATE, message));
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.ACCOUNT_UPDATE, to, "Account Security Update", String.format(ACCOUNT_UPDATE_TEMPLATE, message));
     }
 
     @Async
     @Override
     public void sendWelcomeEmail(String to, String firstName) {
         String name = displayName(firstName);
-        sendHtmlEmail(to, "Welcome to Cooked",
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.WELCOME, to, "Welcome to Cooked",
                 String.format(WELCOME_TEMPLATE, BUTTON_STYLE, LOGO_URL, name, APP_HOME_URL));
     }
 
@@ -566,7 +567,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendAccountDeletedEmail(String to, String firstName) {
         String name = displayName(firstName);
-        sendHtmlEmail(to, "Your Cooked account has been deleted",
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.ACCOUNT_DELETED, to, "Your Cooked account has been deleted",
                 String.format(ACCOUNT_DELETED_TEMPLATE, LOGO_URL, name));
     }
 
@@ -574,7 +575,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendNewDeviceSignInEmail(String to, String firstName, String device, String location, String dateTime) {
         String name = displayName(firstName);
-        sendHtmlEmail(to, "New sign-in to your Cooked account",
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.NEW_DEVICE_SIGN_IN, to, "New sign-in to your Cooked account",
                 String.format(NEW_DEVICE_TEMPLATE, BUTTON_STYLE, LOGO_URL, name,
                         device == null || device.isBlank() ? "Unknown device" : device,
                         location == null || location.isBlank() ? "Unknown location" : location,
@@ -611,7 +612,7 @@ public class EmailServiceImpl implements EmailService {
         }
         
         String enhancedMessage = message + additionalInfo;
-        sendHtmlEmail(teamEmail, "New support request: " + subject,
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.SUPPORT_TEAM_NOTIFICATION, teamEmail, "New support request: " + subject,
                 String.format(SUPPORT_TEAM_NOTIFICATION_TEMPLATE, ticketNumber, fromName, fromEmail, subject, enhancedMessage),
                 fromEmail);
     }
@@ -620,7 +621,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendSupportRequestReceivedEmail(String to, String firstName, String ticketNumber, String subject) {
         String name = displayName(firstName);
-        sendHtmlEmail(to, "We received your Cooked support request",
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.SUPPORT_RECEIVED, to, "We received your Cooked support request",
                 String.format(SUPPORT_RECEIVED_TEMPLATE, LOGO_URL, name, ticketNumber, subject));
     }
 
@@ -628,7 +629,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendPaymentFailureEmail(String to, String firstName, String planName, String price) {
         String name = displayName(firstName);
-        sendHtmlEmail(to, "Action needed: Your Cooked payment didn't go through",
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.PAYMENT_FAILED, to, "Action needed: Your Cooked payment didn't go through",
                 String.format(PAYMENT_FAILURE_TEMPLATE, BUTTON_STYLE, LOGO_URL, name, planName, price, MANAGE_SUBSCRIPTION_URL));
     }
 
@@ -636,7 +637,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendGiftCodeEmail(String to, String firstName, String planLabel, String code, String redeemUrl) {
         String name = displayName(firstName);
-        sendHtmlEmail(to, "Your Cooked gift code (" + planLabel + ")",
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.GIFT_CODE, to, "Your Cooked gift code (" + planLabel + ")",
                 String.format(GIFT_CODE_TEMPLATE, BUTTON_STYLE, LOGO_URL, name, planLabel, code, redeemUrl));
     }
 
@@ -644,7 +645,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendGiftPurchaseReceiptEmail(String to, String planLabel, String code, String recipientEmail, String redeemUrl) {
         String recipient = recipientEmail != null ? HtmlUtils.htmlEscape(recipientEmail) : "your friend";
-        sendHtmlEmail(to, "Your Cooked gift (" + planLabel + ") - receipt",
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.GIFT_RECEIPT, to, "Your Cooked gift (" + planLabel + ") - receipt",
                 String.format(GIFT_RECEIPT_TEMPLATE, BUTTON_STYLE, LOGO_URL, planLabel, recipient, code, redeemUrl));
     }
 
@@ -653,7 +654,7 @@ public class EmailServiceImpl implements EmailService {
     public void sendGiftReceivedEmail(String to, String senderName, String planLabel, String code, String redeemUrl) {
         // Sender name is typed on the website: escape it, never inject raw HTML.
         String from = senderName != null && !senderName.isBlank() ? HtmlUtils.htmlEscape(senderName.trim()) : "A friend";
-        sendHtmlEmail(to, from.equals("A friend") ? "You've been gifted Cooked 🎁" : senderName.trim() + " gifted you Cooked 🎁",
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.GIFT_RECEIVED, to, from.equals("A friend") ? "You've been gifted Cooked 🎁" : senderName.trim() + " gifted you Cooked 🎁",
                 String.format(GIFT_RECEIVED_TEMPLATE, BUTTON_STYLE, LOGO_URL, from, planLabel, code, redeemUrl));
     }
 
@@ -661,7 +662,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendTrialEndsTomorrowEmail(String to, String firstName, String planName, String price) {
         String name = displayName(firstName);
-        sendHtmlEmail(to, "Your Cooked free trial ends tomorrow",
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.TRIAL_ENDS_TOMORROW, to, "Your Cooked free trial ends tomorrow",
                 String.format(TRIAL_ENDS_TEMPLATE, BUTTON_STYLE, LOGO_URL, name, planName,
                         price != null && !price.isBlank() ? " at " + price : "", MANAGE_SUBSCRIPTION_URL));
     }
@@ -700,18 +701,22 @@ public class EmailServiceImpl implements EmailService {
             <p><em>Please investigate this error immediately in the admin interface.</em></p>
         """.formatted(errorId, errorType, errorMessage, userInfo, deviceInfo, contextInfo);
 
-        sendHtmlEmail(teamEmail, "🚨 CRITICAL ERROR: " + errorType, errorEmailBody);
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.CRITICAL_ERROR_ALERT, teamEmail, "🚨 CRITICAL ERROR: " + errorType, errorEmailBody);
     }
 
     private String displayName(String firstName) {
         return firstName == null || firstName.isBlank() ? "there" : firstName.trim();
     }
 
-    private void sendHtmlEmail(String to, String subject, String htmlContent) {
-        sendHtmlEmail(to, subject, htmlContent, null);
+    private void sendHtmlEmail(com.cooked.backend.entity.EmailTemplate template, String to, String subject, String htmlContent) {
+        sendHtmlEmail(template, to, subject, htmlContent, null);
     }
 
-    private void sendHtmlEmail(String to, String subject, String htmlContent, String replyToEmail) {
+    /** Sends through Brevo (tagged with the template) and records the outcome for the Email / Integrations screens. */
+    private void sendHtmlEmail(com.cooked.backend.entity.EmailTemplate template, String to, String subject, String htmlContent, String replyToEmail) {
+        long start = System.nanoTime();
+        Integer status = null;
+        String error = null;
         try {
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
             headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
@@ -725,6 +730,7 @@ public class EmailServiceImpl implements EmailService {
             if (replyToEmail != null && !replyToEmail.isBlank()) {
                 body.put("replyTo", java.util.Map.of("email", replyToEmail));
             }
+            body.put("tags", java.util.List.of(template.name().toLowerCase()));
 
             org.springframework.http.HttpEntity<java.util.Map<String, Object>> entity = 
                 new org.springframework.http.HttpEntity<>(body, headers);
@@ -732,15 +738,22 @@ public class EmailServiceImpl implements EmailService {
             org.springframework.http.ResponseEntity<String> response = restTemplate.postForEntity(
                 BREVO_API_URL, entity, String.class);
 
+            status = response.getStatusCode().value();
             if (response.getStatusCode().is2xxSuccessful()) {
                 log.info("Email sent successfully to {} via Brevo API", to);
             } else {
                 log.error("Failed to send email to {} via Brevo API. Status: {}, Body: {}", 
                     to, response.getStatusCode(), response.getBody());
+                error = "HTTP " + status;
             }
         } catch (Exception e) {
             log.error("Failed to send HTML email to {} from {} via Brevo API: {}", 
                 to, senderEmail, e.getMessage(), e);
+            error = e.getClass().getSimpleName();
+            if (e instanceof org.springframework.web.client.HttpStatusCodeException http) status = http.getStatusCode().value();
+        } finally {
+            integrationEvents.record(com.cooked.backend.entity.IntegrationKey.BREVO, template.name(), error == null, status,
+                    (int) ((System.nanoTime() - start) / 1_000_000), error);
         }
     }
 }

@@ -55,6 +55,7 @@ public class AdminCostServiceImpl implements AdminCostService {
     private final UserActivityDayRepository activityRepository;
     private final CurrencyConverter currencyConverter;
     private final List<ProviderBillingSync> billingSyncs;
+    private final com.cooked.backend.service.IntegrationEventRecorder integrationEvents;
 
     // ---- reads -------------------------------------------------------------
 
@@ -205,16 +206,23 @@ public class AdminCostServiceImpl implements AdminCostService {
         int rows = 0;
         for (ProviderBillingSync s : billingSyncs) {
             if (!s.isConfigured()) continue;
+            long start = System.nanoTime();
             try {
                 rows += s.sync(35);
+                integrationEvents.record(com.cooked.backend.entity.IntegrationKey.OPENAI, "costs_sync", true, 200, elapsedMs(start), null);
             } catch (RuntimeException e) {
                 log.warn("Billing sync failed for {}: {}", s.provider(), e.getMessage());
+                integrationEvents.record(com.cooked.backend.entity.IntegrationKey.OPENAI, "costs_sync", false, null, elapsedMs(start), e.getClass().getSimpleName());
             }
         }
         return rows;
     }
 
     // ---- computation -------------------------------------------------------
+
+    private static int elapsedMs(long start) {
+        return (int) ((System.nanoTime() - start) / 1_000_000);
+    }
 
     static int clamp(int days) {
         return Math.max(1, Math.min(days, MAX_DAYS));

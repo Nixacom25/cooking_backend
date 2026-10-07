@@ -31,7 +31,8 @@ class AdminCostServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new AdminCostServiceImpl(entries, budgets, daily, users, activity,
-                new CurrencyConverter(new BigDecimal("1.10"), new BigDecimal("0.70"), new BigDecimal("1.30")), List.of());
+                new CurrencyConverter(new BigDecimal("1.10"), new BigDecimal("0.70"), new BigDecimal("1.30")), List.of(),
+                mock(com.cooked.backend.service.IntegrationEventRecorder.class));
     }
 
     private static ProviderDailyCostRepository.ProviderDayAmount synced(String provider, LocalDate day, String usd) {
