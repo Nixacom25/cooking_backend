@@ -30,7 +30,7 @@ public class AdminSummaryBuilder {
         EngagementResponse eng = analytics.engagement(2);
         ProductAnalyticsResponse prod = analytics.product(2);
         CostOverviewResponse cost = costs.overview(2);
-        RevenueSummaryResponse rev = revenue.getSummary();
+        RevenueSummaryResponse rev = revenue.getSummary(30);
         String day = yesterday.toString();
 
         List<String[]> rows = new ArrayList<>();
@@ -55,7 +55,7 @@ public class AdminSummaryBuilder {
         EngagementResponse eng = analytics.engagement(7);
         ProductAnalyticsResponse prod = analytics.product(7);
         CostOverviewResponse cost = costs.overview(7);
-        RevenueSummaryResponse rev = revenue.getSummary();
+        RevenueSummaryResponse rev = revenue.getSummary(30);
 
         List<String[]> rows = new ArrayList<>();
         rows.add(new String[] {"New sign-ups", acq.getNewUsers() + " (prev. " + acq.getNewUsersPrev() + ")"});

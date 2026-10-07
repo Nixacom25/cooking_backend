@@ -37,11 +37,11 @@ public class RecipeAssignmentController {
         return ResponseEntity.ok(assignmentService.getRecipeStats());
     }
 
-    @Operation(summary = "Get stagiaires leaderboard ranking")
+    @Operation(summary = "Get stagiaires leaderboard ranking (optionally only assignments of the last N days)")
     @GetMapping("/leaderboard")
     @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
-    public ResponseEntity<List<StagiaireLeaderboardResponse>> getLeaderboard() {
-        return ResponseEntity.ok(assignmentService.getStagiairesLeaderboard());
+    public ResponseEntity<List<StagiaireLeaderboardResponse>> getLeaderboard(@RequestParam(required = false) Integer days) {
+        return ResponseEntity.ok(assignmentService.getStagiairesLeaderboard(days));
     }
 
     @Operation(summary = "Assign recipes to editors")

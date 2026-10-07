@@ -28,6 +28,11 @@ public interface RecipeAssignmentRepository extends JpaRepository<RecipeAssignme
             + "where a.assignedToUser is not null group by a.assignedToUser.id, a.status")
     List<UserStatusCount> countByUserAndStatus();
 
+    /** Same, limited to assignments made since {@code since} (leaderboard period filter). */
+    @Query("select a.assignedToUser.id as userId, a.status as status, count(a) as total from RecipeAssignment a "
+            + "where a.assignedToUser is not null and a.assignedDate >= :since group by a.assignedToUser.id, a.status")
+    List<UserStatusCount> countByUserAndStatusSince(@Param("since") LocalDateTime since);
+
     
     Page<RecipeAssignment> findAllByAssignedToUserIdOrderByAssignedDateDesc(UUID userId, Pageable pageable);
     

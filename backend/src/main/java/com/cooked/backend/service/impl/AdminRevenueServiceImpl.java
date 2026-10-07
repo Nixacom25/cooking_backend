@@ -38,6 +38,8 @@ public class AdminRevenueServiceImpl implements AdminRevenueService {
 
     static final String CURRENCY = "EUR";
     static final int DAYS = 30;
+    static final int MAX_DAYS = 365;
+    static final int MAX_SERIES_DAYS = 90;
     static final int MONTHS = 8;
     private static final List<SubscriptionStatus> PAID = List.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.PREMIUM);
 
@@ -46,15 +48,22 @@ public class AdminRevenueServiceImpl implements AdminRevenueService {
     private final SubscriptionService subscriptionService;
 
     @Override
-    public RevenueSummaryResponse getSummary() {
-        return summaryAt(LocalDateTime.now());
+    public RevenueSummaryResponse getSummary(int days) {
+        return summaryAt(LocalDateTime.now(), days);
     }
 
-    /** Same as {@link #getSummary()} at a fixed instant (tests). */
+    /** 30-day summary at a fixed instant (tests). */
     RevenueSummaryResponse summaryAt(LocalDateTime now) {
-        LocalDateTime from30 = now.minusDays(DAYS);
-        LocalDateTime from60 = now.minusDays(2L * DAYS);
-        LocalDate firstDay = now.toLocalDate().minusDays(DAYS - 1L);
+        return summaryAt(now, DAYS);
+    }
+
+    /** Same as {@link #getSummary(int)} at a fixed instant (tests). */
+    RevenueSummaryResponse summaryAt(LocalDateTime now, int requestedDays) {
+        int days = clampDays(requestedDays);
+        int seriesDays = Math.min(Math.max(days, 7), MAX_SERIES_DAYS);
+        LocalDateTime from30 = now.minusDays(days);
+        LocalDateTime from60 = now.minusDays(2L * days);
+        LocalDate firstDay = now.toLocalDate().minusDays(seriesDays - 1L);
         YearMonth firstMonth = YearMonth.from(now).minusMonths(MONTHS - 1L);
 
         long monthlyPlans = userRepository.countByRoleAndSubscriptionStatusInAndSubscriptionType(Role.CLIENT, PAID, SubscriptionType.MONTHLY);
@@ -67,6 +76,7 @@ public class AdminRevenueServiceImpl implements AdminRevenueService {
 
         return RevenueSummaryResponse.builder()
                 .currency(CURRENCY)
+                .periodDays(days)
                 .activeSubscriptions(userRepository.countByRoleAndSubscriptionStatusIn(Role.CLIENT, PAID))
                 .activeTrials(userRepository.countByRoleAndSubscriptionStatusIn(Role.CLIENT, List.of(SubscriptionStatus.TRIAL)))
                 .monthlyPlans(monthlyPlans)
@@ -85,7 +95,7 @@ public class AdminRevenueServiceImpl implements AdminRevenueService {
                 .ltv(everPaid > 0 ? round(toDouble(paymentRepository.sumSuccess()) / everPaid) : null)
                 .byStore(sortedByAmount(paymentRepository.sumSuccessByStoreSince(from30), label -> label))
                 .byPlan(sortedByAmount(paymentRepository.sumSuccessByPlanTypeSince(from30), AdminRevenueServiceImpl::planLabel))
-                .daily(dailySeries(firstDay, paymentRepository.sumSuccessByDaySince(firstDay.atStartOfDay())))
+                .daily(dailySeries(firstDay, seriesDays, paymentRepository.sumSuccessByDaySince(firstDay.atStartOfDay())))
                 .monthly(monthlySeries(firstMonth, paymentRepository.sumSuccessByMonthSince(firstMonth.atDay(1).atStartOfDay())))
                 .build();
     }
@@ -109,11 +119,19 @@ public class AdminRevenueServiceImpl implements AdminRevenueService {
         return out;
     }
 
+    static int clampDays(int days) {
+        return Math.min(Math.max(days, 1), MAX_DAYS);
+    }
+
     static List<DailyAmount> dailySeries(LocalDate firstDay, List<SubscriptionPaymentRepository.DayAmount> rows) {
+        return dailySeries(firstDay, DAYS, rows);
+    }
+
+    static List<DailyAmount> dailySeries(LocalDate firstDay, int length, List<SubscriptionPaymentRepository.DayAmount> rows) {
         Map<LocalDate, Double> byDay = new HashMap<>();
         rows.forEach(r -> byDay.merge(r.getDay(), toDouble(r.getAmount()), Double::sum));
-        List<DailyAmount> out = new ArrayList<>(DAYS);
-        for (int i = 0; i < DAYS; i++) {
+        List<DailyAmount> out = new ArrayList<>(length);
+        for (int i = 0; i < length; i++) {
             LocalDate d = firstDay.plusDays(i);
             out.add(new DailyAmount(d.toString(), round(byDay.getOrDefault(d, 0.0))));
         }

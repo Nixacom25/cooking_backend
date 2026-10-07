@@ -92,6 +92,22 @@ class AdminRevenueServiceImplTest {
     }
 
     @Test
+    void periodSetsWindowAndSeriesLength() {
+        when(paymentRepository.countDistinctPayers()).thenReturn(0L);
+        LocalDateTime now = LocalDateTime.of(2026, 10, 6, 12, 0);
+
+        RevenueSummaryResponse week = service.summaryAt(now, 7);
+        assertEquals(7, week.getPeriodDays());
+        assertEquals(7, week.getDaily().size());
+        assertEquals("2026-09-30", week.getDaily().get(0).getDate());
+
+        assertEquals(7, service.summaryAt(now, 1).getDaily().size());       // short windows still show a week
+        assertEquals(90, service.summaryAt(now, 365).getDaily().size());    // long windows are capped
+        assertEquals(365, service.summaryAt(now, 10_000).getPeriodDays());  // clamped
+        assertEquals(1, service.summaryAt(now, -5).getPeriodDays());
+    }
+
+    @Test
     void noPaymentsGivesNullChurnAndLtv() {
         when(paymentRepository.countDistinctPayers()).thenReturn(0L);
         RevenueSummaryResponse s = service.summaryAt(LocalDateTime.of(2026, 10, 6, 12, 0));

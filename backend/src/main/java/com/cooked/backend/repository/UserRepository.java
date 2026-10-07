@@ -2,6 +2,7 @@ package com.cooked.backend.repository;
 
 import com.cooked.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -10,7 +11,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, UUID> {
+public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificationExecutor<User> {
+
+    /** Distinct onboarding discovery sources (admin Users filter options). */
+    @org.springframework.data.jpa.repository.Query("select distinct trim(u.discoverySource) from User u where u.discoverySource is not null and trim(u.discoverySource) <> '' order by trim(u.discoverySource)")
+    List<String> findDistinctDiscoverySources();
     Optional<User> findByEmail(String email);
     Optional<User> findFirstByRevenueCatCustomerId(String revenueCatCustomerId);
     Optional<User> findByOriginalTransactionId(String originalTransactionId);

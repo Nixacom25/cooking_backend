@@ -64,7 +64,7 @@ public class AskCookedTools {
     @Bean
     AskCookedTool revenueTool(AdminRevenueService revenue) {
         return new SimpleTool("revenue", "Subscriptions and revenue: MRR, ARR, churn, LTV, active subscriptions and trials, revenue last 30 days vs previous, by store and plan, daily and monthly series.",
-                "Revenue", AskCookedTool.NO_PARAMETERS, a -> revenue.getSummary());
+                "Revenue", AskCookedTool.NO_PARAMETERS, a -> revenue.getSummary(30));
     }
 
     @Bean

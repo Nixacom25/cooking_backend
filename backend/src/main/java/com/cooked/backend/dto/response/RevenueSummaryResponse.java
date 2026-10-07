@@ -19,6 +19,8 @@ import java.util.Map;
 @AllArgsConstructor
 public class RevenueSummaryResponse {
     private String currency;
+    /** Length of the window behind the "...30" fields (days). */
+    private int periodDays;
 
     private long activeSubscriptions;
     private long activeTrials;

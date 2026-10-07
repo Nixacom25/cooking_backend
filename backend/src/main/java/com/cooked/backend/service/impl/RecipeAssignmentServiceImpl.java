@@ -418,11 +418,20 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
     @Override
     @Transactional(readOnly = true)
     public List<StagiaireLeaderboardResponse> getStagiairesLeaderboard() {
+        return getStagiairesLeaderboard(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StagiaireLeaderboardResponse> getStagiairesLeaderboard(Integer days) {
         List<User> editors = userRepository.findAllByRole(Role.EDITOR);
 
         // One aggregate query for every intern and status (was 9 count queries per intern).
+        var rows = days == null
+                ? assignmentRepository.countByUserAndStatus()
+                : assignmentRepository.countByUserAndStatusSince(LocalDateTime.now().minusDays(Math.min(Math.max(days, 1), 3650)));
         java.util.Map<java.util.UUID, java.util.Map<AssignmentStatus, Long>> counts = new java.util.HashMap<>();
-        for (var c : assignmentRepository.countByUserAndStatus()) {
+        for (var c : rows) {
             counts.computeIfAbsent(c.getUserId(), k -> new java.util.EnumMap<>(AssignmentStatus.class))
                     .merge(c.getStatus(), c.getTotal() == null ? 0L : c.getTotal(), Long::sum);
         }

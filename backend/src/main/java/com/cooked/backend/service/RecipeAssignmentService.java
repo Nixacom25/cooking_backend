@@ -24,6 +24,8 @@ public interface RecipeAssignmentService {
     void removeAssignment(UUID assignmentId, String adminEmail);
     List<RecipeAssignmentHistoryResponse> getAssignmentHistory(UUID assignmentId);
     List<StagiaireLeaderboardResponse> getStagiairesLeaderboard();
+    /** Leaderboard counting only assignments made in the last {@code days} days (null = all time). */
+    List<StagiaireLeaderboardResponse> getStagiairesLeaderboard(Integer days);
     List<RecipeAssignmentResponse> assignBatchByCount(com.cooked.backend.dto.request.BatchAssignmentRequest request, String adminEmail);
     long getAvailableUnassignedCount();
 }
