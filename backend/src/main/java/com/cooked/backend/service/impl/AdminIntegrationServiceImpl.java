@@ -36,6 +36,7 @@ public class AdminIntegrationServiceImpl implements AdminIntegrationService {
     private final IntegrationEventRepository events;
     private final ProductEventRepository productEvents;
     private final IntegrationConfigProbe probe;
+    private final com.cooked.backend.service.EmailStatsProvider emailStats;
 
     @Override
     public List<IntegrationStatusResponse> integrations() {
@@ -107,6 +108,7 @@ public class AdminIntegrationServiceImpl implements AdminIntegrationService {
         Counts cur = Counts.of(byKey(events.summarySince(from)).get(IntegrationKey.BREVO));
         Counts prev = Counts.of(byKey(events.summarySince(from.minusDays(d))).get(IntegrationKey.BREVO)).minus(cur);
 
+        java.time.LocalDate today = now.toLocalDate();
         Map<String, IntegrationEventRepository.NameSummary> byName = new HashMap<>();
         events.byName(IntegrationKey.BREVO, from).forEach(n -> byName.put(n.getName(), n));
         List<EmailSummaryResponse.TemplateStats> templates = Arrays.stream(EmailTemplate.values()).map(t -> {
@@ -115,6 +117,8 @@ public class AdminIntegrationServiceImpl implements AdminIntegrationService {
                     .template(t.name()).label(t.getLabel()).trigger(t.getTrigger()).automation(t.isAutomation())
                     .sent(n == null ? 0 : nz(n.getTotal())).failed(n == null ? 0 : nz(n.getFailures()))
                     .lastSentAt(n == null ? null : n.getLastAt())
+                    .providerStats(t.isAutomation()
+                            ? emailStats.aggregated(today.minusDays(d - 1L), today, t.name().toLowerCase(Locale.ROOT)).orElse(null) : null)
                     .build();
         }).sorted(Comparator.comparingLong(EmailSummaryResponse.TemplateStats::getSent).reversed()).toList();
 
@@ -126,6 +130,8 @@ public class AdminIntegrationServiceImpl implements AdminIntegrationService {
                 .acceptedRate(cur.successRate()).acceptedRatePrev(prev.successRate())
                 .trackingSince(events.firstAt(IntegrationKey.BREVO))
                 .templates(templates)
+                .providerStats(emailStats.aggregated(today.minusDays(d - 1L), today, null).orElse(null))
+                .providerStatsPrev(emailStats.aggregated(today.minusDays(2L * d - 1), today.minusDays(d), null).orElse(null))
                 .build();
     }
 

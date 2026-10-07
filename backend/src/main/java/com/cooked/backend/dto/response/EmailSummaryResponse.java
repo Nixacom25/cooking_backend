@@ -25,6 +25,9 @@ public class EmailSummaryResponse {
     private Double acceptedRatePrev;
     private LocalDateTime trackingSince;
     private List<TemplateStats> templates;
+    /** Provider statistics (delivery, opens, clicks, spam) for the period / previous one; null when unavailable. */
+    private EmailProviderStats providerStats;
+    private EmailProviderStats providerStatsPrev;
 
     @Data @Builder @AllArgsConstructor @NoArgsConstructor
     public static class TemplateStats {
@@ -35,5 +38,7 @@ public class EmailSummaryResponse {
         private long sent;
         private long failed;
         private LocalDateTime lastSentAt;
+        /** Provider statistics for this template's tag (emails sent since tagging started). */
+        private EmailProviderStats providerStats;
     }
 }
