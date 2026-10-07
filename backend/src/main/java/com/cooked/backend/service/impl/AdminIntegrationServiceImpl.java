@@ -154,6 +154,7 @@ public class AdminIntegrationServiceImpl implements AdminIntegrationService {
     static String activity(IntegrationKey key) {
         return switch (key) {
             case REVENUECAT, STRIPE, APPLE, GOOGLE_PLAY -> "webhooks received";
+            case SLACK -> "messages posted";
             case BREVO -> "emails sent";
             case OPENAI -> "billing syncs";
             case MARKHOR -> "scan / import / search calls";

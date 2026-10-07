@@ -704,6 +704,24 @@ public class EmailServiceImpl implements EmailService {
         sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.CRITICAL_ERROR_ALERT, teamEmail, "🚨 CRITICAL ERROR: " + errorType, errorEmailBody);
     }
 
+    @Override
+    public void sendAdminSummaryEmail(String to, String subject, String title, java.util.List<String[]> rows) {
+        StringBuilder table = new StringBuilder();
+        for (String[] r : rows) {
+            table.append("<tr><td style=\"padding:8px 12px;color:#66625C\">").append(escape(r[0]))
+                 .append("</td><td style=\"padding:8px 12px;font-weight:600;text-align:right\">").append(escape(r[1])).append("</td></tr>");
+        }
+        String html = "<div style=\"font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#141414\">"
+                + "<h2 style=\"margin:0 0 16px\">" + escape(title) + "</h2>"
+                + "<table style=\"width:100%;border-collapse:collapse;border:1px solid #ECE8E1\">" + table + "</table>"
+                + "<p style=\"color:#66625C;font-size:12px;margin-top:16px\">Sent by the Cooked backoffice. Turn it off in Settings.</p></div>";
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.ADMIN_SUMMARY, to, subject, html);
+    }
+
+    private static String escape(String s) {
+        return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
     private String displayName(String firstName) {
         return firstName == null || firstName.isBlank() ? "there" : firstName.trim();
     }

@@ -10,7 +10,8 @@ public enum IntegrationKey {
     OPENAI("OpenAI", "Image ranking, image generation, billing sync"),
     MARKHOR("Markhor AI", "Scan, import, web search and recipe generation"),
     FIREBASE("Firebase", "Push notifications (FCM)"),
-    CLOUDINARY("Cloudinary", "Image storage and CDN");
+    CLOUDINARY("Cloudinary", "Image storage and CDN"),
+    SLACK("Slack", "Critical alerts and admin summaries (Settings)");
 
     private final String label;
     private final String description;

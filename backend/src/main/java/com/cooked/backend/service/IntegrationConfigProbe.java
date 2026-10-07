@@ -14,9 +14,11 @@ public class IntegrationConfigProbe {
     private static final Set<String> PLACEHOLDERS = Set.of("", "sk-placeholder-key-replace-me", "VOTRE_SHARED_SECRET", "dummy_cloud", "dummy_key");
 
     private final Environment env;
+    private final WorkspaceSettingsService settings;
 
-    public IntegrationConfigProbe(Environment env) {
+    public IntegrationConfigProbe(Environment env, WorkspaceSettingsService settings) {
         this.env = env;
+        this.settings = settings;
     }
 
     public boolean isConfigured(IntegrationKey key) {
@@ -30,6 +32,7 @@ public class IntegrationConfigProbe {
             case MARKHOR -> set("ai.api.base-url");
             case FIREBASE -> firebaseReady();
             case CLOUDINARY -> set("cloudinary.cloud.name") && set("cloudinary.api.key");
+            case SLACK -> settings.current().getSlackWebhookUrl() != null;
         };
     }
 

@@ -15,5 +15,8 @@ public interface EmailService {
     /** Website gift: the gift itself, sent to the friend. */
     void sendGiftReceivedEmail(String to, String senderName, String planLabel, String code, String redeemUrl);
     void sendTrialEndsTomorrowEmail(String to, String firstName, String planName, String price);
+    /** Key figures for admins; rows are {label, value}. */
+    void sendAdminSummaryEmail(String to, String subject, String title, java.util.List<String[]> rows);
+
     void sendCriticalErrorAlert(String teamEmail, String errorId, String errorType, String errorMessage, String userId, String userEmail, String platform, String osVersion, String appVersion, String context);
 }

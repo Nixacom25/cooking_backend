@@ -14,7 +14,8 @@ public enum EmailTemplate {
     GIFT_RECEIPT("Gift receipt", "Gift purchased on the website", false),
     GIFT_RECEIVED("Gift received", "Gift sent to a friend", false),
     TRIAL_ENDS_TOMORROW("Trial ending reminder", "Trial ends in 1 day (hourly job)", true),
-    CRITICAL_ERROR_ALERT("Critical error alert", "Critical crash reported by the app", false);
+    CRITICAL_ERROR_ALERT("Critical error alert", "Critical crash reported by the app", false),
+    ADMIN_SUMMARY("Admin summary", "Daily 8 AM summary / Monday review (Settings)", false);
 
     private final String label;
     private final String trigger;

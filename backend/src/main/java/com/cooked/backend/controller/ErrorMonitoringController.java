@@ -4,12 +4,10 @@ import com.cooked.backend.dto.request.CriticalErrorRequest;
 import com.cooked.backend.dto.response.MessageResponse;
 import com.cooked.backend.entity.CriticalError;
 import com.cooked.backend.repository.CriticalErrorRepository;
-import com.cooked.backend.service.EmailService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,11 +26,8 @@ import java.util.UUID;
 public class ErrorMonitoringController {
 
     private final CriticalErrorRepository criticalErrorRepository;
-    private final EmailService emailService;
+    private final com.cooked.backend.service.CriticalErrorNotifier criticalErrorNotifier;
     private final ObjectMapper objectMapper;
-
-    @Value("${support.notification.email:contact@cookedapp.com}")
-    private String supportTeamEmail;
 
     @Operation(summary = "Submit a critical error from mobile app")
     @PostMapping("/critical")
@@ -61,10 +56,8 @@ public class ErrorMonitoringController {
         CriticalError saved = criticalErrorRepository.save(error);
         String errorId = shortErrorId(saved.getId());
 
-        // Send immediate email alert for critical errors
-        emailService.sendCriticalErrorAlert(supportTeamEmail, errorId, saved.getErrorType(),
-                saved.getErrorMessage(), saved.getUserId(), saved.getUserEmail(), saved.getPlatform(),
-                saved.getOsVersion(), saved.getAppVersion(), saved.getContext());
+        // Alert the team (email and/or Slack, as enabled in Settings)
+        criticalErrorNotifier.notify(saved, errorId);
 
         return ResponseEntity.ok(new MessageResponse("Critical error recorded successfully"));
     }

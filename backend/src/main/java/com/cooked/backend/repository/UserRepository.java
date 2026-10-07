@@ -47,6 +47,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             
     long countByRole(com.cooked.backend.entity.Role role);
 
+    @org.springframework.data.jpa.repository.Query("select u.email from User u where u.role = :role and u.email is not null")
+    java.util.List<String> findEmailsByRole(@org.springframework.data.repository.query.Param("role") com.cooked.backend.entity.Role role);
+
     org.springframework.data.domain.Page<User> findAllByRoleIn(java.util.List<com.cooked.backend.entity.Role> roles,
             org.springframework.data.domain.Pageable pageable);
 
