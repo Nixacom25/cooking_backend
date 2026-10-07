@@ -41,6 +41,13 @@ public class AdminAnalyticsController {
         return ResponseEntity.ok(analyticsService.acquisition(days));
     }
 
+    @Operation(summary = "Retention D1/D7/D14/D30 of recent sign-ups, by week | source | platform | subscription | scan | import | ambassador")
+    @GetMapping("/retention")
+    public ResponseEntity<com.cooked.backend.dto.response.RetentionResponse> retention(@RequestParam(required = false) String by,
+                                                                                      @RequestParam(defaultValue = "90") int days) {
+        return ResponseEntity.ok(analyticsService.retention(by, days));
+    }
+
     @Operation(summary = "Active users: DAU / WAU / MAU and daily series (days: 1-90, default 30)")
     @GetMapping("/engagement")
     public ResponseEntity<EngagementResponse> engagement(@RequestParam(defaultValue = "30") int days,

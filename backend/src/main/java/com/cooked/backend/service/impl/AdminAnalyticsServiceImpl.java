@@ -81,6 +81,68 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
     private static final UUID NOBODY = new UUID(0L, 0L);
 
     @Override
+    public com.cooked.backend.dto.response.RetentionResponse retention(String by, int days) {
+        int d = Math.max(7, Math.min(days, 180));
+        String dim = by == null || by.isBlank() ? "week" : by.trim().toLowerCase(java.util.Locale.ROOT);
+        LocalDate today = LocalDate.now();
+        LocalDate from = today.minusDays(d - 1L);
+
+        var cohort = userRepository.findCohort(from.atStartOfDay());
+        List<UUID> ids = cohort.stream().map(UserRepository.CohortUser::getId).toList();
+        Map<UUID, java.util.Set<LocalDate>> active = new java.util.HashMap<>();
+        if (!ids.isEmpty()) {
+            java.util.Set<UUID> idSet = new java.util.HashSet<>(ids);
+            activityRepository.activitySince(from).stream().filter(r -> idSet.contains(r.getUserId()))
+                    .forEach(r -> active.computeIfAbsent(r.getUserId(), k -> new java.util.HashSet<>()).add(r.getDay()));
+        }
+        Map<UUID, UserRepository.CohortUser> byId = new java.util.HashMap<>();
+        cohort.forEach(u -> byId.put(u.getId(), u));
+        java.util.function.Function<RetentionCalculator.Member, String> groupOf = switch (dim) {
+            case "source" -> {
+                Map<String, String> canonical = new java.util.HashMap<>();
+                yield m -> {
+                    String raw = byId.get(m.id()).getDiscoverySource();
+                    if (raw == null || raw.isBlank()) return "Not answered";
+                    return canonical.computeIfAbsent(raw.trim().toLowerCase(java.util.Locale.ROOT), k -> raw.trim());
+                };
+            }
+            case "subscription" -> m -> {
+                var st = byId.get(m.id()).getSubscriptionStatus();
+                return st == null ? "Free" : st.name().charAt(0) + st.name().substring(1).toLowerCase(java.util.Locale.ROOT);
+            };
+            case "ambassador" -> m -> byId.get(m.id()).getReferredByAmbassadorId() != null ? "Ambassador code" : "No code";
+            case "scan", "import" -> {
+                ProductEventType type = dim.equals("scan") ? ProductEventType.SCAN : ProductEventType.IMPORT;
+                java.util.Set<UUID> used = ids.isEmpty() ? java.util.Set.of() : new java.util.HashSet<>(eventRepository.usersWhoUsed(type, ids));
+                String yes = dim.equals("scan") ? "Scanned a recipe" : "Imported a recipe";
+                String no = dim.equals("scan") ? "Never scanned" : "Never imported";
+                yield m -> used.contains(m.id()) ? yes : no;
+            }
+            case "platform" -> {
+                Map<UUID, String> platform = new java.util.HashMap<>();
+                if (!ids.isEmpty()) {
+                    for (Object[] row : userRepository.findDeviceNames(ids)) {
+                        String name = row[1] == null ? "" : row[1].toString().toLowerCase(java.util.Locale.ROOT);
+                        String p = name.startsWith("ios") ? "iOS" : name.startsWith("android") ? "Android" : "Web / other";
+                        platform.merge((UUID) row[0], p, (a, b) -> a.equals("Web / other") ? b : a);
+                    }
+                }
+                yield m -> platform.getOrDefault(m.id(), "Unknown");
+            }
+            default -> m -> RetentionCalculator.weekOf(m.signup());
+        };
+        List<RetentionCalculator.Member> members = cohort.stream()
+                .filter(u -> u.getCreatedAt() != null)
+                .map(u -> new RetentionCalculator.Member(u.getId(), u.getCreatedAt().toLocalDate())).toList();
+        String label = switch (dim) {
+            case "source", "subscription", "ambassador", "scan", "import", "platform" -> dim;
+            default -> "week";
+        };
+        return new com.cooked.backend.dto.response.RetentionResponse(label, d,
+                RetentionCalculator.groups(members, active, today, groupOf, label.equals("week")));
+    }
+
+    @Override
     public ProductFailuresResponse failures(ProductEventType type, int days, int page, int size) {
         int d = clamp(days);
         int p = Math.max(0, page);

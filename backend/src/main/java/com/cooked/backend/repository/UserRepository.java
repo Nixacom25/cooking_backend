@@ -13,6 +13,24 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificationExecutor<User> {
 
+    interface CohortUser {
+        UUID getId();
+        LocalDateTime getCreatedAt();
+        String getDiscoverySource();
+        com.cooked.backend.entity.SubscriptionStatus getSubscriptionStatus();
+        UUID getReferredByAmbassadorId();
+    }
+
+    /** Clients who signed up since [from] (retention cohorts). */
+    @org.springframework.data.jpa.repository.Query("select u.id as id, u.createdAt as createdAt, u.discoverySource as discoverySource, "
+            + "u.subscriptionStatus as subscriptionStatus, u.referredByAmbassadorId as referredByAmbassadorId "
+            + "from User u where u.role = com.cooked.backend.entity.Role.CLIENT and u.createdAt >= :from")
+    List<CohortUser> findCohort(@org.springframework.data.repository.query.Param("from") LocalDateTime from);
+
+    /** (user id, device name) of every login session of these users. */
+    @org.springframework.data.jpa.repository.Query("select s.user.id, s.deviceName from DeviceSession s where s.user.id in :ids")
+    List<Object[]> findDeviceNames(@org.springframework.data.repository.query.Param("ids") java.util.Collection<UUID> ids);
+
     /** Distinct onboarding discovery sources (admin Users filter options). */
     @org.springframework.data.jpa.repository.Query("select distinct trim(u.discoverySource) from User u where u.discoverySource is not null and trim(u.discoverySource) <> '' order by trim(u.discoverySource)")
     List<String> findDistinctDiscoverySources();

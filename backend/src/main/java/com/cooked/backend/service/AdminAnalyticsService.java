@@ -27,6 +27,12 @@ public interface AdminAnalyticsService {
     /** Same, for the users in [segment] (total users = segment size). */
     EngagementResponse engagement(int days, com.cooked.backend.dto.request.AnalyticsSegment segment);
 
+    /**
+     * Retention (D1 / D7 / D14 / D30) of clients who signed up in the last [days] days,
+     * grouped by [by]: week (default), source, platform, subscription, scan, import, ambassador.
+     */
+    com.cooked.backend.dto.response.RetentionResponse retention(String by, int days);
+
     /** Failed [type] events over the last [days] days, newest first (size clamped to 1..{@value #MAX_PAGE_SIZE}). */
     ProductFailuresResponse failures(ProductEventType type, int days, int page, int size);
 }

@@ -128,6 +128,9 @@ public interface ProductEventRepository extends JpaRepository<ProductEvent, UUID
             + "group by e.type, e.failureReason order by count(e) desc")
     List<ReasonCount> topFailureReasonsForUsers(@Param("from") LocalDateTime from, @Param("users") java.util.Collection<UUID> users, Pageable page);
 
+    @Query("select distinct e.userId from ProductEvent e where e.type = :type and e.userId in :users")
+    List<UUID> usersWhoUsed(@Param("type") ProductEventType type, @Param("users") java.util.Collection<UUID> users);
+
     @Query("select min(e.createdAt) from ProductEvent e")
     LocalDateTime firstEventAt();
 }
