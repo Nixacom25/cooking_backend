@@ -49,7 +49,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
                         "AND (:cuisine IS NULL OR LOWER(r.cuisine.name) = :cuisine) " +
                         "AND (:category IS NULL OR :category IN (SELECT LOWER(c.name) FROM r.categories c)) " +
                         "ORDER BY r.createdAt DESC")
-        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "cuisine"}) // categories: batch-fetched (no in-memory pagination)
         org.springframework.data.domain.Page<Recipe> findExploreRecipes(
                         @org.springframework.data.repository.query.Param("origin1") com.cooked.backend.entity.RecipeOrigin origin1,
                         @org.springframework.data.repository.query.Param("origin2") com.cooked.backend.entity.RecipeOrigin origin2,
@@ -57,7 +57,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
                         @org.springframework.data.repository.query.Param("category") String category,
                         org.springframework.data.domain.Pageable pageable);
 
-        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "cuisine"}) // categories: batch-fetched (no in-memory pagination)
         org.springframework.data.domain.Page<Recipe> findByOriginOrderByCreatedAtDesc(
                         com.cooked.backend.entity.RecipeOrigin origin,
                         org.springframework.data.domain.Pageable pageable);
@@ -171,15 +171,17 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
     List<Recipe> findRecipesExistingInData();
 
     @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.status = true AND LOWER(r.cuisine.name) = LOWER(:cuisine) AND r.image IS NOT NULL AND r.image != '' AND r.image NOT LIKE '%unsplash%' AND r.image NOT LIKE '%splash%' ORDER BY RANDOM()")
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "cuisine"}) // categories: batch-fetched (no in-memory pagination)
     org.springframework.data.domain.Page<Recipe> findByCuisineWithImage(@org.springframework.data.repository.query.Param("cuisine") String cuisine, org.springframework.data.domain.Pageable pageable);
 
     @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.origin = 'EXPLORE' AND r.status = true AND LOWER(:category) IN (SELECT LOWER(c.name) FROM r.categories c) AND r.image IS NOT NULL AND r.image != '' AND r.image NOT LIKE '%unsplash%' AND r.image NOT LIKE '%splash%' ORDER BY RANDOM()")
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "cuisine"}) // categories: batch-fetched (no in-memory pagination)
     org.springframework.data.domain.Page<Recipe> findByCategoryWithImage(@org.springframework.data.repository.query.Param("category") String category, org.springframework.data.domain.Pageable pageable);
 
     @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE LOWER(r.name) LIKE LOWER(CONCAT('%', :name, '%')) ORDER BY COALESCE(r.updatedAt, r.createdAt) DESC")
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "categories", "cuisine"})
+    // No collection in the graph: with pagination Hibernate would load every recipe and page in memory.
+    // Categories of the page come in one batch (hibernate.default_batch_fetch_size).
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "cuisine"})
     org.springframework.data.domain.Page<Recipe> findAdminRecipesByName(@org.springframework.data.repository.query.Param("name") String name, org.springframework.data.domain.Pageable pageable);
 
     @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.origin = :origin AND LOWER(r.name) LIKE LOWER(CONCAT('%', :name, '%')) ORDER BY COALESCE(r.updatedAt, r.createdAt) DESC")

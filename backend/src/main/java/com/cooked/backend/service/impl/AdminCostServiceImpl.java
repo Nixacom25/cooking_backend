@@ -109,7 +109,7 @@ public class AdminCostServiceImpl implements AdminCostService {
         Ledger ledger = ledger(w);
         String name = ledger.canonical(provider)
                 .or(() -> budgetRepository.findByProviderIgnoreCase(provider).map(ProviderBudget::getProvider))
-                .orElseThrow(() -> new ResourceNotFoundException("No cost recorded for provider " + provider));
+                .orElse(provider == null ? "" : provider.trim());   // nothing recorded yet: empty detail, not an error
         Predicate<String> only = name::equals;
         ProviderRow summary = providerRows(ledger, budgetRepository.findAll(), w).stream()
                 .filter(r -> r.getProvider().equals(name)).findFirst().orElse(null);

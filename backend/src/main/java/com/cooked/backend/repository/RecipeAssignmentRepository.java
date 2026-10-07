@@ -16,6 +16,18 @@ import java.util.UUID;
 
 @Repository
 public interface RecipeAssignmentRepository extends JpaRepository<RecipeAssignment, UUID> {
+
+    interface UserStatusCount {
+        java.util.UUID getUserId();
+        AssignmentStatus getStatus();
+        Long getTotal();
+    }
+
+    /** Assignments per intern and status, in one query (leaderboard). */
+    @Query("select a.assignedToUser.id as userId, a.status as status, count(a) as total from RecipeAssignment a "
+            + "where a.assignedToUser is not null group by a.assignedToUser.id, a.status")
+    List<UserStatusCount> countByUserAndStatus();
+
     
     Page<RecipeAssignment> findAllByAssignedToUserIdOrderByAssignedDateDesc(UUID userId, Pageable pageable);
     

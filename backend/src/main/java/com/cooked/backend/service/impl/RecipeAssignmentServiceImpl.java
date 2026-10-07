@@ -418,21 +418,26 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
     @Override
     @Transactional(readOnly = true)
     public List<StagiaireLeaderboardResponse> getStagiairesLeaderboard() {
-        List<User> editors = userRepository.findAll().stream()
-                .filter(u -> u.getRole() == Role.EDITOR)
-                .toList();
+        List<User> editors = userRepository.findAllByRole(Role.EDITOR);
+
+        // One aggregate query for every intern and status (was 9 count queries per intern).
+        java.util.Map<java.util.UUID, java.util.Map<AssignmentStatus, Long>> counts = new java.util.HashMap<>();
+        for (var c : assignmentRepository.countByUserAndStatus()) {
+            counts.computeIfAbsent(c.getUserId(), k -> new java.util.EnumMap<>(AssignmentStatus.class))
+                    .merge(c.getStatus(), c.getTotal() == null ? 0L : c.getTotal(), Long::sum);
+        }
 
         List<StagiaireLeaderboardResponse> leaderboard = new ArrayList<>();
 
         for (User ed : editors) {
-            long assigned = assignmentRepository.countByAssignedToUserId(ed.getId());
-            long validated = assignmentRepository.countByAssignedToUserIdAndStatus(ed.getId(), AssignmentStatus.VALIDATED)
-                    + assignmentRepository.countByAssignedToUserIdAndStatus(ed.getId(), AssignmentStatus.COMPLETED);
-            long deleted = assignmentRepository.countByAssignedToUserIdAndStatus(ed.getId(), AssignmentStatus.DELETED);
-            long pending = assignmentRepository.countByAssignedToUserIdAndStatus(ed.getId(), AssignmentStatus.SUBMITTED_FOR_VALIDATION);
-            long returned = assignmentRepository.countByAssignedToUserIdAndStatus(ed.getId(), AssignmentStatus.NEEDS_CORRECTION);
-            long remaining = assignmentRepository.countByAssignedToUserIdAndStatus(ed.getId(), AssignmentStatus.ASSIGNED)
-                    + assignmentRepository.countByAssignedToUserIdAndStatus(ed.getId(), AssignmentStatus.IN_PROGRESS);
+            java.util.Map<AssignmentStatus, Long> byStatus = counts.getOrDefault(ed.getId(), java.util.Map.of());
+            java.util.function.ToLongFunction<AssignmentStatus> n = s -> byStatus.getOrDefault(s, 0L);
+            long assigned = byStatus.values().stream().mapToLong(Long::longValue).sum();
+            long validated = n.applyAsLong(AssignmentStatus.VALIDATED) + n.applyAsLong(AssignmentStatus.COMPLETED);
+            long deleted = n.applyAsLong(AssignmentStatus.DELETED);
+            long pending = n.applyAsLong(AssignmentStatus.SUBMITTED_FOR_VALIDATION);
+            long returned = n.applyAsLong(AssignmentStatus.NEEDS_CORRECTION);
+            long remaining = n.applyAsLong(AssignmentStatus.ASSIGNED) + n.applyAsLong(AssignmentStatus.IN_PROGRESS);
 
             double validationRate = assigned > 0 ? (double) validated / assigned * 100.0 : 0.0;
             double progressPercentage = assigned > 0 ? (double) (validated + deleted) / assigned * 100.0 : 0.0;
