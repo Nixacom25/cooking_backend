@@ -65,6 +65,10 @@ public interface TrendQueryRepository extends Repository<Recipe, UUID> {
     List<LabelCount> eventDetailCountsIn(@Param("type") ProductEventType type, @Param("labels") Collection<String> labels,
                                          @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
+    /** Recipes (any owner) whose name contains [q] (lower-case). */
+    @Query("select count(r) from Recipe r where lower(r.name) like concat('%', :q, '%') and (r.isDeleted is null or r.isDeleted = false)")
+    long countRecipesMatching(@Param("q") String q);
+
     @Query("select cast(e.createdAt as LocalDate) as day, count(e) as total from ProductEvent e where e.type = :type and e.detail = :detail "
             + "and e.createdAt >= :from and e.createdAt < :to group by cast(e.createdAt as LocalDate)")
     List<DayCount> eventDetailDaily(@Param("type") ProductEventType type, @Param("detail") String detail,

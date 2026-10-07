@@ -91,6 +91,8 @@ public class SecurityConfig {
                                 "/notification-campaigns/*/open",
                                 "/notification-campaigns/*/click")
                         .permitAll()
+                        // Website blog: published articles, read-only
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/public/articles", "/public/articles/*").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())

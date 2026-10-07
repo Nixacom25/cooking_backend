@@ -40,6 +40,8 @@ public final class AutomationCatalog {
             new Automation("admin_summaries", "Admin daily summary & weekly review", Kind.SCHEDULED, "Hourly check · sends at 8 AM (Settings timezone)",
                     List.of("Collect yesterday's / last week's key figures", "Email every admin", "Post to Slack (if connected)"), "AdminSummaryJob.sendDueSummaries", EmailTemplate.ADMIN_SUMMARY,
                     "Turn on in Settings → Your alerts."),
+            new Automation("article_publishing", "Scheduled articles", Kind.SCHEDULED, "Every 15 minutes",
+                    List.of("Publish articles whose scheduled date has come"), "ArticlePublishingJob.publishDueArticles", null, null),
             new Automation("drip_funnel", "Free users drip", Kind.SCHEDULED, "Daily at 10:00",
                     List.of("Free users who signed up 3 / 7 days ago", "Push (or email without a push token), once per step"), "DripFunnelService.processDripCampaigns", EmailTemplate.DRIP,
                     "Off until turned on in Settings → Your alerts."),
