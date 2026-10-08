@@ -124,6 +124,31 @@ public class RequestMetrics {
                 Math.max(0, aiInFlight.get()), (System.currentTimeMillis() - startedAt) / 1000);
     }
 
+    /** One minute of the series (oldest first). */
+    public record Minute(long minute, int requests, int errors, Integer p95Ms) {
+    }
+
+    /** Last [minutes] minutes, one point per minute (empty minutes included). */
+    public List<Minute> series(int minutes) {
+        return seriesAt(System.currentTimeMillis() / 60_000, minutes);
+    }
+
+    synchronized List<Minute> seriesAt(long nowMinute, int minutes) {
+        int span = Math.max(1, Math.min(minutes, MINUTES));
+        List<Minute> out = new ArrayList<>(span);
+        for (long m = nowMinute - span + 1; m <= nowMinute; m++) {
+            Bucket b = buckets[(int) (m % MINUTES)];
+            if (b.minute != m) {
+                out.add(new Minute(m, 0, 0, null));
+                continue;
+            }
+            int[] d = Arrays.copyOf(b.durations, b.sampled);
+            Arrays.sort(d);
+            out.add(new Minute(m, b.count, b.errors, percentile(d, 95)));
+        }
+        return out;
+    }
+
     static Integer percentile(int[] sorted, int p) {
         if (sorted.length == 0) return null;
         int idx = (int) Math.ceil(p / 100.0 * sorted.length) - 1;

@@ -77,7 +77,7 @@ public class SystemStatusServiceImpl implements SystemStatusService {
         services.add(probe("External Recipe API", RECIPE_API));
         services.add(probe("Image CDN", IMAGE_CDN));
         services.add(probe("Website", WEBSITE));
-        return new SystemStatusResponse(now, snap, db, workerFailures, services, incidents.open());
+        return new SystemStatusResponse(now, snap, metrics.series(15), db, workerFailures, services, incidents.open());
     }
 
     Integer dbLatency() {

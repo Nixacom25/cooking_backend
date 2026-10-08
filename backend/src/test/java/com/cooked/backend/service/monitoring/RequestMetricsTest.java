@@ -24,6 +24,22 @@ class RequestMetricsTest {
     }
 
     @Test
+    void perMinuteSeries() {
+        RequestMetrics m = new RequestMetrics();
+        m.record(100, 200, 10);
+        m.record(100, 500, 30);
+        m.record(102, 200, 5);
+        var series = m.seriesAt(102, 3);
+        assertEquals(3, series.size());
+        assertEquals(2, series.get(0).requests());
+        assertEquals(1, series.get(0).errors());
+        assertEquals(30, series.get(0).p95Ms());
+        assertEquals(0, series.get(1).requests());
+        assertNull(series.get(1).p95Ms());
+        assertEquals(1, series.get(2).requests());
+    }
+
+    @Test
     void emptyAndAiDetection() {
         RequestMetrics.Snapshot s = new RequestMetrics().snapshotAt(5, 15);
         assertNull(s.p95Ms());

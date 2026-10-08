@@ -14,8 +14,8 @@ import java.util.List;
  * @param services         one row per monitored service
  * @param openIncidents    incidents declared and not resolved
  */
-public record SystemStatusResponse(LocalDateTime at, RequestMetrics.Snapshot metrics, Integer dbLatencyMs, long workerFailures24h,
-                                   List<Service> services, List<IncidentResponse> openIncidents) {
+public record SystemStatusResponse(LocalDateTime at, RequestMetrics.Snapshot metrics, List<RequestMetrics.Minute> lastMinutes,
+                                   Integer dbLatencyMs, long workerFailures24h, List<Service> services, List<IncidentResponse> openIncidents) {
 
     /** status: UP, DEGRADED, DOWN, IDLE (no traffic) or NOT_CONFIGURED. */
     public record Service(String name, String status, String detail) {
