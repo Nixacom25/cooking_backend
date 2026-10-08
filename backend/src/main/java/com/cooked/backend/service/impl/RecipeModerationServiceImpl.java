@@ -34,6 +34,24 @@ public class RecipeModerationServiceImpl implements RecipeModerationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public com.cooked.backend.dto.response.RecipeStatsResponse stats(UUID recipeId) {
+        if (!recipes.existsById(recipeId)) throw new ResourceNotFoundException("Recipe not found");
+        String id = recipeId.toString();
+        java.util.function.Function<String, Long> count = (jpql) -> (Long) em.createQuery(jpql).setParameter("id", recipeId).getSingleResult();
+        long views = (Long) em.createQuery("select count(e) from ProductEvent e where e.type = com.cooked.backend.entity.ProductEventType.RECIPE_VIEW and e.detail = :d")
+                .setParameter("d", id).getSingleResult();
+        long views30 = (Long) em.createQuery("select count(e) from ProductEvent e where e.type = com.cooked.backend.entity.ProductEventType.RECIPE_VIEW and e.detail = :d and e.createdAt >= :from")
+                .setParameter("d", id).setParameter("from", LocalDateTime.now().minusDays(30)).getSingleResult();
+        return new com.cooked.backend.dto.response.RecipeStatsResponse(views, views30,
+                count.apply("select count(c) from Cookbook c join c.recipes r where r.id = :id"),
+                count.apply("select count(m) from MealPlan m where m.recipe.id = :id"),
+                count.apply("select count(g) from GroceryItem g where g.recipe.id = :id"),
+                count.apply("select count(f) from RecipeFlag f where f.recipeId = :id and f.resolvedAt is null"),
+                count.apply("select count(a) from RecipeAssignment a where a.recipe.id = :id"));
+    }
+
+    @Override
     @Transactional
     public RecipeFlagResponse flag(UUID recipeId, RecipeFlagRequest r, String adminEmail) {
         if (!recipes.existsById(recipeId)) throw new ResourceNotFoundException("Recipe not found");

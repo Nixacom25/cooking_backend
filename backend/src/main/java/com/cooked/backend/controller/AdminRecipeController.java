@@ -53,6 +53,13 @@ public class AdminRecipeController {
         return ResponseEntity.ok(recipeService.getAdminRecipes(origin, name, pageable));
     }
 
+    @Operation(summary = "Usage of a recipe: views, cookbooks, meal plans, grocery adds, open reports, assignments")
+    @GetMapping("/{id}/stats")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<com.cooked.backend.dto.response.RecipeStatsResponse> recipeStats(@PathVariable UUID id) {
+        return ResponseEntity.ok(moderation.stats(id));
+    }
+
     @Operation(summary = "Reports on a recipe, newest first")
     @GetMapping("/{id}/flags")
     @PreAuthorize("hasRole('ADMIN')")

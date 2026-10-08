@@ -40,6 +40,11 @@ class RecipeMergeTest {
         tem.flush();
 
         var service = new RecipeModerationServiceImpl(flags, recipes, em);
+        var before = service.stats(dup.getId());
+        assertEquals(2, before.cookbooks());
+        assertEquals(1, before.mealPlans());
+        assertEquals(1, before.groceryAdds());
+        assertEquals(0, before.openReports());
         var result = service.merge(keep.getId(), dup.getId(), "boss@cooked.app");
         tem.flush();
         tem.clear();
