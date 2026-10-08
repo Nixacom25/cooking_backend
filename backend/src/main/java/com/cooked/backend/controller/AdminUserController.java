@@ -13,6 +13,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -60,6 +63,12 @@ public class AdminUserController {
     @GetMapping("/summary")
     public ResponseEntity<com.cooked.backend.dto.response.UserSummaryResponse> summary() {
         return ResponseEntity.ok(users.summary());
+    }
+
+    @Operation(summary = "Block or unblock an app user (status ACTIVE | BLOCKED); blocked users lose access at once")
+    @PutMapping("/{id}/status")
+    public ResponseEntity<UserResponse> setStatus(@PathVariable java.util.UUID id, @RequestBody java.util.Map<String, String> body) {
+        return ResponseEntity.ok(users.setStatus(id, body.get("status")));
     }
 
     @Operation(summary = "App versions and countries reported by the app (filter options)")

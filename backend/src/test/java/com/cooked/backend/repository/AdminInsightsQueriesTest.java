@@ -65,5 +65,16 @@ class AdminInsightsQueriesTest {
         assertEquals(1L, service.articleVisitors(28).get("/blog/mafe"));
         assertEquals(1L, service.payingUsersByFeature(30).get("SCAN"));
         assertEquals(1, repo.groceryAddsOf(ana.getId()) + 1);
+        SubscriptionPayment failed = new SubscriptionPayment();
+        failed.setUser(ana);
+        failed.setAmount(new BigDecimal("9.99"));
+        failed.setStatus("FAILED");
+        failed.setPlanType("MONTHLY");
+        em.persist(failed);
+        em.flush();
+        em.getEntityManager().createQuery("update SubscriptionPayment p set p.createdAt = :at where p.id = :id")
+                .setParameter("at", java.time.LocalDateTime.now().minusDays(2)).setParameter("id", failed.getId()).executeUpdate();
+        assertEquals(1L, service.billingRecovery(30).get("failedPayers"));
+        assertEquals(1L, service.billingRecovery(30).get("recovered"));   // the success above is after the failure
     }
 }

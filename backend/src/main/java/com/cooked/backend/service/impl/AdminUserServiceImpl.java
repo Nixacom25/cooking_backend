@@ -61,6 +61,20 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     @Override
+    @Transactional
+    public com.cooked.backend.dto.response.UserResponse setStatus(java.util.UUID id, String status) {
+        var s = "BLOCKED".equalsIgnoreCase(status) ? com.cooked.backend.entity.Status.BLOCKED
+                : "ACTIVE".equalsIgnoreCase(status) ? com.cooked.backend.entity.Status.ACTIVE : null;
+        if (s == null) throw new com.cooked.backend.exception.BadRequestException("status must be ACTIVE or BLOCKED");
+        var u = userRepository.findById(id).orElseThrow(() -> new com.cooked.backend.exception.ResourceNotFoundException("User not found"));
+        if (u.getRole() != com.cooked.backend.entity.Role.CLIENT && u.getRole() != com.cooked.backend.entity.Role.CREATOR) {
+            throw new com.cooked.backend.exception.BadRequestException("Only app users can be blocked here.");
+        }
+        u.setStatus(s);
+        return userMapper.toResponse(userRepository.save(u));
+    }
+
+    @Override
     public java.util.Map<String, List<String>> clientContextOptions() {
         List<String> versions = new java.util.ArrayList<>(userRepository.findDistinctAppVersions());
         versions.sort(java.util.Comparator.comparing(AdminUserServiceImpl::versionKey).reversed());

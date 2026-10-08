@@ -20,6 +20,9 @@ public interface AdminUserService {
 
     com.cooked.backend.dto.response.UserSummaryResponse summary();
 
+    /** Blocks (ACTIVE -> BLOCKED) or unblocks an app user; admins and interns are managed elsewhere. */
+    com.cooked.backend.dto.response.UserResponse setStatus(java.util.UUID id, String status);
+
     /** {"versions": [...newest first], "countries": [...]} reported by the app. */
     java.util.Map<String, List<String>> clientContextOptions();
 }

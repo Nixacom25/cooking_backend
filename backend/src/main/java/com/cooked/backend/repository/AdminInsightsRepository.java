@@ -51,6 +51,14 @@ public interface AdminInsightsRepository extends Repository<User, UUID> {
             + "and u.subscriptionStatus in (com.cooked.backend.entity.SubscriptionStatus.ACTIVE, com.cooked.backend.entity.SubscriptionStatus.PREMIUM) group by e.type")
     List<Object[]> payingUsersByTypeSince(@Param("from") LocalDateTime from);
 
+    /** Users with a failed payment since [from] and a successful one after it (billing recovered). */
+    @Query("select count(distinct f.user.id) from SubscriptionPayment f where upper(f.status) like 'FAIL%' and f.createdAt >= :from "
+            + "and exists (select 1 from SubscriptionPayment s where s.user = f.user and upper(s.status) = 'SUCCESS' and s.createdAt > f.createdAt)")
+    long countRecoveredSince(@Param("from") LocalDateTime from);
+
+    @Query("select count(distinct f.user.id) from SubscriptionPayment f where upper(f.status) like 'FAIL%' and f.createdAt >= :from")
+    long countFailedPayersSince(@Param("from") LocalDateTime from);
+
     @Query("select count(g) from GroceryItem g where g.user.id = :id")
     long groceryAddsOf(@Param("id") UUID userId);
 

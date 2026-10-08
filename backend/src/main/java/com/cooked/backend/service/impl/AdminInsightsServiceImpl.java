@@ -88,6 +88,12 @@ public class AdminInsightsServiceImpl implements AdminInsightsService {
     }
 
     @Override
+    public Map<String, Long> billingRecovery(int days) {
+        LocalDateTime from = LocalDateTime.now().minusDays(Math.max(1, Math.min(days, 365)));
+        return Map.of("failedPayers", repo.countFailedPayersSince(from), "recovered", repo.countRecoveredSince(from));
+    }
+
+    @Override
     public Map<String, Long> payingUsersByFeature(int days) {
         Map<String, Long> out = new LinkedHashMap<>();
         repo.payingUsersByTypeSince(LocalDate.now().minusDays(Math.max(1, Math.min(days, 365)) - 1L).atStartOfDay())

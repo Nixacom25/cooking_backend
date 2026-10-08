@@ -47,6 +47,12 @@ public class AdminInsightsController {
         return ResponseEntity.ok(insights.articleVisitors(days));
     }
 
+    @Operation(summary = "Billing recovery: users with a failed payment and those who paid again afterwards")
+    @GetMapping("/billing")
+    public ResponseEntity<Map<String, Long>> billing(@RequestParam(defaultValue = "30") int days) {
+        return ResponseEntity.ok(insights.billingRecovery(days));
+    }
+
     @Operation(summary = "Paying users per product feature (event type)")
     @GetMapping("/paying-by-feature")
     public ResponseEntity<Map<String, Long>> payingByFeature(@RequestParam(defaultValue = "30") int days) {

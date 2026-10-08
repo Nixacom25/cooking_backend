@@ -55,7 +55,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             var userDetails = userDetailsService.loadUserByUsername(email);
 
-            if (jwtService.isTokenValid(token, userDetails)) {
+            // Blocked / archived accounts lose access immediately, even with a valid token.
+            if (jwtService.isTokenValid(token, userDetails) && userDetails.isAccountNonLocked()) {
                 var authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,

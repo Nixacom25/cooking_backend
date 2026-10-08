@@ -21,6 +21,9 @@ public interface AdminInsightsService {
     /** {"/blog/slug": visitors} over the last [days] days. */
     Map<String, Long> articleVisitors(int days);
 
+    /** {"failedPayers", "recovered"} over the last [days] days. */
+    Map<String, Long> billingRecovery(int days);
+
     /** {eventType: paying users} over the last [days] days. */
     Map<String, Long> payingUsersByFeature(int days);
 }
