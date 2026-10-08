@@ -17,4 +17,9 @@ public interface IngredientRepository extends JpaRepository<Ingredient, UUID> {
     
     java.util.List<com.cooked.backend.entity.Ingredient> findByNameContainingIgnoreCase(String query);
     java.util.List<Ingredient> findByPriceIsNull();
+
+    /** Every ingredient name with the number of recipes using it, most used first: rows [name, recipes]. */
+    @org.springframework.data.jpa.repository.Query("select i.name, count(ri.id) from Ingredient i "
+            + "left join RecipeIngredient ri on ri.ingredient = i group by i.name order by count(ri.id) desc, i.name")
+    java.util.List<Object[]> namesByUsage();
 }

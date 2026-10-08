@@ -8,11 +8,13 @@ import com.cooked.backend.entity.*;
 import com.cooked.backend.exception.BadRequestException;
 import com.cooked.backend.exception.ResourceNotFoundException;
 import com.cooked.backend.repository.IngredientCatalogReleaseRepository;
+import com.cooked.backend.repository.IngredientRepository;
 import com.cooked.backend.repository.IngredientVisualRepository;
 import com.cooked.backend.repository.UnmatchedIngredientRepository;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.repository.spec.IngredientCatalogSpecs;
 import com.cooked.backend.service.IngredientCatalogService;
+import com.cooked.backend.util.IngredientCategories;
 import com.cooked.backend.util.IngredientKeys;
 import com.cooked.backend.util.SvgAssets;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,7 +26,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -83,11 +87,14 @@ public class IngredientCatalogServiceImpl implements IngredientCatalogService {
     static final String GENERIC_ID = "ingredient_generic";
     static final int KEPT_MANIFESTS = 5;
     static final int MAX_REUSABLE = 80;
+    static final int IMPORT_CHUNK = 500;
 
     private final IngredientVisualRepository visuals;
     private final IngredientCatalogReleaseRepository releases;
     private final UnmatchedIngredientRepository unmatched;
     private final UserRepository users;
+    private final IngredientRepository ingredients;
+    private final PlatformTransactionManager txManager;
     private final ObjectMapper json;
 
     @Override
@@ -352,6 +359,75 @@ public class IngredientCatalogServiceImpl implements IngredientCatalogService {
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Could not write the ingredient manifest", e);
         }
+    }
+
+    @Override
+    public CatalogSeedResponse importDatabaseIngredients(String adminEmail) {
+        TransactionTemplate tx = new TransactionTemplate(txManager);
+        Set<String> taken = new HashSet<>();
+        tx.executeWithoutResult(st -> {
+            visuals.nameKeys().forEach(r -> { taken.add((String) r[1]); taken.add((String) r[2]); });
+            visuals.aliasKeys().forEach(r -> taken.add((String) r[1]));
+            // disabled visuals still own their names
+            visuals.findAll((r, q, cb) -> cb.isFalse(r.get("enabled"))).forEach(v -> taken.addAll(keysOf(v)));
+        });
+        String by = displayName(adminEmail);
+        List<IngredientVisual> batch = new ArrayList<>();
+        List<String> batchKeys = new ArrayList<>();
+        int created = 0, skipped = 0;
+        List<Object[]> rows = tx.execute(st -> ingredients.namesByUsage());
+        for (Object[] row : rows == null ? List.<Object[]>of() : rows) {
+            String raw = row[0] == null ? "" : row[0].toString().trim().replaceAll("\\s+", " ");
+            String key = IngredientKeys.key(raw);
+            String canonicalId = canonicalFrom(key);
+            if (raw.length() > IngredientKeys.MAX_LENGTH || canonicalId == null || taken.contains(key) || taken.contains(canonicalId)) {
+                skipped++;
+                continue;
+            }
+            taken.add(key);
+            taken.add(canonicalId);
+            String category = IngredientCategories.guess(key);
+            IngredientVisual v = IngredientVisual.builder()
+                    .canonicalId(canonicalId)
+                    .name(Character.toUpperCase(raw.charAt(0)) + raw.substring(1))
+                    .nameKey(key)
+                    .category(category)
+                    .animation(CATEGORY_PRESETS.getOrDefault(category, PRESETS.get(0)))
+                    .delivery(IngredientDelivery.CDN)
+                    .reviewed(false)
+                    .build();
+            v.touch(by);
+            batch.add(v);
+            batchKeys.add(key);
+            if (batch.size() >= IMPORT_CHUNK) {
+                saveImported(tx, batch, batchKeys, adminEmail);
+                created += batch.size();
+                batch.clear();
+                batchKeys.clear();
+            }
+        }
+        if (!batch.isEmpty()) {
+            saveImported(tx, batch, batchKeys, adminEmail);
+            created += batch.size();
+        }
+        return new CatalogSeedResponse(created, skipped);
+    }
+
+    /** One transaction per chunk: a large import never holds one huge transaction. */
+    private void saveImported(TransactionTemplate tx, List<IngredientVisual> batch, List<String> keys, String adminEmail) {
+        List<IngredientVisual> copy = new ArrayList<>(batch);
+        List<String> keyCopy = new ArrayList<>(keys);
+        tx.executeWithoutResult(st -> {
+            Map<String, UUID> ids = new HashMap<>();
+            visuals.saveAll(copy).forEach(v -> ids.put(v.getNameKey(), v.getId()));
+            unmatched.findByNameKeyInAndStatus(keyCopy, UnmatchedStatus.OPEN)
+                    .forEach(u -> markResolved(u, ids.get(u.getNameKey()), adminEmail));
+        });
+    }
+
+    /** The key itself when it is a valid permanent id; quantities ("2_tomato") and very long names are left out. */
+    static String canonicalFrom(String key) {
+        return IngredientKeys.isCanonicalId(key) ? key : null;
     }
 
     @Override

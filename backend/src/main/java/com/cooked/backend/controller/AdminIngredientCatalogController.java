@@ -107,6 +107,12 @@ public class AdminIngredientCatalogController {
                 .body(catalog.draftManifest());
     }
 
+    @Operation(summary = "Add every database ingredient the catalog does not resolve yet, as Missing Asset entries")
+    @PostMapping("/import-ingredients")
+    public ResponseEntity<CatalogSeedResponse> importIngredients(Authentication auth) {
+        return ResponseEntity.ok(catalog.importDatabaseIngredients(auth.getName()));
+    }
+
     @Operation(summary = "Install the starter art pack (skips what already exists)")
     @PostMapping("/starter-pack")
     public ResponseEntity<CatalogSeedResponse> starterPack(Authentication auth) {

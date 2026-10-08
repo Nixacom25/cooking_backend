@@ -40,6 +40,12 @@ public interface IngredientCatalogService {
     /** Manifest of the latest published release. */
     Optional<String> publishedManifest();
 
+    /**
+     * Adds every ingredient name of the database the catalog does not resolve yet, as Missing Asset entries
+     * (one per normalized name, most used spelling first). Safe to run again: known names are skipped.
+     */
+    CatalogSeedResponse importDatabaseIngredients(String adminEmail);
+
     /** Adds the starter art (skips ids and names already in the catalog). */
     CatalogSeedResponse installStarterPack(String adminEmail);
 }

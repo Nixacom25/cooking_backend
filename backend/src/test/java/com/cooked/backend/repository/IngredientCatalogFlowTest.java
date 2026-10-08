@@ -34,6 +34,7 @@ class IngredientCatalogFlowTest {
     @Autowired private UnmatchedIngredientUserRepository unmatchedUsers;
     @Autowired private RecipeIngredientRepository recipeIngredients;
     @Autowired private UserRepository users;
+    @Autowired private IngredientRepository ingredients;
     @Autowired private PlatformTransactionManager tx;
 
     private final ObjectMapper json = new ObjectMapper();
@@ -42,7 +43,7 @@ class IngredientCatalogFlowTest {
 
     @BeforeEach
     void setUp() {
-        catalog = new IngredientCatalogServiceImpl(visuals, releases, unmatched, users, json);
+        catalog = new IngredientCatalogServiceImpl(visuals, releases, unmatched, users, ingredients, tx, json);
         queue = new UnmatchedIngredientServiceImpl(unmatched, unmatchedUsers, visuals, recipeIngredients, catalog, tx);
         em.persist(User.builder().email("cheikh@test.com").firstname("Cheikh").lastname("Gueye").password("x")
                 .role(Role.ADMIN).status(Status.ACTIVE).build());
@@ -197,5 +198,31 @@ class IngredientCatalogFlowTest {
         assertEquals(2, page.release().nextVersion());
         assertEquals(2, catalog.publish(null, "cheikh@test.com").version());
         assertEquals(2, catalog.releases().size());
+    }
+
+    @Test
+    void importAddsEveryUnknownDatabaseIngredientOnce() {
+        catalog.installStarterPack("cheikh@test.com");
+        User ana = em.persist(User.builder().email("ana@test.com").password("x").role(Role.CLIENT).status(Status.ACTIVE).build());
+        Recipe mafe = em.persist(Recipe.builder().name("Mafe").user(ana).build());
+        Ingredient peanut = em.persist(Ingredient.builder().name("peanut butter").build());
+        em.persist(Ingredient.builder().name("Peanut Butters").build());
+        em.persist(Ingredient.builder().name("Tomatoes").build());
+        em.persist(Ingredient.builder().name("2 onions").build());
+        em.persist(Ingredient.builder().name("Chicken stock").build());
+        em.persist(RecipeIngredient.builder().recipe(mafe).ingredient(peanut).quantity("1 cup").build());
+        queue.record(List.of("Chicken stocks"), IngredientNameSource.IMPORT, "ana@test.com");
+        em.flush();
+
+        CatalogSeedResponse r = catalog.importDatabaseIngredients("cheikh@test.com");
+        assertEquals(2, r.created());
+        assertEquals(3, r.skipped());
+        IngredientVisual pb = visuals.findByCanonicalId("peanut_butter").orElseThrow();
+        assertEquals("Peanut butter", pb.getName());
+        assertEquals(IngredientVisualStatus.MISSING_ASSET, pb.getStatus());
+        assertEquals("Nuts & Seeds", pb.getCategory());
+        assertEquals("Soups & Stocks", visuals.findByCanonicalId("chicken_stock").orElseThrow().getCategory());
+        assertEquals(UnmatchedStatus.RESOLVED, unmatched.findByNameKey("chicken_stock").orElseThrow().getStatus());
+        assertEquals(0, catalog.importDatabaseIngredients("cheikh@test.com").created());
     }
 }
