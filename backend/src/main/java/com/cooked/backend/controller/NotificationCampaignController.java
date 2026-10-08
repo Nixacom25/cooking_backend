@@ -25,6 +25,7 @@ import java.util.List;
 public class NotificationCampaignController {
 
     private final NotificationCampaignService campaignService;
+    private final com.cooked.backend.service.TestPushService testPush;
 
     @Operation(summary = "Create a new notification campaign")
     @PostMapping
@@ -34,6 +35,14 @@ public class NotificationCampaignController {
             Authentication auth) {
         request.setCreatedBy(auth.getName());
         return ResponseEntity.ok(campaignService.createCampaign(request));
+    }
+
+    @Operation(summary = "Send a test push to one account's device")
+    @PostMapping("/test")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> testPush(@Valid @RequestBody com.cooked.backend.dto.request.TestPushRequest body) {
+        testPush.send(body);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Get a specific campaign by ID")
