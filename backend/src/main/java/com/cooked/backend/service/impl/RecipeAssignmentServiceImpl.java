@@ -405,6 +405,44 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
         return resp;
     }
 
+    static final java.util.List<AssignmentStatus> MOVABLE = java.util.List.of(AssignmentStatus.ASSIGNED, AssignmentStatus.IN_PROGRESS);
+
+    @Override
+    @Transactional
+    public com.cooked.backend.dto.response.BatchReassignResponse reassignBatch(com.cooked.backend.dto.request.BatchReassignRequest request, String adminEmail) {
+        if (request.fromUserId().equals(request.toUserId())) throw new BadRequestException("Choisissez un autre stagiaire comme destinataire.");
+        User admin = userRepository.findByEmail(adminEmail).orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
+        User from = userRepository.findById(request.fromUserId()).orElseThrow(() -> new ResourceNotFoundException("Stagiaire introuvable"));
+        User to = userRepository.findById(request.toUserId()).orElseThrow(() -> new ResourceNotFoundException("Stagiaire introuvable"));
+        if (to.getRole() != Role.EDITOR) throw new BadRequestException("Le destinataire doit être un stagiaire.");
+
+        List<RecipeAssignment> movable = assignmentRepository.findMovable(from.getId(), MOVABLE, org.springframework.data.domain.PageRequest.of(0, request.count()));
+        if (movable.size() < request.count()) {
+            throw new BadRequestException("Impossible de retirer " + request.count() + " recettes : " + from.getFirstname() + " n'en a que " + movable.size() + " non terminée(s).");
+        }
+        int notStarted = 0;
+        for (RecipeAssignment a : movable) {
+            AssignmentStatus previous = a.getStatus();
+            if (previous == AssignmentStatus.ASSIGNED) notStarted++;
+            a.setAssignedToUser(to);
+            a.setAssignedByUser(admin);
+            a.setStatus(AssignmentStatus.ASSIGNED);
+            RecipeAssignment saved = assignmentRepository.save(a);
+            recordHistory(saved, admin, "REASSIGNED", previous, AssignmentStatus.ASSIGNED, null,
+                    "Ré-assignée par lot de " + from.getFirstname() + " à " + to.getFirstname());
+        }
+        notificationService.createAndSendNotification(to, admin, "Nouvelles recettes attribuées",
+                movable.size() + " recette(s) vous ont été réattribuée(s).", "ASSIGNMENT", null, null);
+        broadcastStats();
+        return new com.cooked.backend.dto.response.BatchReassignResponse(movable.size(), notStarted, movable.size() - notStarted,
+                displayName(from), displayName(to));
+    }
+
+    private static String displayName(User u) {
+        String n = ((u.getFirstname() == null ? "" : u.getFirstname()) + " " + (u.getLastname() == null ? "" : u.getLastname())).trim();
+        return n.isEmpty() ? u.getEmail() : n;
+    }
+
     @Override
     @Transactional
     public void removeAssignment(UUID assignmentId, String adminEmail) {

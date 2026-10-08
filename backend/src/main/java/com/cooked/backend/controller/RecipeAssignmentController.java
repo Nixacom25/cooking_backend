@@ -161,6 +161,14 @@ public class RecipeAssignmentController {
         return ResponseEntity.ok(assignmentService.reassignAssignment(id, newUserId, auth.getName()));
     }
 
+    @Operation(summary = "Admin: move N unfinished recipes from one intern to another (not started first, then in progress)")
+    @PostMapping("/assignments/reassign-batch")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<com.cooked.backend.dto.response.BatchReassignResponse> reassignBatch(
+            @jakarta.validation.Valid @RequestBody com.cooked.backend.dto.request.BatchReassignRequest request, Authentication auth) {
+        return ResponseEntity.ok(assignmentService.reassignBatch(request, auth.getName()));
+    }
+
     @Operation(summary = "Admin: Remove assignment")
     @DeleteMapping("/assignments/{id}")
     @PreAuthorize("hasRole('ADMIN')")

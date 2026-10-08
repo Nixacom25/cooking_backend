@@ -40,6 +40,12 @@ public interface RecipeAssignmentRepository extends JpaRepository<RecipeAssignme
             + "from RecipeAssignment a where a.assignedToUser is not null and a.submittedDate is not null and a.assignedDate >= :since")
     List<Timing> timingsSince(@Param("since") LocalDateTime since);
 
+    /** Unfinished assignments of an intern, not started first, oldest first (batch reassignment). */
+    @Query("select a from RecipeAssignment a where a.assignedToUser.id = :userId and a.status in :statuses "
+            + "order by case when a.status = com.cooked.backend.entity.AssignmentStatus.ASSIGNED then 0 else 1 end, a.assignedDate asc")
+    List<RecipeAssignment> findMovable(@Param("userId") UUID userId, @Param("statuses") java.util.Collection<AssignmentStatus> statuses,
+                                       org.springframework.data.domain.Pageable page);
+
     /** Same, limited to assignments made since {@code since} (leaderboard period filter). */
     @Query("select a.assignedToUser.id as userId, a.status as status, count(a) as total from RecipeAssignment a "
             + "where a.assignedToUser is not null and a.assignedDate >= :since group by a.assignedToUser.id, a.status")

@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -57,6 +58,20 @@ class LeaderboardQueriesTest {
         assertEquals(1, recipes.countUnassignedUnmodifiedRecipesByOrigin(RecipeOrigin.IMPORT));
         assertEquals("Free import", recipes.findUnassignedUnmodifiedRecipesByOrigin(RecipeOrigin.IMPORT, org.springframework.data.domain.PageRequest.of(0, 5)).get(0).getName());
         assertEquals(2, recipes.countUnassignedUnmodifiedRecipes());
+    }
+
+    @Test
+    void movableAssignmentsNotStartedFirst() {
+        User admin = em.persist(User.builder().email("a3@test.com").password("x").role(Role.ADMIN).status(Status.ACTIVE).build());
+        User intern = em.persist(User.builder().email("i3@test.com").password("x").role(Role.EDITOR).status(Status.ACTIVE).build());
+        assign(admin, intern, AssignmentStatus.IN_PROGRESS, LocalDateTime.now().minusDays(5));
+        assign(admin, intern, AssignmentStatus.ASSIGNED, LocalDateTime.now().minusDays(1));
+        assign(admin, intern, AssignmentStatus.VALIDATED, LocalDateTime.now().minusDays(9));
+        em.flush();
+        em.clear();
+        var movable = assignments.findMovable(intern.getId(), List.of(AssignmentStatus.ASSIGNED, AssignmentStatus.IN_PROGRESS), org.springframework.data.domain.PageRequest.of(0, 5));
+        assertEquals(2, movable.size());
+        assertEquals(AssignmentStatus.ASSIGNED, movable.get(0).getStatus());
     }
 
     private void assign(User by, User to, AssignmentStatus status, LocalDateTime at) {

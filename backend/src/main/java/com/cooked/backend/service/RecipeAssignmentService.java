@@ -21,6 +21,8 @@ public interface RecipeAssignmentService {
     RecipeAssignmentResponse validateAssignment(UUID assignmentId, String adminEmail);
     RecipeAssignmentResponse rejectAssignment(UUID assignmentId, RejectAssignmentRequest request, String adminEmail);
     RecipeAssignmentResponse reassignAssignment(UUID assignmentId, UUID newUserId, String adminEmail);
+    /** Moves [count] unfinished recipes (not started first, then in progress) from one intern to another. */
+    com.cooked.backend.dto.response.BatchReassignResponse reassignBatch(com.cooked.backend.dto.request.BatchReassignRequest request, String adminEmail);
     void removeAssignment(UUID assignmentId, String adminEmail);
     List<RecipeAssignmentHistoryResponse> getAssignmentHistory(UUID assignmentId);
     List<StagiaireLeaderboardResponse> getStagiairesLeaderboard();
