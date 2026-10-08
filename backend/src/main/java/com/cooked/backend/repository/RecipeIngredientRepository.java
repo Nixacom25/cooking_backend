@@ -18,4 +18,9 @@ public interface RecipeIngredientRepository extends JpaRepository<RecipeIngredie
            "GROUP BY ri.ingredient " +
            "ORDER BY MAX(ri.createdAt) DESC")
     List<Ingredient> findRecentIngredientsByUserId(@Param("userId") UUID userId, org.springframework.data.domain.Pageable pageable);
+
+    /** Ingredient names by number of recipes using them, as rows [name, recipes] (Not-in-catalog backfill). */
+    @Query("SELECT ri.ingredient.name, COUNT(DISTINCT ri.recipe.id) FROM RecipeIngredient ri " +
+           "GROUP BY ri.ingredient.name ORDER BY COUNT(DISTINCT ri.recipe.id) DESC")
+    List<Object[]> mostUsedNames(org.springframework.data.domain.Pageable pageable);
 }

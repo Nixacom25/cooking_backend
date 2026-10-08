@@ -27,6 +27,7 @@ import java.util.UUID;
 public class GroceryItemController {
 
     private final GroceryItemService groceryItemService;
+    private final com.cooked.backend.service.IngredientNameReporter ingredientNames;
 
     @Operation(summary = "Generate an Instacart shoppable list link from current grocery items")
     @PostMapping("/instacart")
@@ -38,7 +39,12 @@ public class GroceryItemController {
     @PostMapping
     public ResponseEntity<GroceryItemResponse> create(Authentication auth,
             @Valid @RequestBody CreateGroceryItemRequest request) {
-        return ResponseEntity.ok(groceryItemService.create(auth.getName(), request));
+        GroceryItemResponse item = groceryItemService.create(auth.getName(), request);
+        if (request.getIngredientName() != null) {
+            ingredientNames.report(List.of(request.getIngredientName()),
+                    com.cooked.backend.entity.IngredientNameSource.GROCERY, auth.getName());
+        }
+        return ResponseEntity.ok(item);
     }
 
     @Operation(summary = "Get my entire grocery list")

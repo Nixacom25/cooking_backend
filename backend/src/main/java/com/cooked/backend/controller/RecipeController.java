@@ -35,6 +35,7 @@ public class RecipeController {
     private final AiService aiService;
     private final TrendingService trendingService;
     private final ProductEventTracker eventTracker;
+    private final com.cooked.backend.service.IngredientNameReporter ingredientNames;
 
     @Operation(summary = "Import Recipe via Link (AI)")
     @PostMapping("/import")
@@ -46,8 +47,13 @@ public class RecipeController {
         }
         // Optional: HTML of the page as loaded in the app's WebView (see extractRecipeFromPage)
         String html = payload.get("html");
-        return ResponseEntity.ok(eventTracker.track(ProductEventType.IMPORT, auth.getName(), importSource(url), url,
-                () -> recipeService.importAndSaveAsSuggestion(url, html, auth.getName()), r -> 1));
+        RecipeResponse recipe = eventTracker.track(ProductEventType.IMPORT, auth.getName(), importSource(url), url,
+                () -> recipeService.importAndSaveAsSuggestion(url, html, auth.getName()), r -> 1);
+        if (recipe != null && recipe.getIngredients() != null) {
+            ingredientNames.report(recipe.getIngredients().stream().map(i -> i.getName()).toList(),
+                    com.cooked.backend.entity.IngredientNameSource.IMPORT, auth.getName());
+        }
+        return ResponseEntity.ok(recipe);
     }
 
     @Operation(summary = "Detect Ingredients from Image (AI)")
@@ -57,7 +63,12 @@ public class RecipeController {
         if (file.isEmpty()) {
             throw new com.cooked.backend.exception.BadRequestException("Image file is required");
         }
-        return ResponseEntity.ok(aiService.detectIngredients(file, auth.getName()));
+        AiIngredientDetectionResponse detected = aiService.detectIngredients(file, auth.getName());
+        if (detected != null && detected.getAllowed_ingredients() != null) {
+            ingredientNames.report(detected.getAllowed_ingredients().stream().map(i -> i.getName()).toList(),
+                    com.cooked.backend.entity.IngredientNameSource.SCAN, auth.getName());
+        }
+        return ResponseEntity.ok(detected);
     }
 
     @Operation(summary = "Generate Recipes from Ingredients (AI)")
@@ -86,6 +97,8 @@ public class RecipeController {
         if (ingredients == null || ingredients.isEmpty()) {
             throw new com.cooked.backend.exception.BadRequestException("Ingredients list is required");
         }
+        ingredientNames.report(List.copyOf(ingredients.stream().filter(java.util.Objects::nonNull).toList()),
+                com.cooked.backend.entity.IngredientNameSource.SCAN, auth.getName());
         return ResponseEntity.ok(eventTracker.track(ProductEventType.SCAN, auth.getName(), "typed",
                 () -> aiService.scanTyped(ingredients, auth.getName()), ProductEventCounts::recipes));
     }

@@ -97,6 +97,7 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/public/creator-applications").permitAll()
                         // Website page views (anonymous counter for Acquisition → Visitors)
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/public/visits").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/public/ingredient-catalog/manifest").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/r/*").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
