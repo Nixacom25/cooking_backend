@@ -29,6 +29,18 @@ class SvgAssetsTest {
     }
 
     @Test
+    void recolourMovesTheWholeColourFamily() {
+        String pepper = "<svg viewBox=\"0 0 64 64\"><radialGradient id=\"g\"><stop stop-color=\"#F1B0AE\"/><stop stop-color=\"#DE4D48\"/>"
+                + "<stop stop-color=\"#D9302A\"/><stop stop-color=\"#80221D\"/></radialGradient><path fill=\"#5E3B2C\" d=\"M1 1\"/>"
+                + "<path fill=\"#4C8D56\" d=\"M1 1\"/><path stroke=\"#2A1410\" d=\"M1 1\"/></svg>";
+        assertEquals("#D9302A", SvgAssets.mainColor(pepper).orElseThrow());
+        String purple = SvgAssets.recolor(pepper, "#7A4A9A");
+        assertTrue(purple.contains("#7A4A9A"));
+        for (String red : new String[]{"#F1B0AE", "#DE4D48", "#D9302A", "#80221D"}) assertFalse(purple.contains(red), red);
+        assertTrue(purple.contains("#4C8D56") && purple.contains("#2A1410") && purple.contains("#5E3B2C"));
+    }
+
+    @Test
     void recolourReplacesTheMainColourOnly() {
         assertEquals("#E2553B", SvgAssets.mainColor(OK).orElseThrow());
         String purple = SvgAssets.recolor(OK, "#7b4fa0");
