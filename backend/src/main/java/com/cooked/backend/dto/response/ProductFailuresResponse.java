@@ -34,5 +34,10 @@ public class ProductFailuresResponse {
         private UUID userId;
         private String userName;
         private String userEmail;
+        /** Full URL when recorded (failures after Oct 8 2026). */
+        private String target;
+        private LocalDateTime resolvedAt;
+        private LocalDateTime retriedAt;
+        private Boolean retrySucceeded;
     }
 }

@@ -7,6 +7,8 @@ public enum CostCategory {
     AI_APIS("AI & APIs"),
     ANALYTICS_TOOLING("Analytics & tooling"),
     GROWTH_TOOLS("Growth tools"),
+    /** Paid acquisition (ads): used for CAC and ROAS on Acquisition. */
+    ADVERTISING("Advertising"),
     LEGAL_COMPLIANCE("Legal & compliance"),
     OTHER("Other");
 

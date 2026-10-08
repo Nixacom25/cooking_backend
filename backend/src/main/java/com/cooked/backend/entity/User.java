@@ -267,6 +267,14 @@ public class User implements UserDetails {
     // Track last active time for user segmentation in notification campaigns
     private LocalDateTime lastActive;
 
+    /** App version last reported by the mobile app (X-App-Version), e.g. "1.0.5+107". */
+    @Column(length = 32)
+    private String appVersion;
+
+    /** ISO country (2 letters) last reported by the app (X-Client-Country, from the device locale). */
+    @Column(length = 2)
+    private String country;
+
     /** Ambassador whose code this user entered in onboarding (referral attribution). */
     private java.util.UUID referredByAmbassadorId;
 
@@ -421,6 +429,10 @@ public class User implements UserDetails {
     public LocalDateTime getReferredAt() { return referredAt; }
     public void setReferredAt(LocalDateTime referredAt) { this.referredAt = referredAt; }
     public void setLastActive(LocalDateTime lastActive) { this.lastActive = lastActive; }
+    public String getAppVersion() { return appVersion; }
+    public void setAppVersion(String appVersion) { this.appVersion = appVersion; }
+    public String getCountry() { return country; }
+    public void setCountry(String country) { this.country = country; }
 
     public String getOtpCode() { return otpCode; }
     public void setOtpCode(String otpCode) { this.otpCode = otpCode; }

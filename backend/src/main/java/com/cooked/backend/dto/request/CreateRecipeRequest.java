@@ -16,6 +16,11 @@ public class CreateRecipeRequest {
     private Integer cookTime;
     private Integer prepTime;
     private Integer kcal;
+    private Double proteinG;
+    private Double carbsG;
+    private Double fatG;
+    private Double fiberG;
+    private Integer sodiumMg;
     private Integer servings;
     private String tips;
     private String cuisine;
@@ -50,6 +55,16 @@ public class CreateRecipeRequest {
     public void setPrepTime(Integer prepTime) { this.prepTime = prepTime; }
     public Integer getKcal() { return kcal; }
     public void setKcal(Integer kcal) { this.kcal = kcal; }
+    public Double getProteinG() { return proteinG; }
+    public void setProteinG(Double v) { this.proteinG = v; }
+    public Double getCarbsG() { return carbsG; }
+    public void setCarbsG(Double v) { this.carbsG = v; }
+    public Double getFatG() { return fatG; }
+    public void setFatG(Double v) { this.fatG = v; }
+    public Double getFiberG() { return fiberG; }
+    public void setFiberG(Double v) { this.fiberG = v; }
+    public Integer getSodiumMg() { return sodiumMg; }
+    public void setSodiumMg(Integer v) { this.sodiumMg = v; }
     public Integer getServings() { return servings; }
     public void setServings(Integer servings) { this.servings = servings; }
     public String getTips() { return tips; }

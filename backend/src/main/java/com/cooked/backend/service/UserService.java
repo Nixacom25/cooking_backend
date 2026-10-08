@@ -63,6 +63,10 @@ public interface UserService {
 
     void updateLastActive(String email);
 
+    /** Same, also storing the app version and country the app reports (blank values ignored). */
+
+    void updateLastActive(String email, String appVersion, String country);
+
     void syncSubscription(String email, Map<String, Object> subscriptionData);
 
     MessageResponse sendWelcomeEmail(String email);

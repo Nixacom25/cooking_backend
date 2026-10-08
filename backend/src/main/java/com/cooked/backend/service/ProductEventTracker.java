@@ -19,4 +19,8 @@ public interface ProductEventTracker {
      */
     <T> T track(ProductEventType type, String userEmail, String detail,
                 Supplier<T> action, ToIntFunction<T> resultCount);
+
+    /** Same, keeping the full [target] (e.g. import URL) on failures so they can be retried. */
+    <T> T track(ProductEventType type, String userEmail, String detail, String target,
+                Supplier<T> action, ToIntFunction<T> resultCount);
 }

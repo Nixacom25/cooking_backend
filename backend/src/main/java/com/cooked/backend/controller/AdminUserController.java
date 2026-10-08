@@ -40,9 +40,11 @@ public class AdminUserController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Boolean trial,
             @RequestParam(required = false) Boolean partner,
+            @RequestParam(required = false) String version,
+            @RequestParam(required = false) String country,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        AdminUserFilter filter = new AdminUserFilter(q, platform, subscription, signupDays, source, status, trial, partner);
+        AdminUserFilter filter = new AdminUserFilter(q, platform, subscription, signupDays, source, status, trial, partner, version, country);
         PageRequest pageable = PageRequest.of(PaginationUtils.clampPage(page), PaginationUtils.clampSize(size), Sort.by(Sort.Direction.DESC, "createdAt"));
         return ResponseEntity.ok(users.search(filter, pageable));
     }
@@ -58,6 +60,12 @@ public class AdminUserController {
     @GetMapping("/summary")
     public ResponseEntity<com.cooked.backend.dto.response.UserSummaryResponse> summary() {
         return ResponseEntity.ok(users.summary());
+    }
+
+    @Operation(summary = "App versions and countries reported by the app (filter options)")
+    @GetMapping("/client-context")
+    public ResponseEntity<java.util.Map<String, List<String>>> clientContext() {
+        return ResponseEntity.ok(users.clientContextOptions());
     }
 
     @Operation(summary = "Discovery sources answered in onboarding (filter options)")

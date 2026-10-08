@@ -11,7 +11,14 @@ package com.cooked.backend.dto.request;
  * @param status       an account Status name (ACTIVE, BLOCKED…)
  * @param trial        true = on trial only
  * @param partner      true = creators and ambassadors instead of regular clients
+ * @param version      app version last reported (exact, e.g. "1.0.5+107")
+ * @param country      ISO country last reported by the app
  */
 public record AdminUserFilter(String q, String platform, String subscription, Integer signupDays,
-                              String source, String status, Boolean trial, Boolean partner) {
+                              String source, String status, Boolean trial, Boolean partner, String version, String country) {
+
+    public AdminUserFilter(String q, String platform, String subscription, Integer signupDays,
+                           String source, String status, Boolean trial, Boolean partner) {
+        this(q, platform, subscription, signupDays, source, status, trial, partner, null, null);
+    }
 }

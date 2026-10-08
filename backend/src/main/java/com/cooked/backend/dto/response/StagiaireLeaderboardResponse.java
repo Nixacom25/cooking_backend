@@ -27,4 +27,8 @@ public class StagiaireLeaderboardResponse {
     private long totalRemaining;
     private double validationRate; // e.g. 85.5%
     private double progressPercentage; // e.g. 72.0%
+    /** Average hours from assignment to submission (null = nothing submitted). */
+    private Double avgHoursToSubmit;
+    /** Average hours from submission to validation (admin review time; null = nothing validated). */
+    private Double avgHoursToValidate;
 }

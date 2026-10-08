@@ -19,4 +19,7 @@ public interface AdminUserService {
     java.util.Map<java.util.UUID, com.cooked.backend.dto.response.UserExtrasResponse> extras(java.util.Collection<java.util.UUID> ids);
 
     com.cooked.backend.dto.response.UserSummaryResponse summary();
+
+    /** {"versions": [...newest first], "countries": [...]} reported by the app. */
+    java.util.Map<String, List<String>> clientContextOptions();
 }

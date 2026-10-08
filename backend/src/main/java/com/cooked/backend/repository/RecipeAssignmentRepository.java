@@ -28,6 +28,18 @@ public interface RecipeAssignmentRepository extends JpaRepository<RecipeAssignme
             + "where a.assignedToUser is not null group by a.assignedToUser.id, a.status")
     List<UserStatusCount> countByUserAndStatus();
 
+    interface Timing {
+        UUID getUserId();
+        LocalDateTime getAssignedDate();
+        LocalDateTime getSubmittedDate();
+        LocalDateTime getValidatedDate();
+    }
+
+    /** Dates of submitted assignments assigned since [since] (processing / review times). */
+    @Query("select a.assignedToUser.id as userId, a.assignedDate as assignedDate, a.submittedDate as submittedDate, a.validatedDate as validatedDate "
+            + "from RecipeAssignment a where a.assignedToUser is not null and a.submittedDate is not null and a.assignedDate >= :since")
+    List<Timing> timingsSince(@Param("since") LocalDateTime since);
+
     /** Same, limited to assignments made since {@code since} (leaderboard period filter). */
     @Query("select a.assignedToUser.id as userId, a.status as status, count(a) as total from RecipeAssignment a "
             + "where a.assignedToUser is not null and a.assignedDate >= :since group by a.assignedToUser.id, a.status")

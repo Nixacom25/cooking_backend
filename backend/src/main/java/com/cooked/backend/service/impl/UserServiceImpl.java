@@ -407,9 +407,18 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateLastActive(String email) {
+        updateLastActive(email, null, null);
+    }
+
+    @Override
+    public void updateLastActive(String email, String appVersion, String country) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         user.setLastActive(LocalDateTime.now());
+        String version = ClientContext.version(appVersion);
+        if (version != null) user.setAppVersion(version);
+        String iso = ClientContext.country(country);
+        if (iso != null) user.setCountry(iso);
         userRepository.save(user);
         try {
             activityRecorder.recordToday(user.getId());

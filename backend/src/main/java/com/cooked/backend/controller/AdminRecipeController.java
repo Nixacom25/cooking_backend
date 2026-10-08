@@ -29,6 +29,8 @@ import java.util.UUID;
 public class AdminRecipeController {
 
     private final RecipeService recipeService;
+    private final com.cooked.backend.service.RecipeModerationService moderation;
+    private final com.cooked.backend.service.RecipeNutritionService nutrition;
 
     @Operation(summary = "Get all recipes for admin")
     @GetMapping
@@ -48,6 +50,43 @@ public class AdminRecipeController {
         }
         Pageable pageable = PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size), Sort.by("updatedAt").ascending());
         return ResponseEntity.ok(recipeService.getAdminRecipes(origin, name, pageable));
+    }
+
+    @Operation(summary = "Reports on a recipe, newest first")
+    @GetMapping("/{id}/flags")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<java.util.List<com.cooked.backend.dto.response.RecipeFlagResponse>> flags(@PathVariable UUID id) {
+        return ResponseEntity.ok(moderation.flags(id));
+    }
+
+    @Operation(summary = "Report a problem on a recipe")
+    @PostMapping("/{id}/flags")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
+    public ResponseEntity<com.cooked.backend.dto.response.RecipeFlagResponse> flag(@PathVariable UUID id,
+            @jakarta.validation.Valid @RequestBody com.cooked.backend.dto.request.RecipeFlagRequest body, Authentication auth) {
+        return ResponseEntity.ok(moderation.flag(id, body, auth.getName()));
+    }
+
+    @Operation(summary = "Mark a report as resolved")
+    @PutMapping("/flags/{flagId}/resolve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<com.cooked.backend.dto.response.RecipeFlagResponse> resolveFlag(@PathVariable UUID flagId, Authentication auth) {
+        return ResponseEntity.ok(moderation.resolve(flagId, auth.getName()));
+    }
+
+    @Operation(summary = "Merge a duplicate into this recipe (cookbooks, meal plans, grocery items move; duplicate archived)")
+    @PostMapping("/{id}/merge")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<com.cooked.backend.dto.response.RecipeMergeResponse> merge(@PathVariable UUID id,
+            @RequestParam UUID duplicateId, Authentication auth) {
+        return ResponseEntity.ok(moderation.merge(id, duplicateId, auth.getName()));
+    }
+
+    @Operation(summary = "Estimate nutrition per serving with the AI and save it")
+    @PostMapping("/{id}/nutrition/estimate")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
+    public ResponseEntity<com.cooked.backend.dto.response.NutritionEstimateResponse> estimateNutrition(@PathVariable UUID id) {
+        return ResponseEntity.ok(nutrition.estimate(id));
     }
 
     @Operation(summary = "Get single recipe details for admin")

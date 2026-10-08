@@ -427,6 +427,29 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
                 .toList();
     }
 
+    /** Per user: [sum hours to submit, count, sum hours to validate, count]. */
+    static java.util.Map<java.util.UUID, double[]> timingByUser(List<RecipeAssignmentRepository.Timing> rows) {
+        java.util.Map<java.util.UUID, double[]> out = new java.util.HashMap<>();
+        for (var t : rows) {
+            double[] acc = out.computeIfAbsent(t.getUserId(), k -> new double[4]);
+            if (t.getAssignedDate() != null && !t.getSubmittedDate().isBefore(t.getAssignedDate())) {
+                acc[0] += java.time.Duration.between(t.getAssignedDate(), t.getSubmittedDate()).toMinutes() / 60.0;
+                acc[1]++;
+            }
+            if (t.getValidatedDate() != null && !t.getValidatedDate().isBefore(t.getSubmittedDate())) {
+                acc[2] += java.time.Duration.between(t.getSubmittedDate(), t.getValidatedDate()).toMinutes() / 60.0;
+                acc[3]++;
+            }
+        }
+        return out;
+    }
+
+    /** Average from timingByUser at [offset] (0 = submit, 2 = validate), rounded to 0.1 h; null without data. */
+    static Double avgHours(double[] acc, int offset) {
+        if (acc == null || acc[offset + 1] == 0) return null;
+        return Math.round(acc[offset] / acc[offset + 1] * 10.0) / 10.0;
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<StagiaireLeaderboardResponse> getStagiairesLeaderboard() {
@@ -447,6 +470,9 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
             counts.computeIfAbsent(c.getUserId(), k -> new java.util.EnumMap<>(AssignmentStatus.class))
                     .merge(c.getStatus(), c.getTotal() == null ? 0L : c.getTotal(), Long::sum);
         }
+
+        java.util.Map<java.util.UUID, double[]> times = timingByUser(assignmentRepository.timingsSince(
+                days == null ? LocalDateTime.of(2000, 1, 1, 0, 0) : LocalDateTime.now().minusDays(Math.min(Math.max(days, 1), 3650))));
 
         List<StagiaireLeaderboardResponse> leaderboard = new ArrayList<>();
 
@@ -477,6 +503,8 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
                     .totalRemaining(remaining)
                     .validationRate(Math.round(validationRate * 10.0) / 10.0)
                     .progressPercentage(Math.round(progressPercentage * 10.0) / 10.0)
+                    .avgHoursToSubmit(avgHours(times.get(ed.getId()), 0))
+                    .avgHoursToValidate(avgHours(times.get(ed.getId()), 2))
                     .build());
         }
 

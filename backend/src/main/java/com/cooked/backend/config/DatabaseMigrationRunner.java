@@ -34,6 +34,31 @@ public class DatabaseMigrationRunner {
         createNotificationCampaignsTable();
         addUserLastActiveColumn();
         addRevenueCatCustomerIdColumn();
+        // Enums that gained values after their table was created (ddl-auto never updates CHECKs).
+        syncEnumCheck("product_events", "type", com.cooked.backend.entity.ProductEventType.class);
+        syncEnumCheck("cost_entries", "category", com.cooked.backend.entity.CostCategory.class);
+    }
+
+    /**
+     * Recreates the CHECK constraint Hibernate generated for an enum column
+     * ({table}_{column}_check) with every current value of the Java enum.
+     * PostgreSQL only; does nothing elsewhere (H2 tests) or when the table is missing.
+     */
+    void syncEnumCheck(String table, String column, Class<? extends Enum<?>> type) {
+        String name = table + "_" + column + "_check";
+        try {
+            String product = jdbc.execute((java.sql.Connection c) -> c.getMetaData().getDatabaseProductName());
+            if (product == null || !product.toLowerCase(java.util.Locale.ROOT).contains("postgres")) return;
+            Integer tables = jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = ?", Integer.class, table);
+            if (tables == null || tables == 0) return;
+            String values = java.util.Arrays.stream(type.getEnumConstants()).map(e -> "'" + e.name() + "'")
+                    .collect(java.util.stream.Collectors.joining(", "));
+            jdbc.execute("ALTER TABLE " + table + " DROP CONSTRAINT IF EXISTS " + name);
+            jdbc.execute("ALTER TABLE " + table + " ADD CONSTRAINT " + name + " CHECK (" + column + " IN (" + values + "))");
+            log.info("[Migration] {} now allows {}", name, values);
+        } catch (Exception e) {
+            log.warn("[Migration] Could not update {}: {}", name, e.getMessage());
+        }
     }
 
     /**

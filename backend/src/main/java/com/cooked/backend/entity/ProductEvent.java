@@ -53,6 +53,17 @@ public class ProductEvent {
 
     private UUID userId;
 
+    /** Full target of the action (import URL), kept for failed events so an admin can retry. */
+    @Column(columnDefinition = "TEXT")
+    private String target;
+
+    /** Failure handled by an admin (Import failures → Mark resolved). */
+    private LocalDateTime resolvedAt;
+
+    /** Last admin retry of a failed event, and whether it worked. */
+    private LocalDateTime retriedAt;
+    private Boolean retrySucceeded;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

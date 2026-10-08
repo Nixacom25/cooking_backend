@@ -46,7 +46,7 @@ public class RecipeController {
         }
         // Optional: HTML of the page as loaded in the app's WebView (see extractRecipeFromPage)
         String html = payload.get("html");
-        return ResponseEntity.ok(eventTracker.track(ProductEventType.IMPORT, auth.getName(), importSource(url),
+        return ResponseEntity.ok(eventTracker.track(ProductEventType.IMPORT, auth.getName(), importSource(url), url,
                 () -> recipeService.importAndSaveAsSuggestion(url, html, auth.getName()), r -> 1));
     }
 

@@ -56,6 +56,26 @@ public class Recipe {
     @Column(nullable = true)
     private Integer kcal;
 
+    /** Per serving, null = unknown. */
+    @Column(name = "protein_g")
+    private Double proteinG;
+
+    /** Per serving, null = unknown. */
+    @Column(name = "carbs_g")
+    private Double carbsG;
+
+    /** Per serving, null = unknown. */
+    @Column(name = "fat_g")
+    private Double fatG;
+
+    /** Per serving, null = unknown. */
+    @Column(name = "fiber_g")
+    private Double fiberG;
+
+    /** Per serving, null = unknown. */
+    @Column(name = "sodium_mg")
+    private Integer sodiumMg;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "recipe_categories_mapping",
@@ -151,6 +171,16 @@ public class Recipe {
     public void setPrepTime(Integer prepTime) { this.prepTime = prepTime; }
     public Integer getKcal() { return kcal; }
     public void setKcal(Integer kcal) { this.kcal = kcal; }
+    public Double getProteinG() { return proteinG; }
+    public void setProteinG(Double v) { this.proteinG = v; }
+    public Double getCarbsG() { return carbsG; }
+    public void setCarbsG(Double v) { this.carbsG = v; }
+    public Double getFatG() { return fatG; }
+    public void setFatG(Double v) { this.fatG = v; }
+    public Double getFiberG() { return fiberG; }
+    public void setFiberG(Double v) { this.fiberG = v; }
+    public Integer getSodiumMg() { return sodiumMg; }
+    public void setSodiumMg(Integer v) { this.sodiumMg = v; }
     public Set<RecipeCategory> getCategories() { return categories; }
     public void setCategories(Set<RecipeCategory> categories) { this.categories = categories; }
     public RecipeCategory getCuisine() { return cuisine; }

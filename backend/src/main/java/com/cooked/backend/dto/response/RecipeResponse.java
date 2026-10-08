@@ -11,6 +11,11 @@ public class RecipeResponse {
     private Integer cookTime;
     private Integer prepTime;
     private Integer kcal;
+    private Double proteinG;
+    private Double carbsG;
+    private Double fatG;
+    private Double fiberG;
+    private Integer sodiumMg;
     private List<String> categories;
     private String cuisine;
     private Integer servings;
@@ -52,6 +57,16 @@ public class RecipeResponse {
     public void setPrepTime(Integer prepTime) { this.prepTime = prepTime; }
     public Integer getKcal() { return kcal; }
     public void setKcal(Integer kcal) { this.kcal = kcal; }
+    public Double getProteinG() { return proteinG; }
+    public void setProteinG(Double v) { this.proteinG = v; }
+    public Double getCarbsG() { return carbsG; }
+    public void setCarbsG(Double v) { this.carbsG = v; }
+    public Double getFatG() { return fatG; }
+    public void setFatG(Double v) { this.fatG = v; }
+    public Double getFiberG() { return fiberG; }
+    public void setFiberG(Double v) { this.fiberG = v; }
+    public Integer getSodiumMg() { return sodiumMg; }
+    public void setSodiumMg(Integer v) { this.sodiumMg = v; }
     public List<String> getCategories() { return categories; }
     public void setCategories(List<String> categories) { this.categories = categories; }
     public String getCuisine() { return cuisine; }
@@ -115,6 +130,11 @@ public class RecipeResponse {
         public RecipeResponseBuilder cookTime(Integer cookTime) { response.setCookTime(cookTime); return this; }
         public RecipeResponseBuilder prepTime(Integer prepTime) { response.setPrepTime(prepTime); return this; }
         public RecipeResponseBuilder kcal(Integer kcal) { response.setKcal(kcal); return this; }
+        public RecipeResponseBuilder proteinG(Double v) { response.setProteinG(v); return this; }
+        public RecipeResponseBuilder carbsG(Double v) { response.setCarbsG(v); return this; }
+        public RecipeResponseBuilder fatG(Double v) { response.setFatG(v); return this; }
+        public RecipeResponseBuilder fiberG(Double v) { response.setFiberG(v); return this; }
+        public RecipeResponseBuilder sodiumMg(Integer v) { response.setSodiumMg(v); return this; }
         public RecipeResponseBuilder categories(List<String> categories) { response.setCategories(categories); return this; }
         public RecipeResponseBuilder cuisine(String cuisine) { response.setCuisine(cuisine); return this; }
         public RecipeResponseBuilder servings(Integer servings) { response.setServings(servings); return this; }

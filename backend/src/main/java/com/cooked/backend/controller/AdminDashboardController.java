@@ -26,4 +26,11 @@ public class AdminDashboardController {
     public ResponseEntity<AdminDashboardResponse> getDashboardMetrics() {
         return ResponseEntity.ok(adminDashboardService.getMetrics());
     }
+
+    @Operation(summary = "Live counters: grocery adds and meals planned today vs yesterday, scans / imports in progress, new subscribers in the last hour")
+    @GetMapping("/live")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<com.cooked.backend.dto.response.DashboardLiveResponse> live() {
+        return ResponseEntity.ok(adminDashboardService.live());
+    }
 }

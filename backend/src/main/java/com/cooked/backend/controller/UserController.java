@@ -83,8 +83,10 @@ public class UserController {
 
     @Operation(summary = "Update last active timestamp", description = "Updates the user's last active timestamp for notification targeting")
     @PostMapping("/last-active")
-    public ResponseEntity<MessageResponse> updateLastActive(Authentication authentication) {
-        userService.updateLastActive(authentication.getName());
+    public ResponseEntity<MessageResponse> updateLastActive(Authentication authentication,
+            @RequestHeader(value = "X-App-Version", required = false) String appVersion,
+            @RequestHeader(value = "X-Client-Country", required = false) String country) {
+        userService.updateLastActive(authentication.getName(), appVersion, country);
         return ResponseEntity.ok(new MessageResponse("Last active timestamp updated"));
     }
 

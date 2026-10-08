@@ -45,6 +45,12 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
     private final UserActivityDayRepository activityRepository;
+    private final com.cooked.backend.repository.SiteVisitRepository siteVisits;
+    private final com.cooked.backend.repository.CostEntryRepository costEntries;
+    private final com.cooked.backend.repository.SubscriptionPaymentRepository paymentRepository;
+
+    @org.springframework.beans.factory.annotation.Value("${cost.fx.eur:1.08}")
+    private double fxEur = 1.08;
 
     @Override
     public ProductAnalyticsResponse product(int days) {
@@ -172,7 +178,21 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
                 .userId(r.getUserId())
                 .userName(name.isEmpty() ? null : name)
                 .userEmail(r.getEmail())
+                .target(r.getTarget())
+                .resolvedAt(r.getResolvedAt())
+                .retriedAt(r.getRetriedAt())
+                .retrySucceeded(r.getRetrySucceeded())
                 .build();
+    }
+
+    /** Advertising entries of the Cost Center spread over [first, last] (USD). */
+    double adSpendUsd(LocalDate first, LocalDate last) {
+        double total = 0;
+        for (var e : costEntries.findOverlapping(first, last)) {
+            if (e.getCategory() != com.cooked.backend.entity.CostCategory.ADVERTISING) continue;
+            for (LocalDate d = first; !d.isAfter(last); d = d.plusDays(1)) total += CostAllocation.on(e, d).doubleValue();
+        }
+        return total;
     }
 
     static int clamp(int days) {
@@ -214,6 +234,10 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
         LocalDate firstDay = now.toLocalDate().minusDays(days - 1L);
         LocalDateTime from = firstDay.atStartOfDay();
         LocalDateTime prevFrom = from.minusDays(days);
+        long paid = userRepository.countFirstPaymentsBetween(from, now.plusMinutes(1));
+        double adSpend = adSpendUsd(firstDay, now.toLocalDate());
+        java.math.BigDecimal revenue = paymentRepository.sumSuccessBetween(from, now.plusMinutes(1));
+        double revenueUsd = (revenue == null ? 0 : revenue.doubleValue()) * fxEur;
 
         Map<LocalDate, Long> byDay = new LinkedHashMap<>();
         userRepository.countSignupsByDay(Role.CLIENT, from).forEach(d -> byDay.merge(d.getDay(), nz(d.getTotal()), Long::sum));
@@ -232,6 +256,17 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
                 .newUsersPrev(userRepository.countSignupsBetween(Role.CLIENT, prevFrom, from))
                 .signupsDaily(series)
                 .bySource(mergeSources(userRepository.countSignupsBySource(Role.CLIENT, from)))
+                .visitors(siteVisits.countVisitors(firstDay, firstDay.plusDays(days)))
+                .visitorsPrev(siteVisits.countVisitors(firstDay.minusDays(days), firstDay))
+                .trials(userRepository.countSignupsWithStatus(Role.CLIENT, from, com.cooked.backend.entity.SubscriptionStatus.TRIAL))
+                .paid(paid)
+                .paidPrev(userRepository.countFirstPaymentsBetween(prevFrom, from))
+                .adSpendUsd(round(adSpend))
+                .revenueUsd(round(revenueUsd))
+                .cac(adSpend > 0 && paid > 0 ? round(adSpend / paid) : null)
+                .roas(adSpend > 0 ? round(revenueUsd / adSpend) : null)
+                .visitorsByReferrer(siteVisits.visitorsByReferrer(firstDay, firstDay.plusDays(days)).stream()
+                        .map(r -> new AcquisitionResponse.SourceCount(r.getLabel(), nz(r.getTotal()))).toList())
                 .build();
     }
 

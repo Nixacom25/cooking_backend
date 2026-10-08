@@ -12,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,14 +28,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminAnalyticsController {
 
     private final AdminAnalyticsService analyticsService;
+    private final com.cooked.backend.service.ImportFailureAdminService importFailures;
 
     @Operation(summary = "Scan / import / web-search metrics (days: 1-90, default 30)")
     @GetMapping("/product")
     public ResponseEntity<ProductAnalyticsResponse> product(@RequestParam(defaultValue = "30") int days,
                                                             @RequestParam(required = false) String platform,
                                                             @RequestParam(required = false) String subscription,
-                                                            @RequestParam(required = false) String source) {
-        return ResponseEntity.ok(analyticsService.product(days, new com.cooked.backend.dto.request.AnalyticsSegment(platform, subscription, source)));
+                                                            @RequestParam(required = false) String source,
+                                                            @RequestParam(required = false) String version,
+                                                            @RequestParam(required = false) String country) {
+        return ResponseEntity.ok(analyticsService.product(days, new com.cooked.backend.dto.request.AnalyticsSegment(platform, subscription, source, version, country)));
     }
 
     @Operation(summary = "Sign-ups and discovery sources (days: 1-90, default 30)")
@@ -53,8 +59,23 @@ public class AdminAnalyticsController {
     public ResponseEntity<EngagementResponse> engagement(@RequestParam(defaultValue = "30") int days,
                                                          @RequestParam(required = false) String platform,
                                                          @RequestParam(required = false) String subscription,
-                                                         @RequestParam(required = false) String source) {
-        return ResponseEntity.ok(analyticsService.engagement(days, new com.cooked.backend.dto.request.AnalyticsSegment(platform, subscription, source)));
+                                                         @RequestParam(required = false) String source,
+                                                         @RequestParam(required = false) String version,
+                                                         @RequestParam(required = false) String country) {
+        return ResponseEntity.ok(analyticsService.engagement(days, new com.cooked.backend.dto.request.AnalyticsSegment(platform, subscription, source, version, country)));
+    }
+
+    @Operation(summary = "Mark a failed import as handled")
+    @PutMapping("/import-failures/{id}/resolve")
+    public ResponseEntity<Void> resolveImportFailure(@PathVariable java.util.UUID id) {
+        importFailures.resolve(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Retry a failed import for the same user and URL")
+    @PostMapping("/import-failures/{id}/retry")
+    public ResponseEntity<com.cooked.backend.dto.response.ImportRetryResponse> retryImportFailure(@PathVariable java.util.UUID id) {
+        return ResponseEntity.ok(importFailures.retry(id));
     }
 
     @Operation(summary = "Failed imports, newest first (days: 1-90, default 7; size: 1-100)")

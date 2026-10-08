@@ -49,6 +49,33 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
     long countLapsedSince(@org.springframework.data.repository.query.Param("statuses") java.util.Collection<com.cooked.backend.entity.SubscriptionStatus> statuses,
                           @org.springframework.data.repository.query.Param("from") LocalDateTime from);
 
+    @org.springframework.data.jpa.repository.Query("select count(g) from GroceryItem g where g.createdAt >= :from and g.createdAt < :to")
+    long countGroceryAddsBetween(@org.springframework.data.repository.query.Param("from") LocalDateTime from, @org.springframework.data.repository.query.Param("to") LocalDateTime to);
+
+    @org.springframework.data.jpa.repository.Query("select count(m) from MealPlan m where m.createdAt >= :from and m.createdAt < :to")
+    long countMealPlansBetween(@org.springframework.data.repository.query.Param("from") LocalDateTime from, @org.springframework.data.repository.query.Param("to") LocalDateTime to);
+
+    /** Successful payments since [from] of users with no earlier successful payment (new subscribers). */
+    @org.springframework.data.jpa.repository.Query("select count(distinct p.user.id) from SubscriptionPayment p where upper(p.status) = 'SUCCESS' and p.createdAt >= :from "
+            + "and not exists (select 1 from SubscriptionPayment q where q.user = p.user and upper(q.status) = 'SUCCESS' and q.createdAt < :from)")
+    long countNewPayersSince(@org.springframework.data.repository.query.Param("from") LocalDateTime from);
+
+    @org.springframework.data.jpa.repository.Query("select distinct u.appVersion from User u where u.appVersion is not null")
+    List<String> findDistinctAppVersions();
+
+    @org.springframework.data.jpa.repository.Query("select distinct u.country from User u where u.country is not null order by u.country")
+    List<String> findDistinctCountries();
+
+    @org.springframework.data.jpa.repository.Query("select count(u) from User u where u.role = :role and u.createdAt >= :from and u.subscriptionStatus = :status")
+    long countSignupsWithStatus(@org.springframework.data.repository.query.Param("role") com.cooked.backend.entity.Role role,
+                                @org.springframework.data.repository.query.Param("from") LocalDateTime from,
+                                @org.springframework.data.repository.query.Param("status") com.cooked.backend.entity.SubscriptionStatus status);
+
+    /** Users whose first successful payment falls in [from, to). */
+    @org.springframework.data.jpa.repository.Query("select count(distinct p.user.id) from SubscriptionPayment p where upper(p.status) = 'SUCCESS' and p.createdAt >= :from and p.createdAt < :to "
+            + "and not exists (select 1 from SubscriptionPayment q where q.user = p.user and upper(q.status) = 'SUCCESS' and q.createdAt < :from)")
+    long countFirstPaymentsBetween(@org.springframework.data.repository.query.Param("from") LocalDateTime from, @org.springframework.data.repository.query.Param("to") LocalDateTime to);
+
     /** Distinct onboarding discovery sources (admin Users filter options). */
     @org.springframework.data.jpa.repository.Query("select distinct trim(u.discoverySource) from User u where u.discoverySource is not null and trim(u.discoverySource) <> '' order by trim(u.discoverySource)")
     List<String> findDistinctDiscoverySources();

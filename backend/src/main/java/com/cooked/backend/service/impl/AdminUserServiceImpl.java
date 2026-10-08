@@ -61,6 +61,20 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     @Override
+    public java.util.Map<String, List<String>> clientContextOptions() {
+        List<String> versions = new java.util.ArrayList<>(userRepository.findDistinctAppVersions());
+        versions.sort(java.util.Comparator.comparing(AdminUserServiceImpl::versionKey).reversed());
+        return java.util.Map.of("versions", versions, "countries", userRepository.findDistinctCountries());
+    }
+
+    /** Sortable key of "1.0.5+107" (each part zero-padded). */
+    static String versionKey(String v) {
+        StringBuilder out = new StringBuilder();
+        for (String part : v.split("[.+]")) out.append(String.format("%06d", part.chars().allMatch(Character::isDigit) && !part.isEmpty() ? Integer.parseInt(part) : 0));
+        return out.toString();
+    }
+
+    @Override
     public com.cooked.backend.dto.response.UserSummaryResponse summary() {
         LocalDateTime now = LocalDateTime.now();
         var role = com.cooked.backend.entity.Role.CLIENT;

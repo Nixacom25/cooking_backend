@@ -77,6 +77,8 @@ public final class AdminUserSpecs {
             if (f.signupDays() != null && f.signupDays() > 0) {
                 and.add(cb.greaterThanOrEqualTo(root.get("createdAt"), now.minusDays(Math.min(f.signupDays(), 3650))));
             }
+            if (notBlank(f.version())) and.add(cb.equal(root.get("appVersion"), f.version().trim()));
+            if (notBlank(f.country())) and.add(cb.equal(root.get("country"), f.country().trim().toUpperCase(Locale.ROOT)));
             if (notBlank(f.source())) {
                 and.add(cb.equal(cb.lower(cb.trim(root.get("discoverySource"))), f.source().trim().toLowerCase(Locale.ROOT)));
             }

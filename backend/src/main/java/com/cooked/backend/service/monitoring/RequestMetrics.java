@@ -21,6 +21,8 @@ public class RequestMetrics {
 
     private final Bucket[] buckets = new Bucket[MINUTES];
     private final AtomicInteger aiInFlight = new AtomicInteger();
+    private final AtomicInteger scansInFlight = new AtomicInteger();
+    private final AtomicInteger importsInFlight = new AtomicInteger();
     private final long startedAt = System.currentTimeMillis();
 
     private static final class Bucket {
@@ -47,12 +49,43 @@ public class RequestMetrics {
     }
 
     public void started(boolean ai) {
-        if (ai) aiInFlight.incrementAndGet();
+        started(ai, null);
     }
 
     public void finished(boolean ai, int status, long durationMs) {
-        if (ai) aiInFlight.decrementAndGet();
+        finished(ai, null, status, durationMs);
+    }
+
+    /** [path] tells scans and imports apart for the live counters. */
+    public void started(boolean ai, String path) {
+        if (!ai) return;
+        aiInFlight.incrementAndGet();
+        AtomicInteger kind = kindCounter(path);
+        if (kind != null) kind.incrementAndGet();
+    }
+
+    public void finished(boolean ai, String path, int status, long durationMs) {
+        if (ai) {
+            aiInFlight.decrementAndGet();
+            AtomicInteger kind = kindCounter(path);
+            if (kind != null) kind.decrementAndGet();
+        }
         record(System.currentTimeMillis() / 60_000, status, durationMs);
+    }
+
+    private AtomicInteger kindCounter(String path) {
+        if (path == null) return null;
+        if (path.startsWith("/recipes/scan")) return scansInFlight;
+        if (path.startsWith("/recipes/import")) return importsInFlight;
+        return null;
+    }
+
+    public int scansInFlight() {
+        return Math.max(0, scansInFlight.get());
+    }
+
+    public int importsInFlight() {
+        return Math.max(0, importsInFlight.get());
     }
 
     synchronized void record(long minute, int status, long durationMs) {

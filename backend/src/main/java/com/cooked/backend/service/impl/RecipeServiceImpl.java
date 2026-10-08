@@ -121,6 +121,11 @@ public class RecipeServiceImpl implements RecipeService {
             if (request.getCookTime() != null) recipe.setCookTime(request.getCookTime());
             if (request.getPrepTime() != null) recipe.setPrepTime(request.getPrepTime());
             if (request.getKcal() != null) recipe.setKcal(request.getKcal());
+            if (request.getProteinG() != null) recipe.setProteinG(request.getProteinG());
+            if (request.getCarbsG() != null) recipe.setCarbsG(request.getCarbsG());
+            if (request.getFatG() != null) recipe.setFatG(request.getFatG());
+            if (request.getFiberG() != null) recipe.setFiberG(request.getFiberG());
+            if (request.getSodiumMg() != null) recipe.setSodiumMg(request.getSodiumMg());
             if (request.getServings() != null) recipe.setServings(request.getServings());
             if (request.getTips() != null) recipe.setTips(request.getTips());
             if (request.getCuisine() != null) recipe.setCuisine(taxonomyService.getOrCreateCategory(request.getCuisine(), CategoryType.CUISINE));
@@ -741,6 +746,7 @@ public class RecipeServiceImpl implements RecipeService {
                 .cookTime(recipe.getCookTime())
                 .prepTime(recipe.getPrepTime())
                 .kcal(recipe.getKcal())
+                .proteinG(recipe.getProteinG()).carbsG(recipe.getCarbsG()).fatG(recipe.getFatG()).fiberG(recipe.getFiberG()).sodiumMg(recipe.getSodiumMg())
                 .categories(recipe.getCategories() != null ? recipe.getCategories().stream().map(RecipeCategory::getName).collect(java.util.stream.Collectors.toList()) : new java.util.ArrayList<>())
                 .cuisine(recipe.getCuisine() != null ? recipe.getCuisine().getName() : null)
                 .creator(recipe.getUser() != null ? RecipeCreatorResponse.builder()
@@ -887,6 +893,11 @@ public class RecipeServiceImpl implements RecipeService {
             if (request.getPrepTime() != null) recipe.setPrepTime(request.getPrepTime());
             if (request.getCookTime() != null) recipe.setCookTime(request.getCookTime());
             if (request.getKcal() != null) recipe.setKcal(request.getKcal());
+            if (request.getProteinG() != null) recipe.setProteinG(request.getProteinG());
+            if (request.getCarbsG() != null) recipe.setCarbsG(request.getCarbsG());
+            if (request.getFatG() != null) recipe.setFatG(request.getFatG());
+            if (request.getFiberG() != null) recipe.setFiberG(request.getFiberG());
+            if (request.getSodiumMg() != null) recipe.setSodiumMg(request.getSodiumMg());
             if (request.getServings() != null) recipe.setServings(request.getServings());
             if (request.getTips() != null) recipe.setTips(request.getTips());
             if (request.getStatus() != null) recipe.setStatus(request.getStatus());

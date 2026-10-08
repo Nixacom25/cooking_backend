@@ -20,6 +20,12 @@ public class ProductEventTrackerImpl implements ProductEventTracker {
     @Override
     public <T> T track(ProductEventType type, String userEmail, String detail,
                        Supplier<T> action, ToIntFunction<T> resultCount) {
+        return track(type, userEmail, detail, null, action, resultCount);
+    }
+
+    @Override
+    public <T> T track(ProductEventType type, String userEmail, String detail, String target,
+                       Supplier<T> action, ToIntFunction<T> resultCount) {
         long start = System.nanoTime();
         try {
             T result = action.get();
@@ -34,7 +40,9 @@ public class ProductEventTrackerImpl implements ProductEventTracker {
         } catch (RuntimeException e) {
             // Paywall refusals aren't product failures: don't count them.
             if (!(e instanceof PaymentRequiredException)) {
-                writer.write(event(type, detail, false, reason(e), start, null), userEmail);
+                ProductEvent failed = event(type, detail, false, reason(e), start, null);
+                failed.setTarget(target == null || target.length() > 4000 ? null : target.trim());
+                writer.write(failed, userEmail);
             }
             throw e;
         }

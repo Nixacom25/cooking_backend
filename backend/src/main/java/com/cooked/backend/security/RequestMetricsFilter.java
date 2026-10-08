@@ -30,15 +30,16 @@ public class RequestMetricsFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        boolean ai = RequestMetrics.isAiRequest(request.getMethod(), request.getRequestURI());
+        String path = request.getRequestURI();
+        boolean ai = RequestMetrics.isAiRequest(request.getMethod(), path);
         long t0 = System.nanoTime();
-        metrics.started(ai);
+        metrics.started(ai, path);
         int status = 500;
         try {
             chain.doFilter(request, response);
             status = response.getStatus();
         } finally {
-            metrics.finished(ai, status, (System.nanoTime() - t0) / 1_000_000);
+            metrics.finished(ai, path, status, (System.nanoTime() - t0) / 1_000_000);
         }
     }
 }
