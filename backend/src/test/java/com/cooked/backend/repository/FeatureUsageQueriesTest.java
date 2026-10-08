@@ -55,6 +55,7 @@ class FeatureUsageQueriesTest {
         assertEquals(1, users.countPushDisabled());
         assertEquals(1, creators.countSavers(chef.getId()));
         assertEquals(1, creators.countViewsSince(chef.getId(), since));
+        assertEquals(1, creators.countAllCreatorViewsSince(since));
         var reported = recipes.findAll(AdminRecipeSpecs.of(new AdminRecipeFilter(null, null, null, null, null, true)), PageRequest.of(0, 10));
         assertEquals(List.of("Yassa"), reported.map(Recipe::getName).getContent());
     }

@@ -64,6 +64,12 @@ public class AdminAmbassadorController {
         return ResponseEntity.ok(creators.detail(id));
     }
 
+    @Operation(summary = "App views of creators' public recipes over the last N days (default 30)")
+    @GetMapping("/creators/views")
+    public ResponseEntity<Map<String, Long>> creatorViews(@RequestParam(defaultValue = "30") int days) {
+        return ResponseEntity.ok(Map.of("views", creators.viewsSince(days)));
+    }
+
     @GetMapping("/creator-applications")
     public ResponseEntity<PagedResponse<CreatorApplicationResponse>> applications(@RequestParam(required = false) CreatorApplicationStatus status,
                                                                                   @RequestParam(defaultValue = "0") int page,

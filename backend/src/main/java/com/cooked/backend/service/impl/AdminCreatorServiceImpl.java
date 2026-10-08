@@ -58,4 +58,9 @@ public class AdminCreatorServiceImpl implements AdminCreatorService {
                 .ambassadorCode(amb.map(com.cooked.backend.entity.Ambassador::getCode).orElse(null))
                 .build();
     }
+
+    @Override
+    public long viewsSince(int days) {
+        return stats.countAllCreatorViewsSince(LocalDateTime.now().minusDays(Math.max(1, Math.min(days, 365))));
+    }
 }
