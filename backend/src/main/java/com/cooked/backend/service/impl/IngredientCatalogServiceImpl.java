@@ -165,7 +165,8 @@ public class IngredientCatalogServiceImpl implements IngredientCatalogService {
         }
         return new IngredientCatalogMetaResponse(PRESETS, new ArrayList<>(categories), visuals.collections(),
                 CATEGORY_PRESETS, new ArrayList<>(families.values()), SvgAssets.MAX_BYTES,
-                visuals.count() + visuals.countAliases());
+                visuals.count() + visuals.countAliases(),
+                visuals.findByCanonicalId(GENERIC_ID).map(IngredientVisual::getSvg).orElse(null));
     }
 
     /** "pod.scallion" → "pod"; without an archetype the canonical id stands for its own family. */
