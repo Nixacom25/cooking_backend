@@ -26,6 +26,10 @@ public class CreatorDetailResponse {
     private long publishedPrev30d;
     /** Times their recipes were added to grocery lists. */
     private long uses;
+    /** Other users keeping this creator's recipes in a cookbook. */
+    private long savers;
+    /** App recipe-screen views of the creator's recipes, last 30 days. */
+    private long views30d;
     private List<AcquisitionResponse.DayCount> publishedDaily;
     private List<Recipe> topRecipes;
     /** Ambassador record with the same email, if any. */

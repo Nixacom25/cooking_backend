@@ -76,6 +76,27 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
             + "and not exists (select 1 from SubscriptionPayment q where q.user = p.user and upper(q.status) = 'SUCCESS' and q.createdAt < :from)")
     long countFirstPaymentsBetween(@org.springframework.data.repository.query.Param("from") LocalDateTime from, @org.springframework.data.repository.query.Param("to") LocalDateTime to);
 
+    @org.springframework.data.jpa.repository.Query("select count(distinct g.user.id) from GroceryItem g where g.createdAt >= :from")
+    long countGroceryUsersSince(@org.springframework.data.repository.query.Param("from") LocalDateTime from);
+
+    @org.springframework.data.jpa.repository.Query("select count(distinct c.user.id) from Cookbook c where coalesce(c.updatedAt, c.createdAt) >= :from")
+    long countCookbookUsersSince(@org.springframework.data.repository.query.Param("from") LocalDateTime from);
+
+    @org.springframework.data.jpa.repository.Query("select count(distinct m.user.id) from MealPlan m where m.createdAt >= :from")
+    long countMealPlanUsersSince(@org.springframework.data.repository.query.Param("from") LocalDateTime from);
+
+    @org.springframework.data.jpa.repository.Query("select count(distinct g.user.id) from GroceryItem g where g.createdAt >= :from and g.user.id in :ids")
+    long countGroceryUsersSinceAmong(@org.springframework.data.repository.query.Param("from") LocalDateTime from, @org.springframework.data.repository.query.Param("ids") java.util.Collection<UUID> ids);
+
+    @org.springframework.data.jpa.repository.Query("select count(distinct c.user.id) from Cookbook c where coalesce(c.updatedAt, c.createdAt) >= :from and c.user.id in :ids")
+    long countCookbookUsersSinceAmong(@org.springframework.data.repository.query.Param("from") LocalDateTime from, @org.springframework.data.repository.query.Param("ids") java.util.Collection<UUID> ids);
+
+    @org.springframework.data.jpa.repository.Query("select count(distinct m.user.id) from MealPlan m where m.createdAt >= :from and m.user.id in :ids")
+    long countMealPlanUsersSinceAmong(@org.springframework.data.repository.query.Param("from") LocalDateTime from, @org.springframework.data.repository.query.Param("ids") java.util.Collection<UUID> ids);
+
+    @org.springframework.data.jpa.repository.Query("select count(u) from User u where u.role = com.cooked.backend.entity.Role.CLIENT and u.pushEnabled = false")
+    long countPushDisabled();
+
     /** Distinct onboarding discovery sources (admin Users filter options). */
     @org.springframework.data.jpa.repository.Query("select distinct trim(u.discoverySource) from User u where u.discoverySource is not null and trim(u.discoverySource) <> '' order by trim(u.discoverySource)")
     List<String> findDistinctDiscoverySources();

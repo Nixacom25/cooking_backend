@@ -13,10 +13,14 @@ import java.util.UUID;
  * @param visibility PUBLIC, PRIVATE or DELETED
  * @param hasImage   true = with an image, false = without
  */
-public record AdminRecipeFilter(RecipeOrigin origin, String name, UUID cuisineId, String visibility, Boolean hasImage) {
+public record AdminRecipeFilter(RecipeOrigin origin, String name, UUID cuisineId, String visibility, Boolean hasImage, Boolean reported) {
+
+    public AdminRecipeFilter(RecipeOrigin origin, String name, UUID cuisineId, String visibility, Boolean hasImage) {
+        this(origin, name, cuisineId, visibility, hasImage, null);
+    }
 
     /** True when only origin / name are set (the indexed legacy queries handle those). */
     public boolean basic() {
-        return cuisineId == null && (visibility == null || visibility.isBlank()) && hasImage == null;
+        return cuisineId == null && (visibility == null || visibility.isBlank()) && hasImage == null && reported == null;
     }
 }

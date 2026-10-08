@@ -20,6 +20,8 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductAnalyticsResponse {
     private int days;
+    /** Distinct users per feature measured from the database: GROCERY (items added), COOKBOOK (cookbooks touched), MEAL_PLAN (meals planned). */
+    private java.util.Map<String, Long> featureUsers;
     /** First recorded product event, null when none yet. */
     private LocalDateTime trackingSince;
 

@@ -82,6 +82,7 @@ public class AdminUserServiceImpl implements AdminUserService {
                 userRepository.countByRole(role),
                 activityRepository.countDistinctUsers(now.toLocalDate().minusDays(29), now.toLocalDate().plusDays(1)),
                 userRepository.countByRoleAndSubscriptionStatusIn(role, List.of(com.cooked.backend.entity.SubscriptionStatus.TRIAL)),
-                userRepository.countLapsedSince(List.of(com.cooked.backend.entity.SubscriptionStatus.CANCELLED, com.cooked.backend.entity.SubscriptionStatus.EXPIRED), now.minusDays(30)));
+                userRepository.countLapsedSince(List.of(com.cooked.backend.entity.SubscriptionStatus.CANCELLED, com.cooked.backend.entity.SubscriptionStatus.EXPIRED), now.minusDays(30)),
+                userRepository.countPushDisabled());
     }
 }

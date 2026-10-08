@@ -39,5 +39,7 @@ public class ProductFailuresResponse {
         private LocalDateTime resolvedAt;
         private LocalDateTime retriedAt;
         private Boolean retrySucceeded;
+        /** App version the user last reported. */
+        private String appVersion;
     }
 }

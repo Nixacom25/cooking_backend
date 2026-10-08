@@ -89,12 +89,13 @@ public interface ProductEventRepository extends JpaRepository<ProductEvent, UUID
         LocalDateTime getResolvedAt();
         LocalDateTime getRetriedAt();
         Boolean getRetrySucceeded();
+        String getAppVersion();
     }
 
     /** Failed events of a type, newest first, with the user's name (one query per page). */
     @Query(value = "select e.id as id, e.detail as detail, e.failureReason as reason, e.durationMs as durationMs, "
             + "e.createdAt as createdAt, e.userId as userId, u.email as email, u.firstname as firstname, u.lastname as lastname, "
-            + "e.target as target, e.resolvedAt as resolvedAt, e.retriedAt as retriedAt, e.retrySucceeded as retrySucceeded "
+            + "e.target as target, e.resolvedAt as resolvedAt, e.retriedAt as retriedAt, e.retrySucceeded as retrySucceeded, u.appVersion as appVersion "
             + "from ProductEvent e left join User u on u.id = e.userId "
             + "where e.type = :type and e.success = false and e.createdAt >= :from order by e.createdAt desc",
             countQuery = "select count(e) from ProductEvent e where e.type = :type and e.success = false and e.createdAt >= :from")

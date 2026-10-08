@@ -35,6 +35,12 @@ public final class AdminRecipeSpecs {
                 Predicate with = cb.and(cb.isNotNull(root.get("image")), cb.notEqual(cb.trim(root.get("image")), ""));
                 and.add(f.hasImage() ? with : cb.not(with));
             }
+            if (f.reported() != null) {
+                var sub = query.subquery(Long.class);
+                var flag = sub.from(com.cooked.backend.entity.RecipeFlag.class);
+                sub.select(cb.literal(1L)).where(cb.equal(flag.get("recipeId"), root.get("id")), cb.isNull(flag.get("resolvedAt")));
+                and.add(f.reported() ? cb.exists(sub) : cb.not(cb.exists(sub)));
+            }
             // Not on the count query (its result type is Long).
             if (query.getResultType() != Long.class && query.getResultType() != long.class) {
                 query.orderBy(cb.desc(cb.coalesce(root.get("updatedAt"), root.get("createdAt"))));

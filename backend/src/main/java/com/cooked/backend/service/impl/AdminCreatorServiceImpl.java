@@ -49,6 +49,8 @@ public class AdminCreatorServiceImpl implements AdminCreatorService {
                 .published30d(stats.countPublicBetween(userId, now.minusDays(30), now.plusDays(1)))
                 .publishedPrev30d(stats.countPublicBetween(userId, now.minusDays(60), now.minusDays(30)))
                 .uses(stats.totalUses(userId))
+                .savers(stats.countSavers(userId))
+                .views30d(stats.countViewsSince(userId, now.minusDays(30)))
                 .publishedDaily(daily)
                 .topRecipes(stats.topRecipes(userId, PageRequest.of(0, 8)).stream()
                         .map(r -> new CreatorDetailResponse.Recipe(r.getId(), r.getName(), r.getImage(), r.getUses() == null ? 0 : r.getUses(), r.getCreatedAt())).toList())

@@ -182,6 +182,7 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
                 .resolvedAt(r.getResolvedAt())
                 .retriedAt(r.getRetriedAt())
                 .retrySucceeded(r.getRetrySucceeded())
+                .appVersion(r.getAppVersion())
                 .build();
     }
 
@@ -211,8 +212,14 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
         boolean all = users == null;
         List<RecipeOrigin> origins = List.of(RecipeOrigin.SCAN, RecipeOrigin.IMPORT);
 
+        java.util.Map<String, Long> featureUsers = new java.util.LinkedHashMap<>();
+        featureUsers.put("GROCERY", all ? userRepository.countGroceryUsersSince(from) : userRepository.countGroceryUsersSinceAmong(from, users));
+        featureUsers.put("COOKBOOK", all ? userRepository.countCookbookUsersSince(from) : userRepository.countCookbookUsersSinceAmong(from, users));
+        featureUsers.put("MEAL_PLAN", all ? userRepository.countMealPlanUsersSince(from) : userRepository.countMealPlanUsersSinceAmong(from, users));
+
         return ProductAnalyticsResponse.builder()
                 .days(days)
+                .featureUsers(featureUsers)
                 .trackingSince(eventRepository.firstEventAt())
                 .summaries(summaries(all ? eventRepository.summaryByType(from) : eventRepository.summaryByTypeForUsers(from, users)))
                 .daily(daily(firstDay, days, all ? eventRepository.dailyCounts(from) : eventRepository.dailyCountsForUsers(from, users)))

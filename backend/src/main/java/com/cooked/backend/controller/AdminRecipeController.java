@@ -41,9 +41,10 @@ public class AdminRecipeController {
             @RequestParam(required = false) java.util.UUID cuisineId,
             @RequestParam(required = false) String visibility,
             @RequestParam(required = false) Boolean hasImage,
+            @RequestParam(required = false) Boolean reported,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        var filter = new com.cooked.backend.dto.request.AdminRecipeFilter(origin, name, cuisineId, visibility, hasImage);
+        var filter = new com.cooked.backend.dto.request.AdminRecipeFilter(origin, name, cuisineId, visibility, hasImage, reported);
         if (!filter.basic()) {
             Pageable unsorted = PageRequest.of(com.cooked.backend.util.PaginationUtils.clampPage(page), com.cooked.backend.util.PaginationUtils.clampSize(size));
             return ResponseEntity.ok(recipeService.getAdminRecipes(filter, unsorted));
