@@ -19,4 +19,6 @@ public class UserStatsResponse {
     private long totalScans;
     private long totalImports;
     private long savedExploreRecipes;
+    private long groceryAdds;
+    private long webSearches;
 }

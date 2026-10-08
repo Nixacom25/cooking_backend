@@ -13,7 +13,7 @@ public interface RecipeModerationService {
     List<RecipeFlagResponse> flags(UUID recipeId);
 
     /** Views (app), cookbooks, meal plans, grocery adds, open reports and intern assignments of a recipe. */
-    com.cooked.backend.dto.response.RecipeStatsResponse stats(UUID recipeId);
+    com.cooked.backend.dto.response.RecipeUsageResponse stats(UUID recipeId);
 
     RecipeFlagResponse flag(UUID recipeId, RecipeFlagRequest request, String adminEmail);
 

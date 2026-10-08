@@ -56,7 +56,7 @@ public class AdminRecipeController {
     @Operation(summary = "Usage of a recipe: views, cookbooks, meal plans, grocery adds, open reports, assignments")
     @GetMapping("/{id}/stats")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<com.cooked.backend.dto.response.RecipeStatsResponse> recipeStats(@PathVariable UUID id) {
+    public ResponseEntity<com.cooked.backend.dto.response.RecipeUsageResponse> recipeStats(@PathVariable UUID id) {
         return ResponseEntity.ok(moderation.stats(id));
     }
 

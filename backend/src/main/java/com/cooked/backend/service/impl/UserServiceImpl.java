@@ -38,6 +38,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+
+    private final com.cooked.backend.repository.AdminInsightsRepository insightsRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final CloudinaryService cloudinaryService;
@@ -632,6 +634,8 @@ public class UserServiceImpl implements UserService {
                 .totalScans(totalScans)
                 .totalImports(totalImports)
                 .savedExploreRecipes(savedExploreRecipes)
+                .groceryAdds(insightsRepository.groceryAddsOf(id))
+                .webSearches(insightsRepository.searchesOf(id))
                 .build();
     }
 }
