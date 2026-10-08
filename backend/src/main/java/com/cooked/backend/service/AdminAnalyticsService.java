@@ -33,6 +33,9 @@ public interface AdminAnalyticsService {
      */
     com.cooked.backend.dto.response.RetentionResponse retention(String by, int days);
 
+    /** Grocery list activity over the last [days] days (clamped to 1..{@value #MAX_DAYS}). */
+    com.cooked.backend.dto.response.GroceryAnalyticsResponse grocery(int days);
+
     /** Failed [type] events over the last [days] days, newest first (size clamped to 1..{@value #MAX_PAGE_SIZE}). */
     ProductFailuresResponse failures(ProductEventType type, int days, int page, int size);
 }

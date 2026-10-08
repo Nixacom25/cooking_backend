@@ -46,6 +46,7 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
     private final UserRepository userRepository;
     private final UserActivityDayRepository activityRepository;
     private final com.cooked.backend.repository.SiteVisitRepository siteVisits;
+    private final com.cooked.backend.repository.GroceryStatsRepository groceryStats;
     private final com.cooked.backend.repository.CostEntryRepository costEntries;
     private final com.cooked.backend.repository.SubscriptionPaymentRepository paymentRepository;
 
@@ -147,6 +148,36 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
         };
         return new com.cooked.backend.dto.response.RetentionResponse(label, d,
                 RetentionCalculator.groups(members, active, today, groupOf, label.equals("week")));
+    }
+
+    @Override
+    public com.cooked.backend.dto.response.GroceryAnalyticsResponse grocery(int days) {
+        return groceryAt(clamp(days), LocalDateTime.now());
+    }
+
+    com.cooked.backend.dto.response.GroceryAnalyticsResponse groceryAt(int days, LocalDateTime now) {
+        LocalDate firstDay = now.toLocalDate().minusDays(days - 1L);
+        LocalDateTime from = firstDay.atStartOfDay();
+        LocalDateTime prevFrom = from.minusDays(days);
+        LocalDateTime to = now.plusMinutes(1);
+        Map<LocalDate, Long> byDay = new LinkedHashMap<>();
+        groceryStats.dailySince(prevFrom).forEach(d -> byDay.merge(d.getDay(), nz(d.getTotal()), Long::sum));
+        List<AcquisitionResponse.DayCount> daily = new ArrayList<>(days);
+        List<AcquisitionResponse.DayCount> dailyPrev = new ArrayList<>(days);
+        for (int i = 0; i < days; i++) {
+            LocalDate d = firstDay.plusDays(i);
+            LocalDate p = d.minusDays(days);
+            daily.add(new AcquisitionResponse.DayCount(d.toString(), byDay.getOrDefault(d, 0L)));
+            dailyPrev.add(new AcquisitionResponse.DayCount(p.toString(), byDay.getOrDefault(p, 0L)));
+        }
+        PageRequest top = PageRequest.of(0, TOP);
+        return new com.cooked.backend.dto.response.GroceryAnalyticsResponse(days,
+                groceryStats.countAdded(from, to), groceryStats.countAdded(prevFrom, from),
+                groceryStats.countUsers(from, to), groceryStats.countUsers(prevFrom, from),
+                groceryStats.countBought(from, to), groceryStats.countFromRecipes(from, to), groceryStats.countUsersEver(),
+                daily, dailyPrev,
+                groceryStats.topIngredients(from, top).stream().map(r -> new com.cooked.backend.dto.response.GroceryAnalyticsResponse.Label(r.getLabel(), nz(r.getTotal()))).toList(),
+                groceryStats.topRecipes(from, top).stream().map(r -> new com.cooked.backend.dto.response.GroceryAnalyticsResponse.RecipeItem(r.getId(), r.getName(), nz(r.getTotal()))).toList());
     }
 
     @Override

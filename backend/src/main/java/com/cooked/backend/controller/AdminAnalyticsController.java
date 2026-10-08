@@ -65,6 +65,12 @@ public class AdminAnalyticsController {
         return ResponseEntity.ok(analyticsService.engagement(days, new com.cooked.backend.dto.request.AnalyticsSegment(platform, subscription, source, version, country)));
     }
 
+    @Operation(summary = "Grocery lists: items added, users, bought, from recipes, daily series, top ingredients and recipes")
+    @GetMapping("/grocery")
+    public ResponseEntity<com.cooked.backend.dto.response.GroceryAnalyticsResponse> grocery(@RequestParam(defaultValue = "30") int days) {
+        return ResponseEntity.ok(analyticsService.grocery(days));
+    }
+
     @Operation(summary = "Mark a failed import as handled")
     @PutMapping("/import-failures/{id}/resolve")
     public ResponseEntity<Void> resolveImportFailure(@PathVariable java.util.UUID id) {
