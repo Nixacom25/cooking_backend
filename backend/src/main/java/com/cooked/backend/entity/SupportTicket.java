@@ -67,6 +67,9 @@ public class SupportTicket {
     @Column(length = 16)
     private String priority;
 
+    /** When the team first replied (null = no reply yet). */
+    private LocalDateTime firstResponseAt;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

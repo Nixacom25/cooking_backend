@@ -18,6 +18,12 @@ public interface EmailService {
     /** Answer to a website creator / ambassador application. */
     void sendCreatorDecisionEmail(String to, String name, String title, String body);
 
+    /** Answer to a support ticket, written in the backoffice. */
+    void sendSupportReplyEmail(String to, String name, String ticketNumber, String subject, String body);
+
+    /** Invitation to the backoffice: the new member sets a password through [setPasswordUrl]. */
+    void sendTeamInviteEmail(String to, String firstName, String roleLabel, String setPasswordUrl);
+
     /** Free-user nudge (drip funnel) when no push token is registered. */
     void sendDripEmail(String to, String firstName, String title, String body);
 

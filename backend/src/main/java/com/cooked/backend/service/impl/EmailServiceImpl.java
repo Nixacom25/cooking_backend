@@ -715,6 +715,27 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    public void sendSupportReplyEmail(String to, String name, String ticketNumber, String subject, String body) {
+        String html = "<div style=\"font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#141414\">"
+                + "<p>Hi " + escape(displayName(name)) + ",</p>"
+                + "<p style=\"font-size:15px;line-height:1.6;white-space:pre-line\">" + escape(body) + "</p>"
+                + "<p style=\"color:#66625C;font-size:13px\">— The Cooked team · ticket #" + escape(ticketNumber) + "</p></div>";
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.SUPPORT_REPLY, to, "Re: " + (subject == null || subject.isBlank() ? "your Cooked request" : subject), html);
+    }
+
+    @Override
+    public void sendTeamInviteEmail(String to, String firstName, String roleLabel, String setPasswordUrl) {
+        String html = "<div style=\"font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#141414\">"
+                + "<p>Hi " + escape(displayName(firstName)) + ",</p>"
+                + "<h2 style=\"margin:0 0 12px\">You're invited to the Cooked backoffice</h2>"
+                + "<p style=\"font-size:15px;line-height:1.6\">An account was created for you as <b>" + escape(roleLabel) + "</b>. "
+                + "Choose your password to sign in: open the link below and enter this email address (" + escape(to) + ").</p>"
+                + "<p><a href=\"" + escape(setPasswordUrl) + "\" style=\"display:inline-block;padding:12px 20px;border-radius:999px;background:#C4161C;color:#fff;text-decoration:none;font-weight:600\">Set my password</a></p>"
+                + "<p style=\"color:#66625C;font-size:13px\">— The Cooked team</p></div>";
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.TEAM_INVITE, to, "Your Cooked backoffice access", html);
+    }
+
+    @Override
     public void sendDripEmail(String to, String firstName, String title, String body) {
         String html = "<div style=\"font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#141414\">"
                 + "<p>Hi " + escape(displayName(firstName)) + ",</p>"

@@ -97,6 +97,8 @@ public interface ProductEventRepository extends JpaRepository<ProductEvent, UUID
 
     long countByTypeAndSuccessFalseAndCreatedAtGreaterThanEqual(ProductEventType type, LocalDateTime from);
 
+    long countByTypeAndCreatedAtGreaterThanEqual(ProductEventType type, LocalDateTime from);
+
     // --- Same aggregates restricted to a user segment (admin analytics filters) ---
 
     @Query("select e.type as type, count(e) as total, "

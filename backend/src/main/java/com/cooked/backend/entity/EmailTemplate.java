@@ -17,7 +17,9 @@ public enum EmailTemplate {
     CRITICAL_ERROR_ALERT("Critical error alert", "Critical crash reported by the app", false),
     ADMIN_SUMMARY("Admin summary", "Daily 8 AM summary / Monday review (Settings)", false),
     DRIP("Free users drip", "Free user at day 3 / day 7 without a push token (Settings)", true),
-    CREATOR_DECISION("Creator application decision", "Application approved, rejected or more info requested", false);
+    CREATOR_DECISION("Creator application decision", "Application approved, rejected or more info requested", false),
+    SUPPORT_REPLY("Support reply", "Admin answered a support ticket", false),
+    TEAM_INVITE("Team invitation", "Admin invited a team member", false);
 
     private final String label;
     private final String trigger;

@@ -47,6 +47,19 @@ public class AdminUserController {
         return ResponseEntity.ok(users.search(filter, pageable));
     }
 
+    @Operation(summary = "Platform, lifetime revenue and last seen for up to 100 user ids")
+    @GetMapping("/extras")
+    public ResponseEntity<java.util.Map<java.util.UUID, com.cooked.backend.dto.response.UserExtrasResponse>> extras(@RequestParam List<java.util.UUID> ids) {
+        if (ids.size() > 100) throw new com.cooked.backend.exception.BadRequestException("At most 100 ids");
+        return ResponseEntity.ok(users.extras(ids));
+    }
+
+    @Operation(summary = "Users KPIs: clients, active in 30 days, on trial, churned in 30 days")
+    @GetMapping("/summary")
+    public ResponseEntity<com.cooked.backend.dto.response.UserSummaryResponse> summary() {
+        return ResponseEntity.ok(users.summary());
+    }
+
     @Operation(summary = "Discovery sources answered in onboarding (filter options)")
     @GetMapping("/sources")
     public ResponseEntity<List<String>> sources() {

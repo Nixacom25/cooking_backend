@@ -14,4 +14,9 @@ public interface AdminUserService {
 
     /** Distinct discovery sources answered in onboarding (filter options). */
     List<String> sources();
+
+    /** Platform (latest login), lifetime revenue and last seen, per user id. */
+    java.util.Map<java.util.UUID, com.cooked.backend.dto.response.UserExtrasResponse> extras(java.util.Collection<java.util.UUID> ids);
+
+    com.cooked.backend.dto.response.UserSummaryResponse summary();
 }

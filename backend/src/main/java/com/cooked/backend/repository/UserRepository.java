@@ -31,6 +31,24 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
     @org.springframework.data.jpa.repository.Query("select s.user.id, s.deviceName from DeviceSession s where s.user.id in :ids")
     List<Object[]> findDeviceNames(@org.springframework.data.repository.query.Param("ids") java.util.Collection<UUID> ids);
 
+    List<User> findAllByRoleIn(java.util.Collection<com.cooked.backend.entity.Role> roles);
+
+    /** [user id, latest session lastActive] for users with these roles. */
+    @org.springframework.data.jpa.repository.Query("select s.user.id, max(s.lastActive) from DeviceSession s where s.user.role in :roles group by s.user.id")
+    List<Object[]> findLastSessionByRoles(@org.springframework.data.repository.query.Param("roles") java.util.Collection<com.cooked.backend.entity.Role> roles);
+
+    /** [user id, latest session device name, latest session time] (admin Users table platform column). */
+    @org.springframework.data.jpa.repository.Query("select s.user.id, s.deviceName, s.lastActive from DeviceSession s where s.user.id in :ids order by s.lastActive desc")
+    List<Object[]> findSessionsOf(@org.springframework.data.repository.query.Param("ids") java.util.Collection<UUID> ids);
+
+    /** [user id, total successful payments] of these users. */
+    @org.springframework.data.jpa.repository.Query("select p.user.id, sum(p.amount) from SubscriptionPayment p where p.user.id in :ids and upper(p.status) = 'SUCCESS' group by p.user.id")
+    List<Object[]> sumPaymentsOf(@org.springframework.data.repository.query.Param("ids") java.util.Collection<UUID> ids);
+
+    @org.springframework.data.jpa.repository.Query("select count(u) from User u where u.role = com.cooked.backend.entity.Role.CLIENT and u.subscriptionStatus in :statuses and u.subscriptionExpiresAt >= :from")
+    long countLapsedSince(@org.springframework.data.repository.query.Param("statuses") java.util.Collection<com.cooked.backend.entity.SubscriptionStatus> statuses,
+                          @org.springframework.data.repository.query.Param("from") LocalDateTime from);
+
     /** Distinct onboarding discovery sources (admin Users filter options). */
     @org.springframework.data.jpa.repository.Query("select distinct trim(u.discoverySource) from User u where u.discoverySource is not null and trim(u.discoverySource) <> '' order by trim(u.discoverySource)")
     List<String> findDistinctDiscoverySources();
