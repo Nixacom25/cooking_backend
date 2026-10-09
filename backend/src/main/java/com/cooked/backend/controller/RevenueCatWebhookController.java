@@ -300,13 +300,21 @@ public class RevenueCatWebhookController {
             payment.setUser(user);
             payment.setAmount(priceObj instanceof Number n ? BigDecimal.valueOf(n.doubleValue()) : BigDecimal.ZERO);
             payment.setPlanType(planType);
-            payment.setStatus("SUCCESS");
+            payment.setStatus(paymentStatus(event));
             payment.setStripePaymentId(paymentRef);
             payment.setStore(store);
             subscriptionPaymentRepository.save(payment);
         } catch (Exception e) {
             log.error("Failed to record gift payment for user {}: {}", user.getEmail(), e.getMessage());
         }
+    }
+
+    /**
+     * TestFlight and sandbox purchases are not real money (Apple renews them about once a day in TestFlight):
+     * they still unlock Premium for the tester, but are recorded as SANDBOX so revenue only counts SUCCESS.
+     */
+    static String paymentStatus(Map<String, Object> event) {
+        return "SANDBOX".equalsIgnoreCase(String.valueOf(event.get("environment"))) ? "SANDBOX" : "SUCCESS";
     }
 
     private String formatPrice(Object price, Object currency) {
@@ -348,7 +356,7 @@ public class RevenueCatWebhookController {
             payment.setUser(user);
             payment.setAmount(amount);
             payment.setPlanType(productId != null && productId.toLowerCase().contains("year") ? "YEARLY" : "MONTHLY");
-            payment.setStatus("SUCCESS");
+            payment.setStatus(paymentStatus(event));
             payment.setStripePaymentId(paymentRef);
             payment.setStore(store);
             subscriptionPaymentRepository.save(payment);

@@ -121,6 +121,36 @@ class RevenueCatWebhookControllerTest {
     }
 
     @Test
+    void testSandboxRenewal_UnlocksPremiumButIsNotRevenue() {
+        User user = User.builder()
+                .email("tester@cookedapp.com")
+                .password("password")
+                .role(Role.CLIENT)
+                .status(Status.ACTIVE)
+                .subscriptionStatus(SubscriptionStatus.FREE)
+                .build();
+        when(userRepository.findByEmail("tester@cookedapp.com")).thenReturn(Optional.of(user));
+        when(subscriptionPaymentRepository.existsByStripePaymentId("rc_evt_sb")).thenReturn(false);
+
+        Map<String, Object> payload = Map.of("event", Map.of(
+                "id", "evt_sb",
+                "type", "RENEWAL",
+                "environment", "SANDBOX",
+                "app_user_id", "tester@cookedapp.com",
+                "product_id", "yearly_sub",
+                "price", 29.99,
+                "store", "APP_STORE",
+                "expiration_at_ms", 1750000000000L));
+
+        assertEquals(HttpStatus.OK, controller.handleWebhook(null, payload).getStatusCode());
+        assertEquals(SubscriptionStatus.ACTIVE, user.getSubscriptionStatus());
+        ArgumentCaptor<com.cooked.backend.entity.SubscriptionPayment> paymentCaptor =
+                ArgumentCaptor.forClass(com.cooked.backend.entity.SubscriptionPayment.class);
+        verify(subscriptionPaymentRepository, times(1)).save(paymentCaptor.capture());
+        assertEquals("SANDBOX", paymentCaptor.getValue().getStatus());
+    }
+
+    @Test
     void testInitialPurchaseEvent_SkipsDuplicatePaymentOnRetry() {
         User user = User.builder()
                 .email("retry@cookedapp.com")
