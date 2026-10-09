@@ -41,7 +41,7 @@ public class AnalyticsService {
             map.put("store", p.getStore());
             map.put("product", p.getPlanType() + " Plan");
             map.put("date", p.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")));
-            map.put("revenue", "€" + p.getAmount());
+            map.put("revenue", "$" + p.getAmount());
             map.put("status", p.getStatus());
             return map;
         });

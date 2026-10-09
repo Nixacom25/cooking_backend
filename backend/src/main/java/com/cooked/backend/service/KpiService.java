@@ -51,8 +51,8 @@ public class KpiService {
         kpis.put("totalUsers", totalUsers);
         kpis.put("premiumUsers", premiumUsers);
         kpis.put("conversionRate", String.format("%.2f%%", conversionRate));
-        kpis.put("arpu", String.format("%.2f€", arpu));
-        kpis.put("ltv", String.format("%.2f€", arpu * 12));
+        kpis.put("arpu", String.format("$%.2f", arpu));
+        kpis.put("ltv", String.format("$%.2f", arpu * 12));
         // Real churn needs a subscription-status-change history this app
         // doesn't keep (only the user's *current* status is stored) - "N/A"
         // is honest here; a specific-looking percentage was never actually
@@ -74,7 +74,7 @@ public class KpiService {
                     map.put("store", p.getStore());
                     map.put("product", p.getPlanType() + " Plan");
                     map.put("date", p.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")));
-                    map.put("revenue", "€" + p.getAmount());
+                    map.put("revenue", "$" + p.getAmount());
                     map.put("status", p.getStatus());
                     return map;
                 })

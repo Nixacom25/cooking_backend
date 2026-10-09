@@ -250,7 +250,7 @@ public class FirebaseAnalyticsService {
             totalRevenue = 2490.50;
             totalPurchases = 84;
         }
-        inAppPurchases.put("totalRevenue", String.format("%.2f€", totalRevenue));
+        inAppPurchases.put("totalRevenue", String.format("$%.2f", totalRevenue));
         inAppPurchases.put("totalPurchases", totalPurchases);
         inAppPurchases.put("monthlyPurchases", (int)(totalPurchases * 0.72));
         inAppPurchases.put("yearlyPurchases", (int)(totalPurchases * 0.28));

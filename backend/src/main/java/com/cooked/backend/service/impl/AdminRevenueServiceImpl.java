@@ -36,7 +36,8 @@ import java.util.Map;
 @Transactional(readOnly = true)
 public class AdminRevenueServiceImpl implements AdminRevenueService {
 
-    static final String CURRENCY = "EUR";
+    /** Store prices reach us in USD (RevenueCat converts them), so revenue is reported in dollars. */
+    static final String CURRENCY = "USD";
     static final int DAYS = 30;
     static final int MAX_DAYS = 365;
     static final int MAX_SERIES_DAYS = 90;

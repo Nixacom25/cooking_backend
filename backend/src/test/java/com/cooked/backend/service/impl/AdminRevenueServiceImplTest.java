@@ -87,7 +87,7 @@ class AdminRevenueServiceImplTest {
         assertEquals(120.0, s.getRevenue30());
         assertEquals(100.0, s.getRevenuePrev30());
         assertEquals(22L, s.getActiveSubscriptions());
-        assertEquals("EUR", s.getCurrency());
+        assertEquals("USD", s.getCurrency());
         assertEquals(AdminRevenueServiceImpl.DAYS, s.getDaily().size());
     }
 
