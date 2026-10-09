@@ -214,15 +214,19 @@ class IngredientCatalogFlowTest {
         queue.record(List.of("Chicken stocks"), IngredientNameSource.IMPORT, "ana@test.com");
         em.flush();
 
-        CatalogSeedResponse r = catalog.importDatabaseIngredients("cheikh@test.com");
-        assertEquals(2, r.created());
-        assertEquals(3, r.skipped());
+        ImportProgressResponse first = catalog.importDatabaseIngredients("cheikh@test.com", 1);
+        assertEquals(1, first.created());
+        assertEquals(1, first.remaining());
+        ImportProgressResponse r = catalog.importDatabaseIngredients("cheikh@test.com", 500);
+        assertEquals(1, r.created());
+        assertEquals(0, r.remaining());
+        assertEquals(4, r.skipped());
         IngredientVisual pb = visuals.findByCanonicalId("peanut_butter").orElseThrow();
         assertEquals("Peanut butter", pb.getName());
         assertEquals(IngredientVisualStatus.MISSING_ASSET, pb.getStatus());
         assertEquals("Nuts & Seeds", pb.getCategory());
         assertEquals("Soups & Stocks", visuals.findByCanonicalId("chicken_stock").orElseThrow().getCategory());
         assertEquals(UnmatchedStatus.RESOLVED, unmatched.findByNameKey("chicken_stock").orElseThrow().getStatus());
-        assertEquals(0, catalog.importDatabaseIngredients("cheikh@test.com").created());
+        assertEquals(0, catalog.importDatabaseIngredients("cheikh@test.com", 500).created());
     }
 }

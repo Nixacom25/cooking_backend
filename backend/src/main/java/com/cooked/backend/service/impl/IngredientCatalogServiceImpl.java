@@ -87,7 +87,8 @@ public class IngredientCatalogServiceImpl implements IngredientCatalogService {
     static final String GENERIC_ID = "ingredient_generic";
     static final int KEPT_MANIFESTS = 5;
     static final int MAX_REUSABLE = 80;
-    static final int IMPORT_CHUNK = 500;
+    static final int IMPORT_CHUNK = 250;
+    static final int MAX_IMPORT_PER_CALL = 1000;
 
     private final IngredientVisualRepository visuals;
     private final IngredientCatalogReleaseRepository releases;
@@ -363,7 +364,8 @@ public class IngredientCatalogServiceImpl implements IngredientCatalogService {
     }
 
     @Override
-    public CatalogSeedResponse importDatabaseIngredients(String adminEmail) {
+    public ImportProgressResponse importDatabaseIngredients(String adminEmail, int max) {
+        int limit = Math.min(Math.max(1, max), MAX_IMPORT_PER_CALL);
         TransactionTemplate tx = new TransactionTemplate(txManager);
         Set<String> taken = new HashSet<>();
         tx.executeWithoutResult(st -> {
@@ -375,7 +377,7 @@ public class IngredientCatalogServiceImpl implements IngredientCatalogService {
         String by = displayName(adminEmail);
         List<IngredientVisual> batch = new ArrayList<>();
         List<String> batchKeys = new ArrayList<>();
-        int created = 0, skipped = 0;
+        int created = 0, skipped = 0, remaining = 0;
         List<Object[]> rows = tx.execute(st -> ingredients.namesByUsage());
         for (Object[] row : rows == null ? List.<Object[]>of() : rows) {
             String raw = row[0] == null ? "" : row[0].toString().trim().replaceAll("\\s+", " ");
@@ -387,6 +389,10 @@ public class IngredientCatalogServiceImpl implements IngredientCatalogService {
             }
             taken.add(key);
             taken.add(canonicalId);
+            if (created + batch.size() >= limit) {
+                remaining++; // left for the next call
+                continue;
+            }
             String category = IngredientCategories.guess(key);
             IngredientVisual v = IngredientVisual.builder()
                     .canonicalId(canonicalId)
@@ -411,7 +417,7 @@ public class IngredientCatalogServiceImpl implements IngredientCatalogService {
             saveImported(tx, batch, batchKeys, adminEmail);
             created += batch.size();
         }
-        return new CatalogSeedResponse(created, skipped);
+        return new ImportProgressResponse(created, skipped, remaining);
     }
 
     /** One transaction per chunk: a large import never holds one huge transaction. */

@@ -41,10 +41,11 @@ public interface IngredientCatalogService {
     Optional<String> publishedManifest();
 
     /**
-     * Adds every ingredient name of the database the catalog does not resolve yet, as Missing Asset entries
-     * (one per normalized name, most used spelling first). Safe to run again: known names are skipped.
+     * Adds up to {@code max} ingredient names of the database the catalog does not resolve yet, as Missing Asset
+     * entries (one per normalized name, most used spelling first). Call again while {@code remaining > 0}:
+     * known names are skipped, so each call continues where the previous one stopped.
      */
-    CatalogSeedResponse importDatabaseIngredients(String adminEmail);
+    ImportProgressResponse importDatabaseIngredients(String adminEmail, int max);
 
     /** Adds the starter art (skips ids and names already in the catalog). */
     CatalogSeedResponse installStarterPack(String adminEmail);

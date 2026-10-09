@@ -107,11 +107,11 @@ public class AdminIngredientCatalogController {
                 .body(catalog.draftManifest());
     }
 
-    @Operation(summary = "Add every database ingredient the catalog does not resolve yet, as Missing Asset entries")
+    @Operation(summary = "Add up to `max` database ingredients the catalog does not resolve yet (Missing Asset); repeat while remaining > 0")
     @PostMapping("/import-ingredients")
-    public ResponseEntity<CatalogSeedResponse> importIngredients(Authentication auth) {
+    public ResponseEntity<ImportProgressResponse> importIngredients(@RequestParam(defaultValue = "500") int max, Authentication auth) {
         try {
-            return ResponseEntity.ok(catalog.importDatabaseIngredients(auth.getName()));
+            return ResponseEntity.ok(catalog.importDatabaseIngredients(auth.getName(), max));
         } catch (RuntimeException e) {
             // admin-only bulk job: say what went wrong instead of a bare "Server error"
             Throwable root = e;
