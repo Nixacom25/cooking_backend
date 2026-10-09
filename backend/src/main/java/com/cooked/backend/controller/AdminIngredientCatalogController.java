@@ -110,7 +110,15 @@ public class AdminIngredientCatalogController {
     @Operation(summary = "Add every database ingredient the catalog does not resolve yet, as Missing Asset entries")
     @PostMapping("/import-ingredients")
     public ResponseEntity<CatalogSeedResponse> importIngredients(Authentication auth) {
-        return ResponseEntity.ok(catalog.importDatabaseIngredients(auth.getName()));
+        try {
+            return ResponseEntity.ok(catalog.importDatabaseIngredients(auth.getName()));
+        } catch (RuntimeException e) {
+            // admin-only bulk job: say what went wrong instead of a bare "Server error"
+            Throwable root = e;
+            while (root.getCause() != null && root.getCause() != root) root = root.getCause();
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Import failed: " + root.getClass().getSimpleName() + ": " + String.valueOf(root.getMessage()).lines().findFirst().orElse(""), e);
+        }
     }
 
     @Operation(summary = "Install the starter art pack (skips what already exists)")
