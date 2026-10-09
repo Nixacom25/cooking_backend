@@ -9,11 +9,14 @@ class SystemStatusServiceImplTest {
 
     @Test
     void featureStatusFromSuccessRate() {
-        assertEquals("IDLE", SystemStatusServiceImpl.featureStatus("Scan AI", 0, 0).status());
-        assertEquals("UP", SystemStatusServiceImpl.featureStatus("Scan AI", 10, 1).status());
-        assertEquals("DEGRADED", SystemStatusServiceImpl.featureStatus("Scan AI", 10, 3).status());
-        assertEquals("DOWN", SystemStatusServiceImpl.featureStatus("Scan AI", 10, 6).status());
-        assertEquals("90% success · 10 in 24 h", SystemStatusServiceImpl.featureStatus("Scan AI", 10, 1).detail());
+        assertEquals("IDLE", SystemStatusServiceImpl.featureStatus("Scan AI", 0, 0, 0).status());
+        assertEquals("UP", SystemStatusServiceImpl.featureStatus("Scan AI", 10, 1, 0).status());
+        assertEquals("DEGRADED", SystemStatusServiceImpl.featureStatus("Scan AI", 10, 3, 0).status());
+        assertEquals("DOWN", SystemStatusServiceImpl.featureStatus("Scan AI", 10, 6, 0).status());
+        assertEquals("90% success · 10 in 24 h", SystemStatusServiceImpl.featureStatus("Scan AI", 10, 1, 0).detail());
+        // a link without a recipe is a refused input, not an outage (the 3 imports / 1 TikTok photo case)
+        assertEquals("UP", SystemStatusServiceImpl.featureStatus("Import", 3, 0, 1).status());
+        assertEquals("100% success · 3 in 24 h · 1 unusable input", SystemStatusServiceImpl.featureStatus("Import", 3, 0, 1).detail());
     }
 
     @Test

@@ -38,7 +38,6 @@ public class SystemStatusServiceImpl implements SystemStatusService {
 
     static final String WEBSITE = "https://cookedapp.com";
     static final String IMAGE_CDN = "https://res.cloudinary.com";
-    static final String RECIPE_API = "https://recipe.markhorsystems.com";
     private static final Duration PROBE_TTL = Duration.ofSeconds(60);
 
     private final RequestMetrics metrics;
@@ -47,6 +46,10 @@ public class SystemStatusServiceImpl implements SystemStatusService {
     private final AutomationRunRepository automationRuns;
     private final AdminIntegrationService integrations;
     private final IncidentService incidents;
+
+    /** The AI server the app really calls (scan, import, search, generation). */
+    @org.springframework.beans.factory.annotation.Value("${ai.api.base-url:https://recipe.markhorsystems.com}")
+    private String aiBaseUrl;
 
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(4)).followRedirects(HttpClient.Redirect.NORMAL).build();
     private final Map<String, Probe> probes = new ConcurrentHashMap<>();
@@ -69,12 +72,14 @@ public class SystemStatusServiceImpl implements SystemStatusService {
                 snap.p95Ms() == null ? "Answering" : "p95 " + snap.p95Ms() + " ms"));
         services.add(new Service("Database", db == null ? "DOWN" : "UP", db == null ? "No answer" : db + " ms"));
         services.add(feature("Scan AI", ProductEventType.SCAN, day));
-        services.add(integration("Recipe generation", byKey.get("MARKHOR")));
+        long aiTechnical = events.countTechnicalFailures(day);
+        services.add(featureStatus("AI requests", events.countByCreatedAtGreaterThanEqual(day), aiTechnical,
+                events.countBySuccessFalseAndCreatedAtGreaterThanEqual(day) - aiTechnical));
         services.add(feature("Import", ProductEventType.IMPORT, day));
         services.add(integration("RevenueCat", byKey.get("REVENUECAT")));
         services.add(integration("Push", byKey.get("FIREBASE")));
         services.add(integration("Email", byKey.get("BREVO")));
-        services.add(probe("External Recipe API", RECIPE_API));
+        services.add(probe("Markhor AI server", aiBaseUrl));
         services.add(probe("Image CDN", IMAGE_CDN));
         services.add(probe("Website", WEBSITE));
         return new SystemStatusResponse(now, snap, metrics.series(15), db, workerFailures, services, incidents.open());
@@ -93,14 +98,21 @@ public class SystemStatusServiceImpl implements SystemStatusService {
     Service feature(String name, ProductEventType type, LocalDateTime since) {
         long total = events.countByTypeAndCreatedAtGreaterThanEqual(type, since);
         long failed = events.countByTypeAndSuccessFalseAndCreatedAtGreaterThanEqual(type, since);
-        return featureStatus(name, total, failed);
+        long technical = events.countTechnicalFailures(type, since);
+        return featureStatus(name, total, technical, failed - technical);
     }
 
-    static Service featureStatus(String name, long total, long failed) {
+    /**
+     * Status from technical failures only; inputs the service rightly refused (a link without a recipe,
+     * a photo without food) are shown in the detail but do not make the service look degraded.
+     */
+    static Service featureStatus(String name, long total, long technicalFailures, long rejectedInputs) {
         if (total == 0) return new Service(name, "IDLE", "No request in 24 h");
-        double rate = 100.0 * (total - failed) / total;
+        double rate = 100.0 * (total - technicalFailures) / total;
         String status = rate < 50 ? "DOWN" : rate < 85 ? "DEGRADED" : "UP";
-        return new Service(name, status, Math.round(rate) + "% success · " + total + " in 24 h");
+        String detail = Math.round(rate) + "% success · " + total + " in 24 h";
+        if (rejectedInputs > 0) detail += " · " + rejectedInputs + " unusable input" + (rejectedInputs == 1 ? "" : "s");
+        return new Service(name, status, detail);
     }
 
     static Service integration(String name, IntegrationStatusResponse i) {

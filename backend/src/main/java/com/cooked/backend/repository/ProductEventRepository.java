@@ -105,6 +105,22 @@ public interface ProductEventRepository extends JpaRepository<ProductEvent, UUID
 
     long countByTypeAndCreatedAtGreaterThanEqual(ProductEventType type, LocalDateTime from);
 
+    long countByCreatedAtGreaterThanEqual(LocalDateTime from);
+
+    /**
+     * Technical failures only: the tracker stores the exception name (no space) for those, and the user-facing
+     * message for expected ones such as a link without a recipe (BadRequestException), which are not outages.
+     */
+    @Query("select count(e) from ProductEvent e where e.type = :type and e.success = false "
+            + "and e.createdAt >= :from and (e.failureReason is null or e.failureReason not like '% %')")
+    long countTechnicalFailures(@Param("type") ProductEventType type, @Param("from") LocalDateTime from);
+
+    @Query("select count(e) from ProductEvent e where e.success = false "
+            + "and e.createdAt >= :from and (e.failureReason is null or e.failureReason not like '% %')")
+    long countTechnicalFailures(@Param("from") LocalDateTime from);
+
+    long countBySuccessFalseAndCreatedAtGreaterThanEqual(LocalDateTime from);
+
     // --- Same aggregates restricted to a user segment (admin analytics filters) ---
 
     @Query("select e.type as type, count(e) as total, "
