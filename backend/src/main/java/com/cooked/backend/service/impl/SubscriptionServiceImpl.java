@@ -233,30 +233,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
         userRepository.save(user);
 
-        // Real transaction/purchase-token identifier (was previously using
-        // .length() of the id, which is not unique and made every repeat
-        // verification of the same receipt look like a distinct payment).
-        String transactionRef = realOriginalTransactionId != null ? realOriginalTransactionId : request.getPurchaseToken();
-        String paymentId = "iap_" + request.getPlatform() + "_" + transactionRef;
-
-        // The client re-verifies the same receipt on every app resume, so
-        // skip re-recording a payment we've already logged for this exact
-        // transaction - only the subscription/user sync above needs to run
-        // every time.
-        if (!subscriptionPaymentRepository.existsByStripePaymentId(paymentId)) {
-            SubscriptionPlan plan = getPlan();
-            BigDecimal price = isYearly ? plan.getYearlyPrice() : plan.getMonthlyPrice();
-
-            SubscriptionPayment payment = new SubscriptionPayment();
-            payment.setUser(user);
-            payment.setAmount(price);
-            payment.setPlanType(isYearly ? "YEARLY" : "MONTHLY");
-            payment.setStatus("SUCCESS");
-            payment.setStripePaymentId(paymentId);
-            payment.setStore("IOS".equalsIgnoreCase(request.getPlatform()) ? "Apple" : "Google");
-
-            subscriptionPaymentRepository.save(payment);
-        }
+        // No payment row here: the app re-verifies its receipt on every resume, and the identifier Apple
+        // gives back is not always stable, so this path created a new "payment" each time the app opened.
+        // Payments come from the RevenueCat webhook only (one row per real store transaction).
 
         activityLogService.logActivity(user, "Subscription Successful",
                 "Your subscription via " + request.getPlatform() + " has been activated.");
@@ -667,8 +646,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                     return new AppleReceiptValidationResult(false, null, null);
                 }
                 
-                log.warn("Apple verification returned status: {}. Returning fallback success.", status);
-                return new AppleReceiptValidationResult(true, "fallback_status_" + status, LocalDateTime.now().plusMonths(1));
+                // Apple answered and refused the receipt (malformed, not authentic, expired secret...):
+                // never grant Premium on it, or any made-up receipt would unlock the app.
+                log.warn("Apple verification refused the receipt with status: {}", status);
+                return new AppleReceiptValidationResult(false, null, null);
             } else {
                 log.error("Apple verification failed with status code: {}", response.getStatusCode());
                 return new AppleReceiptValidationResult(true, "fallback_http_" + response.getStatusCode(), LocalDateTime.now().plusMonths(1));

@@ -247,8 +247,9 @@ public class FirebaseAnalyticsService {
                 .sum();
             totalPurchases = payments.stream().filter(p -> "SUCCESS".equals(p.getStatus())).count();
         } catch (Exception e) {
-            totalRevenue = 2490.50;
-            totalPurchases = 84;
+            // never show invented revenue when the payments cannot be read
+            totalRevenue = 0;
+            totalPurchases = 0;
         }
         inAppPurchases.put("totalRevenue", String.format("$%.2f", totalRevenue));
         inAppPurchases.put("totalPurchases", totalPurchases);

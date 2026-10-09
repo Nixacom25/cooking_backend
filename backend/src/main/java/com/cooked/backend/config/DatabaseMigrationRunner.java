@@ -37,6 +37,29 @@ public class DatabaseMigrationRunner {
         // Enums that gained values after their table was created (ddl-auto never updates CHECKs).
         syncEnumCheck("product_events", "type", com.cooked.backend.entity.ProductEventType.class);
         syncEnumCheck("cost_entries", "category", com.cooked.backend.entity.CostCategory.class);
+        markReceiptReplayPayments();
+    }
+
+    /**
+     * Receipt re-verification (iap_ rows) used to log a new payment each time the app opened. Marks those
+     * extra rows DUPLICATE (status only, reversible) so revenue counts each purchase once: all of them when
+     * RevenueCat already recorded the user's purchase (rc_ row), otherwise every one but the first.
+     * Idempotent: rows already marked are not SUCCESS any more.
+     */
+    public int markReceiptReplayPayments() {
+        try {
+            int n = jdbc.update("UPDATE subscription_payments SET status = 'DUPLICATE' "
+                    + "WHERE LEFT(stripe_payment_id, 4) = 'iap_' AND UPPER(status) = 'SUCCESS' AND ("
+                    + " EXISTS (SELECT 1 FROM subscription_payments r WHERE r.user_id = subscription_payments.user_id"
+                    + "   AND LEFT(r.stripe_payment_id, 3) = 'rc_' AND UPPER(r.status) = 'SUCCESS')"
+                    + " OR id <> (SELECT p.id FROM subscription_payments p WHERE p.user_id = subscription_payments.user_id"
+                    + "   AND LEFT(p.stripe_payment_id, 4) = 'iap_' ORDER BY p.created_at, p.id LIMIT 1))");
+            if (n > 0) log.info("[Migration] {} repeated receipt payments marked DUPLICATE", n);
+            return n;
+        } catch (Exception e) {
+            log.warn("[Migration] Could not mark repeated receipt payments: {}", e.getMessage());
+            return 0;
+        }
     }
 
     /**
