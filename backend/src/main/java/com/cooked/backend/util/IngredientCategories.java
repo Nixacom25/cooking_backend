@@ -1,5 +1,7 @@
 package com.cooked.backend.util;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +71,7 @@ public final class IngredientCategories {
 
     public static String guess(String key) {
         if (key == null || key.isBlank()) return OTHER;
-        Set<String> tokens = Set.of(key.split("_"));
+        Set<String> tokens = new HashSet<>(Arrays.asList(key.split("_"))); // words can repeat ("half_and_half")
         String padded = "_" + key + "_";
         for (Map.Entry<String, List<String>> rule : RULES.entrySet()) {
             for (String word : rule.getValue()) {

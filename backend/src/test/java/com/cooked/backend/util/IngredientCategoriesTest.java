@@ -23,5 +23,7 @@ class IngredientCategoriesTest {
         assertEquals("Nuts & Seeds", of("Peanut butter"));
         assertEquals("Common Spices", of("Nététou"));
         assertEquals("Other", of("Fufu"));
+        assertEquals("Other", of("Half and half"));
+        assertEquals("Dairy", of("Milk, whole milk"));
     }
 }
