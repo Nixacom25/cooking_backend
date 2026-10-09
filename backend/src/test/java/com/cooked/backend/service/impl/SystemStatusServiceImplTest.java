@@ -34,4 +34,17 @@ class SystemStatusServiceImplTest {
         brevo.setConfigured(false);
         assertEquals("NOT_CONFIGURED", SystemStatusServiceImpl.integration("Email", brevo).status());
     }
+
+    @Test
+    void samplesAreThrottledAndCapped() {
+        SystemStatusServiceImpl svc = new SystemStatusServiceImpl(null, null, null, null, null, null);
+        java.time.LocalDateTime t = java.time.LocalDateTime.of(2026, 10, 9, 12, 0);
+        assertEquals(1, svc.sample(t, 40, 0).size());
+        assertEquals(1, svc.sample(t.plusSeconds(5), 41, 1).size()); // too soon
+        assertEquals(2, svc.sample(t.plusSeconds(25), 42, 2).size());
+        for (int i = 2; i < 50; i++) svc.sample(t.plusSeconds(25L * i), 50, 0);
+        var all = svc.sample(t.plusHours(1), 60, 0);
+        assertEquals(SystemStatusServiceImpl.MAX_SAMPLES, all.size());
+        assertEquals(60, all.get(all.size() - 1).dbLatencyMs());
+    }
 }

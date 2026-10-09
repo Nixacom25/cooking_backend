@@ -53,6 +53,10 @@ public class SystemStatusServiceImpl implements SystemStatusService {
 
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(4)).followRedirects(HttpClient.Redirect.NORMAL).build();
     private final Map<String, Probe> probes = new ConcurrentHashMap<>();
+    /** Last checks, for the DB latency and AI queue sparklines (this instance only, reset on restart). */
+    private final java.util.Deque<SystemStatusResponse.Sample> samples = new java.util.ArrayDeque<>();
+    static final int MAX_SAMPLES = 30;
+    static final long SAMPLE_EVERY_MS = 20_000;
 
     record Probe(long at, boolean ok, int ms, String detail) {
     }
@@ -82,7 +86,18 @@ public class SystemStatusServiceImpl implements SystemStatusService {
         services.add(probe("Markhor AI server", aiBaseUrl));
         services.add(probe("Image CDN", IMAGE_CDN));
         services.add(probe("Website", WEBSITE));
-        return new SystemStatusResponse(now, snap, metrics.series(15), db, workerFailures, services, incidents.open());
+        return new SystemStatusResponse(now, snap, metrics.series(15), db, workerFailures, services, incidents.open(),
+                sample(now, db, snap.aiInFlight()));
+    }
+
+    /** Adds this check to the history (at most one every 20 s) and returns the history, oldest first. */
+    synchronized List<SystemStatusResponse.Sample> sample(LocalDateTime now, Integer db, int aiInFlight) {
+        SystemStatusResponse.Sample last = samples.peekLast();
+        if (last == null || java.time.Duration.between(last.at(), now).toMillis() >= SAMPLE_EVERY_MS) {
+            samples.addLast(new SystemStatusResponse.Sample(now, db, aiInFlight));
+            while (samples.size() > MAX_SAMPLES) samples.removeFirst();
+        }
+        return List.copyOf(samples);
     }
 
     Integer dbLatency() {

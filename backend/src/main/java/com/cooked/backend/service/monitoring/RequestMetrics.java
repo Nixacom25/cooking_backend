@@ -125,7 +125,7 @@ public class RequestMetrics {
     }
 
     /** One minute of the series (oldest first). */
-    public record Minute(long minute, int requests, int errors, Integer p95Ms) {
+    public record Minute(long minute, int requests, int errors, Integer p50Ms, Integer p95Ms) {
     }
 
     /** Last [minutes] minutes, one point per minute (empty minutes included). */
@@ -139,12 +139,12 @@ public class RequestMetrics {
         for (long m = nowMinute - span + 1; m <= nowMinute; m++) {
             Bucket b = buckets[(int) (m % MINUTES)];
             if (b.minute != m) {
-                out.add(new Minute(m, 0, 0, null));
+                out.add(new Minute(m, 0, 0, null, null));
                 continue;
             }
             int[] d = Arrays.copyOf(b.durations, b.sampled);
             Arrays.sort(d);
-            out.add(new Minute(m, b.count, b.errors, percentile(d, 95)));
+            out.add(new Minute(m, b.count, b.errors, percentile(d, 50), percentile(d, 95)));
         }
         return out;
     }

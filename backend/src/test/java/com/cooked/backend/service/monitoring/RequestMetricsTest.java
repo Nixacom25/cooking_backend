@@ -34,6 +34,7 @@ class RequestMetricsTest {
         assertEquals(2, series.get(0).requests());
         assertEquals(1, series.get(0).errors());
         assertEquals(30, series.get(0).p95Ms());
+        assertEquals(10, series.get(0).p50Ms());
         assertEquals(0, series.get(1).requests());
         assertNull(series.get(1).p95Ms());
         assertEquals(1, series.get(2).requests());

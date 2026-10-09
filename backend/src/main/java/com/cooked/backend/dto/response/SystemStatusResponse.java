@@ -13,9 +13,14 @@ import java.util.List;
  * @param workerFailures24h failed scheduled jobs in the last 24 h
  * @param services         one row per monitored service
  * @param openIncidents    incidents declared and not resolved
+ * @param samples          recent checks of the database latency and AI queue (oldest first, about 20 s apart)
  */
 public record SystemStatusResponse(LocalDateTime at, RequestMetrics.Snapshot metrics, List<RequestMetrics.Minute> lastMinutes,
-                                   Integer dbLatencyMs, long workerFailures24h, List<Service> services, List<IncidentResponse> openIncidents) {
+                                   Integer dbLatencyMs, long workerFailures24h, List<Service> services, List<IncidentResponse> openIncidents,
+                                   List<Sample> samples) {
+
+    public record Sample(LocalDateTime at, Integer dbLatencyMs, int aiInFlight) {
+    }
 
     /** status: UP, DEGRADED, DOWN, IDLE (no traffic) or NOT_CONFIGURED. */
     public record Service(String name, String status, String detail) {
