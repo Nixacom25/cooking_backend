@@ -166,4 +166,17 @@ public class AdminRevenueServiceImpl implements AdminRevenueService {
     static double round(double v) {
         return Math.round(v * 100.0) / 100.0;
     }
+
+    @Override
+    @Transactional
+    public com.cooked.backend.dto.response.PaymentStatusResponse setPaymentStatus(java.util.UUID id, String status, String adminEmail) {
+        com.cooked.backend.entity.SubscriptionPayment p = paymentRepository.findById(id)
+                .orElseThrow(() -> new com.cooked.backend.exception.ResourceNotFoundException("Payment not found"));
+        String previous = p.getStatus();
+        p.setStatus(status);
+        paymentRepository.save(p);
+        org.slf4j.LoggerFactory.getLogger(AdminRevenueServiceImpl.class)
+                .info("Payment {} status {} -> {} by {}", id, previous, status, adminEmail);
+        return new com.cooked.backend.dto.response.PaymentStatusResponse(id, previous, status);
+    }
 }

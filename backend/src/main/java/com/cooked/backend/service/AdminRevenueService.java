@@ -11,4 +11,7 @@ public interface AdminRevenueService {
      * and an 8-month series. Field names keep their historic "30" suffix.
      */
     RevenueSummaryResponse getSummary(int days);
+
+    /** Corrects a recorded payment (e.g. a TestFlight renewal marked SANDBOX) so revenue counts it right. */
+    com.cooked.backend.dto.response.PaymentStatusResponse setPaymentStatus(java.util.UUID id, String status, String adminEmail);
 }

@@ -8,6 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,5 +29,13 @@ public class AdminRevenueController {
     @GetMapping("/summary")
     public ResponseEntity<RevenueSummaryResponse> summary(@RequestParam(defaultValue = "30") int days) {
         return ResponseEntity.ok(adminRevenueService.getSummary(days));
+    }
+
+    @Operation(summary = "Correct a payment's status (SUCCESS counts as revenue; SANDBOX, DUPLICATE, REFUNDED, FAILED do not)")
+    @PatchMapping("/payments/{id}/status")
+    public ResponseEntity<com.cooked.backend.dto.response.PaymentStatusResponse> setPaymentStatus(
+            @PathVariable java.util.UUID id, @jakarta.validation.Valid @RequestBody com.cooked.backend.dto.request.PaymentStatusRequest body,
+            org.springframework.security.core.Authentication auth) {
+        return ResponseEntity.ok(adminRevenueService.setPaymentStatus(id, body.status(), auth.getName()));
     }
 }

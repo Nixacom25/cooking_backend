@@ -115,4 +115,18 @@ class AdminRevenueServiceImplTest {
         assertNull(s.getLtv());
         assertEquals(0.0, s.getMrr());
     }
+
+    @Test
+    void paymentStatusCanBeCorrected() {
+        java.util.UUID id = java.util.UUID.randomUUID();
+        com.cooked.backend.entity.SubscriptionPayment p = new com.cooked.backend.entity.SubscriptionPayment();
+        p.setStatus("SUCCESS");
+        org.mockito.Mockito.when(paymentRepository.findById(id)).thenReturn(java.util.Optional.of(p));
+        var r = service.setPaymentStatus(id, "SANDBOX", "admin@x.com");
+        assertEquals("SUCCESS", r.previousStatus());
+        assertEquals("SANDBOX", p.getStatus());
+        org.mockito.Mockito.verify(paymentRepository).save(p);
+        org.junit.jupiter.api.Assertions.assertThrows(com.cooked.backend.exception.ResourceNotFoundException.class,
+                () -> service.setPaymentStatus(java.util.UUID.randomUUID(), "SANDBOX", "admin@x.com"));
+    }
 }
