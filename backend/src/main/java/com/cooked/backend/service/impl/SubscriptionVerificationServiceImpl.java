@@ -97,6 +97,7 @@ public class SubscriptionVerificationServiceImpl implements SubscriptionVerifica
             sub.setStatus(premium.trial() ? SubscriptionStatus.TRIAL : SubscriptionStatus.ACTIVE);
             // endDate is NOT NULL; a lifetime entitlement has no expiry.
             sub.setEndDate(expiresAt != null ? expiresAt : LocalDateTime.now().plusYears(100));
+            if (premium.purchasedAt() != null) sub.setStartDate(StoreDates.toLocal(premium.purchasedAt()));
             if (premium.productId() != null) sub.setIsYearly(yearly);
             userSubscriptionRepository.save(sub);
         }

@@ -19,6 +19,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Map;
 import java.util.Optional;
 import com.cooked.backend.entity.GiftPlan;
+import com.cooked.backend.entity.UserSubscription;
 import com.cooked.backend.service.GiftService;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,6 +32,7 @@ class RevenueCatWebhookControllerTest {
     private PushNotificationService pushNotificationService;
     private SubscriptionPaymentRepository subscriptionPaymentRepository;
     private GiftService giftService;
+    private com.cooked.backend.repository.UserSubscriptionRepository userSubscriptionRepository;
     private RevenueCatWebhookController controller;
 
     @BeforeEach
@@ -40,8 +42,9 @@ class RevenueCatWebhookControllerTest {
         pushNotificationService = mock(PushNotificationService.class);
         subscriptionPaymentRepository = mock(SubscriptionPaymentRepository.class);
         giftService = mock(GiftService.class);
+        userSubscriptionRepository = mock(com.cooked.backend.repository.UserSubscriptionRepository.class);
         controller = new RevenueCatWebhookController(userRepository, emailService, pushNotificationService,
-                subscriptionPaymentRepository, giftService);
+                subscriptionPaymentRepository, giftService, userSubscriptionRepository);
     }
 
     @Test
@@ -326,5 +329,67 @@ class RevenueCatWebhookControllerTest {
         ResponseEntity<?> response = controller.handleWebhook(null, payload);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(giftService).voidForRefund("tx_gift_1");
+    }
+
+    private User clientWithRecord(UserSubscription sub) {
+        User user = User.builder()
+                .id(java.util.UUID.randomUUID())
+                .email("payer@cookedapp.com")
+                .role(Role.CLIENT)
+                .status(Status.ACTIVE)
+                .subscriptionStatus(SubscriptionStatus.ACTIVE)
+                .build();
+        when(userRepository.findByEmail("payer@cookedapp.com")).thenReturn(Optional.of(user));
+        when(userSubscriptionRepository.findByUserId(user.getId())).thenReturn(Optional.of(sub));
+        return user;
+    }
+
+    @Test
+    void yearlyTrialMarksRecordYearlyFromDayOne() {
+        UserSubscription sub = new UserSubscription();
+        sub.setStatus(SubscriptionStatus.TRIAL);
+        sub.setIsYearly(false);
+        User user = clientWithRecord(sub);
+        long expires = java.time.Instant.parse("2026-10-02T05:23:44Z").toEpochMilli();
+
+        controller.handleWebhook(null, Map.of("event", Map.of(
+                "type", "INITIAL_PURCHASE", "app_user_id", "payer@cookedapp.com",
+                "product_id", "yearly_sub", "period_type", "TRIAL",
+                "expiration_at_ms", expires, "purchased_at_ms", expires - 3 * 86_400_000L)));
+
+        assertEquals(SubscriptionStatus.TRIAL, user.getSubscriptionStatus());
+        assertTrue(sub.getIsYearly());
+        assertEquals(SubscriptionStatus.TRIAL, sub.getStatus());
+        assertNotNull(sub.getStartDate());
+        assertEquals(user.getSubscriptionExpiresAt(), sub.getEndDate());
+    }
+
+    @Test
+    void cancellingAutoRenewKeepsPaidAccess() {
+        UserSubscription sub = new UserSubscription();
+        sub.setStatus(SubscriptionStatus.ACTIVE);
+        User user = clientWithRecord(sub);
+
+        controller.handleWebhook(null, Map.of("event", Map.of(
+                "type", "CANCELLATION", "app_user_id", "payer@cookedapp.com", "product_id", "yearly_sub",
+                "expiration_at_ms", System.currentTimeMillis() + 30L * 86_400_000L)));
+
+        assertEquals(SubscriptionStatus.ACTIVE, user.getSubscriptionStatus());
+        assertEquals(SubscriptionStatus.ACTIVE, sub.getStatus());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void refundCancellationRevokesAccess() {
+        UserSubscription sub = new UserSubscription();
+        sub.setStatus(SubscriptionStatus.ACTIVE);
+        User user = clientWithRecord(sub);
+
+        controller.handleWebhook(null, Map.of("event", Map.of(
+                "type", "CANCELLATION", "app_user_id", "payer@cookedapp.com", "product_id", "yearly_sub",
+                "expiration_at_ms", System.currentTimeMillis() - 60_000L)));
+
+        assertEquals(SubscriptionStatus.EXPIRED, user.getSubscriptionStatus());
+        assertEquals(SubscriptionStatus.EXPIRED, sub.getStatus());
     }
 }

@@ -5,8 +5,10 @@ import com.cooked.backend.entity.SubscriptionPayment;
 import com.cooked.backend.entity.SubscriptionStatus;
 import com.cooked.backend.entity.SubscriptionType;
 import com.cooked.backend.entity.User;
+import com.cooked.backend.entity.UserSubscription;
 import com.cooked.backend.repository.SubscriptionPaymentRepository;
 import com.cooked.backend.repository.UserRepository;
+import com.cooked.backend.repository.UserSubscriptionRepository;
 import com.cooked.backend.service.EmailService;
 import com.cooked.backend.service.GiftService;
 import com.cooked.backend.service.PushNotificationService;
@@ -40,6 +42,7 @@ public class RevenueCatWebhookController {
     private final PushNotificationService pushNotificationService;
     private final SubscriptionPaymentRepository subscriptionPaymentRepository;
     private final GiftService giftService;
+    private final UserSubscriptionRepository userSubscriptionRepository;
 
     @Value("${revenuecat.webhook.secret:}")
     private String webhookSecret;
@@ -59,8 +62,10 @@ public class RevenueCatWebhookController {
     public RevenueCatWebhookController(UserRepository userRepository, EmailService emailService,
             PushNotificationService pushNotificationService,
             SubscriptionPaymentRepository subscriptionPaymentRepository,
-            GiftService giftService) {
+            GiftService giftService,
+            UserSubscriptionRepository userSubscriptionRepository) {
         this.giftService = giftService;
+        this.userSubscriptionRepository = userSubscriptionRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.pushNotificationService = pushNotificationService;
@@ -148,18 +153,9 @@ public class RevenueCatWebhookController {
                 "TRANSFER".equalsIgnoreCase(eventType) ||
                 "SUBSCRIPTION_EXTENDED".equalsIgnoreCase(eventType)) {
 
-                // Check if this is a trial (INITIAL_PURCHASE may be trial)
-                Boolean isTrial = null;
-                if ("INITIAL_PURCHASE".equalsIgnoreCase(eventType)) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> product = (Map<String, Object>) event.get("product");
-                    if (product != null) {
-                        isTrial = (Boolean) product.get("is_trial");
-                    }
-                }
-
-                // Set status based on trial detection
-                if (isTrial != null && isTrial) {
+                // A free trial is still the plan the user picked (yearly or
+                // monthly); RevenueCat flags it with period_type TRIAL.
+                if (isTrial(event)) {
                     user.setSubscriptionStatus(SubscriptionStatus.TRIAL);
                 } else {
                     user.setSubscriptionStatus(SubscriptionStatus.ACTIVE);
@@ -184,6 +180,8 @@ public class RevenueCatWebhookController {
                 }
 
                 userRepository.save(user);
+                syncSubscriptionRecord(user, user.getSubscriptionStatus(), user.getSubscriptionExpiresAt(),
+                        productId, toLocal(event.get("purchased_at_ms")));
                 log.info("Activated subscription (status: {}) for user: {}", user.getSubscriptionStatus(), user.getEmail());
 
                 // Record the actual transaction so "In-App Purchases &
@@ -196,12 +194,19 @@ public class RevenueCatWebhookController {
                     recordPaymentFromEvent(event, eventType, user, productId);
                 }
 
+            } else if ("CANCELLATION".equalsIgnoreCase(eventType)
+                    && toLocal(expirationMsNum) != null && toLocal(expirationMsNum).isAfter(LocalDateTime.now())) {
+                // Auto-renew turned off: the period is paid, access stays until
+                // it ends (EXPIRATION follows). A refund comes as a
+                // CANCELLATION whose expiration is already past - handled below.
+                log.info("Auto-renew turned off for user: {} - access kept until {}", user.getEmail(), toLocal(expirationMsNum));
             } else if ("EXPIRATION".equalsIgnoreCase(eventType) || "CANCELLATION".equalsIgnoreCase(eventType) ||
                     // A pause (Google Play only) and a refund both revoke
                     // access the same way an expiration does.
                     "SUBSCRIPTION_PAUSED".equalsIgnoreCase(eventType) || "REFUND".equalsIgnoreCase(eventType)) {
                 user.setSubscriptionStatus(SubscriptionStatus.EXPIRED);
                 userRepository.save(user);
+                syncSubscriptionRecord(user, SubscriptionStatus.EXPIRED, LocalDateTime.now(), null, null);
                 log.info("Set subscription EXPIRED for user: {} (event: {})", user.getEmail(), eventType);
             } else if ("BILLING_ISSUE".equalsIgnoreCase(eventType)) {
                 String planName = productId != null && productId.toLowerCase().contains("year") ? "Yearly" : "Monthly";
@@ -223,6 +228,35 @@ public class RevenueCatWebhookController {
             log.error("Error processing RevenueCat webhook: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    private static boolean isTrial(Map<String, Object> event) {
+        if ("TRIAL".equalsIgnoreCase(String.valueOf(event.get("period_type")))) return true;
+        Object product = event.get("product");
+        return product instanceof Map<?, ?> p && Boolean.TRUE.equals(p.get("is_trial"));
+    }
+
+    private static LocalDateTime toLocal(Object epochMs) {
+        return epochMs instanceof Number n
+                ? LocalDateTime.ofInstant(Instant.ofEpochMilli(n.longValue()), ZoneId.systemDefault())
+                : null;
+    }
+
+    /**
+     * Mirrors the store state onto the subscription record the app's
+     * Subscription screen reads (/subscriptions/me): without it the record
+     * created at sign-up stayed "monthly, ends after the trial" forever.
+     */
+    private void syncSubscriptionRecord(User user, SubscriptionStatus status, LocalDateTime endDate,
+                                        String productId, LocalDateTime startDate) {
+        if (user.getId() == null) return;
+        UserSubscription sub = userSubscriptionRepository.findByUserId(user.getId()).orElse(null);
+        if (sub == null || sub.getStatus() == SubscriptionStatus.INFINITE) return;
+        sub.setStatus(status);
+        if (endDate != null) sub.setEndDate(endDate);
+        if (startDate != null) sub.setStartDate(startDate);
+        if (productId != null) sub.setIsYearly(productId.toLowerCase().contains("year"));
+        userSubscriptionRepository.save(sub);
     }
 
     /**

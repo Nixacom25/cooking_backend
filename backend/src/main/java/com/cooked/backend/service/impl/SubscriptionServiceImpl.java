@@ -90,8 +90,17 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public UserSubscription getMySubscription(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        return userSubscriptionRepository.findByUserId(user.getId())
+        UserSubscription sub = userSubscriptionRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("No subscription found for this user"));
+        boolean active = (sub.getStatus() == SubscriptionStatus.ACTIVE || sub.getStatus() == SubscriptionStatus.TRIAL
+                || sub.getStatus() == SubscriptionStatus.PREMIUM || sub.getStatus() == SubscriptionStatus.INFINITE)
+                && (sub.getEndDate() == null || sub.getEndDate().isAfter(LocalDateTime.now()));
+        // Don't show a payer "EXPIRED" because a webhook was missed: the
+        // re-check refreshes this record from RevenueCat.
+        if (!active && subscriptionVerificationService.refreshFromStore(user, java.time.Duration.ofSeconds(60))) {
+            return userSubscriptionRepository.findByUserId(user.getId()).orElse(sub);
+        }
+        return sub;
     }
 
     @Override

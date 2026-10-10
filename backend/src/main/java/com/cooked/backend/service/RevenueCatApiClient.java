@@ -63,7 +63,7 @@ public class RevenueCatApiClient {
     }
 
     /** The premium entitlement as RevenueCat sees it. expiresAt null = lifetime. */
-    public record PremiumEntitlement(String productId, Instant expiresAt, boolean trial) {
+    public record PremiumEntitlement(String productId, Instant expiresAt, boolean trial, Instant purchasedAt) {
         public boolean isActiveAt(Instant now) {
             return expiresAt == null || expiresAt.isAfter(now);
         }
@@ -111,7 +111,8 @@ public class RevenueCatApiClient {
         boolean trial = productId != null
                 && "trial".equalsIgnoreCase(subscriber.path("subscriptions").path(productId).path("period_type").asText(""));
 
-        PremiumEntitlement premium = new PremiumEntitlement(productId, effective, trial);
+        PremiumEntitlement premium = new PremiumEntitlement(productId, effective, trial,
+                parseInstant(ent.path("purchase_date")));
         return premium.isActiveAt(now) ? Optional.of(premium) : Optional.empty();
     }
 

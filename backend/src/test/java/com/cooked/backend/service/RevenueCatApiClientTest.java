@@ -21,13 +21,15 @@ class RevenueCatApiClientTest {
     void activeYearlyAfterTrial() throws Exception {
         JsonNode body = json("""
                 {"subscriber":{"entitlements":{"premium":{"expires_date":"2027-10-02T05:23:44Z",
-                  "grace_period_expires_date":null,"product_identifier":"cooked_yearly"}},
+                  "grace_period_expires_date":null,"product_identifier":"cooked_yearly",
+                  "purchase_date":"2026-10-02T05:23:44Z"}},
                  "subscriptions":{"cooked_yearly":{"period_type":"normal"}}}}""");
         Optional<RevenueCatApiClient.PremiumEntitlement> p = RevenueCatApiClient.parsePremium(body, "premium", NOW);
         assertTrue(p.isPresent());
         assertEquals("cooked_yearly", p.get().productId());
         assertEquals(Instant.parse("2027-10-02T05:23:44Z"), p.get().expiresAt());
         assertFalse(p.get().trial());
+        assertEquals(Instant.parse("2026-10-02T05:23:44Z"), p.get().purchasedAt());
     }
 
     @Test

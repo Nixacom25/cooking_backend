@@ -51,9 +51,11 @@ class SubscriptionVerificationServiceImplTest {
         Instant expires = Instant.parse("2027-10-02T05:23:44Z");
         UserSubscription sub = new UserSubscription();
         sub.setStatus(SubscriptionStatus.EXPIRED);
+        sub.setIsYearly(false);
         when(revenueCatApiClient.isConfigured()).thenReturn(true);
         when(revenueCatApiClient.fetchActivePremium(user.getId().toString()))
-                .thenReturn(Optional.of(new PremiumEntitlement("cooked_yearly", expires, false)));
+                .thenReturn(Optional.of(new PremiumEntitlement("yearly_sub", expires, false,
+                        Instant.parse("2026-10-02T05:23:44Z"))));
         when(userSubscriptionRepository.findByUserId(user.getId())).thenReturn(Optional.of(sub));
 
         assertTrue(service.refreshFromStore(user, Duration.ofSeconds(60)));
@@ -64,6 +66,8 @@ class SubscriptionVerificationServiceImplTest {
         assertEquals(SubscriptionType.YEARLY, user.getSubscriptionType());
         assertEquals(SubscriptionStatus.ACTIVE, sub.getStatus());
         assertEquals(expected, sub.getEndDate());
+        assertTrue(sub.getIsYearly());
+        assertEquals(LocalDateTime.ofInstant(Instant.parse("2026-10-02T05:23:44Z"), ZoneId.systemDefault()), sub.getStartDate());
         verify(userRepository).save(user);
         verify(userSubscriptionRepository).save(sub);
     }
