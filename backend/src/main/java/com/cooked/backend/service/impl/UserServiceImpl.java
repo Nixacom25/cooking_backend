@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import com.cooked.backend.service.CloudinaryService;
 import com.cooked.backend.service.EmailService;
 
+import com.cooked.backend.service.SubscriptionVerificationService;
 import com.cooked.backend.util.StoreDates;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -460,17 +461,23 @@ public class UserServiceImpl implements UserService {
             // almost immediately; other syncs are throttled.
             boolean claimsActive = Boolean.TRUE.equals(isActive);
             Duration minInterval = claimsActive && !isPremium(user) ? Duration.ofSeconds(5) : Duration.ofSeconds(60);
-            boolean verified = subscriptionVerificationService.refreshFromStore(user, minInterval);
-            if (claimsActive && !verified && !isPremium(user)) {
-                log.warn("Sync for {} claims an active subscription RevenueCat doesn't confirm", email);
+            SubscriptionVerificationService.Result result = subscriptionVerificationService.verify(user, minInterval);
+            if (result != SubscriptionVerificationService.Result.UNAVAILABLE) {
+                if (claimsActive && result != SubscriptionVerificationService.Result.CONFIRMED && !isPremium(user)) {
+                    log.warn("Sync for {} claims an active subscription RevenueCat doesn't confirm ({})", email, result);
+                }
+                userRepository.save(user);
+                log.info("Synced subscription data for user: {} (RevenueCat: {})", email, result);
+                return;
             }
-            userRepository.save(user);
-            log.info("Synced subscription data for user: {} (verified with RevenueCat: {})", email, verified);
-            return;
+            // RevenueCat couldn't answer (outage, wrong key): don't lock a
+            // payer out for our failure - fall back to what the app reports.
+            log.error("RevenueCat unavailable - falling back to app-reported subscription for {}", email);
+        } else {
+            log.warn("RevenueCat secret key not configured - trusting app-reported subscription for {}", email);
         }
 
-        // Fallback when REVENUECAT_SECRET_API_KEY isn't set: client-reported data.
-        log.warn("RevenueCat secret key not configured - trusting app-reported subscription for {}", email);
+        // Fallback: client-reported data.
         if (isActive != null && isActive) {
             user.setSubscriptionStatus(SubscriptionStatus.ACTIVE);
 

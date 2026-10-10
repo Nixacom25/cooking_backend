@@ -44,13 +44,13 @@ public class SubscriptionVerificationServiceImpl implements SubscriptionVerifica
 
     @Override
     @Transactional
-    public boolean refreshFromStore(User user, Duration minInterval) {
-        if (user == null || user.getId() == null || !isAvailable()) return false;
+    public Result verify(User user, Duration minInterval) {
+        if (user == null || user.getId() == null || !isAvailable()) return Result.SKIPPED;
 
         Instant now = Instant.now();
         Instant previous = lastCheck.get(user.getId());
         if (previous != null && previous.plus(minInterval).isAfter(now)) {
-            return false;
+            return Result.SKIPPED;
         }
         if (lastCheck.size() > MAX_TRACKED_USERS) lastCheck.clear();
         lastCheck.put(user.getId(), now);
@@ -62,18 +62,20 @@ public class SubscriptionVerificationServiceImpl implements SubscriptionVerifica
             premium = revenueCatApiClient.fetchActivePremium(user.getId().toString());
         } catch (Exception e) {
             log.error("[SubVerify] RevenueCat lookup failed for {}: {}", user.getEmail(), e.getMessage());
-            return false;
+            // Don't keep a failed lookup in the throttle: retry on next request.
+            lastCheck.remove(user.getId());
+            return Result.UNAVAILABLE;
         }
 
         if (premium.isEmpty()) {
             log.info("[SubVerify] RevenueCat: no active premium for {}", user.getEmail());
-            return false;
+            return Result.NOT_ENTITLED;
         }
 
         apply(user, premium.get());
         log.info("[SubVerify] RevenueCat confirmed premium for {} (product={}, expires={})",
                 user.getEmail(), premium.get().productId(), user.getSubscriptionExpiresAt());
-        return true;
+        return Result.CONFIRMED;
     }
 
     private void apply(User user, PremiumEntitlement premium) {

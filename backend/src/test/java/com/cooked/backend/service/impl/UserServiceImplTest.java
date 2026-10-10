@@ -25,6 +25,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -130,5 +131,37 @@ public class UserServiceImplTest {
 
         assertNotNull(response);
         verify(userRepository).delete(dummyUser);
+    }
+
+    private java.util.Map<String, Object> appSaysYearlyActive() {
+        return java.util.Map.of("isActive", true, "expirationDate", "2027-10-02T05:23:44Z", "productId", "yearly_sub");
+    }
+
+    @Test
+    void syncFallsBackToAppDataWhenRevenueCatUnavailable() {
+        dummyUser.setSubscriptionStatus(com.cooked.backend.entity.SubscriptionStatus.EXPIRED);
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(dummyUser));
+        when(subscriptionVerificationService.isAvailable()).thenReturn(true);
+        when(subscriptionVerificationService.verify(eq(dummyUser), any()))
+                .thenReturn(com.cooked.backend.service.SubscriptionVerificationService.Result.UNAVAILABLE);
+
+        userService.syncSubscription("test@example.com", appSaysYearlyActive());
+
+        assertEquals(com.cooked.backend.entity.SubscriptionStatus.ACTIVE, dummyUser.getSubscriptionStatus());
+        assertEquals(java.time.LocalDateTime.ofInstant(java.time.Instant.parse("2027-10-02T05:23:44Z"),
+                java.time.ZoneId.systemDefault()), dummyUser.getSubscriptionExpiresAt());
+    }
+
+    @Test
+    void syncIgnoresAppClaimWhenRevenueCatSaysNotEntitled() {
+        dummyUser.setSubscriptionStatus(com.cooked.backend.entity.SubscriptionStatus.EXPIRED);
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(dummyUser));
+        when(subscriptionVerificationService.isAvailable()).thenReturn(true);
+        when(subscriptionVerificationService.verify(eq(dummyUser), any()))
+                .thenReturn(com.cooked.backend.service.SubscriptionVerificationService.Result.NOT_ENTITLED);
+
+        userService.syncSubscription("test@example.com", appSaysYearlyActive());
+
+        assertEquals(com.cooked.backend.entity.SubscriptionStatus.EXPIRED, dummyUser.getSubscriptionStatus());
     }
 }

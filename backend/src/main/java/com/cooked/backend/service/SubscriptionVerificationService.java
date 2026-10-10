@@ -10,6 +10,18 @@ import java.time.Duration;
  */
 public interface SubscriptionVerificationService {
 
+    /** Outcome of a store lookup. */
+    enum Result {
+        /** RevenueCat confirms an active entitlement (written to the user). */
+        CONFIRMED,
+        /** RevenueCat answered: no active entitlement. */
+        NOT_ENTITLED,
+        /** RevenueCat couldn't answer (outage, bad key...): unknown. */
+        UNAVAILABLE,
+        /** Skipped: checked too recently, or verification not configured. */
+        SKIPPED
+    }
+
     /** True when the store can be queried (RevenueCat secret key configured). */
     boolean isAvailable();
 
@@ -17,10 +29,13 @@ public interface SubscriptionVerificationService {
      * Asks RevenueCat whether the user has an active premium entitlement and,
      * if so, writes it to the user (status, expiry, plan). Never downgrades:
      * losing access is driven by webhooks and the stored expiry date.
-     * Calls for the same user closer than {@code minInterval} are skipped and
-     * return false, so a client can't hammer RevenueCat through us.
-     *
-     * @return true if the store confirms an active entitlement
+     * Calls for the same user closer than {@code minInterval} are SKIPPED,
+     * so a client can't hammer RevenueCat through us.
      */
-    boolean refreshFromStore(User user, Duration minInterval);
+    Result verify(User user, Duration minInterval);
+
+    /** @return true if the store confirms an active entitlement */
+    default boolean refreshFromStore(User user, Duration minInterval) {
+        return verify(user, minInterval) == Result.CONFIRMED;
+    }
 }

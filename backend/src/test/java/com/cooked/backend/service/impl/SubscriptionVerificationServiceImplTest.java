@@ -86,7 +86,11 @@ class SubscriptionVerificationServiceImplTest {
         when(revenueCatApiClient.isConfigured()).thenReturn(true);
         when(revenueCatApiClient.fetchActivePremium(any())).thenThrow(new IllegalStateException("down"));
 
-        assertFalse(service.refreshFromStore(user, Duration.ofSeconds(60)));
+        assertEquals(com.cooked.backend.service.SubscriptionVerificationService.Result.UNAVAILABLE,
+                service.verify(user, Duration.ofSeconds(60)));
+        // A failed lookup isn't throttled: the next request retries.
+        service.verify(user, Duration.ofSeconds(60));
+        verify(revenueCatApiClient, times(2)).fetchActivePremium(any());
         verify(userRepository, never()).save(any());
     }
 
