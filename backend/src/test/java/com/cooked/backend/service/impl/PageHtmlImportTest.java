@@ -24,7 +24,7 @@ class PageHtmlImportTest {
     private final RecipeRepository recipeRepository = mock(RecipeRepository.class);
     private final RecipeNutritionService nutrition = mock(RecipeNutritionService.class);
     private final MarkhorAiServiceImpl service =
-            new MarkhorAiServiceImpl(null, new ObjectMapper(), null, null, recipeRepository, null, nutrition);
+            new MarkhorAiServiceImpl(null, new ObjectMapper(), null, null, recipeRepository, null, nutrition, null);
 
     private static final String STEPS = "\"recipeInstructions\":[{\"@type\":\"HowToStep\",\"text\":\"Mix everything well.\"}]";
 

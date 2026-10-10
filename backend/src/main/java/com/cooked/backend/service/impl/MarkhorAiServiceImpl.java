@@ -63,6 +63,7 @@ public class MarkhorAiServiceImpl implements AiService {
     private final com.cooked.backend.repository.RecipeRepository recipeRepository;
     private final com.cooked.backend.repository.IngredientRepository ingredientRepository;
     private final com.cooked.backend.service.RecipeNutritionService nutritionService;
+    private final com.cooked.backend.service.WebSearchApiClient webSearchApi;
 
     @Value("${ai.api.base-url:https://recipe.markhorsystems.com}")
     private String baseUrl;
@@ -82,6 +83,10 @@ public class MarkhorAiServiceImpl implements AiService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         verifyAiAccess(user);
+
+        // Official search API first: scraping is blocked from our server IP.
+        List<Map<String, String>> apiResults = webSearchApi.search(query);
+        if (!apiResults.isEmpty()) return apiResults;
 
         // All engines in parallel, first non-empty answer wins, hard 12 s
         // budget: the app gives up after 30 s, and engines run one after the
