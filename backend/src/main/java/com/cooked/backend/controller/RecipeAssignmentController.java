@@ -102,6 +102,14 @@ public class RecipeAssignmentController {
     }
 
 
+    @Operation(summary = "Share of each correction reason over the last N days (intern recipe guidelines)")
+    @GetMapping("/correction-reasons")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
+    public ResponseEntity<java.util.List<com.cooked.backend.dto.response.CorrectionReasonShare>> correctionReasons(
+            @RequestParam(defaultValue = "90") int days) {
+        return ResponseEntity.ok(assignmentService.correctionReasons(days));
+    }
+
     @Operation(summary = "Get assignments for logged-in editor")
     @GetMapping("/my-assignments")
     @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")

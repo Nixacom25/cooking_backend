@@ -70,6 +70,14 @@ public class SupportTicket {
     /** When the team first replied (null = no reply yet). */
     private LocalDateTime firstResponseAt;
 
+    /** Intern messages: the assignment the question is about (optional). */
+    @Column(name = "related_assignment_id")
+    private UUID relatedAssignmentId;
+
+    /** Intern messages: optional uploaded screenshot or file (Cloudinary URL). */
+    @Column(name = "attachment_url", columnDefinition = "TEXT")
+    private String attachmentUrl;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

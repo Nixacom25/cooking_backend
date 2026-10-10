@@ -16,6 +16,9 @@ public interface RecipeAssignmentService {
     Page<RecipeAssignmentResponse> getAllAssignments(Pageable pageable);
     Page<RecipeAssignmentResponse> getAssignmentsByStatus(AssignmentStatus status, Pageable pageable);
     Page<RecipeAssignmentResponse> getMyAssignments(String editorEmail, Pageable pageable);
+
+    /** Share of each correction reason over the last {@code days} days (Recipe guidelines). */
+    java.util.List<com.cooked.backend.dto.response.CorrectionReasonShare> correctionReasons(int days);
     RecipeAssignmentResponse updateAssignmentStatus(UUID assignmentId, String newStatus, String userEmail);
     RecipeAssignmentResponse submitForValidation(UUID assignmentId, String editorEmail);
     RecipeAssignmentResponse validateAssignment(UUID assignmentId, String adminEmail);

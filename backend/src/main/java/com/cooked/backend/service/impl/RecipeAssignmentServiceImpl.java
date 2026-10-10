@@ -227,8 +227,36 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
     public Page<RecipeAssignmentResponse> getMyAssignments(String editorEmail, Pageable pageable) {
         User editor = userRepository.findByEmail(editorEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        return assignmentRepository.findAllByAssignedToUserIdOrderByAssignedDateDesc(editor.getId(), pageable)
+        Page<RecipeAssignmentResponse> page = assignmentRepository.findAllByAssignedToUserIdOrderByAssignedDateDesc(editor.getId(), pageable)
                 .map(this::mapToResponse);
+        // "Validated by" for the intern's Completed screen, in one query.
+        java.util.List<UUID> validated = page.getContent().stream()
+                .filter(r -> r.getStatus() == com.cooked.backend.entity.AssignmentStatus.VALIDATED
+                        || r.getStatus() == com.cooked.backend.entity.AssignmentStatus.COMPLETED)
+                .map(RecipeAssignmentResponse::getId).toList();
+        if (!validated.isEmpty()) {
+            java.util.Map<UUID, String> by = new java.util.HashMap<>();
+            for (RecipeAssignmentHistoryRepository.Validator v : historyRepository.findValidators(validated)) {
+                String name = ((v.getFirstname() == null ? "" : v.getFirstname()) + " "
+                        + (v.getLastname() == null || v.getLastname().isBlank() ? "" : v.getLastname().charAt(0) + ".")).trim();
+                by.put(v.getAssignmentId(), name.isEmpty() ? v.getEmail() : name); // latest wins
+            }
+            page.getContent().forEach(r -> r.setValidatedBy(by.get(r.getId())));
+        }
+        return page;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<com.cooked.backend.dto.response.CorrectionReasonShare> correctionReasons(int days) {
+        int d = Math.max(1, Math.min(days, 365));
+        java.util.List<RecipeAssignmentHistoryRepository.ReasonCount> rows =
+                historyRepository.countCorrectionReasonsSince(java.time.LocalDateTime.now().minusDays(d));
+        long total = rows.stream().mapToLong(r -> r.getTotal() == null ? 0 : r.getTotal()).sum();
+        return rows.stream().filter(r -> r.getReason() != null)
+                .map(r -> new com.cooked.backend.dto.response.CorrectionReasonShare(r.getReason(), r.getTotal(),
+                        total == 0 ? 0 : Math.round(1000.0 * r.getTotal() / total) / 10.0))
+                .toList();
     }
 
     @Override

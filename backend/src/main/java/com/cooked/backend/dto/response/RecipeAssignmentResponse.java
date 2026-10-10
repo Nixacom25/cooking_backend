@@ -23,6 +23,8 @@ public class RecipeAssignmentResponse {
     private LocalDateTime completedDate;
     private LocalDateTime submittedDate;
     private LocalDateTime validatedDate;
+    /** Name of the admin who validated it (intern "Completed" screen). */
+    private String validatedBy;
     private List<String> errorCategories;
     private String feedbackComment;
     private Integer revisionCount;

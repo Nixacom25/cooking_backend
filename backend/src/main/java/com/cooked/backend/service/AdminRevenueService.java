@@ -14,4 +14,15 @@ public interface AdminRevenueService {
 
     /** Corrects a recorded payment (e.g. a TestFlight renewal marked SANDBOX) so revenue counts it right. */
     com.cooked.backend.dto.response.PaymentStatusResponse setPaymentStatus(java.util.UUID id, String status, String adminEmail);
+
+    /** Same, with the reason written to the audit log. */
+    com.cooked.backend.dto.response.PaymentStatusResponse setPaymentStatus(java.util.UUID id, String status, String reason, String adminEmail);
+
+    /**
+     * Payments screen. Period = [from, to] days when given, else the last
+     * {@code days} days; store ALL|APPLE|GOOGLE|WEB, plan ALL|YEARLY|MONTHLY,
+     * status ALL or one status, q searches name, email and transaction id.
+     */
+    com.cooked.backend.dto.response.PaymentListResponse listPayments(int days, java.time.LocalDate from, java.time.LocalDate to,
+            String store, String plan, String status, String q, int page, int size);
 }

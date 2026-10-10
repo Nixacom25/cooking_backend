@@ -76,6 +76,39 @@ public interface SubscriptionPaymentRepository extends JpaRepository<Subscriptio
             + "where upper(p.status) = 'SUCCESS' and p.createdAt >= :from group by cast(p.createdAt as LocalDate)")
     List<DayAmount> sumSuccessByDaySince(@Param("from") LocalDateTime from);
 
+    // --- Payments screen: one filter fragment shared by the page, the status
+    // tabs and the KPI aggregates. store: ALL | APPLE | GOOGLE | WEB (anything
+    // else); plan: ALL | YEARLY | MONTHLY ...; q: '' or a lower-case %pattern%.
+    String PAYMENT_FILTER = "p.createdAt >= :from and p.createdAt < :to "
+            + "and (:store = 'ALL' or (:store = 'APPLE' and upper(p.store) = 'APPLE') "
+            + "or (:store = 'GOOGLE' and upper(p.store) = 'GOOGLE') "
+            + "or (:store = 'WEB' and upper(coalesce(p.store, '')) not in ('APPLE', 'GOOGLE'))) "
+            + "and (:plan = 'ALL' or upper(p.planType) = :plan) "
+            + "and (:q = '' or lower(u.email) like :q "
+            + "or lower(concat(coalesce(u.firstname, ''), ' ', coalesce(u.lastname, ''))) like :q "
+            + "or lower(coalesce(p.stripePaymentId, '')) like :q) ";
+
+    @Query(value = "select p from SubscriptionPayment p join fetch p.user u where " + PAYMENT_FILTER
+            + "and (:status = 'ALL' or upper(p.status) = :status)",
+            countQuery = "select count(p) from SubscriptionPayment p join p.user u where " + PAYMENT_FILTER
+            + "and (:status = 'ALL' or upper(p.status) = :status)")
+    org.springframework.data.domain.Page<SubscriptionPayment> searchPayments(
+            @Param("from") LocalDateTime from, @Param("to") LocalDateTime to, @Param("store") String store,
+            @Param("plan") String plan, @Param("q") String q, @Param("status") String status,
+            org.springframework.data.domain.Pageable pageable);
+
+    /** Count and amount per status for the Payments tabs and KPIs. */
+    interface StatusTotal {
+        String getLabel();
+        Long getCount();
+        BigDecimal getAmount();
+    }
+
+    @Query("select upper(p.status) as label, count(p) as count, coalesce(sum(p.amount), 0) as amount "
+            + "from SubscriptionPayment p join p.user u where " + PAYMENT_FILTER + "group by upper(p.status)")
+    List<StatusTotal> totalsByStatus(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to,
+            @Param("store") String store, @Param("plan") String plan, @Param("q") String q);
+
     @Query("select extract(year from p.createdAt) as year, extract(month from p.createdAt) as month, "
             + "sum(p.amount) as amount from SubscriptionPayment p "
             + "where upper(p.status) = 'SUCCESS' and p.createdAt >= :from "

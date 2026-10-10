@@ -5,5 +5,7 @@ import jakarta.validation.constraints.Pattern;
 
 /** Correction of a recorded payment: only SUCCESS counts as revenue. */
 public record PaymentStatusRequest(
-        @NotBlank @Pattern(regexp = "SUCCESS|SANDBOX|DUPLICATE|REFUNDED|FAILED") String status) {
+        @NotBlank @Pattern(regexp = "SUCCESS|SANDBOX|DUPLICATE|REFUNDED|FAILED") String status,
+        /** Why the status is corrected; kept in the audit log. */
+        @jakarta.validation.constraints.Size(max = 500) String reason) {
 }

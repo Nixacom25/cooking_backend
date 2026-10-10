@@ -47,6 +47,7 @@ public class AdminRevenueServiceImpl implements AdminRevenueService {
     private final UserRepository userRepository;
     private final SubscriptionPaymentRepository paymentRepository;
     private final SubscriptionService subscriptionService;
+    private final com.cooked.backend.service.ActivityLogService activityLogService;
 
     @Override
     public RevenueSummaryResponse getSummary(int days) {
@@ -170,6 +171,12 @@ public class AdminRevenueServiceImpl implements AdminRevenueService {
     @Override
     @Transactional
     public com.cooked.backend.dto.response.PaymentStatusResponse setPaymentStatus(java.util.UUID id, String status, String adminEmail) {
+        return setPaymentStatus(id, status, null, adminEmail);
+    }
+
+    @Override
+    @Transactional
+    public com.cooked.backend.dto.response.PaymentStatusResponse setPaymentStatus(java.util.UUID id, String status, String reason, String adminEmail) {
         com.cooked.backend.entity.SubscriptionPayment p = paymentRepository.findById(id)
                 .orElseThrow(() -> new com.cooked.backend.exception.ResourceNotFoundException("Payment not found"));
         String previous = p.getStatus();
@@ -177,6 +184,82 @@ public class AdminRevenueServiceImpl implements AdminRevenueService {
         paymentRepository.save(p);
         org.slf4j.LoggerFactory.getLogger(AdminRevenueServiceImpl.class)
                 .info("Payment {} status {} -> {} by {}", id, previous, status, adminEmail);
+        // Audit trail: who changed which payment, from what to what, and why.
+        userRepository.findByEmail(adminEmail).ifPresent(admin -> {
+            String customer = p.getUser() != null ? p.getUser().getEmail() : "unknown customer";
+            String why = reason == null || reason.isBlank() ? "" : " · Reason: " + reason.trim();
+            activityLogService.logActivity(admin, "Payment status changed",
+                    previous + " → " + status + " · " + p.getAmount() + " " + CURRENCY + " · " + customer + why, id, "PAYMENT");
+        });
         return new com.cooked.backend.dto.response.PaymentStatusResponse(id, previous, status);
+    }
+
+    @Override
+    public com.cooked.backend.dto.response.PaymentListResponse listPayments(int days, LocalDate from, LocalDate to,
+            String store, String plan, String status, String q, int page, int size) {
+        LocalDateTime start;
+        LocalDateTime end;
+        if (from != null) {
+            start = from.atStartOfDay();
+            end = (to != null && !to.isBefore(from) ? to : from).plusDays(1).atStartOfDay();
+        } else {
+            int d = Math.max(1, Math.min(days, MAX_DAYS));
+            end = LocalDateTime.now();
+            start = end.minusDays(d);
+        }
+        java.time.Duration span = java.time.Duration.between(start, end);
+        String st = code(store, "ALL", "APPLE", "GOOGLE", "WEB");
+        String pl = plan == null || plan.isBlank() ? "ALL" : plan.trim().toUpperCase();
+        String stat = status == null || status.isBlank() ? "ALL" : status.trim().toUpperCase();
+        String like = q == null || q.isBlank() ? "" : "%" + q.trim().toLowerCase() + "%";
+
+        org.springframework.data.domain.Page<com.cooked.backend.entity.SubscriptionPayment> result = paymentRepository.searchPayments(
+                start, end, st, pl, like, stat,
+                org.springframework.data.domain.PageRequest.of(Math.max(page, 0), Math.max(1, Math.min(size, 100)),
+                        org.springframework.data.domain.Sort.by("createdAt").descending()));
+        List<com.cooked.backend.dto.response.PaymentListResponse.Row> rows = result.getContent().stream().map(p -> {
+            com.cooked.backend.entity.User u = p.getUser();
+            String name = u == null ? null : (String.join(" ",
+                    u.getFirstname() == null ? "" : u.getFirstname(), u.getLastname() == null ? "" : u.getLastname())).trim();
+            return new com.cooked.backend.dto.response.PaymentListResponse.Row(p.getId(), p.getCreatedAt(),
+                    u == null ? null : u.getId(), name == null || name.isEmpty() ? null : name, u == null ? null : u.getEmail(),
+                    p.getStore(), p.getPlanType(), p.getAmount(), p.getStatus() == null ? null : p.getStatus().toUpperCase(),
+                    p.getStripePaymentId());
+        }).toList();
+
+        Map<String, SubscriptionPaymentRepository.StatusTotal> now = byLabel(paymentRepository.totalsByStatus(start, end, st, pl, like));
+        Map<String, SubscriptionPaymentRepository.StatusTotal> prev = byLabel(paymentRepository.totalsByStatus(start.minus(span), start, st, pl, like));
+        Map<String, Long> counts = new LinkedHashMap<>();
+        long all = 0;
+        for (String s : List.of("SUCCESS", "SANDBOX", "DUPLICATE", "REFUNDED", "FAILED")) counts.put(s, count(now, s));
+        for (SubscriptionPaymentRepository.StatusTotal t : now.values()) all += t.getCount() == null ? 0 : t.getCount();
+        counts.put("ALL", all);
+
+        return new com.cooked.backend.dto.response.PaymentListResponse(rows, result.getNumber(), result.getSize(),
+                result.getTotalElements(), result.getTotalPages(), counts,
+                amount(now, "SUCCESS"), amount(prev, "SUCCESS"), count(now, "SUCCESS"), count(prev, "SUCCESS"),
+                amount(now, "REFUNDED"), count(now, "REFUNDED"), amount(prev, "REFUNDED"), count(now, "SANDBOX"), CURRENCY);
+    }
+
+    private static String code(String v, String... allowed) {
+        String up = v == null ? "" : v.trim().toUpperCase();
+        for (String a : allowed) if (a.equals(up)) return a;
+        return allowed[0];
+    }
+
+    private static Map<String, SubscriptionPaymentRepository.StatusTotal> byLabel(List<SubscriptionPaymentRepository.StatusTotal> totals) {
+        Map<String, SubscriptionPaymentRepository.StatusTotal> m = new HashMap<>();
+        for (SubscriptionPaymentRepository.StatusTotal t : totals) if (t.getLabel() != null) m.put(t.getLabel(), t);
+        return m;
+    }
+
+    private static long count(Map<String, SubscriptionPaymentRepository.StatusTotal> m, String s) {
+        SubscriptionPaymentRepository.StatusTotal t = m.get(s);
+        return t == null || t.getCount() == null ? 0 : t.getCount();
+    }
+
+    private static BigDecimal amount(Map<String, SubscriptionPaymentRepository.StatusTotal> m, String s) {
+        SubscriptionPaymentRepository.StatusTotal t = m.get(s);
+        return t == null || t.getAmount() == null ? BigDecimal.ZERO : t.getAmount();
     }
 }

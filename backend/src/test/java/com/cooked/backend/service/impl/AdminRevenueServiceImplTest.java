@@ -28,6 +28,7 @@ class AdminRevenueServiceImplTest {
     @Mock private UserRepository userRepository;
     @Mock private SubscriptionPaymentRepository paymentRepository;
     @Mock private SubscriptionService subscriptionService;
+    @Mock private com.cooked.backend.service.ActivityLogService activityLogService;
     @InjectMocks private AdminRevenueServiceImpl service;
 
     private static LabelAmount row(String label, String amount) {
@@ -128,5 +129,27 @@ class AdminRevenueServiceImplTest {
         org.mockito.Mockito.verify(paymentRepository).save(p);
         org.junit.jupiter.api.Assertions.assertThrows(com.cooked.backend.exception.ResourceNotFoundException.class,
                 () -> service.setPaymentStatus(java.util.UUID.randomUUID(), "SANDBOX", "admin@x.com"));
+    }
+
+    @Test
+    void statusChangeIsAuditedWithItsReason() {
+        java.util.UUID id = java.util.UUID.randomUUID();
+        com.cooked.backend.entity.User customer = new com.cooked.backend.entity.User();
+        customer.setEmail("fatou@x.com");
+        com.cooked.backend.entity.SubscriptionPayment p = new com.cooked.backend.entity.SubscriptionPayment();
+        p.setStatus("DUPLICATE");
+        p.setAmount(new BigDecimal("49.99"));
+        p.setUser(customer);
+        com.cooked.backend.entity.User admin = new com.cooked.backend.entity.User();
+        when(paymentRepository.findById(id)).thenReturn(java.util.Optional.of(p));
+        when(userRepository.findByEmail("admin@x.com")).thenReturn(java.util.Optional.of(admin));
+
+        service.setPaymentStatus(id, "SUCCESS", "First charge was voided", "admin@x.com");
+
+        assertEquals("SUCCESS", p.getStatus());
+        org.mockito.Mockito.verify(activityLogService).logActivity(org.mockito.ArgumentMatchers.eq(admin),
+                org.mockito.ArgumentMatchers.eq("Payment status changed"),
+                org.mockito.ArgumentMatchers.argThat(m -> m.contains("DUPLICATE → SUCCESS") && m.contains("First charge was voided") && m.contains("fatou@x.com")),
+                org.mockito.ArgumentMatchers.eq(id), org.mockito.ArgumentMatchers.eq("PAYMENT"));
     }
 }

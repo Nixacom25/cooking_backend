@@ -36,6 +36,21 @@ public class AdminRevenueController {
     public ResponseEntity<com.cooked.backend.dto.response.PaymentStatusResponse> setPaymentStatus(
             @PathVariable java.util.UUID id, @jakarta.validation.Valid @RequestBody com.cooked.backend.dto.request.PaymentStatusRequest body,
             org.springframework.security.core.Authentication auth) {
-        return ResponseEntity.ok(adminRevenueService.setPaymentStatus(id, body.status(), auth.getName()));
+        return ResponseEntity.ok(adminRevenueService.setPaymentStatus(id, body.status(), body.reason(), auth.getName()));
+    }
+
+    @Operation(summary = "Payments: transactions with filters, counts per status and KPIs (only SUCCESS counts as revenue)")
+    @GetMapping("/payments")
+    public ResponseEntity<com.cooked.backend.dto.response.PaymentListResponse> payments(
+            @RequestParam(defaultValue = "30") int days,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate to,
+            @RequestParam(defaultValue = "ALL") String store,
+            @RequestParam(defaultValue = "ALL") String plan,
+            @RequestParam(defaultValue = "ALL") String status,
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(adminRevenueService.listPayments(days, from, to, store, plan, status, q, page, size));
     }
 }

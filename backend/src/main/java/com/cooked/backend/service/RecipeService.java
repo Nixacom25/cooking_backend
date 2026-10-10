@@ -64,6 +64,12 @@ public interface RecipeService {
 
         RecipeResponse updateAdminRecipe(UUID id, String recipeJson, org.springframework.web.multipart.MultipartFile image);
 
+        /**
+         * New library recipe written by an admin ("New recipe" screen): same fields as the
+         * intern editor. {@code status} false keeps it as a draft, true publishes it.
+         */
+        RecipeResponse createAdminRecipe(String adminEmail, String recipeJson, org.springframework.web.multipart.MultipartFile image);
+
         void deleteAdminRecipe(UUID id, String userEmail);
         void restoreAdminRecipe(UUID id, String userEmail);
         

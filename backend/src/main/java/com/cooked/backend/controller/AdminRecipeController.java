@@ -104,6 +104,16 @@ public class AdminRecipeController {
         return ResponseEntity.ok(recipeService.getAdminRecipeById(id));
     }
 
+    @Operation(summary = "Create a library recipe (multipart: recipe JSON + optional image); status=false saves a draft")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RecipeResponse> createRecipe(
+            @RequestPart("recipe") String recipeJson,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            org.springframework.security.core.Authentication auth) {
+        return ResponseEntity.ok(recipeService.createAdminRecipe(auth.getName(), recipeJson, image));
+    }
+
     @Operation(summary = "Update full recipe details")
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")

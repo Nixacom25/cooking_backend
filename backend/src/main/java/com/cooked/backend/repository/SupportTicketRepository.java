@@ -12,4 +12,7 @@ import java.util.UUID;
 public interface SupportTicketRepository extends JpaRepository<SupportTicket, UUID> {
     Page<SupportTicket> findAllByOrderByCreatedAtDesc(Pageable pageable);
     Page<SupportTicket> findAllByStatusOrderByCreatedAtDesc(String status, Pageable pageable);
+
+    /** An intern's own messages to the recipe team, newest first. */
+    java.util.List<SupportTicket> findAllBySourceAndUserIdOrderByCreatedAtDesc(String source, String userId);
 }

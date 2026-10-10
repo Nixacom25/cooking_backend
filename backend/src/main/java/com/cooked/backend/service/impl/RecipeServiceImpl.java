@@ -871,6 +871,42 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     @Transactional
     @org.springframework.cache.annotation.CacheEvict(value = {"exploreRecipes", "popularRecipes", "explore_cuisines", "explore_categories"}, allEntries = true)
+    public RecipeResponse createAdminRecipe(String adminEmail, String recipeJson, org.springframework.web.multipart.MultipartFile image) {
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin user not found"));
+        CreateRecipeRequest request;
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            request = mapper.readValue(recipeJson, CreateRecipeRequest.class);
+        } catch (Exception e) {
+            throw new BadRequestException("Invalid recipe data");
+        }
+        String name = request.getName() == null ? "" : request.getName().trim();
+        if (name.isEmpty()) throw new BadRequestException("A recipe needs a title.");
+        if (name.length() > 120) throw new BadRequestException("Keep the title under 120 characters.");
+        boolean publish = Boolean.TRUE.equals(request.getStatus());
+        if (publish && (image == null || image.isEmpty()) && (request.getImage() == null || request.getImage().isBlank())) {
+            throw new BadRequestException("Add a photo to publish.");
+        }
+        String source = request.getSourceUrl() == null || request.getSourceUrl().isBlank() ? null : request.getSourceUrl().trim();
+        Recipe recipe = recipeRepository.save(Recipe.builder()
+                .user(admin)
+                .name(name)
+                .image(request.getImage())
+                .sourceUrl(source)
+                .isPublic(true)
+                .status(false)
+                .origin(RecipeOrigin.EXPLORE)
+                .steps(new ArrayList<>())
+                .equipment(new ArrayList<>())
+                .build());
+        // Everything else (ingredients, steps, times, cuisine, tags, photo, status) like the editor.
+        return updateAdminRecipe(recipe.getId(), recipeJson, image);
+    }
+
+    @Override
+    @Transactional
     public RecipeResponse updateAdminRecipe(UUID id, String recipeJson, org.springframework.web.multipart.MultipartFile image) {
         try {
             Recipe recipe = recipeRepository.findById(id)
