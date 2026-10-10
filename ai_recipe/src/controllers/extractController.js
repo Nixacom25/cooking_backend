@@ -5,6 +5,7 @@ const { instagramService } = require('../services/instagram.service');
 const { openaiService } = require('../services/openai.service');
 const { youtubeService } = require('../services/youtube.service');
 const { webService } = require('../services/web.service');
+const { parseKcal } = require('../utils/nutrition');
 
 /**
  * Extracts recipe data from a social media or web URL.
@@ -95,7 +96,7 @@ async function extractRecipe(req, res, next) {
       image: rawRecipe.image || data.thumbnail || null,
       cookTime: parseInt(rawRecipe.time_and_servings?.cook_time || rawRecipe.cookTime, 10) || 0,
       prepTime: parseInt(rawRecipe.time_and_servings?.prep_time || rawRecipe.prepTime, 10) || 0,
-      kcal: parseInt(rawRecipe.time_and_servings?.kcal || rawRecipe.kcal, 10) || 0,
+      kcal: parseKcal(rawRecipe.time_and_servings?.kcal ?? rawRecipe.kcal),
       servings: parseInt(rawRecipe.time_and_servings?.servings || rawRecipe.servings, 10) || 1,
       tips: rawRecipe.description || rawRecipe.tips || "",
       cuisine: rawRecipe.metadata?.cuisine || rawRecipe.cuisine || "Inconnue",

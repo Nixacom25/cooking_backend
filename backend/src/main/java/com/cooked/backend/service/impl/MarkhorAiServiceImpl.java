@@ -62,6 +62,7 @@ public class MarkhorAiServiceImpl implements AiService {
     private final SubscriptionService subscriptionService;
     private final com.cooked.backend.repository.RecipeRepository recipeRepository;
     private final com.cooked.backend.repository.IngredientRepository ingredientRepository;
+    private final com.cooked.backend.service.RecipeNutritionService nutritionService;
 
     @Value("${ai.api.base-url:https://recipe.markhorsystems.com}")
     private String baseUrl;
@@ -405,7 +406,7 @@ public class MarkhorAiServiceImpl implements AiService {
                     for (CreateRecipeRequest r : recipes) {
                         r.setOrigin("ONBOARDING");
                     }
-                    assignBestMatchingImages(recipes);
+                    finishRecipes(recipes);
                     log.info("Found {} initial suggestions for {}", recipes.size(), user.getEmail());
                     return recipes;
                 }
@@ -555,15 +556,8 @@ public class MarkhorAiServiceImpl implements AiService {
                                         .timeout(5000)
                                         .get();
                                 
-                                String ogImage = doc.select("meta[property=og:image]").attr("content");
-                                if (!ogImage.isEmpty()) {
-                                    request.setImage(ogImage);
-                                } else {
-                                    String twitterImage = doc.select("meta[name=twitter:image]").attr("content");
-                                    if (!twitterImage.isEmpty()) {
-                                        request.setImage(twitterImage);
-                                    }
-                                }
+                                String pageImage = findPageImage(doc);
+                                if (pageImage != null) request.setImage(pageImage);
                             } catch (Exception e) {
                                 log.warn("Fallback scraping failed for image: {}", e.getMessage());
                             }
@@ -579,6 +573,7 @@ public class MarkhorAiServiceImpl implements AiService {
                             throw new BadRequestException("We couldn't extract complete recipe instructions from this link.");
                         }
                         
+                        finishImport(request);
                         return request;
                     }
                 }
@@ -589,7 +584,9 @@ public class MarkhorAiServiceImpl implements AiService {
 
         // 2. Fallback to Jsoup HTML/JSON-LD Scraping if AI microservice failed or user doesn't have AI access
         try {
-            return extractRecipeViaJsoup(cleanUrl);
+            CreateRecipeRequest request = extractRecipeViaJsoup(cleanUrl);
+            finishImport(request);
+            return request;
         } catch (Exception e) {
             log.error("Jsoup fallback extraction failed for {}: {}", cleanUrl, e.getMessage());
             // Instead of creating a generic fallback recipe with fake ingredients,
@@ -620,7 +617,9 @@ public class MarkhorAiServiceImpl implements AiService {
     public CreateRecipeRequest extractRecipeFromPage(String url, String html, String email) {
         if (html != null && !html.isBlank() && url != null && !url.isBlank()) {
             try {
-                return extractRecipeFromDocument(Jsoup.parse(html, url.trim()), url.trim());
+                CreateRecipeRequest request = extractRecipeFromDocument(Jsoup.parse(html, url.trim()), url.trim());
+                finishImport(request);
+                return request;
             } catch (Exception e) {
                 log.warn("Page HTML extraction failed for {}: {}. Falling back to link import.", url, e.getMessage());
             }
@@ -638,8 +637,8 @@ public class MarkhorAiServiceImpl implements AiService {
             title = title.replaceAll("(?i)\\s*[-|•]\\s*(marmiton|allrecipes|tasty|bbc good food|750g|cuisineAZ|youtube|tiktok|instagram).*", "").trim();
         }
 
-        String image = doc.select("meta[property=og:image]").attr("content");
-        if (image.isEmpty()) image = doc.select("meta[name=twitter:image]").attr("content");
+        String image = null;
+        Integer kcal = null;
 
         List<com.cooked.backend.dto.request.IngredientPayload> ingredients = new ArrayList<>();
         List<String> steps = new ArrayList<>();
@@ -653,12 +652,9 @@ public class MarkhorAiServiceImpl implements AiService {
                     if (recipeNode.has("name") && !recipeNode.get("name").asText().isEmpty()) {
                         title = recipeNode.get("name").asText();
                     }
-                    if (recipeNode.has("image")) {
-                        JsonNode imgNode = recipeNode.get("image");
-                        if (imgNode.isTextual()) image = imgNode.asText();
-                        else if (imgNode.isArray() && imgNode.size() > 0) image = imgNode.get(0).asText();
-                        else if (imgNode.has("url")) image = imgNode.get("url").asText();
-                    }
+                    image = pickJsonLdImage(recipeNode.get("image"));
+                    if (image != null) image = resolveUrl(doc, image);
+                    kcal = parseKcal(recipeNode.path("nutrition").path("calories").asText(null));
                     if (recipeNode.has("recipeIngredient") && recipeNode.get("recipeIngredient").isArray()) {
                         for (JsonNode ing : recipeNode.get("recipeIngredient")) {
                             com.cooked.backend.dto.request.IngredientPayload ip = new com.cooked.backend.dto.request.IngredientPayload();
@@ -714,16 +710,15 @@ public class MarkhorAiServiceImpl implements AiService {
             throw new BadRequestException("We couldn't extract recipe instructions from this link. The page didn't contain enough recipe information.");
         }
 
-        if (image == null || image.isEmpty()) {
-            image = "https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=800&q=80";
-        }
+        if (image == null || image.isEmpty()) image = findPageImage(doc);
+        // Still none: finishImport() borrows the closest recipe photo from our base.
 
         CreateRecipeRequest req = new CreateRecipeRequest();
         req.setName(title);
         req.setImage(image);
         req.setCookTime(15);
         req.setPrepTime(10);
-        req.setKcal(350);
+        req.setKcal(kcal); // null -> estimated in finishImport()
         req.setServings(2);
         req.setSourceUrl(url);
         req.setOrigin("IMPORT");
@@ -733,7 +728,7 @@ public class MarkhorAiServiceImpl implements AiService {
         return req;
     }
 
-    private JsonNode findRecipeNodeInJsonLd(JsonNode node) {
+    private static JsonNode findRecipeNodeInJsonLd(JsonNode node) {
         if (node == null) return null;
         if (node.isArray()) {
             for (JsonNode child : node) {
@@ -798,7 +793,7 @@ public class MarkhorAiServiceImpl implements AiService {
                     throw new BadRequestException("The provided ingredients are not sufficient to generate any recipe. Please add more ingredients.");
                 }
                 for (CreateRecipeRequest r : recipes) r.setOrigin("MANUAL");
-                assignBestMatchingImages(recipes);
+                finishRecipes(recipes);
                 return recipes;
             }
         } catch (PaymentRequiredException e) {
@@ -847,7 +842,7 @@ public class MarkhorAiServiceImpl implements AiService {
                     for (CreateRecipeRequest r : res.getRecipes()) {
                         r.setOrigin("SCAN");
                     }
-                    assignBestMatchingImages(res.getRecipes());
+                    finishRecipes(res.getRecipes());
                 }
                 return res;
             }
@@ -929,7 +924,7 @@ public class MarkhorAiServiceImpl implements AiService {
                 for (CreateRecipeRequest r : res.getRecipes()) {
                     r.setOrigin("SCAN");
                 }
-                assignBestMatchingImages(res.getRecipes());
+                finishRecipes(res.getRecipes());
 
                 // Populate allowed_ingredients if the microservice didn't return them
                 if (res.getAllowed_ingredients() == null || res.getAllowed_ingredients().isEmpty()) {
@@ -1063,6 +1058,111 @@ public class MarkhorAiServiceImpl implements AiService {
         if (s.equalsIgnoreCase("Confident Cook")) return "ConfidentCook";
         if (s.equalsIgnoreCase("Advanced / Semi-Pro")) return "Advanced Semi Pro";
         return "HomeCook"; // Fallback
+    }
+
+    private static final String GENERIC_FOOD_IMAGE =
+            "https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=800&q=80";
+
+    /** Images + kcal for AI-generated / scanned recipes before they reach the user. */
+    private void finishRecipes(List<CreateRecipeRequest> recipes) {
+        assignBestMatchingImages(recipes);
+        nutritionService.fillMissingKcal(recipes);
+    }
+
+    /**
+     * An imported recipe always leaves with a picture and calories:
+     * 1) the page's own photo (found during extraction), else the video
+     *    thumbnail for YouTube links; 2) else the closest recipe photo in our
+     *    base, like scans do; 3) last resort, a generic food photo.
+     * Missing kcal is estimated from the ingredients.
+     */
+    void finishImport(CreateRecipeRequest request) {
+        if (request == null) return;
+        if (isMissingImage(request.getImage())) {
+            String thumb = youtubeThumbnail(request.getSourceUrl());
+            if (thumb != null) request.setImage(thumb);
+        }
+        if (isMissingImage(request.getImage())) {
+            request.setImage(null);
+            try {
+                assignBestMatchingImages(List.of(request));
+            } catch (Exception e) {
+                log.warn("Closest-image lookup failed for '{}': {}", request.getName(), e.getMessage());
+            }
+        }
+        if (isMissingImage(request.getImage())) request.setImage(GENERIC_FOOD_IMAGE);
+        nutritionService.fillMissingKcal(List.of(request));
+    }
+
+    static boolean isMissingImage(String image) {
+        return image == null || image.isBlank() || image.contains("placeholder")
+                || image.startsWith("data:") || image.contains("photo-1495521821757-a1efb6729352");
+    }
+
+    /** Best picture a page declares for itself, as an absolute URL, or null. */
+    static String findPageImage(Document doc) {
+        String[] metas = {
+                "meta[property=og:image:secure_url]", "meta[property=og:image]", "meta[name=og:image]",
+                "meta[name=twitter:image]", "meta[property=twitter:image]", "meta[itemprop=image]"
+        };
+        for (String selector : metas) {
+            String v = doc.select(selector).attr("content").trim();
+            if (!v.isEmpty()) return resolveUrl(doc, v);
+        }
+        String linkImage = doc.select("link[rel=image_src]").attr("href").trim();
+        if (!linkImage.isEmpty()) return resolveUrl(doc, linkImage);
+        for (Element script : doc.select("script[type=application/ld+json]")) {
+            try {
+                JsonNode recipe = findRecipeNodeInJsonLd(new ObjectMapper().readTree(script.html()));
+                String v = recipe == null ? null : pickJsonLdImage(recipe.get("image"));
+                if (v != null) return resolveUrl(doc, v);
+            } catch (Exception ignored) {}
+        }
+        String itemImg = doc.select("img[itemprop=image]").attr("abs:src").trim();
+        return itemImg.isEmpty() ? null : itemImg;
+    }
+
+    /** schema.org image: a URL, an ImageObject, or an array of either. */
+    static String pickJsonLdImage(JsonNode node) {
+        if (node == null || node.isNull() || node.isMissingNode()) return null;
+        if (node.isTextual()) return node.asText().isBlank() ? null : node.asText().trim();
+        if (node.isArray()) {
+            for (JsonNode item : node) {
+                String v = pickJsonLdImage(item);
+                if (v != null) return v;
+            }
+            return null;
+        }
+        for (String field : new String[]{"url", "contentUrl", "@id"}) {
+            String v = pickJsonLdImage(node.get(field));
+            if (v != null) return v;
+        }
+        return null;
+    }
+
+    private static String resolveUrl(Document doc, String url) {
+        try {
+            return new java.net.URL(new java.net.URL(doc.location()), url).toString();
+        } catch (Exception e) {
+            return url;
+        }
+    }
+
+    static String youtubeThumbnail(String url) {
+        if (url == null) return null;
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("(?:youtube\\.com/(?:watch\\?(?:.*&)?v=|shorts/|embed/)|youtu\\.be/)([A-Za-z0-9_-]{11})")
+                .matcher(url);
+        return m.find() ? "https://img.youtube.com/vi/" + m.group(1) + "/hqdefault.jpg" : null;
+    }
+
+    /** "350 calories", "350 kcal", "350" -> 350; anything else -> null. */
+    static Integer parseKcal(String text) {
+        if (text == null) return null;
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+(?:[.,]\\d+)?)").matcher(text.replace(",", ""));
+        if (!m.find()) return null;
+        long v = Math.round(Double.parseDouble(m.group(1)));
+        return v > 0 && v < 10000 ? (int) v : null;
     }
 
     private void assignBestMatchingImages(List<CreateRecipeRequest> recipes) {

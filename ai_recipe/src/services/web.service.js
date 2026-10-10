@@ -110,6 +110,7 @@ const webService = async (url) => {
                 PrepTime: ${recipeJson.prepTime}
                 CookTime: ${recipeJson.cookTime}
                 Yield: ${recipeJson.recipeYield}
+                Calories: ${recipeJson.nutrition?.calories || ''}
                 Ingredients: ${Array.isArray(recipeJson.recipeInstructions) ? JSON.stringify(recipeJson.recipeIngredient) : recipeJson.recipeIngredient}
                 Instructions: ${JSON.stringify(recipeJson.recipeInstructions)}
                 `.trim();
@@ -119,12 +120,27 @@ const webService = async (url) => {
                            document.body?.innerText || "").trim().substring(0, 15000);
             }
 
-            const thumbnail = recipeJson?.image || (Array.isArray(recipeJson?.image) ? recipeJson.image[0] : null) || imageCandidates[0] || visibleImages[0]?.src || null;
+            // schema.org image is a string, an ImageObject, or an array of
+            // either (most recipe sites) - the array used to end up as null.
+            const pickImage = (img) => {
+                if (!img) return null;
+                if (typeof img === 'string') return img.trim() || null;
+                if (Array.isArray(img)) {
+                    for (const item of img) {
+                        const found = pickImage(item);
+                        if (found) return found;
+                    }
+                    return null;
+                }
+                return pickImage(img.url || img.contentUrl || img['@id']);
+            };
+
+            const thumbnail = pickImage(recipeJson?.image) || imageCandidates[0] || visibleImages[0]?.src || null;
 
             return {
                 title,
                 content,
-                thumbnail: resolveUrl(typeof thumbnail === 'string' ? thumbnail : thumbnail?.url || null),
+                thumbnail: resolveUrl(thumbnail),
             };
         });
         

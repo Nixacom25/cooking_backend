@@ -19,6 +19,7 @@ const { AppError } = require('../middleware/errorHandler');
 const { uploadImage } = require('./storageService');
 const { normaliseDNA, normaliseSkillLevel, normaliseTimePreference, normaliseServingsPreference, normaliseCuisinesLove, normaliseKitchenTools, normaliseCookingGoals } = require('../utils/dna');
 const { sanitiseIngredient } = require('../utils/hash');
+const { parseKcal } = require('../utils/nutrition');
 
 async function timedAiCall(eventBase, model, operation, fn, details = {}) {
   const startedAt = Date.now();
@@ -805,7 +806,7 @@ function validateRecipesSchema(parsed) {
       additional_ingredients_optional: (recipe.additional_ingredients_optional || []).map(String).map((s) => s.trim()),
       cookTime: Number(recipe.cookTime) || 0,
       prepTime: Number(recipe.prepTime) || 0,
-      kcal: Number(recipe.kcal) || 0,
+      kcal: parseKcal(recipe.kcal),
       servings: Number(recipe.servings) || 1,
       cuisine: String(recipe.cuisine || '').trim(),
       category: String(recipe.category || '').trim(),

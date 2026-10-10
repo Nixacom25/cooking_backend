@@ -1,5 +1,7 @@
 package com.cooked.backend.service.impl;
 
+import com.cooked.backend.dto.request.CreateRecipeRequest;
+import com.cooked.backend.dto.request.IngredientPayload;
 import com.cooked.backend.dto.response.NutritionEstimateResponse;
 import com.cooked.backend.entity.Recipe;
 import com.cooked.backend.entity.RecipeIngredient;
@@ -12,13 +14,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class RecipeNutritionServiceImpl implements RecipeNutritionService {
 
@@ -56,6 +61,51 @@ public class RecipeNutritionServiceImpl implements RecipeNutritionService {
         r.setSodiumMg(intOrNull(answer, "sodium_mg"));
         recipes.save(r);
         return new NutritionEstimateResponse(r.getKcal(), r.getProteinG(), r.getCarbsG(), r.getFatG(), r.getFiberG(), r.getSodiumMg(), fillKcal);
+    }
+
+    @Override
+    public void fillMissingKcal(List<CreateRecipeRequest> recipes) {
+        if (recipes == null || !chat.isConfigured()) return;
+        List<CreateRecipeRequest> missing = recipes.stream()
+                .filter(r -> r != null && (r.getKcal() == null || r.getKcal() <= 0)
+                        && r.getIngredients() != null && !r.getIngredients().isEmpty())
+                .toList();
+        if (missing.isEmpty()) return;
+        try {
+            JsonNode kcals = parse(chat.complete(kcalRequest(missing))).path("kcal");
+            for (int i = 0; i < missing.size() && i < kcals.size(); i++) {
+                JsonNode v = kcals.get(i);
+                if (v != null && v.isNumber() && v.asDouble() > 0 && v.asDouble() < 10000) {
+                    missing.get(i).setKcal((int) Math.round(v.asDouble()));
+                }
+            }
+        } catch (Exception e) {
+            log.warn("kcal estimate failed for {} recipe(s): {}", missing.size(), e.getMessage());
+        }
+    }
+
+    ObjectNode kcalRequest(List<CreateRecipeRequest> recipes) {
+        StringBuilder user = new StringBuilder();
+        for (int i = 0; i < recipes.size(); i++) {
+            CreateRecipeRequest r = recipes.get(i);
+            int servings = r.getServings() == null || r.getServings() < 1 ? 1 : r.getServings();
+            user.append(i + 1).append(". ").append(r.getName()).append(" (servings: ").append(servings).append(")\n");
+            for (IngredientPayload ing : r.getIngredients()) {
+                if (ing == null || ing.getName() == null) continue;
+                String q = ing.getQuantity() == null ? "" : ing.getQuantity().trim();
+                user.append("- ").append(q.isEmpty() ? "" : q + " ").append(ing.getName()).append("\n");
+            }
+        }
+        ObjectNode req = json.createObjectNode();
+        req.put("model", model);
+        req.put("temperature", 0);
+        req.putObject("response_format").put("type", "json_object");
+        ArrayNode messages = req.putArray("messages");
+        messages.addObject().put("role", "system").put("content",
+                "You are a nutritionist. For each numbered recipe, estimate calories PER SERVING from its ingredients. "
+                        + "Never answer 0. Answer only JSON: {\"kcal\":[int, ...]} with one value per recipe, in order.");
+        messages.addObject().put("role", "user").put("content", user.toString());
+        return req;
     }
 
     static String line(RecipeIngredient i) {
