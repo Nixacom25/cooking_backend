@@ -26,6 +26,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,6 +42,9 @@ public class SubscriptionServiceImplTest {
     private UserRepository userRepository;
     @Mock
     private ActivityLogService activityLogService;
+
+    @Mock
+    private com.cooked.backend.service.SubscriptionVerificationService subscriptionVerificationService;
 
     @InjectMocks
     private SubscriptionServiceImpl subscriptionService;
@@ -155,5 +159,32 @@ public class SubscriptionServiceImplTest {
         when(userSubscriptionRepository.findByUserId(dummyUserId)).thenReturn(Optional.empty());
 
         assertTrue(subscriptionService.hasAiAccess(dummyUser));
+    }
+
+    @Test
+    void midnightExpiryKeepsPayerConfirmedByRevenueCat() {
+        // Trial ended in our DB but converted to paid in the store (prod case).
+        dummySubscription.setStatus(SubscriptionStatus.TRIAL);
+        when(userSubscriptionRepository.findAllByEndDateBeforeAndStatusNot(any(), eq(SubscriptionStatus.EXPIRED)))
+                .thenReturn(Collections.singletonList(dummySubscription));
+        when(subscriptionVerificationService.refreshFromStore(eq(dummyUser), any())).thenReturn(true);
+
+        subscriptionService.processExpiredSubscriptions();
+
+        assertNotEquals(SubscriptionStatus.EXPIRED, dummySubscription.getStatus());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void midnightExpiryExpiresWhenRevenueCatDoesNotConfirm() {
+        dummySubscription.setStatus(SubscriptionStatus.TRIAL);
+        when(userSubscriptionRepository.findAllByEndDateBeforeAndStatusNot(any(), eq(SubscriptionStatus.EXPIRED)))
+                .thenReturn(Collections.singletonList(dummySubscription));
+        when(subscriptionVerificationService.refreshFromStore(eq(dummyUser), any())).thenReturn(false);
+
+        subscriptionService.processExpiredSubscriptions();
+
+        assertEquals(SubscriptionStatus.EXPIRED, dummySubscription.getStatus());
+        assertEquals(SubscriptionStatus.EXPIRED, dummyUser.getSubscriptionStatus());
     }
 }

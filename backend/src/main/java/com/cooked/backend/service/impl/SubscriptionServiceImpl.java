@@ -42,6 +42,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final SubscriptionPaymentRepository subscriptionPaymentRepository;
     private final UserRepository userRepository;
     private final ActivityLogService activityLogService;
+    private final com.cooked.backend.service.SubscriptionVerificationService subscriptionVerificationService;
 
     @Value("${google.play.service-account:}")
     private String googleServiceAccountBase64;
@@ -53,12 +54,14 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                                    UserSubscriptionRepository userSubscriptionRepository,
                                    SubscriptionPaymentRepository subscriptionPaymentRepository,
                                    UserRepository userRepository,
-                                   ActivityLogService activityLogService) {
+                                   ActivityLogService activityLogService,
+                                   com.cooked.backend.service.SubscriptionVerificationService subscriptionVerificationService) {
         this.planRepository = planRepository;
         this.userSubscriptionRepository = userSubscriptionRepository;
         this.subscriptionPaymentRepository = subscriptionPaymentRepository;
         this.userRepository = userRepository;
         this.activityLogService = activityLogService;
+        this.subscriptionVerificationService = subscriptionVerificationService;
     }
 
     private final RestTemplate restTemplate = new RestTemplate();
@@ -272,6 +275,14 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 SubscriptionStatus.EXPIRED);
 
         for (UserSubscription sub : expiredSubscriptions) {
+            // Our end date is only a copy: a trial that converted to paid, or a
+            // renewal whose webhook we missed, still looks "ended" here. Ask
+            // RevenueCat before cutting a payer off (it refreshes the dates).
+            if (sub.getUser() != null
+                    && subscriptionVerificationService.refreshFromStore(sub.getUser(), java.time.Duration.ofSeconds(60))) {
+                log.info("Kept premium for {}: RevenueCat confirms an active entitlement", sub.getUser().getEmail());
+                continue;
+            }
             sub.setStatus(SubscriptionStatus.EXPIRED);
             userSubscriptionRepository.save(sub);
             
@@ -320,6 +331,17 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Override
     public boolean hasAiAccess(User user) {
+        if (hasAiAccessFromDatabase(user)) return true;
+        // Our copy can lag behind the store (missed renewal webhook, trial
+        // converted to paid): ask RevenueCat before showing a payer the paywall.
+        if (subscriptionVerificationService.refreshFromStore(user, java.time.Duration.ofSeconds(60))) {
+            log.info("[hasAiAccess] Access GRANTED after RevenueCat re-check for {}", user.getEmail());
+            return true;
+        }
+        return false;
+    }
+
+    private boolean hasAiAccessFromDatabase(User user) {
         log.info("[hasAiAccess] Checking access for user: {} (ID: {})", user.getEmail(), user.getId());
         
         // Creators, Admins, and Editors always have infinite access

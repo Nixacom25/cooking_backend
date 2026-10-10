@@ -26,6 +26,8 @@ import org.springframework.stereotype.Service;
 import com.cooked.backend.service.CloudinaryService;
 import com.cooked.backend.service.EmailService;
 
+import com.cooked.backend.util.StoreDates;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.io.IOException;
@@ -54,6 +56,7 @@ public class UserServiceImpl implements UserService {
     private final jakarta.persistence.EntityManager entityManager;
     private final com.cooked.backend.repository.UserSubscriptionRepository userSubscriptionRepository;
     private final com.cooked.backend.service.UserActivityRecorder activityRecorder;
+    private final com.cooked.backend.service.SubscriptionVerificationService subscriptionVerificationService;
 
     @Override
     public UserResponse getCurrentUser(String email) {
@@ -450,18 +453,33 @@ public class UserServiceImpl implements UserService {
             user.setRevenueCatCustomerId(revenueCatCustomerId);
         }
 
-        // Update subscription status based on RevenueCat data
+        if (subscriptionVerificationService.isAvailable()) {
+            // Never trust isActive / expirationDate sent by the app: anyone
+            // can POST them. Re-read the entitlement from RevenueCat instead.
+            // A fresh purchase (app says active, we don't) is re-checked
+            // almost immediately; other syncs are throttled.
+            boolean claimsActive = Boolean.TRUE.equals(isActive);
+            Duration minInterval = claimsActive && !isPremium(user) ? Duration.ofSeconds(5) : Duration.ofSeconds(60);
+            boolean verified = subscriptionVerificationService.refreshFromStore(user, minInterval);
+            if (claimsActive && !verified && !isPremium(user)) {
+                log.warn("Sync for {} claims an active subscription RevenueCat doesn't confirm", email);
+            }
+            userRepository.save(user);
+            log.info("Synced subscription data for user: {} (verified with RevenueCat: {})", email, verified);
+            return;
+        }
+
+        // Fallback when REVENUECAT_SECRET_API_KEY isn't set: client-reported data.
+        log.warn("RevenueCat secret key not configured - trusting app-reported subscription for {}", email);
         if (isActive != null && isActive) {
             user.setSubscriptionStatus(SubscriptionStatus.ACTIVE);
-            
-            // Set expiration date if available
-            if (expirationDateStr != null && !expirationDateStr.isEmpty()) {
-                try {
-                    LocalDateTime expirationDate = LocalDateTime.parse(expirationDateStr);
-                    user.setSubscriptionExpiresAt(expirationDate);
-                } catch (Exception e) {
-                    log.warn("Failed to parse expiration date: {}", expirationDateStr);
-                }
+
+            // Set expiration date if available (ISO instant, e.g. "...Z")
+            LocalDateTime expirationDate = StoreDates.parse(expirationDateStr);
+            if (expirationDate != null) {
+                user.setSubscriptionExpiresAt(expirationDate);
+            } else if (expirationDateStr != null && !expirationDateStr.isEmpty()) {
+                log.warn("Failed to parse expiration date: {}", expirationDateStr);
             }
 
             // Set subscription type based on product ID
@@ -474,20 +492,24 @@ public class UserServiceImpl implements UserService {
             }
         } else {
             // Check if subscription is expired
-            if (expirationDateStr != null && !expirationDateStr.isEmpty()) {
-                try {
-                    LocalDateTime expirationDate = LocalDateTime.parse(expirationDateStr);
-                    if (expirationDate.isBefore(LocalDateTime.now())) {
-                        user.setSubscriptionStatus(SubscriptionStatus.EXPIRED);
-                    }
-                } catch (Exception e) {
-                    log.warn("Failed to parse expiration date: {}", expirationDateStr);
-                }
+            LocalDateTime expirationDate = StoreDates.parse(expirationDateStr);
+            if (expirationDate != null && expirationDate.isBefore(LocalDateTime.now())
+                    && user.getSubscriptionStatus() != SubscriptionStatus.INFINITE) {
+                user.setSubscriptionStatus(SubscriptionStatus.EXPIRED);
             }
         }
 
         userRepository.save(user);
         log.info("Synced subscription data for user: {}", email);
+    }
+
+    /** Same rule as SubscriptionRequiredFilter: an access-granting status not yet expired. */
+    private static boolean isPremium(User user) {
+        SubscriptionStatus status = user.getSubscriptionStatus();
+        if (status == SubscriptionStatus.INFINITE) return true;
+        if (status != SubscriptionStatus.ACTIVE && status != SubscriptionStatus.TRIAL
+                && status != SubscriptionStatus.PREMIUM) return false;
+        return user.getSubscriptionExpiresAt() == null || user.getSubscriptionExpiresAt().isAfter(LocalDateTime.now());
     }
 
     @Override

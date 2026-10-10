@@ -3,6 +3,7 @@ package com.cooked.backend.security;
 import com.cooked.backend.entity.SubscriptionStatus;
 import com.cooked.backend.entity.User;
 import com.cooked.backend.repository.UserRepository;
+import com.cooked.backend.service.SubscriptionVerificationService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Component
@@ -22,10 +24,16 @@ public class SubscriptionRequiredFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(SubscriptionRequiredFilter.class);
 
-    private final UserRepository userRepository;
+    /** How often a denied user may trigger a RevenueCat re-check. */
+    private static final Duration STORE_RECHECK_INTERVAL = Duration.ofSeconds(60);
 
-    public SubscriptionRequiredFilter(UserRepository userRepository) {
+    private final UserRepository userRepository;
+    private final SubscriptionVerificationService subscriptionVerificationService;
+
+    public SubscriptionRequiredFilter(UserRepository userRepository,
+                                      SubscriptionVerificationService subscriptionVerificationService) {
         this.userRepository = userRepository;
+        this.subscriptionVerificationService = subscriptionVerificationService;
     }
 
     @Override
@@ -59,7 +67,10 @@ public class SubscriptionRequiredFilter extends OncePerRequestFilter {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            if (!hasActiveSubscription(user)) {
+            // Our copy can lag behind the store (missed renewal webhook, trial
+            // converted to paid): ask RevenueCat before refusing a payer.
+            if (!hasActiveSubscription(user)
+                    && !subscriptionVerificationService.refreshFromStore(user, STORE_RECHECK_INTERVAL)) {
                 log.warn("Access denied for user {} - No active subscription (status: {})",
                         email, user.getSubscriptionStatus());
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);

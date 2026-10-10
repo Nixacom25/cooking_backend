@@ -56,6 +56,9 @@ public class UserServiceImplTest {
     @Mock
     private com.cooked.backend.mapper.UserMapper userMapper;
 
+    @Mock
+    private com.cooked.backend.service.SubscriptionVerificationService subscriptionVerificationService;
+
     @InjectMocks
     private UserServiceImpl userService;
 
