@@ -25,6 +25,19 @@ export async function webService(url) {
                 return match ? match[1].trim() : null;
             };
 
+            const pickImage = (img) => {
+                if (!img) return null;
+                if (typeof img === "string") return img.trim() || null;
+                if (Array.isArray(img)) {
+                    for (const item of img) {
+                        const found = pickImage(item);
+                        if (found) return found;
+                    }
+                    return null;
+                }
+                return pickImage(img.url || img.contentUrl || img["@id"]);
+            };
+
             // 1a. Attempt fast JSON-LD extraction from HTML
             const jsonLdMatches = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
             if (jsonLdMatches) {
@@ -45,7 +58,8 @@ export async function webService(url) {
                             const instrs = Array.isArray(recipe.recipeInstructions) 
                                 ? recipe.recipeInstructions.map(i => typeof i === 'string' ? i : i.text || i.description || "").join("\n")
                                 : (recipe.recipeInstructions || "");
-                            const thumbnail = typeof recipe.image === 'string' ? recipe.image : (Array.isArray(recipe.image) ? recipe.image[0] : recipe.image?.url || getMeta("og:image"));
+                            // schema.org image: URL, ImageObject, or an array of either.
+                            const thumbnail = pickImage(recipe.image) || getMeta("og:image") || getMeta("twitter:image");
 
                             const fullContent = `Title: ${title}\nDescription: ${description}\n\nIngredients:\n${ings}\n\nInstructions:\n${instrs}`.trim();
                             if (fullContent.length > 30) {
@@ -137,6 +151,7 @@ export async function webService(url) {
                 PrepTime: ${recipeJson.prepTime}
                 CookTime: ${recipeJson.cookTime}
                 Yield: ${recipeJson.recipeYield}
+                Calories: ${recipeJson.nutrition?.calories || ''}
                 Ingredients: ${Array.isArray(recipeJson.recipeIngredient) ? JSON.stringify(recipeJson.recipeIngredient) : recipeJson.recipeIngredient}
                 Instructions: ${JSON.stringify(recipeJson.recipeInstructions)}
                 `.trim();
@@ -145,10 +160,23 @@ export async function webService(url) {
                           (document.querySelector('main')?.innerText || document.body?.innerText || "").trim().substring(0, 8000);
             }
 
-            const thumbnail = recipeJson?.image || (Array.isArray(recipeJson?.image) ? recipeJson.image[0] : null) || 
-                              getMetaContent('meta[property="og:image"]', 'meta[name="twitter:image"]');
+            const pickImage = (img) => {
+                if (!img) return null;
+                if (typeof img === "string") return img.trim() || null;
+                if (Array.isArray(img)) {
+                    for (const item of img) {
+                        const found = pickImage(item);
+                        if (found) return found;
+                    }
+                    return null;
+                }
+                return pickImage(img.url || img.contentUrl || img["@id"]);
+            };
 
-            return { title, content, thumbnail: typeof thumbnail === 'string' ? thumbnail : thumbnail?.url || null };
+            const thumbnail = pickImage(recipeJson?.image) ||
+                              getMetaContent('meta[property="og:image"]', 'meta[property="og:image:secure_url"]', 'meta[name="twitter:image"]');
+
+            return { title, content, thumbnail };
         });
 
         const platform = /facebook\.com|fb\.watch/i.test(url) ? "facebook" : "web";

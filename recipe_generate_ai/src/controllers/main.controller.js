@@ -6,6 +6,7 @@ import { instagramService } from "../services/instagram.service.js";
 import { openAiService } from "../services/openai.service.js";
 import { youtubeService } from "../services/youtube.service.js";
 import { webService } from "../services/web.service.js";
+import { parseKcal } from "../utils/nutrition.js";
 
 export const main = asyncHandler(async (req, res) => {
   const { url } = req.body ?? {};
@@ -93,7 +94,7 @@ export const main = asyncHandler(async (req, res) => {
     image: rawRecipe.image || data.thumbnail || null,
     cookTime: parseInt(rawRecipe.cookTime || rawRecipe.cook_time || rawRecipe.time_and_servings?.cook_time, 10) || 0,
     prepTime: parseInt(rawRecipe.prepTime || rawRecipe.prep_time || rawRecipe.time_and_servings?.prep_time, 10) || 0,
-    kcal: parseInt(rawRecipe.kcal || rawRecipe.calories || rawRecipe.nutrition?.calories, 10) || 0,
+    kcal: parseKcal(rawRecipe.kcal ?? rawRecipe.calories ?? rawRecipe.nutrition?.calories ?? rawRecipe.time_and_servings?.kcal),
     servings: parseInt(rawRecipe.servings || rawRecipe.time_and_servings?.servings, 10) || 1,
     tips: rawRecipe.tips || rawRecipe.description || "",
     cuisine: rawRecipe.cuisine || rawRecipe.metadata?.cuisine || "International",

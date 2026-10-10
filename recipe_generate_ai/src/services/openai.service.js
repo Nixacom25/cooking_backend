@@ -6,8 +6,11 @@ import { ApiError } from "../utils/ApiError.js";
 import { imageIngredientsPrompt } from "../prompts/ingredientsScanningPrompt.js";
 import { scanAndRecipePrompt } from "../prompts/scanAndRecipePrompt.js";
 import {createRecipePrompt} from "../prompts/diggerentRecipiePrompt.js"
+import { parseKcal } from "../utils/nutrition.js";
 
 const DEFAULT_OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+// Stronger vision model for a second look when the first scan finds nothing.
+const VISION_FALLBACK_MODEL = process.env.OPENAI_VISION_MODEL || "gpt-4o";
 const PROMPT_TEMPLATE_PATH = path.resolve(process.cwd(), "prompt.md");
 const OPENAI_SUPPORTED_IMAGE_TYPES = new Set([
     "image/jpeg",
@@ -52,7 +55,10 @@ RULES:
 - Identify every visible food ingredient, but name only what the image supports.
 - Read package labels when possible. A flavored product is one product (for example, strawberry yogurt is yogurt), not separate ingredients inferred from its flavor.
 - Never identify an ingredient from color or shape alone. Do not turn green onions into lettuce or spinach.
-- If the exact ingredient cannot be confirmed, use the most honest broader name and a lower confidence value. Never guess.
+- If the exact ingredient cannot be confirmed, use the most honest broader name and a lower confidence value. Never invent items that are not there.
+- Look at the WHOLE scene: every shelf, the door, drawers, background, bowls, jars, bottles, bags and packaging. Read labels and brand names.
+- A visible food you are unsure about must still be listed (broader name, e.g. "cheese", "sauce", "vegetables", with a low confidence) rather than left out.
+- Return an empty "ingredients" list ONLY when the image contains no food at all.
 - Generate 3 distinct recipes using only detected ingredients.
 - Include every ingredient used by each recipe with a quantity and unit. Do not hide ingredients in the instructions.
 - Give each recipe 8-12 numbered, practical preparation steps. Include preparation, cooking temperatures and times, doneness checks, assembly, and serving where relevant.
@@ -185,6 +191,7 @@ const toOpenAiImageDataUrl = async (file) => {
         // Images with transparency
         if (metadata.hasAlpha) {
             optimizedBuffer = await sharp(buffer)
+                .rotate()
                 .resize({
                     width: MAX_WIDTH,
                     withoutEnlargement: true,
@@ -200,6 +207,7 @@ const toOpenAiImageDataUrl = async (file) => {
         } else {
         // Normal photos
         optimizedBuffer = await sharp(buffer)
+            .rotate()
             .resize({
                 width: MAX_WIDTH,
                 withoutEnlargement: true,
@@ -423,6 +431,44 @@ export const generateRecipes = async (ingredients) => {
     return JSON.parse(extractTextFromResponse(response));
 };
 
+const SECOND_LOOK_TEXT = `SECOND LOOK: a first analysis of these image(s) found no ingredients, which is almost always wrong.
+Examine every area of every image again, including partly hidden, blurry, dark or packaged items, and list every food or drink you can see (use broader names with lower confidence when unsure).
+Only if there is truly no food at all, return an empty "ingredients" list.`;
+
+const hasScannedIngredients = (parsed) =>
+    Boolean(parsed) && Array.isArray(parsed.ingredients) && parsed.ingredients.length > 0;
+
+/** One scan + recipes call; returns the parsed JSON object. */
+const runScanPass = async (client, model, imageContent, extraText = "") => {
+    const response = await client.responses.create({
+        model,
+        input: [
+            {
+                role: "user",
+                content: [
+                    {
+                        type: "input_text",
+                        text: extraText ? `${singlePassScanAndRecipePrompt}\n${extraText}` : singlePassScanAndRecipePrompt,
+                    },
+                    ...imageContent,
+                ],
+            },
+        ],
+        max_output_tokens: 7000,
+        text: {
+            format: {
+                type: "json_object",
+            },
+        },
+    });
+
+    const rawText = extractTextFromResponse(response);
+    if (!rawText) {
+        throw new ApiError(502, "OpenAI returned an empty response");
+    }
+    return JSON.parse(rawText);
+};
+
 const scanAndGenerateRecipes = async (files) => {
     const client = await getOpenAIClient();
 
@@ -435,34 +481,20 @@ const scanAndGenerateRecipes = async (files) => {
     );
 
     try {
-        const response = await client.responses.create({
-            model: DEFAULT_OPENAI_MODEL,
-            input: [
-                {
-                    role: "user",
-                    content: [
-                        {
-                            type: "input_text",
-                            text: singlePassScanAndRecipePrompt,
-                        },
-                        ...imageContent,
-                    ],
-                },
-            ],
-            max_output_tokens: 7000,
-            text: {
-                format: {
-                    type: "json_object",
-                },
-            },
-        });
-
-        const rawText = extractTextFromResponse(response);
-        if (!rawText) {
-            throw new ApiError(502, "OpenAI returned an empty response");
+        let parsed = null;
+        try {
+            parsed = await runScanPass(client, DEFAULT_OPENAI_MODEL, imageContent);
+        } catch (error) {
+            console.warn(`[scan] first pass failed (${DEFAULT_OPENAI_MODEL}): ${error?.message}`);
+        }
+        // Nothing found (dark fridge, cluttered shelf, odd angle) or unreadable
+        // answer: take a second, more careful look with the stronger model
+        // before telling the user we saw no ingredients.
+        if (!hasScannedIngredients(parsed)) {
+            console.warn(`[scan] no ingredients on first pass, retrying with ${VISION_FALLBACK_MODEL}`);
+            parsed = await runScanPass(client, VISION_FALLBACK_MODEL, imageContent, SECOND_LOOK_TEXT);
         }
 
-        const parsed = JSON.parse(rawText);
         let ingredients = Array.isArray(parsed.ingredients) ? parsed.ingredients : [];
 
         // Normalize string ingredients to object format if needed
@@ -583,8 +615,7 @@ export const normalizeRecipeForCooked = (r) => {
   const rawCook = r.cookTime || r.cook_time || (r.time_and_servings?.cook_time) || "15";
   const cookTime = parseInt(String(rawCook).replace(/\D/g, ""), 10) || 15;
 
-  const rawKcal = r.kcal || r.calories || (r.nutrition?.calories) || "400";
-  const kcal = parseInt(String(rawKcal).replace(/\D/g, ""), 10) || 400;
+  const kcal = parseKcal(r.kcal ?? r.calories ?? r.nutrition?.calories ?? r.time_and_servings?.kcal);
 
   const rawServings = r.servings || (r.time_and_servings?.servings) || "2";
   const servings = parseInt(String(rawServings).replace(/\D/g, ""), 10) || 2;
