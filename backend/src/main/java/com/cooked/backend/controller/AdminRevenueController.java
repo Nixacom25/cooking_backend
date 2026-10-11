@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,6 +38,19 @@ public class AdminRevenueController {
             @PathVariable java.util.UUID id, @jakarta.validation.Valid @RequestBody com.cooked.backend.dto.request.PaymentStatusRequest body,
             org.springframework.security.core.Authentication auth) {
         return ResponseEntity.ok(adminRevenueService.setPaymentStatus(id, body.status(), body.reason(), auth.getName()));
+    }
+
+    private final com.cooked.backend.service.RevenueCatReconciliationService reconciliation;
+
+    @Operation(summary = "Read every possible subscriber from RevenueCat and add the real payments we missed (background)")
+    @PostMapping("/sync-revenuecat")
+    public ResponseEntity<com.cooked.backend.service.RevenueCatReconciliationService.SyncStatus> syncRevenueCat(org.springframework.security.core.Authentication auth) {
+        return ResponseEntity.ok(reconciliation.startSync(auth.getName()));
+    }
+
+    @GetMapping("/sync-revenuecat")
+    public ResponseEntity<com.cooked.backend.service.RevenueCatReconciliationService.SyncStatus> syncRevenueCatStatus() {
+        return ResponseEntity.ok(reconciliation.status());
     }
 
     @Operation(summary = "Payments: transactions with filters, counts per status and KPIs (only SUCCESS counts as revenue)")

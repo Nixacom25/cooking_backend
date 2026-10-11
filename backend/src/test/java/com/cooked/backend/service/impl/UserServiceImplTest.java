@@ -60,6 +60,9 @@ public class UserServiceImplTest {
     @Mock
     private com.cooked.backend.service.SubscriptionVerificationService subscriptionVerificationService;
 
+    @Mock
+    private com.cooked.backend.service.RevenueCatReconciliationService revenueCatReconciliation;
+
     @InjectMocks
     private UserServiceImpl userService;
 

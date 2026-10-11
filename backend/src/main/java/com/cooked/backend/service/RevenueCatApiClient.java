@@ -94,6 +94,22 @@ public class RevenueCatApiClient {
         return parsePremium(body, entitlementId, Instant.now());
     }
 
+    /** The raw subscriber object (subscriptions, entitlements…), for reconciling payments. */
+    public JsonNode fetchSubscriber(String appUserId) {
+        if (!isConfigured()) {
+            throw new IllegalStateException("RevenueCat secret API key is not configured (REVENUECAT_SECRET_API_KEY)");
+        }
+        String url = BASE_URL + "/subscribers/" + UriUtils.encodePathSegment(appUserId, StandardCharsets.UTF_8);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(secretApiKey);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        ResponseEntity<JsonNode> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), JsonNode.class);
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            throw new IllegalStateException("RevenueCat subscriber lookup failed: " + response.getStatusCode());
+        }
+        return response.getBody().path("subscriber");
+    }
+
     static Optional<PremiumEntitlement> parsePremium(JsonNode body, String entitlementId, Instant now) {
         JsonNode subscriber = body.path("subscriber");
         JsonNode ent = subscriber.path("entitlements").path(entitlementId);

@@ -215,4 +215,10 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
     long countByRoleAndCustomRoleIdIsNull(com.cooked.backend.entity.Role role);
 
     long countByCreatedAtAfter(java.time.LocalDateTime after);
+
+    /** Client accounts that may have paid: a RevenueCat id or a subscription history. */
+    @org.springframework.data.jpa.repository.Query("select u from User u where u.role = com.cooked.backend.entity.Role.CLIENT and (u.revenueCatCustomerId is not null "
+            + "or u.subscriptionStatus in (com.cooked.backend.entity.SubscriptionStatus.TRIAL, com.cooked.backend.entity.SubscriptionStatus.ACTIVE, "
+            + "com.cooked.backend.entity.SubscriptionStatus.PREMIUM, com.cooked.backend.entity.SubscriptionStatus.EXPIRED, com.cooked.backend.entity.SubscriptionStatus.CANCELLED))")
+    java.util.List<User> findPossibleSubscribers();
 }

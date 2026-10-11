@@ -58,6 +58,7 @@ public class UserServiceImpl implements UserService {
     private final com.cooked.backend.repository.UserSubscriptionRepository userSubscriptionRepository;
     private final com.cooked.backend.service.UserActivityRecorder activityRecorder;
     private final com.cooked.backend.service.SubscriptionVerificationService subscriptionVerificationService;
+    private final com.cooked.backend.service.RevenueCatReconciliationService revenueCatReconciliation;
 
     @Override
     public UserResponse getCurrentUser(String email) {
@@ -452,6 +453,12 @@ public class UserServiceImpl implements UserService {
 
         if (revenueCatCustomerId != null && !revenueCatCustomerId.isEmpty()) {
             user.setRevenueCatCustomerId(revenueCatCustomerId);
+            // Purchases made before sign-up were kept under this id: record them now.
+            try {
+                revenueCatReconciliation.resolveFor(user);
+            } catch (Exception e) {
+                log.warn("Pending RevenueCat events not applied for {}: {}", email, e.getMessage());
+            }
         }
 
         if (subscriptionVerificationService.isAvailable()) {

@@ -114,4 +114,14 @@ public interface SubscriptionPaymentRepository extends JpaRepository<Subscriptio
             + "where upper(p.status) = 'SUCCESS' and p.createdAt >= :from "
             + "group by extract(year from p.createdAt), extract(month from p.createdAt)")
     List<MonthAmount> sumSuccessByMonthSince(@Param("from") LocalDateTime from);
+
+    /** Payments are timestamped on insert; a reconciled payment keeps the real purchase time. */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("update SubscriptionPayment p set p.createdAt = :at where p.id = :id")
+    int setCreatedAt(@Param("id") UUID id, @Param("at") LocalDateTime at);
+
+    /** A non-test payment of this user within [from, to] (dedupes webhook vs RevenueCat sync). */
+    @Query("select count(p) > 0 from SubscriptionPayment p where p.user.id = :userId and upper(p.status) <> 'SANDBOX' "
+            + "and p.createdAt >= :from and p.createdAt <= :to")
+    boolean existsRealPaymentBetween(@Param("userId") UUID userId, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }

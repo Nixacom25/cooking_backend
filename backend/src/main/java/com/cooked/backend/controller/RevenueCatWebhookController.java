@@ -44,6 +44,10 @@ public class RevenueCatWebhookController {
     private final GiftService giftService;
     private final UserSubscriptionRepository userSubscriptionRepository;
 
+    /** Keeps events of not-yet-known app users (purchase before sign-up) for later (optional: absent in unit tests). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.cooked.backend.service.RevenueCatReconciliationService reconciliation;
+
     /** Lets custom automations react to failed payments (optional: absent in unit tests). */
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private org.springframework.context.ApplicationEventPublisher events;
@@ -138,8 +142,11 @@ public class RevenueCatWebhookController {
             Optional<User> userOpt = resolveUser(event, appUserId);
 
             if (userOpt.isEmpty()) {
-                log.warn("User not found for RevenueCat app_user_id: {}", appUserId);
-                return ResponseEntity.ok(Map.of("status", "USER_NOT_FOUND"));
+                // Usually a purchase in the onboarding, before the account exists:
+                // kept and applied when the app reports this RevenueCat id.
+                if (reconciliation != null) reconciliation.savePending(event);
+                log.info("RevenueCat {} for unknown app_user_id {}: kept until the account is linked", eventType, appUserId);
+                return ResponseEntity.ok(Map.of("status", "PENDING_USER"));
             }
 
             User user = userOpt.get();
