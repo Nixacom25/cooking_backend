@@ -88,40 +88,189 @@ public class MarkhorAiServiceImpl implements AiService {
         List<Map<String, String>> apiResults = webSearchApi.search(query);
         if (!apiResults.isEmpty()) return apiResults;
 
-        // All engines in parallel, first non-empty answer wins, hard 12 s
-        // budget: the app gives up after 30 s, and engines run one after the
-        // other could take ~50 s when Render's IP is blocked.
-        List<java.util.concurrent.Callable<List<Map<String, String>>>> engines = List.of(
-                () -> performGoogleSearch(query),
-                () -> performDuckDuckGoSearch(query),
-                () -> performQwantLiteSearch(query),
-                () -> performMojeekSearch(query),
-                () -> performBingSearch(query));
+        // All sources in parallel, first non-empty answer wins, hard 12 s
+        // budget (the app gives up after 30 s). The recipe sites' own search
+        // pages answer our server; search engines often block it (captcha /
+        // empty page), so a blocked engine is paused 30 min instead of being
+        // retried - and logged - on every search.
+        Map<String, java.util.concurrent.Callable<List<Map<String, String>>>> sources = new java.util.LinkedHashMap<>();
+        sources.put("Recipe sites", () -> performRecipeSitesSearch(query));
+        sources.put("DuckDuckGo", () -> performDuckDuckGoSearch(query));
+        sources.put("Google", () -> performGoogleSearch(query));
+        sources.put("Bing", () -> performBingSearch(query));
+        sources.put("Qwant", () -> performQwantLiteSearch(query));
+        sources.put("Mojeek", () -> performMojeekSearch(query));
         java.util.concurrent.CompletionService<List<Map<String, String>>> done =
                 new java.util.concurrent.ExecutorCompletionService<>(SEARCH_POOL);
-        List<java.util.concurrent.Future<List<Map<String, String>>>> futures = new ArrayList<>();
-        for (var engine : engines) futures.add(done.submit(engine));
+        Map<java.util.concurrent.Future<List<Map<String, String>>>, String> futures = new java.util.HashMap<>();
+        sources.forEach((name, engine) -> { if (!SearchPause.isPaused(name)) futures.put(done.submit(engine), name); });
         long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(12);
         try {
-            for (int i = 0; i < engines.size(); i++) {
+            for (int i = 0; i < futures.size(); i++) {
                 long left = deadline - System.nanoTime();
                 if (left <= 0) break;
                 java.util.concurrent.Future<List<Map<String, String>>> f = done.poll(left, java.util.concurrent.TimeUnit.NANOSECONDS);
                 if (f == null) break;
+                String name = futures.get(f);
                 try {
                     List<Map<String, String>> res = f.get();
-                    if (res != null && !res.isEmpty()) return res;
+                    if (res != null && !res.isEmpty()) {
+                        log.info("Web search \"{}\": {} results from {}", query, res.size(), name);
+                        return res;
+                    }
                 } catch (java.util.concurrent.ExecutionException e) {
-                    log.warn("Search engine failed: {}", e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
+                    Throwable cause = e.getCause() != null ? e.getCause() : e;
+                    if (!(cause instanceof NoSearchResults)) SearchPause.pause(name, cause.getMessage(), log);
                 }
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } finally {
-            futures.forEach(f -> f.cancel(true));
+            futures.keySet().forEach(f -> f.cancel(true));
         }
         log.warn("No search engine answered for '{}' within the budget, returning recipe-site search links", query);
         return siteSearchLinks(query);
+    }
+
+
+    /** A source that answered but had nothing for this query: not a block, so not paused. */
+    static final class NoSearchResults extends Exception {
+        NoSearchResults(String message) { super(message); }
+    }
+
+    /** Sources that blocked our server are skipped for a while (one log line per pause). */
+    static final class SearchPause {
+        static final java.time.Duration PAUSE = java.time.Duration.ofMinutes(30);
+        private static final Map<String, java.time.Instant> UNTIL = new java.util.concurrent.ConcurrentHashMap<>();
+
+        static boolean isPaused(String name) {
+            java.time.Instant until = UNTIL.get(name);
+            return until != null && until.isAfter(java.time.Instant.now());
+        }
+
+        static void pause(String name, String reason, org.slf4j.Logger log) {
+            UNTIL.put(name, java.time.Instant.now().plus(PAUSE));
+            log.info("Web search: {} unavailable from this server ({}), skipped for 30 min", name, reason);
+        }
+
+        static void clear() {
+            UNTIL.clear();
+        }
+    }
+
+    /** Parallel fetches of the recipe sites (separate from SEARCH_POOL, which runs the sources themselves). */
+    private static final java.util.concurrent.ExecutorService SITE_POOL =
+            java.util.concurrent.Executors.newFixedThreadPool(6, r -> {
+                Thread t = new Thread(r, "recipe-site-search");
+                t.setDaemon(true);
+                return t;
+            });
+
+    /** A recipe site whose own search page lists recipes in the HTML (no JavaScript needed). */
+    record RecipeSite(String name, String searchUrl, java.util.regex.Pattern recipeUrl, boolean titleFromSlug) {
+    }
+
+    static final List<RecipeSite> RECIPE_SITES = List.of(
+            new RecipeSite("BBC Good Food", "https://www.bbcgoodfood.com/search?q=%s",
+                    java.util.regex.Pattern.compile("^https://www\\.bbcgoodfood\\.com/recipes/(?!collection|category)[a-z0-9-]+$"), false),
+            new RecipeSite("RecipeTin Eats", "https://www.recipetineats.com/?s=%s",
+                    java.util.regex.Pattern.compile("^https://www\\.recipetineats\\.com/(?!category|tag|page|about|contact|privacy|recipes)[a-z0-9-]+/$"), false),
+            new RecipeSite("Epicurious", "https://www.epicurious.com/search?q=%s",
+                    java.util.regex.Pattern.compile("^https://www\\.epicurious\\.com/recipes/food/views/[a-z0-9-]+$"), false),
+            new RecipeSite("Delish", "https://www.delish.com/search/?q=%s",
+                    java.util.regex.Pattern.compile("^https://www\\.delish\\.com/cooking/recipe-ideas/a\\d+/[a-z0-9-]+/$"), true),
+            new RecipeSite("Marmiton", "https://www.marmiton.org/recettes/recherche.aspx?aqt=%s",
+                    java.util.regex.Pattern.compile("^https://www\\.marmiton\\.org/recettes/recette_[^/]+_\\d+\\.aspx$"), false));
+
+    /**
+     * Searches the recipe sites directly (their search pages answer servers,
+     * unlike the search engines), keeps recipes whose title matches the
+     * query and interleaves the sites: up to 10 real recipe pages.
+     */
+    List<Map<String, String>> performRecipeSitesSearch(String query) throws Exception {
+        List<String> words = searchWords(query);
+        if (words.isEmpty()) throw new NoSearchResults("no searchable word");
+        String q = URLEncoder.encode(query.trim(), StandardCharsets.UTF_8);
+        List<java.util.concurrent.Future<List<Map<String, String>>>> fs = new ArrayList<>();
+        for (RecipeSite site : RECIPE_SITES) {
+            fs.add(SITE_POOL.submit(() -> {
+                Document doc = Jsoup.connect(String.format(site.searchUrl(), q))
+                        .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                        .headers(getHumanHeaders())
+                        .timeout(7000)
+                        .maxBodySize(5 * 1024 * 1024)
+                        .get();
+                return recipeLinks(doc, site, words);
+            }));
+        }
+        List<List<Map<String, String>>> perSite = new ArrayList<>();
+        long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(9);
+        for (var f : fs) {
+            try {
+                perSite.add(f.get(Math.max(1, deadline - System.nanoTime()), java.util.concurrent.TimeUnit.NANOSECONDS));
+            } catch (Exception e) {
+                f.cancel(true); // one slow or blocked site doesn't stop the others
+            }
+        }
+        List<Map<String, String>> out = new ArrayList<>();
+        for (int i = 0; out.size() < 10; i++) {
+            boolean any = false;
+            for (List<Map<String, String>> l : perSite) {
+                if (i < l.size() && out.size() < 10) { out.add(l.get(i)); any = true; }
+            }
+            if (!any) break;
+        }
+        if (out.isEmpty()) throw new NoSearchResults("no recipe site matched");
+        return out;
+    }
+
+    /** The site's recipe links whose title contains a query word, best matches first. */
+    static List<Map<String, String>> recipeLinks(Document doc, RecipeSite site, List<String> words) {
+        Map<String, String> titles = new java.util.LinkedHashMap<>();
+        for (Element a : doc.select("a[href]")) {
+            String href = a.absUrl("href");
+            int cut = href.indexOf('?');
+            if (cut > 0) href = href.substring(0, cut);
+            if (!site.recipeUrl().matcher(href).matches() || titles.containsKey(href)) continue;
+            String title = site.titleFromSlug() ? slugTitle(href) : a.text().replaceFirst("(?i)^app only\\s*", "").trim();
+            if (title.length() < 4 || title.length() > 140) continue;
+            titles.put(href, title);
+        }
+        List<Map<String, String>> out = new ArrayList<>();
+        titles.entrySet().stream()
+                .map(e -> Map.entry(e, matches(e.getValue(), words)))
+                .filter(x -> x.getValue() > 0)
+                .sorted((x, y) -> Integer.compare(y.getValue(), x.getValue()))
+                .limit(4)
+                .forEach(x -> out.add(Map.of("title", x.getKey().getValue(), "url", x.getKey().getKey(),
+                        "snippet", "Recipe on " + site.name())));
+        return out;
+    }
+
+    /** "…/a58716/easy-chicken-tacos-recipe/" → "Easy chicken tacos". */
+    static String slugTitle(String url) {
+        String[] parts = url.replaceAll("/+$", "").split("/");
+        String t = parts[parts.length - 1].replaceAll("-recipe$", "").replace('-', ' ').trim();
+        return t.isEmpty() ? t : Character.toUpperCase(t.charAt(0)) + t.substring(1);
+    }
+
+    /** Lower-case words of 3+ letters, accents removed, without "recipe(s)" / "recette(s)". */
+    static List<String> searchWords(String query) {
+        String n = java.text.Normalizer.normalize(query == null ? "" : query.toLowerCase(Locale.ROOT), java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+        List<String> out = new ArrayList<>();
+        for (String w : n.split("[^a-z0-9]+")) {
+            if (w.length() < 3 || w.matches("recipes?|recettes?|recetas?|the|and|with|avec")) continue;
+            out.add(w.endsWith("s") && w.length() > 4 ? w.substring(0, w.length() - 1) : w); // tacos → taco
+        }
+        return out;
+    }
+
+    static int matches(String title, List<String> words) {
+        String t = java.text.Normalizer.normalize(title.toLowerCase(Locale.ROOT), java.text.Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+        int n = 0;
+        for (String w : words) if (t.contains(w)) n++;
+        return n;
     }
 
     /**
@@ -168,7 +317,6 @@ public class MarkhorAiServiceImpl implements AiService {
     }
 
     private List<Map<String, String>> performGoogleSearch(String query) throws Exception {
-        log.info("Google Search for: {}", query);
         String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
         String url = "https://www.google.com/search?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8) + "&gbv=1&hl=en";
 
@@ -221,19 +369,14 @@ public class MarkhorAiServiceImpl implements AiService {
                     }
                 }
             }
-            if (results.isEmpty()) throw new Exception("Google returned no results. Title: " + doc.title());
+            if (results.isEmpty()) throw new Exception("blocked or empty page (\"" + doc.title() + "\")");
             return results;
         } catch (org.jsoup.HttpStatusException e) {
-            log.error("Google search HTTP error: Status={}, URL={}", e.getStatusCode(), e.getUrl());
-            throw e;
-        } catch (Exception e) {
-            log.error("Google search failed: {}", e.getMessage());
-            throw e;
+            throw new Exception("HTTP " + e.getStatusCode());
         }
     }
 
     private List<Map<String, String>> performDuckDuckGoSearch(String query) throws Exception {
-        log.info("DDG Search for: {}", query);
         String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
         String url = "https://lite.duckduckgo.com/lite/?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
 
@@ -279,19 +422,14 @@ public class MarkhorAiServiceImpl implements AiService {
                     }
                 }
             }
-            if (results.isEmpty()) throw new Exception("DDG returned no results. Title: " + doc.title());
+            if (results.isEmpty()) throw new Exception("blocked or empty page (\"" + doc.title() + "\")");
             return results;
         } catch (org.jsoup.HttpStatusException e) {
-            log.error("DuckDuckGo HTTP error: Status={}, URL={}", e.getStatusCode(), e.getUrl());
-            throw e;
-        } catch (Exception e) {
-            log.error("DuckDuckGo search failed: {}", e.getMessage());
-            throw e;
+            throw new Exception("HTTP " + e.getStatusCode());
         }
     }
 
     private List<Map<String, String>> performQwantLiteSearch(String query) throws Exception {
-        log.info("Qwant Search for: {}", query);
         String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
         String url = "https://lite.qwant.com/?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
 
@@ -320,7 +458,6 @@ public class MarkhorAiServiceImpl implements AiService {
     }
 
     private List<Map<String, String>> performMojeekSearch(String query) throws Exception {
-        log.info("Mojeek Search for: {}", query);
         String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
         String url = "https://www.mojeek.com/search?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
 
@@ -349,7 +486,6 @@ public class MarkhorAiServiceImpl implements AiService {
     }
 
     private List<Map<String, String>> performBingSearch(String query) throws Exception {
-        log.info("Bing Search for: {}", query);
         String q = query.toLowerCase().contains("recipe") ? query : query + " recipe";
         String url = "https://www.bing.com/search?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
 
