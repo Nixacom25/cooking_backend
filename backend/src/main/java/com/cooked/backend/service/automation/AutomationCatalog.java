@@ -47,6 +47,11 @@ public final class AutomationCatalog {
                     "Off until turned on in Settings → Your alerts."),
             new Automation("scheduled_campaigns", "Scheduled push campaigns", Kind.SCHEDULED, "Every minute",
                     List.of("Send push campaigns whose time has come"), null, null,
-                    "Polls every minute; runs are not logged (see Notifications for sends).")
+                    "Polls every minute; runs are not logged (see Notifications for sends)."),
+            new Automation("data_export_cleanup", "Expired data exports cleanup", Kind.SCHEDULED, "Daily at 03:30",
+                    List.of("Delete export files older than 7 days"), "DataExportCleanupJob.expireOldExports", null, null),
+            new Automation("competitor_sitemaps", "Competitor sites watch", Kind.SCHEDULED, "Mondays at 05:00",
+                    List.of("Read each competitor's sitemap", "Count recipe pages added or updated this week"), "ResearchSourcesServiceImpl.crawlAll", null,
+                    "Sites are added in SEO & content → Research sources.")
     );
 }
