@@ -27,6 +27,12 @@ public interface EmailService {
     /** Free-user nudge (drip funnel) when no push token is registered. */
     void sendDripEmail(String to, String firstName, String title, String body);
 
+    /**
+     * Marketing email from a campaign: the HTML is complete (footer included);
+     * List-Unsubscribe headers point to {@code unsubscribeUrl}. Returns true when Brevo accepted it.
+     */
+    boolean sendCampaignEmail(String to, String subject, String html, String unsubscribeUrl);
+
     /** Key figures for admins; rows are {label, value}. */
     void sendAdminSummaryEmail(String to, String subject, String title, java.util.List<String[]> rows);
 

@@ -35,7 +35,7 @@ class AdminEndpointSecurityTest {
 
     @Test
     void adminControllersRequireAdminOnTheClass() {
-        for (Class<?> c : new Class<?>[] {RecipeDataController.class, AdminRevenueController.class, AdminAnalyticsController.class, AdminCostController.class, AdminTrendsController.class, AdminIntegrationController.class, AskCookedController.class, AdminAutomationController.class, AdminSettingsController.class, AdminTwoFactorController.class, AdminArticleController.class, AdminAmbassadorController.class, com.cooked.backend.controller.AdminExportController.class, com.cooked.backend.controller.AdminResearchSourcesController.class}) {
+        for (Class<?> c : new Class<?>[] {RecipeDataController.class, AdminRevenueController.class, AdminAnalyticsController.class, AdminCostController.class, AdminTrendsController.class, AdminIntegrationController.class, AskCookedController.class, AdminAutomationController.class, AdminSettingsController.class, AdminTwoFactorController.class, AdminArticleController.class, AdminAmbassadorController.class, com.cooked.backend.controller.AdminExportController.class, com.cooked.backend.controller.AdminResearchSourcesController.class, com.cooked.backend.controller.AdminEmailCampaignController.class}) {
             PreAuthorize p = c.getAnnotation(PreAuthorize.class);
             assertNotNull(p, c.getSimpleName() + " must be @PreAuthorize");
             assertEquals(ADMIN, p.value(), c.getSimpleName());

@@ -19,7 +19,8 @@ public enum EmailTemplate {
     DRIP("Free users drip", "Free user at day 3 / day 7 without a push token (Settings)", true),
     CREATOR_DECISION("Creator application decision", "Application approved, rejected or more info requested", false),
     SUPPORT_REPLY("Support reply", "Admin answered a support ticket", false),
-    TEAM_INVITE("Team invitation", "Admin invited a team member", false);
+    TEAM_INVITE("Team invitation", "Admin invited a team member", false),
+    CAMPAIGN("Email campaign", "Sent from Growth → Email → New campaign", true);
 
     private final String label;
     private final String trigger;

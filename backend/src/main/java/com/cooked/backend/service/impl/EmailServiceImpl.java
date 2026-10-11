@@ -772,8 +772,19 @@ public class EmailServiceImpl implements EmailService {
         sendHtmlEmail(template, to, subject, htmlContent, null);
     }
 
-    /** Sends through Brevo (tagged with the template) and records the outcome for the Email / Integrations screens. */
+    @Override
+    public boolean sendCampaignEmail(String to, String subject, String html, String unsubscribeUrl) {
+        return sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.CAMPAIGN, to, subject, html, null,
+                java.util.Map.of("List-Unsubscribe", "<" + unsubscribeUrl + ">", "List-Unsubscribe-Post", "List-Unsubscribe=One-Click"));
+    }
+
     private void sendHtmlEmail(com.cooked.backend.entity.EmailTemplate template, String to, String subject, String htmlContent, String replyToEmail) {
+        sendHtmlEmail(template, to, subject, htmlContent, replyToEmail, null);
+    }
+
+    /** Sends through Brevo (tagged with the template) and records the outcome for the Email / Integrations screens. */
+    private boolean sendHtmlEmail(com.cooked.backend.entity.EmailTemplate template, String to, String subject, String htmlContent, String replyToEmail,
+                                  java.util.Map<String, String> extraHeaders) {
         long start = System.nanoTime();
         Integer status = null;
         String error = null;
@@ -791,6 +802,7 @@ public class EmailServiceImpl implements EmailService {
                 body.put("replyTo", java.util.Map.of("email", replyToEmail));
             }
             body.put("tags", java.util.List.of(template.name().toLowerCase()));
+            if (extraHeaders != null && !extraHeaders.isEmpty()) body.put("headers", extraHeaders);
 
             org.springframework.http.HttpEntity<java.util.Map<String, Object>> entity = 
                 new org.springframework.http.HttpEntity<>(body, headers);
@@ -815,5 +827,6 @@ public class EmailServiceImpl implements EmailService {
             integrationEvents.record(com.cooked.backend.entity.IntegrationKey.BREVO, template.name(), error == null, status,
                     (int) ((System.nanoTime() - start) / 1_000_000), error);
         }
+        return error == null;
     }
 }

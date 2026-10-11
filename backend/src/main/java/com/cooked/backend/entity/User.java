@@ -307,6 +307,13 @@ public class User implements UserDetails {
     @Builder.Default
     private boolean pushNewsOffersEnabled = true;
 
+    // Marketing emails (Growth → Email campaigns). Turned off by the
+    // unsubscribe link in every campaign email; account emails still go out.
+    @Column(nullable = false)
+    @org.hibernate.annotations.ColumnDefault("true")
+    @Builder.Default
+    private boolean emailMarketingEnabled = true;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -421,6 +428,8 @@ public class User implements UserDetails {
     public void setPushRemindersEnabled(boolean pushRemindersEnabled) { this.pushRemindersEnabled = pushRemindersEnabled; }
 
     public boolean isPushNewsOffersEnabled() { return pushNewsOffersEnabled; }
+    public boolean isEmailMarketingEnabled() { return emailMarketingEnabled; }
+    public void setEmailMarketingEnabled(boolean emailMarketingEnabled) { this.emailMarketingEnabled = emailMarketingEnabled; }
     public void setPushNewsOffersEnabled(boolean pushNewsOffersEnabled) { this.pushNewsOffersEnabled = pushNewsOffersEnabled; }
 
     public LocalDateTime getLastActive() { return lastActive; }

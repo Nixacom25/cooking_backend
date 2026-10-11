@@ -52,6 +52,9 @@ public final class AutomationCatalog {
                     List.of("Delete export files older than 7 days"), "DataExportCleanupJob.expireOldExports", null, null),
             new Automation("competitor_sitemaps", "Competitor sites watch", Kind.SCHEDULED, "Mondays at 05:00",
                     List.of("Read each competitor's sitemap", "Count recipe pages added or updated this week"), "ResearchSourcesServiceImpl.crawlAll", null,
-                    "Sites are added in SEO & content → Research sources.")
+                    "Sites are added in SEO & content → Research sources."),
+            new Automation("email_campaigns", "Scheduled email campaigns", Kind.SCHEDULED, "Every minute",
+                    List.of("Send email campaigns whose time has come", "Skip unsubscribed users and anyone emailed twice this week"), null, EmailTemplate.CAMPAIGN,
+                    "Polls every minute; runs are not logged (see Email for sends).")
     );
 }
