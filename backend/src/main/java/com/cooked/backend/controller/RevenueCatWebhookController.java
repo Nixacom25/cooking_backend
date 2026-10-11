@@ -44,6 +44,10 @@ public class RevenueCatWebhookController {
     private final GiftService giftService;
     private final UserSubscriptionRepository userSubscriptionRepository;
 
+    /** Lets custom automations react to failed payments (optional: absent in unit tests). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.springframework.context.ApplicationEventPublisher events;
+
     @Value("${revenuecat.webhook.secret:}")
     private String webhookSecret;
 
@@ -212,6 +216,9 @@ public class RevenueCatWebhookController {
                 String planName = productId != null && productId.toLowerCase().contains("year") ? "Yearly" : "Monthly";
                 String price = formatPrice(event.get("price"), event.get("currency"));
                 emailService.sendPaymentFailureEmail(user.getEmail(), user.getFirstname(), planName, price);
+                if (events != null) {
+                    events.publishEvent(new com.cooked.backend.service.AutomationTriggerEvent("PAYMENT_FAILED", user.getId(), user.getEmail(), planName + " · " + price));
+                }
                 // Billing alerts only respect the master push switch, not the
                 // reminders/news sub-toggles - losing access to the app is
                 // account-critical, not optional marketing.

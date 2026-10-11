@@ -24,6 +24,7 @@ public class AdminAutomationServiceImpl implements AdminAutomationService {
 
     private final AutomationRunRepository runs;
     private final IntegrationEventRepository integrationEvents;
+    private final com.cooked.backend.service.CustomAutomationService customAutomations;
 
     @Override
     public List<AutomationResponse> automations() {
@@ -32,7 +33,14 @@ public class AdminAutomationServiceImpl implements AdminAutomationService {
         runs.summarySince(from).forEach(j -> jobs.put(j.getJob(), j));
         Map<String, IntegrationEventRepository.NameSummary> emails = new HashMap<>();
         integrationEvents.byName(IntegrationKey.BREVO, from).forEach(n -> emails.put(n.getName(), n));
-        return AutomationCatalog.ALL.stream().map(a -> view(a, jobs, emails)).toList();
+        List<AutomationResponse> out = new java.util.ArrayList<>(AutomationCatalog.ALL.stream().map(a -> view(a, jobs, emails)).toList());
+        // Flows built in the backoffice (New automation), after the built-in ones.
+        customAutomations.list().forEach(c -> out.add(AutomationResponse.builder()
+                .key("custom:" + c.id()).name(c.name()).kind("CUSTOM").trigger(c.trigger() + (c.triggerValue() == null ? "" : " = " + c.triggerValue()))
+                .actions(customActions(c)).lastRunAt(c.lastRunAt()).runs30d(c.fired30d()).failures30d(0)
+                .note("ACTIVE".equals(c.status()) ? null : c.status().charAt(0) + c.status().substring(1).toLowerCase() + " · built in the backoffice")
+                .build()));
+        return out;
     }
 
     private AutomationResponse view(Automation a, Map<String, AutomationRunRepository.JobSummary> jobs,
@@ -53,6 +61,15 @@ public class AdminAutomationServiceImpl implements AdminAutomationService {
             }
         }
         return b.build();
+    }
+
+    private static List<String> customActions(com.cooked.backend.dto.response.CustomAutomationResponse c) {
+        List<String> a = new java.util.ArrayList<>();
+        if (c.pushEnabled()) a.add("Push: " + c.pushTitle());
+        if (c.emailEnabled()) a.add("Email: " + c.emailSubject());
+        if (c.slackEnabled()) a.add("Slack" + (c.slackText() == null ? "" : ": " + c.slackText()));
+        if (c.teamEmailEnabled()) a.add("Email the admin team");
+        return a;
     }
 
     private static long nz(Long v) {

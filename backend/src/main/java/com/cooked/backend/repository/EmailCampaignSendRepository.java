@@ -9,4 +9,6 @@ import java.util.UUID;
 @Repository
 public interface EmailCampaignSendRepository extends JpaRepository<EmailCampaignSend, UUID> {
     long countByCampaignId(UUID campaignId);
+
+    long countByUserIdAndSentAtAfter(UUID userId, java.time.LocalDateTime after);
 }

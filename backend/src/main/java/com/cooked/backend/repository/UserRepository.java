@@ -213,4 +213,6 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
 
     /** Admins without a custom role (full access). */
     long countByRoleAndCustomRoleIdIsNull(com.cooked.backend.entity.Role role);
+
+    long countByCreatedAtAfter(java.time.LocalDateTime after);
 }

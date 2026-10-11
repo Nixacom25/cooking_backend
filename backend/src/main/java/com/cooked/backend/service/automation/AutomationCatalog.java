@@ -55,6 +55,11 @@ public final class AutomationCatalog {
                     "Sites are added in SEO & content → Research sources."),
             new Automation("email_campaigns", "Scheduled email campaigns", Kind.SCHEDULED, "Every minute",
                     List.of("Send email campaigns whose time has come", "Skip unsubscribed users and anyone emailed twice this week"), null, EmailTemplate.CAMPAIGN,
-                    "Polls every minute; runs are not logged (see Email for sends).")
+                    "Polls every minute; runs are not logged (see Email for sends)."),
+            new Automation("custom_automations", "Backoffice automations (time triggers)", Kind.SCHEDULED, "Every hour at :05",
+                    List.of("Run the active flows built in New automation", "Daily digest to Slack / admins at 9 AM"), "CustomAutomationEngine.runHourly", null, null),
+            new Automation("custom_crash_spikes", "Backoffice automations (crash spikes)", Kind.SCHEDULED, "Every 5 minutes",
+                    List.of("Check the crash count of the last 15 minutes against active crash-spike flows"), "CustomAutomationEngine.checkErrorSpikes", null,
+                    "Polls every 5 minutes; runs are not logged.")
     );
 }

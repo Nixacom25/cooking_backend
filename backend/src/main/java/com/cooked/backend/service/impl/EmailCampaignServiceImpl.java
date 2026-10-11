@@ -257,6 +257,11 @@ public class EmailCampaignServiceImpl implements EmailCampaignService {
 
     // --- unsubscribe --------------------------------------------------------------------------
 
+    @Override
+    public String unsubscribeLink(UUID userId) {
+        return unsubscribeUrl(userId);
+    }
+
     String unsubscribeUrl(UUID userId) {
         return publicApiUrl + "/public/email/unsubscribe?u=" + userId + "&t=" + token(userId);
     }

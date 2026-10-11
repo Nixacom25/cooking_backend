@@ -40,6 +40,9 @@ public interface EmailCampaignService {
     /** Job: sends the campaigns whose time has come (and resumes interrupted ones). */
     void sendDue();
 
+    /** The signed unsubscribe link for a user (also used by automation emails). */
+    String unsubscribeLink(java.util.UUID userId);
+
     /** Public unsubscribe link: true when the signature matches and the user was found. */
     boolean unsubscribe(UUID userId, String token);
 }

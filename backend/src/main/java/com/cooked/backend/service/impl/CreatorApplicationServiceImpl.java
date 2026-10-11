@@ -42,6 +42,9 @@ public class CreatorApplicationServiceImpl implements CreatorApplicationService 
     private final EmailService emailService;
     private final ProxyManager<byte[]> proxyManager;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.springframework.context.ApplicationEventPublisher events;
+
     @Override
     @Transactional
     public void submit(CreatorApplicationRequest r, String clientKey) {
@@ -55,6 +58,10 @@ public class CreatorApplicationServiceImpl implements CreatorApplicationService 
                 .name(r.getName().trim()).email(r.getEmail().trim().toLowerCase())
                 .handle(blank(r.getHandle())).platform(blank(r.getPlatform())).audience(blank(r.getAudience()))
                 .details(blank(r.getDetails())).status(CreatorApplicationStatus.NEW).build());
+        if (events != null) {
+            events.publishEvent(new com.cooked.backend.service.AutomationTriggerEvent("CREATOR_APPLIED", null, null,
+                    r.getName().trim() + " · " + r.getProgram()));
+        }
     }
 
     @Override
