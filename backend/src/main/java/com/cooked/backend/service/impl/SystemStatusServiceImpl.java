@@ -125,7 +125,7 @@ public class SystemStatusServiceImpl implements SystemStatusService {
         if (total == 0) return new Service(name, "IDLE", "No request in 24 h");
         double rate = 100.0 * (total - technicalFailures) / total;
         String status = rate < 50 ? "DOWN" : rate < 85 ? "DEGRADED" : "UP";
-        String detail = Math.round(rate) + "% success · " + total + " in 24 h";
+        String detail = Math.round(rate) + "% · " + total + " in 24 h";
         if (rejectedInputs > 0) detail += " · " + rejectedInputs + " unusable input" + (rejectedInputs == 1 ? "" : "s");
         return new Service(name, status, detail);
     }
