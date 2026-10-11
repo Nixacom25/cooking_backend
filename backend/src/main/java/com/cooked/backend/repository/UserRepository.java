@@ -205,4 +205,12 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
     java.util.List<LabelCount> countSignupsBySource(
             @org.springframework.data.repository.query.Param("role") com.cooked.backend.entity.Role role,
             @org.springframework.data.repository.query.Param("from") LocalDateTime from);
+
+    /** Members of a custom role (admin team). */
+    java.util.List<User> findAllByCustomRoleId(java.util.UUID customRoleId);
+
+    long countByCustomRoleId(java.util.UUID customRoleId);
+
+    /** Admins without a custom role (full access). */
+    long countByRoleAndCustomRoleIdIsNull(com.cooked.backend.entity.Role role);
 }

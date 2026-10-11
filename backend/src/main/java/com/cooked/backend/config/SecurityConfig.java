@@ -35,9 +35,12 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
     private final SubscriptionRequiredFilter subscriptionRequiredFilter;
+    private final com.cooked.backend.security.CustomRoleFilter customRoleFilter;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, UserDetailsService userDetailsService,
-                          SubscriptionRequiredFilter subscriptionRequiredFilter) {
+                          SubscriptionRequiredFilter subscriptionRequiredFilter,
+                          com.cooked.backend.security.CustomRoleFilter customRoleFilter) {
+        this.customRoleFilter = customRoleFilter;
         this.jwtAuthFilter = jwtAuthFilter;
         this.userDetailsService = userDetailsService;
         this.subscriptionRequiredFilter = subscriptionRequiredFilter;
@@ -106,7 +109,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(subscriptionRequiredFilter, JwtAuthenticationFilter.class);
+                .addFilterAfter(subscriptionRequiredFilter, JwtAuthenticationFilter.class)
+                .addFilterAfter(customRoleFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

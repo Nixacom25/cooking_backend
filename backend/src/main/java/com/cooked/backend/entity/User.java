@@ -314,6 +314,11 @@ public class User implements UserDetails {
     @Builder.Default
     private boolean emailMarketingEnabled = true;
 
+    // Admin team: a custom role (Settings → Permissions) narrows what this ADMIN
+    // can see and change. Null = full admin.
+    @Column(name = "custom_role_id")
+    private java.util.UUID customRoleId;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -429,6 +434,8 @@ public class User implements UserDetails {
 
     public boolean isPushNewsOffersEnabled() { return pushNewsOffersEnabled; }
     public boolean isEmailMarketingEnabled() { return emailMarketingEnabled; }
+    public java.util.UUID getCustomRoleId() { return customRoleId; }
+    public void setCustomRoleId(java.util.UUID customRoleId) { this.customRoleId = customRoleId; }
     public void setEmailMarketingEnabled(boolean emailMarketingEnabled) { this.emailMarketingEnabled = emailMarketingEnabled; }
     public void setPushNewsOffersEnabled(boolean pushNewsOffersEnabled) { this.pushNewsOffersEnabled = pushNewsOffersEnabled; }
 
