@@ -4,15 +4,22 @@ import com.cooked.backend.entity.Cookbook;
 import com.cooked.backend.entity.Recipe;
 import com.cooked.backend.repository.CookbookRepository;
 import com.cooked.backend.repository.RecipeRepository;
+import com.cooked.backend.service.ShareImageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * ShareController — serves Open Graph–enriched HTML pages for recipe share
@@ -33,6 +40,7 @@ public class ShareController {
 
     private final RecipeRepository recipeRepository;
     private final CookbookRepository cookbookRepository;
+    private final ShareImageService shareImageService;
 
     /** App deep-link scheme — update if the scheme changes */
     private static final String APP_SCHEME = "cooked://recipe/";
@@ -101,19 +109,20 @@ public class ShareController {
                     .body(buildFallbackHtml("Cookbook not found", "This cookbook is no longer available."));
         }
 
-        var recipes = cookbook.getRecipes() == null ? java.util.List.<Recipe>of()
-                : cookbook.getRecipes().stream().filter(Objects::nonNull).filter(r -> !r.isDeleted()).toList();
-        String cover = recipes.stream()
-                .map(Recipe::getImage)
-                .filter(img -> img != null && !img.isBlank())
-                .findFirst()
-                .orElse(null);
+        var recipes = activeRecipes(cookbook);
+        List<String> images = recipeImages(recipes);
+        // Four recipes or more: a 2x2 collage (the version busts crawler
+        // caches when the recipes change); otherwise the first recipe image.
+        String cover = images.size() >= ShareImageService.COLLAGE_SIZE
+                ? "https://link.cookedapp.com/share/cookbooks/" + id + "/cover.jpg?v="
+                        + Integer.toHexString(images.subList(0, ShareImageService.COLLAGE_SIZE).hashCode())
+                : ogImage(images.isEmpty() ? null : images.get(0));
 
         String description = recipes.size() + (recipes.size() == 1 ? " recipe" : " recipes")
                 + " shared on " + SITE_NAME;
         String html = buildHtml(
                 escapeHtml(cookbook.getName()),
-                escapeHtml(ogImage(cover)),
+                escapeHtml(cover),
                 description,
                 COOKBOOK_APP_SCHEME + id,
                 "https://link.cookedapp.com/share/cookbooks/" + id);
@@ -123,7 +132,50 @@ public class ShareController {
                 .body(html);
     }
 
+    /**
+     * GET /share/cookbooks/{id}/cover.jpg
+     *
+     * Open Graph image of a shared cookbook: its first four recipe images in a
+     * 2x2 grid. Falls back to the first image when the collage can't be built.
+     */
+    @Operation(summary = "Shared cookbook preview image (Open Graph)")
+    @GetMapping(value = "/cookbooks/{id}/cover.jpg")
+    public ResponseEntity<byte[]> shareCookbookCover(@PathVariable UUID id) {
+        Cookbook cookbook = cookbookRepository.findById(id).filter(Cookbook::isShared).orElse(null);
+        if (cookbook == null) return ResponseEntity.notFound().build();
+
+        List<String> images = recipeImages(activeRecipes(cookbook));
+        return shareImageService.collage(images)
+                .map(jpeg -> ResponseEntity.ok()
+                        .contentType(MediaType.IMAGE_JPEG)
+                        .cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS).cachePublic())
+                        .body(jpeg))
+                .orElseGet(() -> ResponseEntity.status(302)
+                        .header(HttpHeaders.LOCATION, ogImage(images.isEmpty() ? null : images.get(0)))
+                        .build());
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
+
+    /** Newest first, in a stable order: the recipes are an unordered Set. */
+    private List<Recipe> activeRecipes(Cookbook cookbook) {
+        return cookbook.getRecipes() == null ? List.of()
+                : cookbook.getRecipes().stream()
+                        .filter(Objects::nonNull)
+                        .filter(r -> !r.isDeleted())
+                        .sorted(Comparator.comparing(Recipe::getCreatedAt,
+                                        Comparator.nullsLast(Comparator.<LocalDateTime>reverseOrder()))
+                                .thenComparing(Recipe::getId))
+                        .toList();
+    }
+
+    private List<String> recipeImages(List<Recipe> recipes) {
+        return recipes.stream()
+                .map(Recipe::getImage)
+                .filter(img -> img != null && !img.isBlank())
+                .distinct()
+                .toList();
+    }
 
     /**
      * WhatsApp requires images < 300KB: Cloudinary URLs are resized for Open
