@@ -50,4 +50,9 @@ public class Cookbook {
     @Column(nullable = false)
     @Builder.Default
     private boolean isPinned = false;
+
+    /** Set once the owner shares it: only shared cookbooks can be previewed or imported by others. */
+    @Column(nullable = false, columnDefinition = "boolean not null default false")
+    @Builder.Default
+    private boolean isShared = false;
 }

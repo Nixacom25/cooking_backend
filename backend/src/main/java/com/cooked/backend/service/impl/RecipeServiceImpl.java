@@ -38,6 +38,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final RecipeCategoryRepository recipeCategoryRepository;
     private final org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
     private final com.cooked.backend.service.RecipeImageMatchingService recipeImageMatchingService;
+    private final com.cooked.backend.service.RecipeCopyService recipeCopyService;
 
     @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
     public void onStartup() {
@@ -589,21 +590,9 @@ public class RecipeServiceImpl implements RecipeService {
 
         if (!recipe.getUser().getId().equals(user.getId())) {
             if (recipe.isPublic()) {
-                // Check for duplicate by name for this user to avoid multiple clones
-                Optional<Recipe> existing = recipeRepository.findByUserIdAndName(user.getId(), recipe.getName());
-                if (existing.isPresent()) {
-                    Recipe mine = existing.get();
-                    if (mine.isDeleted()) {
-                        // Saving it again from Explore restores the copy.
-                        mine.setDeleted(false);
-                        mine = recipeRepository.save(mine);
-                    }
-                    return mapToResponse(mine, user);
-                }
-                
-                Recipe clone = cloneRecipeForUser(recipe, user);
-                activityLogService.logActivity(user, "Recipe Saved", "You saved '" + clone.getName() + "' from Explore.");
-                return mapToResponse(clone, user);
+                Recipe copy = recipeCopyService.copyForUser(recipe, user);
+                activityLogService.logActivity(user, "Recipe Saved", "You saved '" + copy.getName() + "' from Explore.");
+                return mapToResponse(copy, user);
             }
             throw new BadRequestException("You do not have permission to validate this recipe.");
         }
@@ -682,43 +671,6 @@ public class RecipeServiceImpl implements RecipeService {
                 .recipeCount(items.size())
                 .recipes(items)
                 .build();
-    }
-
-    private Recipe cloneRecipeForUser(Recipe original, User user) {
-        Recipe clone = Recipe.builder()
-                .user(user)
-                .name(original.getName())
-                .image(original.getImage())
-                .cookTime(original.getCookTime())
-                .prepTime(original.getPrepTime())
-                .kcal(original.getKcal())
-                .categories(new java.util.HashSet<>(original.getCategories()))
-                .cuisine(original.getCuisine())
-                .servings(original.getServings())
-                .tips(original.getTips())
-                .steps(new ArrayList<>(original.getSteps()))
-                .equipment(new ArrayList<>(original.getEquipment()))
-                .isPublic(false) // Cloned recipes are private for the user
-                // Saved from Explore: must never be treated as a scan (no savings).
-                .origin(RecipeOrigin.EXPLORE)
-                .sourceUrl(original.getSourceUrl())
-                .build();
-
-        Recipe savedClone = recipeRepository.save(clone);
-
-        if (original.getRecipeIngredients() != null) {
-            Set<RecipeIngredient> clonedIngredients = original.getRecipeIngredients().stream()
-                    .map(ri -> RecipeIngredient.builder()
-                            .recipe(savedClone)
-                            .ingredient(ri.getIngredient())
-                            .quantity(ri.getQuantity())
-                            .build())
-                    .collect(Collectors.toSet());
-            savedClone.setRecipeIngredients(clonedIngredients);
-            return recipeRepository.save(savedClone);
-        }
-
-        return savedClone;
     }
 
     private RecipeResponse mapToResponse(Recipe recipe, User user) {

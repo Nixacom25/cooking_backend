@@ -1,6 +1,8 @@
 package com.cooked.backend.controller;
 
+import com.cooked.backend.entity.Cookbook;
 import com.cooked.backend.entity.Recipe;
+import com.cooked.backend.repository.CookbookRepository;
 import com.cooked.backend.repository.RecipeRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -29,9 +32,12 @@ import java.util.UUID;
 public class ShareController {
 
     private final RecipeRepository recipeRepository;
+    private final CookbookRepository cookbookRepository;
 
     /** App deep-link scheme — update if the scheme changes */
     private static final String APP_SCHEME = "cooked://recipe/";
+    private static final String COOKBOOK_APP_SCHEME = "cooked://cookbook/";
+    private static final String DEFAULT_OG_IMAGE = "https://link.cookedapp.com/og-default.jpg";
 
     /** Fallback URL when the app is not installed */
     private static final String STORE_URL = "https://link.cookedapp.com";
@@ -54,7 +60,7 @@ public class ShareController {
 
         // ── Fallback when recipe not found ──────────────────────────────────
         if (recipe == null || !recipe.isPublic()) {
-            String fallback = buildFallbackHtml();
+            String fallback = buildFallbackHtml("Recipe not found", "This recipe is no longer available.");
             return ResponseEntity.status(404)
                     .contentType(MediaType.TEXT_HTML)
                     .body(fallback);
@@ -62,16 +68,7 @@ public class ShareController {
 
         // ── Build meta values ────────────────────────────────────────────────
         String recipeName = escapeHtml(recipe.getName());
-        String rawImage = (recipe.getImage() != null && !recipe.getImage().isBlank())
-                ? recipe.getImage()
-                : "https://link.cookedapp.com/og-default.jpg";
-
-        // WhatsApp requires images < 300KB. Optimize Cloudinary URLs for Open Graph
-        // (1200x630, high compression, JPEG)
-        if (rawImage.contains("res.cloudinary.com") && rawImage.contains("/image/upload/")) {
-            rawImage = rawImage.replaceFirst("/image/upload/", "/image/upload/w_1200,h_630,c_fill,q_auto,f_jpg/");
-        }
-        String recipeImage = escapeHtml(rawImage);
+        String recipeImage = escapeHtml(ogImage(recipe.getImage()));
 
         String cuisine = recipe.getCuisine() != null ? recipe.getCuisine().getName() : "";
         String category = recipe.getCategories() != null && !recipe.getCategories().isEmpty() ? recipe.getCategories().iterator().next().getName() : "";
@@ -87,7 +84,58 @@ public class ShareController {
                 .body(html);
     }
 
+    /**
+     * GET /share/cookbooks/{id}
+     *
+     * Same as the recipe page, for a cookbook the owner chose to share. The
+     * app opens it on a "receiving cookbook" screen that imports it.
+     */
+    @Operation(summary = "Shared cookbook preview page (Open Graph)")
+    @GetMapping(value = "/cookbooks/{id}", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<String> shareCookbook(@PathVariable UUID id) {
+        Cookbook cookbook = cookbookRepository.findById(id).filter(Cookbook::isShared).orElse(null);
+
+        if (cookbook == null) {
+            return ResponseEntity.status(404)
+                    .contentType(MediaType.TEXT_HTML)
+                    .body(buildFallbackHtml("Cookbook not found", "This cookbook is no longer available."));
+        }
+
+        var recipes = cookbook.getRecipes() == null ? java.util.List.<Recipe>of()
+                : cookbook.getRecipes().stream().filter(Objects::nonNull).filter(r -> !r.isDeleted()).toList();
+        String cover = recipes.stream()
+                .map(Recipe::getImage)
+                .filter(img -> img != null && !img.isBlank())
+                .findFirst()
+                .orElse(null);
+
+        String description = recipes.size() + (recipes.size() == 1 ? " recipe" : " recipes")
+                + " shared on " + SITE_NAME;
+        String html = buildHtml(
+                escapeHtml(cookbook.getName()),
+                escapeHtml(ogImage(cover)),
+                description,
+                COOKBOOK_APP_SCHEME + id,
+                "https://link.cookedapp.com/share/cookbooks/" + id);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_HTML)
+                .body(html);
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
+
+    /**
+     * WhatsApp requires images < 300KB: Cloudinary URLs are resized for Open
+     * Graph (1200x630, high compression, JPEG).
+     */
+    private String ogImage(String image) {
+        String raw = (image != null && !image.isBlank()) ? image : DEFAULT_OG_IMAGE;
+        if (raw.contains("res.cloudinary.com") && raw.contains("/image/upload/")) {
+            raw = raw.replaceFirst("/image/upload/", "/image/upload/w_1200,h_630,c_fill,q_auto,f_jpg/");
+        }
+        return raw;
+    }
 
     private String buildDescription(Recipe recipe, String cuisine, String category) {
         StringBuilder sb = new StringBuilder();
@@ -152,13 +200,13 @@ public class ShareController {
                 "</html>\n";
     }
 
-    private String buildFallbackHtml() {
+    private String buildFallbackHtml(String title, String message) {
         return "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"/>" +
-                "<title>Recipe not found — " + SITE_NAME + "</title>" +
+                "<title>" + title + " — " + SITE_NAME + "</title>" +
                 "<meta http-equiv=\"refresh\" content=\"2;url=" + STORE_URL + "\" />" +
                 "</head><body style=\"font-family:sans-serif;text-align:center;padding:40px;background:#0f0f0f;color:#fff\">"
                 +
-                "<p>This recipe is no longer available.</p>" +
+                "<p>" + message + "</p>" +
                 "<a href=\"" + STORE_URL + "\" style=\"color:#ff6b35\">Go to Cooked</a></body></html>";
     }
 

@@ -3,7 +3,9 @@ package com.cooked.backend.service.impl;
 import com.cooked.backend.dto.request.CreateCookbookRequest;
 import com.cooked.backend.dto.response.CookbookResponse;
 import com.cooked.backend.dto.response.MessageResponse;
+import com.cooked.backend.dto.response.SharedCookbookPreviewResponse;
 import com.cooked.backend.entity.Cookbook;
+import com.cooked.backend.entity.Recipe;
 import com.cooked.backend.entity.User;
 import com.cooked.backend.exception.BadRequestException;
 import com.cooked.backend.exception.ResourceNotFoundException;
@@ -11,6 +13,7 @@ import com.cooked.backend.repository.CookbookRepository;
 import com.cooked.backend.repository.RecipeRepository;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.service.ActivityLogService;
+import com.cooked.backend.service.RecipeCopyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +21,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,6 +43,8 @@ public class CookbookServiceImplTest {
     private RecipeRepository recipeRepository;
     @Mock
     private ActivityLogService activityLogService;
+    @Mock
+    private RecipeCopyService recipeCopyService;
 
     @InjectMocks
     private CookbookServiceImpl cookbookService;
@@ -120,5 +127,102 @@ public class CookbookServiceImplTest {
 
         assertNotNull(response);
         verify(cookbookRepository).delete(dummyCookbook);
+    }
+
+    // ── Sharing ──────────────────────────────────────────────────────────────
+
+    private Recipe recipe(String name, User owner, boolean deleted) {
+        Recipe r = Recipe.builder().id(UUID.randomUUID()).name(name).user(owner).image("https://img/" + name).build();
+        r.setDeleted(deleted);
+        return r;
+    }
+
+    private User recipient() {
+        return User.builder().id(UUID.randomUUID()).email("friend@example.com").build();
+    }
+
+    @Test
+    void getShareLink_marksCookbookShared() {
+        when(cookbookRepository.findById(dummyCookbookId)).thenReturn(Optional.of(dummyCookbook));
+
+        String link = cookbookService.getShareLink(dummyCookbookId, "test@example.com");
+
+        assertEquals("https://link.cookedapp.com/share/cookbooks/" + dummyCookbookId, link);
+        assertTrue(dummyCookbook.isShared());
+        verify(cookbookRepository).save(dummyCookbook);
+    }
+
+    @Test
+    void getShareLink_rejectsOtherUsers() {
+        when(cookbookRepository.findById(dummyCookbookId)).thenReturn(Optional.of(dummyCookbook));
+
+        assertThrows(BadRequestException.class,
+                () -> cookbookService.getShareLink(dummyCookbookId, "friend@example.com"));
+        assertFalse(dummyCookbook.isShared());
+    }
+
+    @Test
+    void sharedPreview_hidesUnsharedCookbooks() {
+        when(cookbookRepository.findById(dummyCookbookId)).thenReturn(Optional.of(dummyCookbook));
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> cookbookService.getSharedPreview(dummyCookbookId, "friend@example.com"));
+        assertThrows(ResourceNotFoundException.class,
+                () -> cookbookService.importShared(dummyCookbookId, "friend@example.com"));
+    }
+
+    @Test
+    void sharedPreview_countsActiveRecipesOnly() {
+        dummyCookbook.setShared(true);
+        dummyCookbook.setRecipes(new LinkedHashSet<>(List.of(
+                recipe("Brownie", dummyUser, false),
+                recipe("Gone", dummyUser, true))));
+        when(cookbookRepository.findById(dummyCookbookId)).thenReturn(Optional.of(dummyCookbook));
+
+        SharedCookbookPreviewResponse preview = cookbookService.getSharedPreview(dummyCookbookId, "friend@example.com");
+
+        assertEquals(1, preview.getRecipeCount());
+        assertEquals(List.of("https://img/Brownie"), preview.getCoverImages());
+        assertFalse(preview.isOwner());
+    }
+
+    @Test
+    void importShared_copiesCookbookAndRecipesForRecipient() {
+        User friend = recipient();
+        Recipe brownie = recipe("Brownie", dummyUser, false);
+        Recipe deleted = recipe("Gone", dummyUser, true);
+        Recipe brownieCopy = recipe("Brownie", friend, false);
+        dummyCookbook.setShared(true);
+        dummyCookbook.setRecipes(new LinkedHashSet<>(List.of(brownie, deleted)));
+
+        when(userRepository.findByEmail("friend@example.com")).thenReturn(Optional.of(friend));
+        when(cookbookRepository.findById(dummyCookbookId)).thenReturn(Optional.of(dummyCookbook));
+        when(recipeCopyService.copyForUser(brownie, friend)).thenReturn(brownieCopy);
+        // The recipient already has a "My Favorites" cookbook.
+        when(cookbookRepository.existsByUserIdAndName(friend.getId(), "My Favorites")).thenReturn(true);
+        when(cookbookRepository.existsByUserIdAndName(friend.getId(), "My Favorites (2)")).thenReturn(false);
+        when(cookbookRepository.save(any(Cookbook.class))).thenAnswer(i -> {
+            Cookbook cb = i.getArgument(0);
+            cb.setId(UUID.randomUUID());
+            return cb;
+        });
+
+        CookbookResponse response = cookbookService.importShared(dummyCookbookId, "friend@example.com");
+
+        assertEquals("My Favorites (2)", response.getName());
+        assertEquals(1, response.getRecipes().size());
+        assertEquals(brownieCopy.getId(), response.getRecipes().get(0).getId());
+        verify(recipeCopyService, never()).copyForUser(eq(deleted), any());
+    }
+
+    @Test
+    void importShared_rejectsOwnCookbook() {
+        dummyCookbook.setShared(true);
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(dummyUser));
+        when(cookbookRepository.findById(dummyCookbookId)).thenReturn(Optional.of(dummyCookbook));
+
+        assertThrows(BadRequestException.class,
+                () -> cookbookService.importShared(dummyCookbookId, "test@example.com"));
+        verify(cookbookRepository, never()).save(any());
     }
 }

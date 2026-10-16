@@ -3,6 +3,7 @@ package com.cooked.backend.controller;
 import com.cooked.backend.dto.request.CreateCookbookRequest;
 import com.cooked.backend.dto.response.CookbookResponse;
 import com.cooked.backend.dto.response.MessageResponse;
+import com.cooked.backend.dto.response.SharedCookbookPreviewResponse;
 import com.cooked.backend.service.CookbookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -14,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -61,5 +63,23 @@ public class CookbookController {
     @PatchMapping("/{id}/pin")
     public ResponseEntity<CookbookResponse> togglePin(@PathVariable UUID id, Authentication auth) {
         return ResponseEntity.ok(cookbookService.togglePin(id, auth.getName()));
+    }
+
+    @Operation(summary = "Get the share link of one of my Cookbooks")
+    @GetMapping("/{id}/share")
+    public ResponseEntity<Map<String, String>> getShareLink(@PathVariable UUID id, Authentication auth) {
+        return ResponseEntity.ok(Map.of("link", cookbookService.getShareLink(id, auth.getName())));
+    }
+
+    @Operation(summary = "Preview a Cookbook shared with me")
+    @GetMapping("/shared/{id}")
+    public ResponseEntity<SharedCookbookPreviewResponse> getSharedPreview(@PathVariable UUID id, Authentication auth) {
+        return ResponseEntity.ok(cookbookService.getSharedPreview(id, auth.getName()));
+    }
+
+    @Operation(summary = "Add a shared Cookbook and its recipes to my library")
+    @PostMapping("/shared/{id}/import")
+    public ResponseEntity<CookbookResponse> importShared(@PathVariable UUID id, Authentication auth) {
+        return ResponseEntity.ok(cookbookService.importShared(id, auth.getName()));
     }
 }

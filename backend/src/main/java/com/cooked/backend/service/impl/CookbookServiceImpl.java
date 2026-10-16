@@ -3,7 +3,9 @@ package com.cooked.backend.service.impl;
 import com.cooked.backend.dto.request.CreateCookbookRequest;
 import com.cooked.backend.dto.response.CookbookResponse;
 import com.cooked.backend.dto.response.MessageResponse;
+import com.cooked.backend.dto.response.SharedCookbookPreviewResponse;
 import com.cooked.backend.entity.Cookbook;
+import com.cooked.backend.entity.Recipe;
 import com.cooked.backend.entity.User;
 import com.cooked.backend.exception.BadRequestException;
 import com.cooked.backend.exception.ResourceNotFoundException;
@@ -12,13 +14,17 @@ import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.repository.RecipeRepository;
 import com.cooked.backend.service.CookbookService;
 import com.cooked.backend.service.ActivityLogService;
+import com.cooked.backend.service.RecipeCopyService;
 import com.cooked.backend.dto.response.RecipeIngredientResponse;
 import com.cooked.backend.dto.response.RecipeCreatorResponse;
 import com.cooked.backend.dto.response.RecipeResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -32,6 +38,9 @@ public class CookbookServiceImpl implements CookbookService {
     private final UserRepository userRepository;
     private final RecipeRepository recipeRepository;
     private final ActivityLogService activityLogService;
+    private final RecipeCopyService recipeCopyService;
+
+    private static final String SHARE_BASE_URL = "https://link.cookedapp.com/share/";
 
     @Override
     public CookbookResponse create(String userEmail, CreateCookbookRequest request) {
@@ -101,24 +110,14 @@ public class CookbookServiceImpl implements CookbookService {
 
     @Override
     public CookbookResponse getCookbook(UUID id, String userEmail) {
-        Cookbook cookbook = cookbookRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Cookbook not found"));
-
-        if (!cookbook.getUser().getEmail().equals(userEmail)) {
-            throw new BadRequestException("You do not have permission to view this cookbook.");
-        }
+        Cookbook cookbook = findOwned(id, userEmail, "view");
 
         return mapToResponse(cookbook);
     }
 
     @Override
     public MessageResponse delete(UUID id, String userEmail) {
-        Cookbook cookbook = cookbookRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Cookbook not found"));
-
-        if (!cookbook.getUser().getEmail().equals(userEmail)) {
-            throw new BadRequestException("You do not have permission to delete this cookbook.");
-        }
+        Cookbook cookbook = findOwned(id, userEmail, "delete");
 
         cookbookRepository.delete(cookbook);
         return new MessageResponse("Cookbook deleted successfully.");
@@ -126,16 +125,113 @@ public class CookbookServiceImpl implements CookbookService {
 
     @Override
     public CookbookResponse togglePin(UUID id, String userEmail) {
-        Cookbook cookbook = cookbookRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Cookbook not found"));
-
-        if (!cookbook.getUser().getEmail().equals(userEmail)) {
-            throw new BadRequestException("You do not have permission to pin this cookbook.");
-        }
+        Cookbook cookbook = findOwned(id, userEmail, "pin");
 
         cookbook.setPinned(!cookbook.isPinned());
         Cookbook saved = cookbookRepository.save(cookbook);
         return mapToResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public String getShareLink(UUID id, String userEmail) {
+        Cookbook cookbook = findOwned(id, userEmail, "share");
+        if (!cookbook.isShared()) {
+            cookbook.setShared(true);
+            cookbookRepository.save(cookbook);
+        }
+        return SHARE_BASE_URL + "cookbooks/" + cookbook.getId();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SharedCookbookPreviewResponse getSharedPreview(UUID id, String userEmail) {
+        Cookbook cookbook = findShared(id);
+        User owner = cookbook.getUser();
+        List<Recipe> recipes = activeRecipes(cookbook);
+
+        return SharedCookbookPreviewResponse.builder()
+                .id(cookbook.getId())
+                .name(cookbook.getName())
+                .ownerName(displayName(owner))
+                .recipeCount(recipes.size())
+                .coverImages(recipes.stream()
+                        .map(Recipe::getImage)
+                        .filter(img -> img != null && !img.isBlank())
+                        .limit(4)
+                        .collect(Collectors.toList()))
+                .isOwner(owner.getEmail().equals(userEmail))
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public CookbookResponse importShared(UUID id, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Cookbook source = findShared(id);
+
+        if (source.getUser().getId().equals(user.getId())) {
+            throw new BadRequestException("This cookbook is already yours.");
+        }
+
+        // Each recipe becomes the recipient's own private copy, so it shows up
+        // in their library and keeps working if the sender deletes theirs.
+        Set<Recipe> copies = activeRecipes(source).stream()
+                .map(recipe -> recipeCopyService.copyForUser(recipe, user))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        Cookbook copy = cookbookRepository.save(Cookbook.builder()
+                .user(user)
+                .name(availableName(user, source.getName()))
+                .recipes(copies)
+                .build());
+
+        activityLogService.logActivity(user, "Cookbook Received",
+                "Received cookbook '" + copy.getName() + "' with " + copies.size() + " recipes.");
+
+        return mapToResponse(copy);
+    }
+
+    private Cookbook findOwned(UUID id, String userEmail, String action) {
+        Cookbook cookbook = cookbookRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cookbook not found"));
+
+        if (!cookbook.getUser().getEmail().equals(userEmail)) {
+            throw new BadRequestException("You do not have permission to " + action + " this cookbook.");
+        }
+        return cookbook;
+    }
+
+    /** Unshared cookbooks are reported as missing so their ids can't be probed. */
+    private Cookbook findShared(UUID id) {
+        return cookbookRepository.findById(id)
+                .filter(Cookbook::isShared)
+                .orElseThrow(() -> new ResourceNotFoundException("Cookbook not found"));
+    }
+
+    private static List<Recipe> activeRecipes(Cookbook cookbook) {
+        if (cookbook.getRecipes() == null) return Collections.emptyList();
+        return cookbook.getRecipes().stream()
+                .filter(Objects::nonNull)
+                .filter(r -> !r.isDeleted())
+                .collect(Collectors.toList());
+    }
+
+    /** "Desserts", then "Desserts (2)", "Desserts (3)"… if the name is taken. */
+    private String availableName(User user, String name) {
+        String candidate = name;
+        for (int i = 2; cookbookRepository.existsByUserIdAndName(user.getId(), candidate); i++) {
+            candidate = name + " (" + i + ")";
+        }
+        return candidate;
+    }
+
+    private static String displayName(User user) {
+        String first = user.getFirstname() != null ? user.getFirstname().trim() : "";
+        String last = user.getLastname() != null ? user.getLastname().trim() : "";
+        String full = (first + " " + last).trim();
+        return full.isEmpty() ? null : full;
     }
 
     // One batched IN(...) query instead of one findById() round trip per
@@ -202,7 +298,7 @@ public class CookbookServiceImpl implements CookbookService {
                                     .origin(r.getOrigin() != null ? r.getOrigin().name() : null)
                                     .isInCookbook(isInCookbook)
                                     .isPinned(r.isPinned())
-                                    .shareUrl("https://link.cookedapp.com/share/recipes/" + r.getId())
+                                    .shareUrl(SHARE_BASE_URL + "recipes/" + r.getId())
                                     .build();
                         })
                         .collect(Collectors.toList()) : Collections.emptyList())

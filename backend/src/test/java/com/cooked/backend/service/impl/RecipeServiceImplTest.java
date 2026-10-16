@@ -50,6 +50,8 @@ public class RecipeServiceImplTest {
     private TaxonomyService taxonomyService;
     @Mock
     private CloudinaryService cloudinaryService;
+    @Mock
+    private com.cooked.backend.service.RecipeCopyService recipeCopyService;
 
     @InjectMocks
     private RecipeServiceImpl recipeService;
