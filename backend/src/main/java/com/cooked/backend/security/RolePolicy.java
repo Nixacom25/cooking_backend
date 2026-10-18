@@ -32,7 +32,7 @@ public final class RolePolicy {
             m.put(p, COMMON);
         }
         for (String p : List.of("/api/admin/users", "/user/client")) m.put(p, "users");
-        for (String p : List.of("/api/admin/recipes", "/api/admin/categories", "/api/admin/ingredient-catalog", "/api/recipe-data",
+        for (String p : List.of("/api/admin/recipes", "/api/admin/ai-images", "/api/admin/categories", "/api/admin/ingredient-catalog", "/api/recipe-data",
                 "/api/ingredients", "/admin/seed", "/user/editors", "/api/admin/insights/recipes")) m.put(p, "recipes");
         for (String p : List.of("/api/admin/revenue", "/api/analytics/subscriptions", "/api/analytics/transactions",
                 "/api/admin/insights/billing", "/api/admin/insights/paying-by-feature")) m.put(p, "revenue");

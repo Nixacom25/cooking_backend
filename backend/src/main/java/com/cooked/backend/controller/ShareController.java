@@ -155,6 +155,22 @@ public class ShareController {
                         .build());
     }
 
+    /**
+     * GET /share/photo-unavailable.jpg
+     *
+     * "Cooked · Photo unavailable" image given to a creator recipe whose AI photo
+     * could not be generated (see CreatorRecipeImageService).
+     */
+    @Operation(summary = "Placeholder shown when a recipe photo is unavailable")
+    @GetMapping(value = "/photo-unavailable.jpg", produces = MediaType.IMAGE_JPEG_VALUE)
+    public ResponseEntity<byte[]> photoUnavailable() throws java.io.IOException {
+        try (var in = new org.springframework.core.io.ClassPathResource("share/photo-unavailable.jpg").getInputStream()) {
+            return ResponseEntity.ok()
+                    .cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic())
+                    .body(in.readAllBytes());
+        }
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     /** Newest first, in a stable order: the recipes are an unordered Set. */

@@ -48,6 +48,24 @@ public class ImageLibrary {
     @Column(nullable = false, length = 20)
     private ImageSource source;
 
+    // Extra tags set by an admin when approving an AI photo (null for older rows).
+    @Column(nullable = true, length = 255)
+    private String recipeTitle;
+
+    @Column(nullable = true, length = 50)
+    private String mealType;
+
+    /** Lowercase, comma-separated (e.g. "vegetarian,gluten-free"). */
+    @Column(nullable = true, length = 255)
+    private String dietaryTags;
+
+    @Column(nullable = true, length = 50)
+    private String visualStyle;
+
+    /** Admin rating, 1-5. */
+    @Column(nullable = true)
+    private Integer qualityScore;
+
     @Builder.Default
     @Column(nullable = false)
     private long timesUsed = 0;

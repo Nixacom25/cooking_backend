@@ -39,6 +39,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
     private final com.cooked.backend.service.RecipeImageMatchingService recipeImageMatchingService;
     private final com.cooked.backend.service.RecipeCopyService recipeCopyService;
+    private final com.cooked.backend.service.CreatorRecipeImageService creatorRecipeImages;
 
     @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
     public void onStartup() {
@@ -214,6 +215,8 @@ public class RecipeServiceImpl implements RecipeService {
             savedRecipe.setIngredientsCount(request.getIngredients().size());
         }
         savedRecipe = recipeRepository.save(savedRecipe);
+        // A creator keeping a scan recipe: its AI photo now belongs to this recipe.
+        creatorRecipeImages.linkSavedRecipe(savedRecipe.getId(), savedRecipe.getImage());
 
         // Ensure inverse relationship is saved in cookbooks
         for (Cookbook cb : attachedCookbooks) {
@@ -327,6 +330,9 @@ public class RecipeServiceImpl implements RecipeService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
         List<CreateRecipeRequest> generated = aiService.generateRecipes(request, userEmail);
+        // Creators: an AI photo of each exact recipe instead of a matched one.
+        boolean aiPhotos = creatorRecipeImages.isEnabledFor(user);
+        if (aiPhotos) creatorRecipeImages.attachImages(generated, userEmail);
         List<RecipeResponse> savedResponses = new ArrayList<>();
         java.time.LocalDateTime expiration = java.time.LocalDateTime.now().plusDays(3);
         
@@ -375,7 +381,11 @@ public class RecipeServiceImpl implements RecipeService {
             }
             saved.setRecipeIngredients(recipeIngredients);
             Recipe finalSaved = recipeRepository.save(saved);
-            recipeImageMatchingService.matchAndAssignImageAsync(finalSaved.getId());
+            if (aiPhotos) {
+                creatorRecipeImages.linkSavedRecipe(finalSaved.getId(), finalSaved.getImage());
+            } else {
+                recipeImageMatchingService.matchAndAssignImageAsync(finalSaved.getId());
+            }
             savedResponses.add(mapToResponse(finalSaved, null));
         }
         

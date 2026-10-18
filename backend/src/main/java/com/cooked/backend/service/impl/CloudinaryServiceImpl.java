@@ -52,4 +52,13 @@ public class CloudinaryServiceImpl implements CloudinaryService {
 
         return (String) uploadResult.get("secure_url");
     }
+
+    @Override
+    public String uploadBytes(byte[] bytes, String subfolder) throws IOException {
+        Map<String, Object> uploadResult = getCloudinary().uploader().upload(bytes, ObjectUtils.asMap(
+                "folder", folder + "/" + subfolder,
+                "resource_type", "image"));
+
+        return (String) uploadResult.get("secure_url");
+    }
 }

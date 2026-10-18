@@ -36,6 +36,8 @@ public class RecipeController {
     private final TrendingService trendingService;
     private final ProductEventTracker eventTracker;
     private final com.cooked.backend.service.IngredientNameReporter ingredientNames;
+    /** Creators only: AI photos made from each scan recipe (see CreatorRecipeImageService). */
+    private final com.cooked.backend.service.CreatorRecipeImageService creatorRecipeImages;
 
     @Operation(summary = "Import Recipe via Link (AI)")
     @PostMapping("/import")
@@ -84,8 +86,10 @@ public class RecipeController {
     public ResponseEntity<com.cooked.backend.dto.response.ScanResponse> scanRecipeViaImage(
             @RequestParam("file") MultipartFile file,
             Authentication auth) {
-        return ResponseEntity.ok(eventTracker.track(ProductEventType.SCAN, auth.getName(), "photo",
-                () -> aiService.scan(file, auth.getName()), ProductEventCounts::recipes));
+        var scan = eventTracker.track(ProductEventType.SCAN, auth.getName(), "photo",
+                () -> aiService.scan(file, auth.getName()), ProductEventCounts::recipes);
+        creatorRecipeImages.attachImages(scan.getRecipes(), auth.getName());
+        return ResponseEntity.ok(scan);
     }
 
     @Operation(summary = "Scan Typed Ingredients (AI)")
@@ -99,8 +103,10 @@ public class RecipeController {
         }
         ingredientNames.report(List.copyOf(ingredients.stream().filter(java.util.Objects::nonNull).toList()),
                 com.cooked.backend.entity.IngredientNameSource.SCAN, auth.getName());
-        return ResponseEntity.ok(eventTracker.track(ProductEventType.SCAN, auth.getName(), "typed",
-                () -> aiService.scanTyped(ingredients, auth.getName()), ProductEventCounts::recipes));
+        var scan = eventTracker.track(ProductEventType.SCAN, auth.getName(), "typed",
+                () -> aiService.scanTyped(ingredients, auth.getName()), ProductEventCounts::recipes);
+        creatorRecipeImages.attachImages(scan.getRecipes(), auth.getName());
+        return ResponseEntity.ok(scan);
     }
 
     @Operation(summary = "Validate Typed Ingredients directly via DB")

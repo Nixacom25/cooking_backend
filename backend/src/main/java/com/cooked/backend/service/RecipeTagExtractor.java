@@ -40,21 +40,13 @@ public class RecipeTagExtractor {
     );
 
     public RecipeTags extract(Recipe recipe) {
-        String name = recipe.getName() == null ? "" : recipe.getName().toLowerCase(Locale.ROOT);
-
         List<String> ingredientNames = new ArrayList<>();
         if (recipe.getRecipeIngredients() != null) {
             for (RecipeIngredient ri : recipe.getRecipeIngredients()) {
                 if (ri.getIngredient() == null || ri.getIngredient().getName() == null) continue;
-                String ing = ri.getIngredient().getName().toLowerCase(Locale.ROOT).trim();
-                if (!ing.isEmpty() && !GENERIC_INGREDIENTS.contains(ing)) {
-                    ingredientNames.add(ing);
-                }
+                ingredientNames.add(ri.getIngredient().getName());
             }
         }
-
-        String protein = findFirstKeyword(name, ingredientNames, PROTEIN_KEYWORDS);
-        String cookingStyle = findFirstKeyword(name, List.of(), COOKING_STYLE_KEYWORDS);
 
         String dishType = null;
         if (recipe.getCategories() != null && !recipe.getCategories().isEmpty()) {
@@ -62,6 +54,24 @@ public class RecipeTagExtractor {
         }
 
         String cuisine = recipe.getCuisine() != null ? recipe.getCuisine().getName() : null;
+        return extract(recipe.getName(), ingredientNames, cuisine, dishType);
+    }
+
+    /** Same tags from plain recipe data (e.g. a scan recipe that isn't saved yet). */
+    public RecipeTags extract(String recipeName, List<String> ingredients, String cuisine, String dishType) {
+        String name = recipeName == null ? "" : recipeName.toLowerCase(Locale.ROOT);
+
+        List<String> ingredientNames = new ArrayList<>();
+        for (String raw : ingredients == null ? List.<String>of() : ingredients) {
+            if (raw == null) continue;
+            String ing = raw.toLowerCase(Locale.ROOT).trim();
+            if (!ing.isEmpty() && !GENERIC_INGREDIENTS.contains(ing)) {
+                ingredientNames.add(ing);
+            }
+        }
+
+        String protein = findFirstKeyword(name, ingredientNames, PROTEIN_KEYWORDS);
+        String cookingStyle = findFirstKeyword(name, List.of(), COOKING_STYLE_KEYWORDS);
 
         List<String> mainIngredients = ingredientNames.stream()
                 .filter(ing -> !ing.equals(protein))

@@ -37,6 +37,7 @@ public class DatabaseMigrationRunner {
         // Enums that gained values after their table was created (ddl-auto never updates CHECKs).
         syncEnumCheck("product_events", "type", com.cooked.backend.entity.ProductEventType.class);
         syncEnumCheck("cost_entries", "category", com.cooked.backend.entity.CostCategory.class);
+        syncEnumCheck("image_library", "source", com.cooked.backend.entity.ImageSource.class);
         markReceiptReplayPayments();
     }
 
