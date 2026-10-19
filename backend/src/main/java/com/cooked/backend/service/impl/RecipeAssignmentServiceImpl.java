@@ -43,7 +43,9 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
         long modified = recipeRepository.countByIsDeletedAndLastModifiedByIsNotNull(false);
         long unmodified = total - modified;
         long assigned = assignmentRepository.countActiveAssignments();
-        long unassigned = Math.max(0, unmodified - assigned);
+        // Same query as the batch-assign modal: unmodified recipes with no assignment row.
+        // (unmodified - assigned) was wrong because active assignments also cover modified recipes.
+        long unassigned = recipeRepository.countUnassignedUnmodifiedRecipes();
 
         long pendingValidation = assignmentRepository.countByStatus(AssignmentStatus.SUBMITTED_FOR_VALIDATION);
         long validated = assignmentRepository.countByStatus(AssignmentStatus.VALIDATED) + assignmentRepository.countByStatus(AssignmentStatus.COMPLETED);
