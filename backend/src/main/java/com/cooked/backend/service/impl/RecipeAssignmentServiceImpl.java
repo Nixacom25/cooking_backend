@@ -158,6 +158,9 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
     @Override
     @Transactional
     public List<RecipeAssignmentResponse> assignBatchByCount(com.cooked.backend.dto.request.BatchAssignmentRequest request, String adminEmail) {
+        if (request.getCount() > MAX_BATCH) {
+            throw new BadRequestException("Vous pouvez attribuer au maximum " + MAX_BATCH + " recettes à la fois.");
+        }
         User admin = userRepository.findByEmail(adminEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
         User editor = userRepository.findById(request.getUserId())
@@ -196,19 +199,15 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
             RecipeAssignment saved = assignmentRepository.save(assignment);
             recordHistory(saved, admin, "BATCH_ASSIGNED", null, AssignmentStatus.ASSIGNED, null, "Attribution automatique par lot (" + requestedCount + " recettes)");
 
-            notificationService.createAndSendNotification(
-                    editor,
-                    admin,
-                    "Nouvelles recettes attribuées",
-                    "Une attribution de " + requestedCount + " recettes vous a été attribuée.",
-                    "ASSIGNMENT",
-                    recipe.getId(),
-                    saved.getId()
-            );
-
             RecipeAssignmentResponse resp = mapToResponse(saved);
             results.add(resp);
             messagingTemplate.convertAndSend("/topic/assignments/user/" + editor.getId(), resp);
+        }
+
+        // One notification for the whole batch (up to MAX_BATCH recipes), not one per recipe.
+        if (!results.isEmpty()) {
+            notificationService.createAndSendNotification(editor, admin, "Nouvelles recettes attribuées",
+                    results.size() + " recette(s) vous ont été attribuée(s).", "ASSIGNMENT", null, null);
         }
 
         broadcastStats();
@@ -441,6 +440,7 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
     @Transactional
     public com.cooked.backend.dto.response.BatchReassignResponse reassignBatch(com.cooked.backend.dto.request.BatchReassignRequest request, String adminEmail) {
         if (request.fromUserId().equals(request.toUserId())) throw new BadRequestException("Choisissez un autre stagiaire comme destinataire.");
+        if (request.count() > MAX_BATCH) throw new BadRequestException("Vous pouvez réattribuer au maximum " + MAX_BATCH + " recettes à la fois.");
         User admin = userRepository.findByEmail(adminEmail).orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
         User from = userRepository.findById(request.fromUserId()).orElseThrow(() -> new ResourceNotFoundException("Stagiaire introuvable"));
         User to = userRepository.findById(request.toUserId()).orElseThrow(() -> new ResourceNotFoundException("Stagiaire introuvable"));

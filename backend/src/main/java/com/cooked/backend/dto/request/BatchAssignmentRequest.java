@@ -1,5 +1,6 @@
 package com.cooked.backend.dto.request;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -19,6 +20,7 @@ public class BatchAssignmentRequest {
     private UUID userId;
 
     @Min(value = 1, message = "Le nombre de recettes doit être supérieur ou égal à 1")
+    @Max(value = 500, message = "500 recettes au maximum par attribution")
     private int count;
 
     /** Only recipes from this source (optional). */

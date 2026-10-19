@@ -69,4 +69,12 @@ class BatchReassignTest {
         assertThrows(BadRequestException.class, () -> service.reassignBatch(new BatchReassignRequest(fromId, fromId, 1), "boss@cooked.app"));
         verify(assignments, never()).save(any());
     }
+
+    @Test
+    void refusesMoreThanMaxBatch() {
+        assertThrows(BadRequestException.class, () -> service.reassignBatch(new BatchReassignRequest(fromId, toId, 501), "boss@cooked.app"));
+        assertThrows(BadRequestException.class, () -> service.assignBatchByCount(
+                com.cooked.backend.dto.request.BatchAssignmentRequest.builder().userId(toId).count(501).build(), "boss@cooked.app"));
+        verify(assignments, never()).save(any());
+    }
 }

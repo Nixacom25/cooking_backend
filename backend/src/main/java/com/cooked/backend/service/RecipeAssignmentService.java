@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.UUID;
 
 public interface RecipeAssignmentService {
+    /** Most recipes one batch assignment or reassignment can move at once. */
+    int MAX_BATCH = 500;
+
     RecipeStatsResponse getRecipeStats();
     List<RecipeAssignmentResponse> createAssignments(CreateAssignmentRequest request, String adminEmail);
     Page<RecipeAssignmentResponse> getAllAssignments(Pageable pageable);

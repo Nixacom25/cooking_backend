@@ -57,7 +57,7 @@ public class RecipeAssignmentController {
     @PostMapping("/assignments/batch")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<RecipeAssignmentResponse>> assignBatch(
-            @RequestBody com.cooked.backend.dto.request.BatchAssignmentRequest request,
+            @jakarta.validation.Valid @RequestBody com.cooked.backend.dto.request.BatchAssignmentRequest request,
             Authentication auth) {
         return ResponseEntity.ok(assignmentService.assignBatchByCount(request, auth.getName()));
     }
