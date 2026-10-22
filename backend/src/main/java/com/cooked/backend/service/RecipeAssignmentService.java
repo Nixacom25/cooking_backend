@@ -38,4 +38,7 @@ public interface RecipeAssignmentService {
     long getAvailableUnassignedCount();
     /** Same, limited to recipes from one source (null = all). */
     long getAvailableUnassignedCount(com.cooked.backend.entity.RecipeOrigin origin);
+
+    /** includeAssigned also counts unmodified recipes another intern holds without having started. */
+    long getAvailableUnassignedCount(com.cooked.backend.entity.RecipeOrigin origin, boolean includeAssigned);
 }

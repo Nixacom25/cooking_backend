@@ -77,4 +77,65 @@ class BatchReassignTest {
                 com.cooked.backend.dto.request.BatchAssignmentRequest.builder().userId(toId).count(501).build(), "boss@cooked.app"));
         verify(assignments, never()).save(any());
     }
+    @Test
+    void batchAssignTopsUpWithNotStartedRecipesWhenAsked() {
+        when(users.findByEmail("boss@cooked.app")).thenReturn(Optional.of(admin));
+        when(users.findById(toId)).thenReturn(Optional.of(omar));
+        Recipe free = Recipe.builder().id(UUID.randomUUID()).name("Free").build();
+        Recipe held = Recipe.builder().id(UUID.randomUUID()).name("Held").build();
+        RecipeAssignment awaHolds = RecipeAssignment.builder().id(UUID.randomUUID()).recipe(held).assignedToUser(awa).status(AssignmentStatus.IN_PROGRESS).build();
+        when(recipes.findUnassignedUnmodifiedRecipes(any())).thenReturn(List.of(free));
+        when(assignments.findReassignableUnmodified(eq(toId), any())).thenReturn(List.of(awaHolds, awaHolds));
+        when(assignments.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        var res = service.assignBatchByCount(com.cooked.backend.dto.request.BatchAssignmentRequest.builder()
+                .userId(toId).count(2).includeAssigned(true).build(), "boss@cooked.app");
+
+        assertEquals(2, res.size());
+        assertSame(omar, awaHolds.getAssignedToUser());
+        assertEquals(AssignmentStatus.ASSIGNED, awaHolds.getStatus());
+        verify(assignments, times(2)).save(any()); // one moved row + one new row, no duplicate for the same recipe
+    }
+
+    @Test
+    void batchAssignWithoutOptionNeverTouchesHeldRecipes() {
+        when(users.findByEmail("boss@cooked.app")).thenReturn(Optional.of(admin));
+        when(users.findById(toId)).thenReturn(Optional.of(omar));
+        when(recipes.findUnassignedUnmodifiedRecipes(any())).thenReturn(List.of());
+
+        var ex = assertThrows(BadRequestException.class, () -> service.assignBatchByCount(
+                com.cooked.backend.dto.request.BatchAssignmentRequest.builder().userId(toId).count(1).build(), "boss@cooked.app"));
+        assertTrue(ex.getMessage().contains("seulement 0"));
+        verify(assignments, never()).findReassignableUnmodified(any(), any());
+        verify(assignments, never()).save(any());
+    }
+
+    @Test
+    void singleReassignKeepsThePreviousStatusInHistory() {
+        when(users.findByEmail("boss@cooked.app")).thenReturn(Optional.of(admin));
+        when(users.findById(toId)).thenReturn(Optional.of(omar));
+        RecipeAssignment a = RecipeAssignment.builder().id(UUID.randomUUID()).recipe(Recipe.builder().name("R").build())
+                .assignedToUser(awa).status(AssignmentStatus.IN_PROGRESS).build();
+        when(assignments.findById(a.getId())).thenReturn(Optional.of(a));
+        when(assignments.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        service.reassignAssignment(a.getId(), toId, "boss@cooked.app");
+
+        var captor = org.mockito.ArgumentCaptor.forClass(RecipeAssignmentHistory.class);
+        verify(history).save(captor.capture());
+        assertEquals(AssignmentStatus.IN_PROGRESS, captor.getValue().getPreviousStatus());
+        assertSame(omar, a.getAssignedToUser());
+    }
+
+    @Test
+    void singleReassignRefusesNonIntern() {
+        when(users.findByEmail("boss@cooked.app")).thenReturn(Optional.of(admin));
+        UUID adminId = UUID.randomUUID();
+        when(users.findById(adminId)).thenReturn(Optional.of(admin));
+        RecipeAssignment a = RecipeAssignment.builder().id(UUID.randomUUID()).assignedToUser(awa).status(AssignmentStatus.ASSIGNED).build();
+        when(assignments.findById(a.getId())).thenReturn(Optional.of(a));
+
+        assertThrows(BadRequestException.class, () -> service.reassignAssignment(a.getId(), adminId, "boss@cooked.app"));
+        verify(assignments, never()).save(any());
+    }
 }

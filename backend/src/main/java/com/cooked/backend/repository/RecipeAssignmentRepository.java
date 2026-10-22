@@ -1,5 +1,7 @@
 package com.cooked.backend.repository;
 
+import com.cooked.backend.entity.RecipeOrigin;
+
 import com.cooked.backend.entity.RecipeAssignment;
 import com.cooked.backend.entity.AssignmentStatus;
 import org.springframework.data.domain.Page;
@@ -71,6 +73,19 @@ public interface RecipeAssignmentRepository extends JpaRepository<RecipeAssignme
 
     @Query("SELECT ra FROM RecipeAssignment ra WHERE ra.recipe.id = :recipeId AND ra.status IN ('ASSIGNED', 'NOT_STARTED', 'IN_PROGRESS', 'SUBMITTED_FOR_VALIDATION', 'NEEDS_CORRECTION')")
     List<RecipeAssignment> findActiveAssignmentsByRecipeId(@Param("recipeId") UUID recipeId);
+
+    // Not-started assignments on unmodified recipes, oldest first, that can move to :userId
+    // (skips recipes in review and recipes :userId already holds).
+    String REASSIGNABLE = "SELECT ra FROM RecipeAssignment ra JOIN ra.recipe r WHERE " + RecipeRepository.UNMODIFIED
+            + " AND ra.status IN ('ASSIGNED', 'NOT_STARTED', 'IN_PROGRESS') AND NOT " + RecipeRepository.IN_REVIEW
+            + " AND NOT EXISTS (SELECT 1 FROM RecipeAssignment mine WHERE mine.recipe = r AND mine.assignedToUser.id = :userId"
+            + " AND mine.status IN ('ASSIGNED', 'NOT_STARTED', 'IN_PROGRESS', 'SUBMITTED_FOR_VALIDATION', 'NEEDS_CORRECTION'))";
+
+    @Query(REASSIGNABLE + " ORDER BY ra.assignedDate ASC")
+    List<RecipeAssignment> findReassignableUnmodified(@Param("userId") UUID userId, org.springframework.data.domain.Pageable pageable);
+
+    @Query(REASSIGNABLE + " AND r.origin = :origin ORDER BY ra.assignedDate ASC")
+    List<RecipeAssignment> findReassignableUnmodifiedByOrigin(@Param("userId") UUID userId, @Param("origin") RecipeOrigin origin, org.springframework.data.domain.Pageable pageable);
 
     Optional<RecipeAssignment> findFirstByRecipeIdOrderByAssignedDateDesc(UUID recipeId);
 

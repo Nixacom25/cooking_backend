@@ -33,4 +33,7 @@ public class BatchAssignmentRequest {
     /** NORMAL, HIGH or URGENT (optional). */
     @jakarta.validation.constraints.Pattern(regexp = "NORMAL|HIGH|URGENT", message = "priority must be NORMAL, HIGH or URGENT")
     private String priority;
+
+    /** Also take unmodified recipes another intern holds but has not started saving (moved, not duplicated). */
+    private boolean includeAssigned;
 }

@@ -38,14 +38,14 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
 
     @Override
     public RecipeStatsResponse getRecipeStats() {
-        long total = recipeRepository.countByIsDeleted(false);
+        long total = recipeRepository.countLiveRecipes();
         long deleted = recipeRepository.countByIsDeleted(true);
-        long modified = recipeRepository.countByIsDeletedAndLastModifiedByIsNotNull(false);
-        long unmodified = total - modified;
+        long unmodified = recipeRepository.countUnmodifiedRecipes();
+        long modified = total - unmodified;
         long assigned = assignmentRepository.countActiveAssignments();
-        // Same query as the batch-assign modal: unmodified recipes with no assignment row.
-        // (unmodified - assigned) was wrong because active assignments also cover modified recipes.
+        // Same queries as the batch-assign modal, so the card and the modal always agree.
         long unassigned = recipeRepository.countUnassignedUnmodifiedRecipes();
+        long reassignable = recipeRepository.countReassignableUnmodifiedRecipes();
 
         long pendingValidation = assignmentRepository.countByStatus(AssignmentStatus.SUBMITTED_FOR_VALIDATION);
         long validated = assignmentRepository.countByStatus(AssignmentStatus.VALIDATED) + assignmentRepository.countByStatus(AssignmentStatus.COMPLETED);
@@ -60,6 +60,9 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
                 .deletedRecipes(deleted)
                 .modifiedRecipes(modified)
                 .unmodifiedRecipes(unmodified)
+                .unmodifiedAssignedRecipes(unmodified - unassigned)
+                .unmodifiedReassignableRecipes(reassignable)
+                .unmodifiedInReviewRecipes(unmodified - unassigned - reassignable)
                 .assignedRecipes(assigned)
                 .unassignedRecipes(unassigned)
                 .pendingValidationRecipes(pendingValidation)
@@ -156,6 +159,14 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
     }
 
     @Override
+    public long getAvailableUnassignedCount(RecipeOrigin origin, boolean includeAssigned) {
+        if (!includeAssigned) return getAvailableUnassignedCount(origin);
+        return getAvailableUnassignedCount(origin) + (origin == null
+                ? recipeRepository.countReassignableUnmodifiedRecipes()
+                : recipeRepository.countReassignableUnmodifiedRecipesByOrigin(origin));
+    }
+
+    @Override
     @Transactional
     public List<RecipeAssignmentResponse> assignBatchByCount(com.cooked.backend.dto.request.BatchAssignmentRequest request, String adminEmail) {
         if (request.getCount() > MAX_BATCH) {
@@ -171,18 +182,48 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
             throw new BadRequestException("Le nombre de recettes à attribuer doit être d'au moins 1.");
         }
         RecipeOrigin origin = request.getOrigin();
-        long availableCount = getAvailableUnassignedCount(origin);
-
-        if (requestedCount > availableCount) {
-            throw new BadRequestException("Impossible d'attribuer " + requestedCount + " recettes : seulement " + availableCount + " recette(s) non attribuée(s) disponible(s).");
-        }
-
         var firstN = org.springframework.data.domain.PageRequest.of(0, requestedCount);
         List<Recipe> availableRecipes = origin == null
                 ? recipeRepository.findUnassignedUnmodifiedRecipes(firstN)
                 : recipeRepository.findUnassignedUnmodifiedRecipesByOrigin(origin, firstN);
+
+        // Top up with not-started recipes other interns hold: one per recipe, oldest first.
+        List<RecipeAssignment> toMove = new ArrayList<>();
+        if (request.isIncludeAssigned() && availableRecipes.size() < requestedCount) {
+            var rest = org.springframework.data.domain.PageRequest.of(0, requestedCount - availableRecipes.size());
+            List<RecipeAssignment> candidates = origin == null
+                    ? assignmentRepository.findReassignableUnmodified(editor.getId(), rest)
+                    : assignmentRepository.findReassignableUnmodifiedByOrigin(editor.getId(), origin, rest);
+            java.util.Set<UUID> seen = new java.util.HashSet<>();
+            for (RecipeAssignment a : candidates) {
+                if (seen.add(a.getRecipe().getId())) toMove.add(a);
+            }
+        }
+
+        int found = availableRecipes.size() + toMove.size();
+        if (found < requestedCount) {
+            throw new BadRequestException("Impossible d'attribuer " + requestedCount + " recettes : seulement " + found + " recette(s) non modifiée(s) disponible(s)"
+                    + (request.isIncludeAssigned() ? "." : ". Cochez « inclure les recettes déjà attribuées non commencées » pour en obtenir plus."));
+        }
+
         String batchLabel = request.getBatchLabel() == null || request.getBatchLabel().isBlank() ? null : request.getBatchLabel().trim();
         List<RecipeAssignmentResponse> results = new ArrayList<>();
+
+        for (RecipeAssignment a : toMove) {
+            AssignmentStatus previous = a.getStatus();
+            String previousEditor = a.getAssignedToUser() == null ? "?" : displayName(a.getAssignedToUser());
+            a.setAssignedToUser(editor);
+            a.setAssignedByUser(admin);
+            a.setStatus(AssignmentStatus.ASSIGNED);
+            if (batchLabel != null) a.setBatchLabel(batchLabel);
+            if (request.getPriority() != null) a.setPriority(request.getPriority());
+            RecipeAssignment saved = assignmentRepository.save(a);
+            recordHistory(saved, admin, "REASSIGNED", previous, AssignmentStatus.ASSIGNED, null,
+                    "Ré-assignée par lot de " + previousEditor + " à " + displayName(editor) + " (recette non modifiée)");
+            RecipeAssignmentResponse resp = mapToResponse(saved);
+            results.add(resp);
+            messagingTemplate.convertAndSend("/topic/assignments/user/" + editor.getId(), resp);
+        }
 
         for (Recipe recipe : availableRecipes) {
             RecipeAssignment assignment = RecipeAssignment.builder()
@@ -410,13 +451,16 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
         User newEditor = userRepository.findById(newUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + newUserId));
 
+        if (newEditor.getRole() != Role.EDITOR) throw new BadRequestException("Le destinataire doit être un stagiaire.");
+
         User previousEditor = assignment.getAssignedToUser();
+        AssignmentStatus previousStatus = assignment.getStatus();
         assignment.setAssignedToUser(newEditor);
         assignment.setAssignedByUser(admin);
         assignment.setStatus(AssignmentStatus.ASSIGNED);
 
         RecipeAssignment saved = assignmentRepository.save(assignment);
-        recordHistory(saved, admin, "REASSIGNED", assignment.getStatus(), AssignmentStatus.ASSIGNED, null, "Re-assignée de " + previousEditor.getFirstname() + " à " + newEditor.getFirstname());
+        recordHistory(saved, admin, "REASSIGNED", previousStatus, AssignmentStatus.ASSIGNED, null, "Re-assignée de " + previousEditor.getFirstname() + " à " + newEditor.getFirstname());
 
         notificationService.createAndSendNotification(
                 newEditor,

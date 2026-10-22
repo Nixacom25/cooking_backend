@@ -12,6 +12,10 @@ import lombok.NoArgsConstructor;
 public class RecipeStatsResponse {
     private long totalRecipes;
     private long unmodifiedRecipes;
+    // unmodifiedRecipes = unassignedRecipes + unmodifiedReassignableRecipes + unmodifiedInReviewRecipes
+    private long unmodifiedAssignedRecipes;
+    private long unmodifiedReassignableRecipes;
+    private long unmodifiedInReviewRecipes;
     private long assignedRecipes;
     private long unassignedRecipes;
     private long deletedRecipes;

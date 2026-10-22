@@ -187,17 +187,38 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID>, org.sprin
     @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.origin = :origin AND LOWER(r.name) LIKE LOWER(CONCAT('%', :name, '%')) ORDER BY COALESCE(r.updatedAt, r.createdAt) DESC")
     org.springframework.data.domain.Page<Recipe> findAdminRecipesByOriginAndName(@org.springframework.data.repository.query.Param("origin") com.cooked.backend.entity.RecipeOrigin origin, @org.springframework.data.repository.query.Param("name") String name, org.springframework.data.domain.Pageable pageable);
 
-    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE (r.isDeleted IS NULL OR r.isDeleted = false) AND r.lastModifiedBy IS NULL AND r.id NOT IN (SELECT ra.recipe.id FROM RecipeAssignment ra)")
+    // --- Intern pipeline. A recipe is "unmodified" while lastModifiedBy is empty.
+    // It is free for batch assignment unless an intern currently holds it; old
+    // finished/removed assignments no longer block it.
+    String LIVE = "(r.isDeleted IS NULL OR r.isDeleted = false)";
+    String UNMODIFIED = LIVE + " AND (r.lastModifiedBy IS NULL OR TRIM(r.lastModifiedBy) = '')";
+    String HELD = "EXISTS (SELECT 1 FROM RecipeAssignment h WHERE h.recipe = r AND h.status IN ('ASSIGNED', 'NOT_STARTED', 'IN_PROGRESS', 'SUBMITTED_FOR_VALIDATION', 'NEEDS_CORRECTION'))";
+    String IN_REVIEW = "EXISTS (SELECT 1 FROM RecipeAssignment rv WHERE rv.recipe = r AND rv.status IN ('SUBMITTED_FOR_VALIDATION', 'NEEDS_CORRECTION'))";
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(r) FROM Recipe r WHERE " + LIVE)
+    long countLiveRecipes();
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(r) FROM Recipe r WHERE " + UNMODIFIED)
+    long countUnmodifiedRecipes();
+
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE " + UNMODIFIED + " AND NOT " + HELD)
     List<Recipe> findUnassignedUnmodifiedRecipes(org.springframework.data.domain.Pageable pageable);
 
-    @org.springframework.data.jpa.repository.Query("SELECT COUNT(r) FROM Recipe r WHERE (r.isDeleted IS NULL OR r.isDeleted = false) AND r.lastModifiedBy IS NULL AND r.id NOT IN (SELECT ra.recipe.id FROM RecipeAssignment ra)")
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(r) FROM Recipe r WHERE " + UNMODIFIED + " AND NOT " + HELD)
     long countUnassignedUnmodifiedRecipes();
 
-    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE (r.isDeleted IS NULL OR r.isDeleted = false) AND r.lastModifiedBy IS NULL AND r.origin = :origin AND r.id NOT IN (SELECT ra.recipe.id FROM RecipeAssignment ra)")
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE " + UNMODIFIED + " AND r.origin = :origin AND NOT " + HELD)
     List<Recipe> findUnassignedUnmodifiedRecipesByOrigin(@org.springframework.data.repository.query.Param("origin") com.cooked.backend.entity.RecipeOrigin origin, org.springframework.data.domain.Pageable pageable);
 
-    @org.springframework.data.jpa.repository.Query("SELECT COUNT(r) FROM Recipe r WHERE (r.isDeleted IS NULL OR r.isDeleted = false) AND r.lastModifiedBy IS NULL AND r.origin = :origin AND r.id NOT IN (SELECT ra.recipe.id FROM RecipeAssignment ra)")
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(r) FROM Recipe r WHERE " + UNMODIFIED + " AND r.origin = :origin AND NOT " + HELD)
     long countUnassignedUnmodifiedRecipesByOrigin(@org.springframework.data.repository.query.Param("origin") com.cooked.backend.entity.RecipeOrigin origin);
+
+    // Held by an intern who has not saved anything yet (not in the review loop): can be moved.
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(r) FROM Recipe r WHERE " + UNMODIFIED + " AND " + HELD + " AND NOT " + IN_REVIEW)
+    long countReassignableUnmodifiedRecipes();
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(r) FROM Recipe r WHERE " + UNMODIFIED + " AND r.origin = :origin AND " + HELD + " AND NOT " + IN_REVIEW)
+    long countReassignableUnmodifiedRecipesByOrigin(@org.springframework.data.repository.query.Param("origin") com.cooked.backend.entity.RecipeOrigin origin);
 
     // --- Admin analytics: recipes created per day and origin (history that
     // exists before product events were recorded).

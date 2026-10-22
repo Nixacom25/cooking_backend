@@ -65,8 +65,9 @@ public class RecipeAssignmentController {
     @Operation(summary = "Get count of unassigned unmodified recipes")
     @GetMapping("/assignments/unassigned-count")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Long> getUnassignedCount(@RequestParam(required = false) com.cooked.backend.entity.RecipeOrigin origin) {
-        return ResponseEntity.ok(assignmentService.getAvailableUnassignedCount(origin));
+    public ResponseEntity<Long> getUnassignedCount(@RequestParam(required = false) com.cooked.backend.entity.RecipeOrigin origin,
+                                                   @RequestParam(defaultValue = "false") boolean includeAssigned) {
+        return ResponseEntity.ok(assignmentService.getAvailableUnassignedCount(origin, includeAssigned));
     }
 
     @Operation(summary = "Get all recipe assignments")
