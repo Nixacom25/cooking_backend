@@ -166,6 +166,37 @@ class CreatorRecipeImageServiceImplTest {
     }
 
     @Test
+    void photoLink_triesAnOldFailedPhotoAgain() {
+        RecipeGeneratedImage row = RecipeGeneratedImage.builder().id(UUID.randomUUID())
+                .recipeTitle("Chicken Tacos")
+                .recipeSnapshot("{\"title\":\"Chicken Tacos\",\"ingredients\":[],\"steps\":[]}")
+                .imagePrompt("tacos")
+                .generationStatus(AiImageGenerationStatus.FAILED)
+                .completedAt(java.time.LocalDateTime.now().minusHours(1))
+                .fallbackImageUrl("https://images.example.com/old.jpg")
+                .build();
+        when(images.findById(row.getId())).thenReturn(Optional.of(row));
+
+        assertThat(service.photoLink(row.getId()))
+                .isEqualTo(new CreatorRecipeImageService.PhotoLink("https://res.cloudinary.com/x/ai.jpg", true));
+        assertThat(row.getGenerationStatus()).isEqualTo(AiImageGenerationStatus.SUCCEEDED);
+    }
+
+    @Test
+    void photoLink_doesNotRetryARecentFailure() throws IOException {
+        RecipeGeneratedImage row = RecipeGeneratedImage.builder().id(UUID.randomUUID())
+                .generationStatus(AiImageGenerationStatus.FAILED)
+                .completedAt(java.time.LocalDateTime.now())
+                .fallbackImageUrl("https://images.example.com/old.jpg")
+                .build();
+        when(images.findById(row.getId())).thenReturn(Optional.of(row));
+
+        assertThat(service.photoLink(row.getId()))
+                .isEqualTo(new CreatorRecipeImageService.PhotoLink("https://images.example.com/old.jpg", false));
+        verify(generator, never()).generate(anyString());
+    }
+
+    @Test
     void attachImages_keepsTheClosestPhotoWhenNoneFullyMatches() throws IOException {
         when(vision.rankCandidates(anyString(), anyList()))
                 .thenReturn(VisionRankResult.builder().bestIndex(0).confidence(0.3).reason("close").build())

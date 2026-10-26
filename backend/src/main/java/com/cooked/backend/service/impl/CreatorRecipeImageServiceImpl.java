@@ -46,6 +46,8 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
     static final String CLOUDINARY_FOLDER = "ai-recipes";
     /** Generations per photo when the provider errors; a mismatching photo is redone only once. */
     static final int MAX_ATTEMPTS = 3;
+    /** A failed photo is generated again when its link is opened this long after. */
+    static final int RETRY_FAILED_AFTER_MINUTES = 10;
     static final String GENERIC_FOOD_IMAGE =
             "https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=800&q=80";
 
@@ -157,6 +159,13 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
     public PhotoLink photoLink(UUID id) {
         RecipeGeneratedImage row = images.findById(id).orElse(null);
         if (row == null) return null;
+        if (row.getGenerationStatus() == AiImageGenerationStatus.FAILED && row.getCompletedAt() != null
+                && row.getCompletedAt().isBefore(LocalDateTime.now().minusMinutes(RETRY_FAILED_AFTER_MINUTES))) {
+            // The provider may be back (or the cause fixed): try again, at most every few minutes.
+            row.setGenerationStatus(AiImageGenerationStatus.GENERATING);
+            row.setRetried(true);
+            row = images.save(row);
+        }
         if (row.getGenerationStatus() == AiImageGenerationStatus.GENERATING) {
             // Not in flight here: the server restarted mid-generation, so start it again.
             CompletableFuture<String> photo = inFlight.containsKey(id) ? inFlight.get(id) : start(row);
