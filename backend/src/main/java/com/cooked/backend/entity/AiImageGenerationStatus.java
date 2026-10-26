@@ -4,6 +4,6 @@ package com.cooked.backend.entity;
 public enum AiImageGenerationStatus {
     GENERATING,
     SUCCEEDED,
-    /** Both attempts failed: the recipe shows the "photo unavailable" placeholder. */
+    /** Every attempt failed: the photo link serves the recipe's previous image instead. */
     FAILED
 }

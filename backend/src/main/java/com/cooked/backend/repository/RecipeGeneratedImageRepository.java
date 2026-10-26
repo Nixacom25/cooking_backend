@@ -26,6 +26,8 @@ public interface RecipeGeneratedImageRepository extends JpaRepository<RecipeGene
 
     Optional<RecipeGeneratedImage> findFirstByGeneratedImageUrlAndRecipeIdIsNull(String generatedImageUrl);
 
+    Optional<RecipeGeneratedImage> findFirstByCreatorUserIdAndRecipeTitleOrderByCreatedAtDesc(UUID creatorUserId, String recipeTitle);
+
     /**
      * Per model since [since]: {model, total, succeeded, failed, retried, approved,
      * rejected, regenerated, addedToLibrary, avgDurationMs (succeeded), costUsd}.

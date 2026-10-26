@@ -12,6 +12,7 @@ import com.cooked.backend.repository.RecipeRepository;
 import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.service.AiImageGenerator;
 import com.cooked.backend.service.CloudinaryService;
+import com.cooked.backend.service.CreatorRecipeImageService;
 import com.cooked.backend.service.VisionImageRankerService;
 import com.cooked.backend.service.dto.VisionRankResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,6 +33,7 @@ import static org.mockito.Mockito.*;
 class CreatorRecipeImageServiceImplTest {
 
     private static final String PLACEHOLDER = "https://link.cookedapp.com/share/photo-unavailable.jpg";
+    private static final String LINK = "https://link.cookedapp.com/share/ai-photo/";
 
     private final RecipeGeneratedImageRepository images = mock(RecipeGeneratedImageRepository.class);
     private final RecipeRepository recipes = mock(RecipeRepository.class);
@@ -58,7 +60,7 @@ class CreatorRecipeImageServiceImplTest {
         when(vision.rankCandidates(anyString(), anyList()))
                 .thenReturn(VisionRankResult.builder().bestIndex(0).confidence(0.9).reason("ok").build());
         service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, cloudinary, vision,
-                new ObjectMapper(), true, 30, 0.5, 4, "https://link.cookedapp.com");
+                new ObjectMapper(), true, 30, 5, 0.5, 4, "https://link.cookedapp.com");
     }
 
     @AfterEach
@@ -122,19 +124,81 @@ class CreatorRecipeImageServiceImplTest {
     }
 
     @Test
-    void attachImages_retriesOnceThenFallsBackToThePlaceholder() throws IOException {
+    void attachImages_retriesThenGivesAPhotoLinkServingThePreviousImage() throws IOException {
         when(generator.generate(anyString())).thenThrow(new IOException("provider down"));
         CreateRecipeRequest tacos = recipe("Chicken Tacos");
 
         service.attachImages(List.of(tacos), user(Role.CREATOR).getEmail());
 
-        assertThat(tacos.getImage()).isEqualTo(PLACEHOLDER);
-        assertThat(tacos.getName()).isEqualTo("Chicken Tacos");
-        verify(generator, times(2)).generate(anyString());
         RecipeGeneratedImage row = saved.get(0);
+        assertThat(tacos.getImage()).isEqualTo(LINK + row.getId() + ".jpg").isNotEqualTo(PLACEHOLDER);
+        assertThat(tacos.getName()).isEqualTo("Chicken Tacos");
+        verify(generator, times(CreatorRecipeImageServiceImpl.MAX_ATTEMPTS)).generate(anyString());
         assertThat(row.getGenerationStatus()).isEqualTo(AiImageGenerationStatus.FAILED);
         assertThat(row.isRetried()).isTrue();
         assertThat(row.getFailureReason()).contains("provider down");
+
+        when(images.findById(row.getId())).thenReturn(Optional.of(row));
+        assertThat(service.photoLink(row.getId()))
+                .isEqualTo(new CreatorRecipeImageService.PhotoLink("https://images.unsplash.com/random", false));
+    }
+
+    @Test
+    void attachImages_givesAPhotoLinkThatWaitsForASlowPhoto() throws Exception {
+        java.util.concurrent.CountDownLatch release = new java.util.concurrent.CountDownLatch(1);
+        when(generator.generate(anyString())).thenAnswer(inv -> {
+            release.await();
+            return new AiImageGenerator.GeneratedImage(new byte[]{1}, "gpt-image-1", 0.04);
+        });
+        service.shutdown();
+        service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, cloudinary, vision,
+                new ObjectMapper(), true, 0, 5, 0.5, 4, "https://link.cookedapp.com");
+        CreateRecipeRequest tacos = recipe("Chicken Tacos");
+
+        service.attachImages(List.of(tacos), user(Role.CREATOR).getEmail());
+
+        RecipeGeneratedImage row = saved.get(0);
+        assertThat(tacos.getImage()).isEqualTo(LINK + row.getId() + ".jpg");
+        when(images.findById(row.getId())).thenReturn(Optional.of(row));
+        release.countDown();
+        assertThat(service.photoLink(row.getId()))
+                .isEqualTo(new CreatorRecipeImageService.PhotoLink("https://res.cloudinary.com/x/ai.jpg", true));
+    }
+
+    @Test
+    void attachImages_keepsTheClosestPhotoWhenNoneFullyMatches() throws IOException {
+        when(vision.rankCandidates(anyString(), anyList()))
+                .thenReturn(VisionRankResult.builder().bestIndex(0).confidence(0.3).reason("close").build())
+                .thenReturn(VisionRankResult.builder().bestIndex(-1).confidence(0.9).reason("wrong").build());
+        when(cloudinary.uploadBytes(any(), eq("ai-recipes")))
+                .thenReturn("https://res.cloudinary.com/x/first.jpg", "https://res.cloudinary.com/x/second.jpg");
+        CreateRecipeRequest tacos = recipe("Chicken Tacos");
+
+        service.attachImages(List.of(tacos), user(Role.CREATOR).getEmail());
+
+        assertThat(tacos.getImage()).isEqualTo("https://res.cloudinary.com/x/first.jpg");
+        RecipeGeneratedImage row = saved.get(0);
+        assertThat(row.getGenerationStatus()).isEqualTo(AiImageGenerationStatus.SUCCEEDED);
+        assertThat(row.getMatchConfidence()).isEqualTo(0.3);
+        assertThat(row.getFailureReason()).contains("closest photo");
+        verify(generator, times(2)).generate(anyString());
+    }
+
+    @Test
+    void linkSavedRecipe_linksAPhotoLinkAndSwapsInTheFinishedPhoto() {
+        RecipeGeneratedImage row = RecipeGeneratedImage.builder().id(UUID.randomUUID())
+                .generationStatus(AiImageGenerationStatus.SUCCEEDED)
+                .generatedImageUrl("https://res.cloudinary.com/x/ai.jpg").build();
+        when(images.findById(row.getId())).thenReturn(Optional.of(row));
+        com.cooked.backend.entity.Recipe saved = new com.cooked.backend.entity.Recipe();
+        saved.setId(UUID.randomUUID());
+        saved.setImage(LINK + row.getId() + ".jpg");
+        when(recipes.findById(saved.getId())).thenReturn(Optional.of(saved));
+
+        service.linkSavedRecipe(saved.getId(), saved.getImage());
+
+        assertThat(row.getRecipeId()).isEqualTo(saved.getId());
+        assertThat(saved.getImage()).isEqualTo("https://res.cloudinary.com/x/ai.jpg");
     }
 
     @Test
@@ -168,7 +232,7 @@ class CreatorRecipeImageServiceImplTest {
     void attachImages_isOffWhenTheFeatureIsDisabled() {
         service.shutdown();
         service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, cloudinary, vision,
-                new ObjectMapper(), false, 30, 0.5, 4, "https://link.cookedapp.com");
+                new ObjectMapper(), false, 30, 5, 0.5, 4, "https://link.cookedapp.com");
         CreateRecipeRequest tacos = recipe("Chicken Tacos");
 
         service.attachImages(List.of(tacos), user(Role.CREATOR).getEmail());

@@ -48,6 +48,8 @@ public final class RecipeImagePromptBuilder {
                 .append("Do not show ingredients, proteins, garnishes or sides that are not listed. ")
                 .append("Natural restaurant-quality plating, believable portion, realistic textures, ")
                 .append("soft natural lighting, premium editorial food photography, clean uncluttered background. ")
+                .append("Shot at a 45-degree angle, the whole dish centered and fully in frame with space around it, ")
+                .append("so it still looks right cropped to a wide banner or a square. ")
                 .append("No text, no people, no hands, no logos, no watermarks, no obvious AI artifacts.");
         return p.toString();
     }

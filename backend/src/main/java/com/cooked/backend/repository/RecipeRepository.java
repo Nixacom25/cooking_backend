@@ -164,6 +164,9 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID>, org.sprin
     @org.springframework.data.jpa.repository.Query("SELECT DISTINCT r FROM Recipe r LEFT JOIN FETCH r.recipeIngredients ri LEFT JOIN FETCH ri.ingredient WHERE r.totalPrice IS NULL")
     java.util.List<Recipe> findByTotalPriceIsNull();
 
+    /** Recipes still showing [image] (e.g. the AI "photo unavailable" placeholder). */
+    List<Recipe> findByImage(String image);
+
     @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r WHERE r.image IS NULL OR r.image = '' OR r.image LIKE '%unsplash%' OR r.image LIKE '%splash%'")
     List<Recipe> findRecipesMissingImages();
 

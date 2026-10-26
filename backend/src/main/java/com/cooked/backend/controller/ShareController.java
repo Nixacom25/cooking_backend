@@ -4,6 +4,7 @@ import com.cooked.backend.entity.Cookbook;
 import com.cooked.backend.entity.Recipe;
 import com.cooked.backend.repository.CookbookRepository;
 import com.cooked.backend.repository.RecipeRepository;
+import com.cooked.backend.service.CreatorRecipeImageService;
 import com.cooked.backend.service.ShareImageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,6 +42,7 @@ public class ShareController {
     private final RecipeRepository recipeRepository;
     private final CookbookRepository cookbookRepository;
     private final ShareImageService shareImageService;
+    private final CreatorRecipeImageService creatorRecipeImages;
 
     /** App deep-link scheme — update if the scheme changes */
     private static final String APP_SCHEME = "cooked://recipe/";
@@ -169,6 +171,27 @@ public class ShareController {
                     .cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic())
                     .body(in.readAllBytes());
         }
+    }
+
+    /**
+     * GET /share/ai-photo/{id}.jpg
+     *
+     * Link given to a creator recipe whose AI photo wasn't ready when the scan
+     * answered: waits for the photo, then redirects to it. If it could not be
+     * made, redirects (uncached) to the recipe's previous image.
+     */
+    @Operation(summary = "Creator recipe AI photo, served once it is generated")
+    @GetMapping("/ai-photo/{id}.jpg")
+    public ResponseEntity<Void> aiPhoto(@PathVariable UUID id) {
+        CreatorRecipeImageService.PhotoLink link = creatorRecipeImages.photoLink(id);
+        if (link == null) return ResponseEntity.notFound().build();
+        CacheControl cache = link.done()
+                ? CacheControl.maxAge(365, TimeUnit.DAYS).cachePublic()
+                : CacheControl.noStore();
+        return ResponseEntity.status(302)
+                .header(HttpHeaders.LOCATION, link.url())
+                .cacheControl(cache)
+                .build();
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

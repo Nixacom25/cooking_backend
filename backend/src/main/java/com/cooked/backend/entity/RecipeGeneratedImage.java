@@ -97,6 +97,10 @@ public class RecipeGeneratedImage {
     /** Photo this one was regenerated from. */
     private UUID regeneratedFromId;
 
+    /** Image the recipe had before (scan match): shown only if every AI attempt failed. */
+    @Column(columnDefinition = "TEXT")
+    private String fallbackImageUrl;
+
     /** Library row created when the photo was approved. */
     private UUID imageLibraryId;
 

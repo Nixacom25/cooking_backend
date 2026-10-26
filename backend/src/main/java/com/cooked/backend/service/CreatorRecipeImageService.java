@@ -19,11 +19,22 @@ public interface CreatorRecipeImageService {
 
     /**
      * For a creator, replaces every recipe's image with an AI photo of that
-     * recipe, generated in parallel (one retry each). A recipe whose photo
-     * fails or isn't ready in time gets the "photo unavailable" placeholder;
-     * the recipes themselves are always kept. Does nothing for other users.
+     * recipe, generated in parallel. A photo that isn't ready in time gets a
+     * link ({@link #photoLink}) that serves it as soon as it is; the recipes
+     * themselves are always kept. Does nothing for other users.
      */
     void attachImages(List<CreateRecipeRequest> recipes, String userEmail);
+
+    /**
+     * Where the photo link of AI photo [id] should point, waiting for it while
+     * it is still being made; null for an unknown id. Never the placeholder:
+     * if every attempt failed it is the recipe's previous image.
+     */
+    PhotoLink photoLink(UUID id);
+
+    /** [done] = the AI photo itself, safe to cache for good. */
+    record PhotoLink(String url, boolean done) {
+    }
 
     /** A recipe was saved with [imageUrl]: links the AI photo to it, if it is one. */
     void linkSavedRecipe(UUID recipeId, String imageUrl);
@@ -35,6 +46,6 @@ public interface CreatorRecipeImageService {
      */
     RecipeGeneratedImage regenerate(RecipeGeneratedImage source);
 
-    /** "Cooked photo unavailable" image shown when generation fails. */
+    /** Old "Cooked photo unavailable" image; no longer given to new recipes. */
     String placeholderUrl();
 }
