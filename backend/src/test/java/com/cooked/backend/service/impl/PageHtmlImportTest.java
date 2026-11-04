@@ -3,16 +3,30 @@ package com.cooked.backend.service.impl;
 import com.cooked.backend.dto.request.CreateRecipeRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import com.cooked.backend.entity.Recipe;
+import com.cooked.backend.entity.Role;
+import com.cooked.backend.entity.User;
 import com.cooked.backend.repository.RecipeRepository;
+import com.cooked.backend.repository.UserRepository;
 import com.cooked.backend.service.RecipeNutritionService;
+import com.cooked.backend.service.SubscriptionService;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -47,6 +61,56 @@ class PageHtmlImportTest {
         assertEquals("Quick Beef Stir-Fry", req.getName());
         assertEquals(3, req.getIngredients().size());
         assertEquals(2, req.getSteps().size());
+    }
+
+    @Test
+    void parsesCapturedInstagramCaptionForCreatorsAndSubscribedClients() {
+        String caption = "Bolognese Potato Bake. Ingredients: 2 lbs Yukon Gold potatoes.";
+        String html = """
+                <html><head>
+                <meta property="og:description" content="%s">
+                <meta property="og:image" content="https://cdn.example.com/potato-bake.jpg">
+                </head><body></body></html>
+                """.formatted(caption);
+
+        for (Role role : List.of(Role.CREATOR, Role.CLIENT)) {
+            String email = role.name().toLowerCase() + "@example.com";
+            User user = User.builder().email(email).role(role).build();
+            RestTemplate restTemplate = mock(RestTemplate.class);
+            UserRepository users = mock(UserRepository.class);
+            SubscriptionService subscriptions = mock(SubscriptionService.class);
+            when(users.findByEmail(email)).thenReturn(Optional.of(user));
+            when(subscriptions.hasAiAccess(user)).thenReturn(true);
+
+            Map<String, Object> recipe = Map.of(
+                    "name", "Bolognese Potato Bake",
+                    "image", "https://cdn.example.com/potato-bake.jpg",
+                    "ingredients", List.of(Map.of("name", "Yukon Gold potatoes", "quantity", "2 lb", "icon", "🥔")),
+                    "steps", List.of("Bake until the potatoes are tender."));
+            Map<String, Object> aiResponse = Map.of(
+                    "data", Map.of("recipe", Map.of("recipe", recipe)));
+            doAnswer(invocation -> new ResponseEntity<>(aiResponse, HttpStatus.OK))
+                    .when(restTemplate).postForEntity(anyString(), any(HttpEntity.class), any(Class.class));
+
+            MarkhorAiServiceImpl service = new MarkhorAiServiceImpl(
+                    restTemplate, new ObjectMapper(), users, subscriptions, recipeRepository, null, nutrition, null);
+            ReflectionTestUtils.setField(service, "baseUrl", "http://dummy-ai-service");
+            ReflectionTestUtils.setField(service, "internalSecret", "dummy-secret");
+
+            CreateRecipeRequest result = service.extractRecipeFromPage(
+                    "https://www.instagram.com/reel/DfSJrAyq3LE/?rpxt=share", html, email);
+
+            assertEquals("Bolognese Potato Bake", result.getName());
+            assertEquals(1, result.getIngredients().size());
+            assertEquals("https://cdn.example.com/potato-bake.jpg", result.getImage());
+            ArgumentCaptor<HttpEntity> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+            verify(restTemplate).postForEntity(
+                    eq("http://dummy-ai-service/api/extract"), requestCaptor.capture(), any(Class.class));
+            Map<?, ?> requestBody = (Map<?, ?>) requestCaptor.getValue().getBody();
+            assertEquals(caption, requestBody.get("caption"));
+            assertEquals("https://cdn.example.com/potato-bake.jpg", requestBody.get("thumbnail"));
+            verify(subscriptions).hasAiAccess(user);
+        }
     }
 
     @Test

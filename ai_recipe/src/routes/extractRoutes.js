@@ -28,6 +28,13 @@ const router = express.Router();
  *                 format: uri
  *                 description: Source content URL from YouTube, TikTok, Instagram, or a website.
  *                 example: https://youtu.be/RaLzxZryEoA?si=uU0mXBgki2MjvtgS
+ *               caption:
+ *                 type: string
+ *                 maxLength: 20000
+ *                 description: Optional page text captured by the mobile app when a social platform blocks server-side extraction.
+ *               thumbnail:
+ *                 type: string
+ *                 description: Optional page image URL captured alongside the caption.
  *     responses:
  *       200:
  *         description: Recipe extracted successfully

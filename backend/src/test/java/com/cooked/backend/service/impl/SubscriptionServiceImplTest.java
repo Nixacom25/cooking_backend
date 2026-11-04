@@ -132,12 +132,22 @@ public class SubscriptionServiceImplTest {
 
     @Test
     void testHasAiAccess_ActiveSubscription() {
+        dummyUser.setRole(Role.CLIENT);
         dummySubscription.setStatus(SubscriptionStatus.ACTIVE);
         dummySubscription.setEndDate(LocalDateTime.now().plusDays(10));
 
         when(userSubscriptionRepository.findByUserId(dummyUserId)).thenReturn(Optional.of(dummySubscription));
 
         assertTrue(subscriptionService.hasAiAccess(dummyUser));
+    }
+
+    @Test
+    void creatorsHaveAiAccessWithoutAStoreSubscription() {
+        dummyUser.setRole(Role.CREATOR);
+
+        assertTrue(subscriptionService.hasAiAccess(dummyUser));
+
+        verifyNoInteractions(userSubscriptionRepository, subscriptionVerificationService);
     }
 
     @Test

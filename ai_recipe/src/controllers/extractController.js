@@ -16,7 +16,7 @@ const { parseKcal } = require('../utils/nutrition');
  */
 async function extractRecipe(req, res, next) {
   try {
-    const { url } = req.body ?? {};
+    const { url, caption, thumbnail } = req.body ?? {};
     if (!url) {
       return res.status(400).json({
         success: false,
@@ -44,8 +44,25 @@ async function extractRecipe(req, res, next) {
       });
     }
 
+    const suppliedCaption = typeof caption === 'string' ? caption.trim() : '';
+    if (suppliedCaption.length > 20000) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'CAPTION_TOO_LONG',
+          message: 'The supplied page caption is too long to import.'
+        }
+      });
+    }
+
     let data;
-    if (isTikTok) {
+    if (suppliedCaption) {
+      data = {
+        platform: isTikTok ? 'tiktok' : isInstagram ? 'instagram' : isYoutube ? 'youtube' : 'web',
+        description: suppliedCaption,
+        thumbnail: typeof thumbnail === 'string' ? thumbnail : null,
+      };
+    } else if (isTikTok) {
       data = await tiktokService(url);
     } else if (isInstagram) {
       data = await instagramService(url);

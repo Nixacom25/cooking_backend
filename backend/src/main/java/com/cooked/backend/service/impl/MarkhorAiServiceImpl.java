@@ -649,77 +649,10 @@ public class MarkhorAiServiceImpl implements AiService {
         // 1. Try AI microservice extraction if AI access is enabled
         if (hasAiAccess) {
             try {
-                Map<String, String> body = Map.of("url", cleanUrl);
-                HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(body, getInternalHeaders());
-                ResponseEntity<Map<String, Object>> response = restTemplate.postForEntity(baseUrl + "/api/extract", requestEntity, (Class<Map<String, Object>>)(Class<?>)Map.class);
-                
-                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                    Map<String, Object> respBody = response.getBody();
-                    Map<String, Object> recipeMap = null;
-
-                    if (respBody.get("data") instanceof Map) {
-                        Map<String, Object> data = (Map<String, Object>) respBody.get("data");
-                        if (data.get("recipe") instanceof Map) {
-                            Map<String, Object> rec = (Map<String, Object>) data.get("recipe");
-                            if (rec.get("recipe") instanceof Map) {
-                                recipeMap = (Map<String, Object>) rec.get("recipe");
-                            } else {
-                                recipeMap = rec;
-                            }
-                        } else {
-                            recipeMap = data;
-                        }
-                    } else if (respBody.get("recipe") instanceof Map) {
-                        Map<String, Object> rec = (Map<String, Object>) respBody.get("recipe");
-                        if (rec.get("recipe") instanceof Map) {
-                            recipeMap = (Map<String, Object>) rec.get("recipe");
-                        } else {
-                            recipeMap = rec;
-                        }
-                    } else {
-                        recipeMap = respBody;
-                    }
-
-                    if (recipeMap != null && recipeMap.get("name") != null && !recipeMap.get("name").toString().trim().isEmpty()) {
-                        recipeMap.put("origin", "IMPORT");
-                        recipeMap.put("sourceUrl", cleanUrl);
-                        
-                        CreateRecipeRequest request = objectMapper.convertValue(recipeMap, CreateRecipeRequest.class);
-                        
-                        // Fallback image extraction if missing
-                        if (request.getImage() == null || request.getImage().trim().isEmpty() || request.getImage().contains("placeholder")) {
-                            log.info("API missed image for {}, attempting fallback scraping", cleanUrl);
-                            try {
-                                Document doc = Jsoup.connect(cleanUrl)
-                                        .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
-                                        .headers(getHumanHeaders())
-                                        .followRedirects(true)
-                                        .timeout(5000)
-                                        .get();
-                                
-                                String pageImage = findPageImage(doc);
-                                if (pageImage != null) request.setImage(pageImage);
-                            } catch (Exception e) {
-                                log.warn("Fallback scraping failed for image: {}", e.getMessage());
-                            }
-                        }
-                        
-                        // Validate that we have actual recipe content before returning
-                        if (request.getIngredients() == null || request.getIngredients().isEmpty()) {
-                            log.warn("AI extraction returned recipe with no ingredients for {}", cleanUrl);
-                            throw new BadRequestException("We couldn't extract complete recipe ingredients from this link.");
-                        }
-                        if (request.getSteps() == null || request.getSteps().isEmpty()) {
-                            log.warn("AI extraction returned recipe with no steps for {}", cleanUrl);
-                            throw new BadRequestException("We couldn't extract complete recipe instructions from this link.");
-                        }
-                        
-                        finishImport(request);
-                        return request;
-                    }
-                }
+                CreateRecipeRequest request = extractRecipeWithAi(cleanUrl, Map.of("url", cleanUrl));
+                if (request != null) return request;
             } catch (Exception e) {
-                log.warn("AI extraction microservice call failed for {}: {}. Trying Jsoup fallback...", cleanUrl, e.getMessage());
+                log.warn("AI extraction microservice call failed for {}. Trying Jsoup fallback...", cleanUrl, e);
             }
         }
 
@@ -734,6 +667,66 @@ public class MarkhorAiServiceImpl implements AiService {
             // throw an exception to trigger the fallback page on mobile
             throw new BadRequestException("We couldn't extract a complete recipe from this link. The page didn't contain enough recipe information for Cooked to import it correctly.");
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private CreateRecipeRequest extractRecipeWithAi(String cleanUrl, Map<String, String> body) {
+        HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(body, getInternalHeaders());
+        ResponseEntity<Map<String, Object>> response = restTemplate.postForEntity(
+                baseUrl + "/api/extract", requestEntity, (Class<Map<String, Object>>) (Class<?>) Map.class);
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) return null;
+
+        Map<String, Object> respBody = response.getBody();
+        Map<String, Object> recipeMap = null;
+        if (respBody.get("data") instanceof Map) {
+            Map<String, Object> data = (Map<String, Object>) respBody.get("data");
+            if (data.get("recipe") instanceof Map) {
+                Map<String, Object> rec = (Map<String, Object>) data.get("recipe");
+                recipeMap = rec.get("recipe") instanceof Map ? (Map<String, Object>) rec.get("recipe") : rec;
+            } else {
+                recipeMap = data;
+            }
+        } else if (respBody.get("recipe") instanceof Map) {
+            Map<String, Object> rec = (Map<String, Object>) respBody.get("recipe");
+            recipeMap = rec.get("recipe") instanceof Map ? (Map<String, Object>) rec.get("recipe") : rec;
+        } else {
+            recipeMap = respBody;
+        }
+
+        if (recipeMap == null || recipeMap.get("name") == null
+                || recipeMap.get("name").toString().trim().isEmpty()) return null;
+
+        recipeMap = new HashMap<>(recipeMap);
+        recipeMap.put("origin", "IMPORT");
+        recipeMap.put("sourceUrl", cleanUrl);
+        CreateRecipeRequest request = objectMapper.convertValue(recipeMap, CreateRecipeRequest.class);
+
+        if (request.getImage() == null || request.getImage().trim().isEmpty()
+                || request.getImage().contains("placeholder")) {
+            log.info("API missed image for {}, attempting fallback scraping", cleanUrl);
+            try {
+                Document doc = Jsoup.connect(cleanUrl)
+                        .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                        .headers(getHumanHeaders())
+                        .followRedirects(true)
+                        .timeout(5000)
+                        .get();
+                String pageImage = findPageImage(doc);
+                if (pageImage != null) request.setImage(pageImage);
+            } catch (Exception e) {
+                log.warn("Fallback scraping failed for image: {}", e.getMessage());
+            }
+        }
+
+        if (request.getIngredients() == null || request.getIngredients().isEmpty()) {
+            throw new BadRequestException("We couldn't extract complete recipe ingredients from this link.");
+        }
+        if (request.getSteps() == null || request.getSteps().isEmpty()) {
+            throw new BadRequestException("We couldn't extract complete recipe instructions from this link.");
+        }
+
+        finishImport(request);
+        return request;
     }
 
     private CreateRecipeRequest extractRecipeViaJsoup(String url) throws Exception {
@@ -751,21 +744,59 @@ public class MarkhorAiServiceImpl implements AiService {
      * Import from a page the app already loaded in its WebView. Sites such as
      * Allrecipes (People Inc / Dotdash Meredith) refuse server-side fetches
      * (HTTP 402) but render fine on the phone, so the app sends the page HTML
-     * and we read its schema.org Recipe data here. Falls back to the normal
-     * link import when the HTML has no usable recipe.
+     * and we read its schema.org data or captured caption here. Falls back to
+     * the normal link import when the HTML has no usable recipe.
      */
     @Override
     public CreateRecipeRequest extractRecipeFromPage(String url, String html, String email) {
         if (html != null && !html.isBlank() && url != null && !url.isBlank()) {
+            Document doc = Jsoup.parse(html, url.trim());
             try {
-                CreateRecipeRequest request = extractRecipeFromDocument(Jsoup.parse(html, url.trim()), url.trim());
+                CreateRecipeRequest request = extractRecipeFromDocument(doc, url.trim());
                 finishImport(request);
                 return request;
             } catch (Exception e) {
-                log.warn("Page HTML extraction failed for {}: {}. Falling back to link import.", url, e.getMessage());
+                log.info("Page has no complete structured recipe for {}: {}", url, e.getMessage());
+            }
+
+            String caption = pageCaption(doc);
+            if (!caption.isBlank()) {
+                try {
+                    User user = userRepository.findByEmail(email)
+                            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                    verifyAiAccess(user);
+
+                    String cleanUrl = url.trim();
+                    if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
+                        cleanUrl = "https://" + cleanUrl;
+                    }
+                    Map<String, String> body = new HashMap<>();
+                    body.put("url", cleanUrl);
+                    body.put("caption", caption.length() > 20000 ? caption.substring(0, 20000) : caption);
+                    String image = findPageImage(doc);
+                    if (image != null) body.put("thumbnail", image);
+
+                    CreateRecipeRequest request = extractRecipeWithAi(cleanUrl, body);
+                    if (request != null) return request;
+                } catch (Exception e) {
+                    log.warn("Captured page text extraction failed for {}. Falling back to link import.", url, e);
+                }
             }
         }
         return extractRecipeFromLink(url, email);
+    }
+
+    private String pageCaption(Document doc) {
+        Element capturedText = doc.getElementsByAttributeValue("name", "cooked:page-text").first();
+        if (capturedText != null && !capturedText.attr("content").isBlank()) {
+            return capturedText.attr("content").trim();
+        }
+        for (String name : List.of("og:description", "twitter:description", "description")) {
+            Element meta = doc.getElementsByAttributeValue("property", name).first();
+            if (meta == null) meta = doc.getElementsByAttributeValue("name", name).first();
+            if (meta != null && !meta.attr("content").isBlank()) return meta.attr("content").trim();
+        }
+        return "";
     }
 
     private CreateRecipeRequest extractRecipeFromDocument(Document doc, String url) throws Exception {
