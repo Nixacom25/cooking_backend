@@ -76,7 +76,7 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
                                          VisionImageRankerService vision,
                                          ObjectMapper objectMapper,
                                          @Value("${creator.ai-images.enabled:true}") boolean enabled,
-                                         @Value("${creator.ai-images.wait-seconds:50}") long waitSeconds,
+                                         @Value("${creator.ai-images.wait-seconds:5}") long waitSeconds,
                                          @Value("${creator.ai-images.link-wait-seconds:85}") long linkWaitSeconds,
                                          @Value("${creator.ai-images.min-match-confidence:0.5}") double minMatchConfidence,
                                          @Value("${creator.ai-images.parallelism:8}") int parallelism,

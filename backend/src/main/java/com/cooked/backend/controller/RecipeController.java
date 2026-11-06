@@ -15,6 +15,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +32,8 @@ import java.util.UUID;
 @Tag(name = "Recipe", description = "Endpoints for managing personal Recipes")
 @SecurityRequirement(name = "bearerAuth")
 public class RecipeController {
+
+    private static final Logger log = LoggerFactory.getLogger(RecipeController.class);
 
     private final RecipeService recipeService;
     private final AiService aiService;
@@ -88,7 +92,7 @@ public class RecipeController {
             Authentication auth) {
         var scan = eventTracker.track(ProductEventType.SCAN, auth.getName(), "photo",
                 () -> aiService.scan(file, auth.getName()), ProductEventCounts::recipes);
-        creatorRecipeImages.attachImages(scan.getRecipes(), auth.getName());
+        attachCreatorImagesBestEffort(scan, auth.getName());
         return ResponseEntity.ok(scan);
     }
 
@@ -105,8 +109,16 @@ public class RecipeController {
                 com.cooked.backend.entity.IngredientNameSource.SCAN, auth.getName());
         var scan = eventTracker.track(ProductEventType.SCAN, auth.getName(), "typed",
                 () -> aiService.scanTyped(ingredients, auth.getName()), ProductEventCounts::recipes);
-        creatorRecipeImages.attachImages(scan.getRecipes(), auth.getName());
+        attachCreatorImagesBestEffort(scan, auth.getName());
         return ResponseEntity.ok(scan);
+    }
+
+    private void attachCreatorImagesBestEffort(com.cooked.backend.dto.response.ScanResponse scan, String userEmail) {
+        try {
+            creatorRecipeImages.attachImages(scan.getRecipes(), userEmail);
+        } catch (RuntimeException e) {
+            log.warn("Could not attach AI photos to scan results: {}", e.getMessage(), e);
+        }
     }
 
     @Operation(summary = "Validate Typed Ingredients directly via DB")
