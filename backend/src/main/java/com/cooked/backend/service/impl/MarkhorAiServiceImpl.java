@@ -1235,17 +1235,14 @@ public class MarkhorAiServiceImpl implements AiService {
     private static final String GENERIC_FOOD_IMAGE =
             "https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=800&q=80";
 
-    /** Images + kcal for AI-generated / scanned recipes before they reach the user. */
+    /** Enrich generated recipes before they reach the user. */
     private void finishRecipes(List<CreateRecipeRequest> recipes) {
         assignBestMatchingImages(recipes);
         nutritionService.fillMissingKcal(recipes);
     }
 
     /**
-     * An imported recipe always leaves with a picture and calories:
-     * 1) the page's own photo (found during extraction), else the video
-     *    thumbnail for YouTube links; 2) else the closest recipe photo in our
-     *    base, like scans do; 3) last resort, a generic food photo.
+     * Keep an image provided by the source or a sufficiently close title match.
      * Missing kcal is estimated from the ingredients.
      */
     void finishImport(CreateRecipeRequest request) {
@@ -1262,7 +1259,6 @@ public class MarkhorAiServiceImpl implements AiService {
                 log.warn("Closest-image lookup failed for '{}': {}", request.getName(), e.getMessage());
             }
         }
-        if (isMissingImage(request.getImage())) request.setImage(GENERIC_FOOD_IMAGE);
         nutritionService.fillMissingKcal(List.of(request));
     }
 
@@ -1360,7 +1356,7 @@ public class MarkhorAiServiceImpl implements AiService {
             keywords.sort((a, b) -> Integer.compare(b.length(), a.length()));
 
             if (keywords.isEmpty()) {
-                // Nothing useful to search on — skip to cuisine/category fallbacks below
+                // Without useful title terms, no existing photo is safe to reuse.
             } else {
                 // --- Phase 1: multi-keyword scoring (one DB round-trip) ---
                 // Pad to exactly 5 slots (query requires 5 named params)
@@ -1383,7 +1379,7 @@ public class MarkhorAiServiceImpl implements AiService {
                     double score = 0;
                     int matchedWords = 0;
                     for (String kw : keywords) {
-                        if (candidateWords.contains(kw) || candidateName.contains(kw)) {
+                        if (candidateWords.contains(kw)) {
                             matchedWords++;
                             score += kw.length() >= 7 ? 2.0 : 1.0;
                         }
@@ -1400,54 +1396,14 @@ public class MarkhorAiServiceImpl implements AiService {
                     }
                 }
 
-                final int minimumMatchedWords = keywords.size() == 1
-                        ? 1
-                        : (int) Math.ceil(keywords.size() * 0.6);
-                if (bestMatch != null && bestMatchedWords >= minimumMatchedWords) {
+                if (keywords.size() > 1 && bestMatch != null && bestMatchedWords == keywords.size()) {
                     request.setImage(bestMatch.getImage());
                     log.info("Assigned image for '{}' via multi-keyword match (score={}, matched='{}')",
                             name, bestScore, bestMatch.getName());
                     continue; // Move to the next recipe
                 }
-
-                // Do not fall back to the first recipe sharing one generic word.
-                // Cuisine/category fallback below is safer than a visibly wrong dish.
             }
-
-            // --- Phase 3: cuisine fallback ---
-            boolean found = false;
-            if (request.getCuisine() != null && !request.getCuisine().isEmpty()) {
-                org.springframework.data.domain.Page<com.cooked.backend.entity.Recipe> cuisineMatches =
-                        recipeRepository.findByCuisineWithImage(request.getCuisine(),
-                                org.springframework.data.domain.PageRequest.of(0, 1));
-                if (cuisineMatches.hasContent()) {
-                    request.setImage(cuisineMatches.getContent().get(0).getImage());
-                    log.info("Assigned image for '{}' via cuisine fallback (cuisine='{}')", name, request.getCuisine());
-                    found = true;
-                }
-            }
-
-            // --- Phase 4: category fallback ---
-            if (!found && request.getCategories() != null && !request.getCategories().isEmpty()) {
-                org.springframework.data.domain.Page<com.cooked.backend.entity.Recipe> categoryMatches =
-                        recipeRepository.findByCategoryWithImage(request.getCategories().get(0),
-                                org.springframework.data.domain.PageRequest.of(0, 1));
-                if (categoryMatches.hasContent()) {
-                    request.setImage(categoryMatches.getContent().get(0).getImage());
-                    log.info("Assigned image for '{}' via category fallback (category='{}')", name, request.getCategories().get(0));
-                    found = true;
-                }
-            }
-
-            // --- Phase 5: final fallback - assign any random recipe image ---
-            if (!found) {
-                org.springframework.data.domain.Page<com.cooked.backend.entity.Recipe> randomRecipe =
-                        recipeRepository.findRandomPopularRecipes(null, null, org.springframework.data.domain.PageRequest.of(0, 1));
-                if (randomRecipe.hasContent() && randomRecipe.getContent().get(0).getImage() != null) {
-                    request.setImage(randomRecipe.getContent().get(0).getImage());
-                    log.info("Assigned image for '{}' via final random fallback", name);
-                }
-            }
+            log.info("No sufficiently close title image found for '{}'; leaving the image unset", name);
         }
     }
 

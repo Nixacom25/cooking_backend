@@ -48,8 +48,6 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
     static final int MAX_ATTEMPTS = 3;
     /** A failed photo is generated again when its link is opened this long after. */
     static final int RETRY_FAILED_AFTER_MINUTES = 10;
-    static final String GENERIC_FOOD_IMAGE =
-            "https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=800&q=80";
 
     private final RecipeGeneratedImageRepository images;
     private final RecipeRepository recipeRepository;
@@ -130,7 +128,6 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
         for (CreateRecipeRequest recipe : recipes) {
             if (recipe == null || recipe.getName() == null || recipe.getName().isBlank()) continue;
             RecipeGeneratedImage row = newRow(RecipeImageInput.from(recipe), user.getId(), scanId, null);
-            row.setFallbackImageUrl(usableImage(recipe.getImage()));
             row = images.save(row);
             targets.add(recipe);
             rowIds.add(row.getId());
@@ -182,8 +179,7 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
         if (row.getGenerationStatus() == AiImageGenerationStatus.SUCCEEDED && row.getGeneratedImageUrl() != null) {
             return new PhotoLink(row.getGeneratedImageUrl(), true);
         }
-        String fallback = usableImage(row.getFallbackImageUrl());
-        return new PhotoLink(fallback != null ? fallback : GENERIC_FOOD_IMAGE, false);
+        return new PhotoLink(placeholderUrl, false);
     }
 
     /**
@@ -301,9 +297,8 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
     /**
      * Generates the photo for [row] and records the outcome. A provider error is
      * retried (up to {@link #MAX_ATTEMPTS} generations); a photo the vision check
-     * doesn't match is redone once, and the best photo made is kept either way,
-     * so a creator never ends up without one. Returns null only when no photo
-     * could be made at all. Never throws.
+     * doesn't match is redone once. Unverified photos are never shown; the
+     * caller receives the unavailable-photo placeholder instead. Never throws.
      */
     String generateInto(RecipeGeneratedImage row) {
         long start = System.currentTimeMillis();
@@ -327,15 +322,21 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
             }
         }
 
-        if (best != null) {
+        if (best != null && best.matches()) {
             row.setGeneratedImageUrl(best.url());
             row.setMatchConfidence(best.confidence());
             row.setGenerationStatus(AiImageGenerationStatus.SUCCEEDED);
-            row.setFailureReason(best.matches() ? null : String.format(java.util.Locale.US,
-                    "Kept the closest photo: does not fully match the recipe (confidence %.2f)", best.confidence()));
+            row.setFailureReason(null);
         } else {
             row.setGenerationStatus(AiImageGenerationStatus.FAILED);
-            row.setFailureReason(truncate(lastError == null ? "No photo generated" : lastError.getMessage(), 500));
+            row.setMatchConfidence(best == null ? null : best.confidence());
+            String reason = best == null
+                    ? (lastError == null ? "No photo generated" : lastError.getMessage())
+                    : best.confidence() == null
+                    ? "Vision verification could not confirm the recipe match"
+                    : String.format(java.util.Locale.US,
+                            "Photo did not meet the recipe match threshold (confidence %.2f)", best.confidence());
+            row.setFailureReason(truncate(reason, 500));
         }
         row.setDurationMs((int) (System.currentTimeMillis() - start));
         row.setCompletedAt(LocalDateTime.now());
@@ -348,8 +349,8 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
         } catch (Exception e) {
             log.error("Could not save AI photo record for '{}': {}", row.getRecipeTitle(), e.getMessage());
         }
-        if (best != null) swapLinkOnRecipe(row);
-        return best != null ? best.url() : null;
+        if (best != null && best.matches()) swapLinkOnRecipe(row);
+        return best != null && best.matches() ? best.url() : null;
     }
 
     /** A saved recipe still showing [row]'s photo link now shows the photo itself. */
@@ -384,7 +385,7 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
         if (url == null || url.isBlank()) throw new IllegalStateException("Cloudinary upload returned no URL");
 
         Double confidence = matchConfidence(url, input);
-        return new Candidate(url, confidence, confidence == null || confidence >= minMatchConfidence);
+        return new Candidate(url, confidence, confidence != null && confidence >= minMatchConfidence);
     }
 
     String photoLinkUrl(UUID id) {
@@ -399,13 +400,6 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
         } catch (IllegalArgumentException e) {
             return null;
         }
-    }
-
-    /** [image] if it is a real photo worth falling back to, else null. */
-    private String usableImage(String image) {
-        if (image == null || MarkhorAiServiceImpl.isMissingImage(image) || image.equals(placeholderUrl)
-                || image.startsWith(photoLinkBase)) return null;
-        return image;
     }
 
     /** How well the photo shows this exact dish, or null when the check could not run. */

@@ -158,16 +158,32 @@ class PageHtmlImportTest {
     }
 
     @Test
-    void noMatchAnywhereStillGivesAnImage() {
+    void noReliableImageMatchLeavesTheImageUnset() {
         CreateRecipeRequest req = new CreateRecipeRequest();
         req.setName("Zzyzx");
-        when(recipeRepository.findRandomPopularRecipes(any(), any(), any()))
-                .thenReturn(org.springframework.data.domain.Page.empty());
 
         service.finishImport(req);
 
-        assertNotNull(req.getImage());
-        assertFalse(req.getImage().isBlank());
+        assertNull(req.getImage());
+        verify(recipeRepository, never()).findRandomPopularRecipes(any(), any(), any());
+    }
+
+    @Test
+    void doesNotBorrowAnImageFromARecipeSharingOnlyOneProteinWord() {
+        Recipe fishDish = new Recipe();
+        fishDish.setName("Chicken Fish Curry");
+        fishDish.setImage("https://res.cloudinary.com/cooked/fish.jpg");
+        when(recipeRepository.findExploreRecipesByKeywords(any(), any(), any(), any(), any()))
+                .thenReturn(List.of(fishDish));
+        CreateRecipeRequest req = new CreateRecipeRequest();
+        req.setName("Chicken");
+
+        service.finishImport(req);
+
+        assertNull(req.getImage());
+        verify(recipeRepository, never()).findByCuisineWithImage(any(), any());
+        verify(recipeRepository, never()).findByCategoryWithImage(any(), any());
+        verify(recipeRepository, never()).findRandomPopularRecipes(any(), any(), any());
     }
 
     @Test

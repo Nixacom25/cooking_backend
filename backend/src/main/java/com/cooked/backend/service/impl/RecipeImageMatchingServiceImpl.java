@@ -11,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +33,6 @@ public class RecipeImageMatchingServiceImpl implements RecipeImageMatchingServic
     private final ImageCandidateProvider candidateProvider;
     private final VisionImageRankerService visionRanker;
     private final CloudinaryService cloudinaryService;
-    private final TaxonomyService taxonomyService;
 
     @Value("${image.matching.library.threshold:0.75}")
     private double libraryThreshold;
@@ -55,7 +52,7 @@ public class RecipeImageMatchingServiceImpl implements RecipeImageMatchingServic
 
             if (tryLibraryMatch(recipe, tags)) return;
             if (tryExternalMatch(recipe, tags)) return;
-            tryGenericFallback(recipe, tags);
+            recordNoMatch(recipe, tags);
         } catch (Exception e) {
             log.error("Image matching failed for recipe {}: {}", recipeId, e.getMessage(), e);
         }
@@ -160,30 +157,9 @@ public class RecipeImageMatchingServiceImpl implements RecipeImageMatchingServic
         return true;
     }
 
-    private void tryGenericFallback(Recipe recipe, RecipeTags tags) {
-        String image = null;
-
-        if (tags.getDishType() != null) {
-            image = taxonomyService.getCategoryImages().get(tags.getDishType());
-        }
-        if (image == null && tags.getCuisine() != null) {
-            image = taxonomyService.getCuisineImages().get(tags.getCuisine());
-        }
-        if (image == null && tags.getCuisine() != null) {
-            Page<Recipe> byCuisine = recipeRepository.findByCuisineWithImage(tags.getCuisine(), PageRequest.of(0, 1));
-            if (byCuisine.hasContent()) image = byCuisine.getContent().get(0).getImage();
-        }
-        if (image == null && tags.getDishType() != null) {
-            Page<Recipe> byCategory = recipeRepository.findByCategoryWithImage(tags.getDishType(), PageRequest.of(0, 1));
-            if (byCategory.hasContent()) image = byCategory.getContent().get(0).getImage();
-        }
-
-        if (image != null) {
-            recipe.setImage(image);
-            recipeRepository.save(recipe);
-        }
-        logMatch(recipe, tags, ImageMatchPath.FALLBACK, image, null);
-        log.info("Recipe '{}' fell back to generic image (found={})", recipe.getName(), image != null);
+    private void recordNoMatch(Recipe recipe, RecipeTags tags) {
+        logMatch(recipe, tags, ImageMatchPath.FALLBACK, null, null);
+        log.info("No verified image found for recipe '{}'; leaving the image unset", recipe.getName());
     }
 
     private void logMatch(Recipe recipe, RecipeTags tags, ImageMatchPath path, String chosenUrl, Double confidence) {

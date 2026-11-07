@@ -140,7 +140,7 @@ class CreatorRecipeImageServiceImplTest {
 
         when(images.findById(row.getId())).thenReturn(Optional.of(row));
         assertThat(service.photoLink(row.getId()))
-                .isEqualTo(new CreatorRecipeImageService.PhotoLink("https://images.unsplash.com/random", false));
+                .isEqualTo(new CreatorRecipeImageService.PhotoLink(PLACEHOLDER, false));
     }
 
     @Test
@@ -192,12 +192,12 @@ class CreatorRecipeImageServiceImplTest {
         when(images.findById(row.getId())).thenReturn(Optional.of(row));
 
         assertThat(service.photoLink(row.getId()))
-                .isEqualTo(new CreatorRecipeImageService.PhotoLink("https://images.example.com/old.jpg", false));
+                .isEqualTo(new CreatorRecipeImageService.PhotoLink(PLACEHOLDER, false));
         verify(generator, never()).generate(anyString());
     }
 
     @Test
-    void attachImages_keepsTheClosestPhotoWhenNoneFullyMatches() throws IOException {
+    void attachImages_doesNotShowAnyPhotoWhenVerificationRejectsAllCandidates() throws IOException {
         when(vision.rankCandidates(anyString(), anyList()))
                 .thenReturn(VisionRankResult.builder().bestIndex(0).confidence(0.3).reason("close").build())
                 .thenReturn(VisionRankResult.builder().bestIndex(-1).confidence(0.9).reason("wrong").build());
@@ -207,11 +207,33 @@ class CreatorRecipeImageServiceImplTest {
 
         service.attachImages(List.of(tacos), user(Role.CREATOR).getEmail());
 
-        assertThat(tacos.getImage()).isEqualTo("https://res.cloudinary.com/x/first.jpg");
+        assertThat(tacos.getImage()).isEqualTo(LINK + saved.get(0).getId() + ".jpg");
         RecipeGeneratedImage row = saved.get(0);
-        assertThat(row.getGenerationStatus()).isEqualTo(AiImageGenerationStatus.SUCCEEDED);
+        when(images.findById(row.getId())).thenReturn(Optional.of(row));
+        assertThat(row.getGenerationStatus()).isEqualTo(AiImageGenerationStatus.FAILED);
+        assertThat(row.getGeneratedImageUrl()).isNull();
         assertThat(row.getMatchConfidence()).isEqualTo(0.3);
-        assertThat(row.getFailureReason()).contains("closest photo");
+        assertThat(row.getFailureReason()).contains("match threshold");
+        assertThat(service.photoLink(row.getId()))
+                .isEqualTo(new CreatorRecipeImageService.PhotoLink(PLACEHOLDER, false));
+        verify(generator, times(2)).generate(anyString());
+    }
+
+    @Test
+    void attachImages_doesNotTreatVisionCheckFailureAsAValidMatch() throws IOException {
+        when(vision.rankCandidates(anyString(), anyList()))
+                .thenReturn(VisionRankResult.builder().bestIndex(0).reason("Vision call failed").build());
+        CreateRecipeRequest tacos = recipe("Chicken Tacos");
+
+        service.attachImages(List.of(tacos), user(Role.CREATOR).getEmail());
+
+        RecipeGeneratedImage row = saved.get(0);
+        when(images.findById(row.getId())).thenReturn(Optional.of(row));
+        assertThat(row.getGenerationStatus()).isEqualTo(AiImageGenerationStatus.FAILED);
+        assertThat(row.getGeneratedImageUrl()).isNull();
+        assertThat(row.getFailureReason()).contains("could not confirm");
+        assertThat(service.photoLink(row.getId()))
+                .isEqualTo(new CreatorRecipeImageService.PhotoLink(PLACEHOLDER, false));
         verify(generator, times(2)).generate(anyString());
     }
 
