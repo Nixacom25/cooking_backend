@@ -8,9 +8,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * A tagged, reusable photo. One row per distinct image (not per recipe) -
- * matching a new recipe is a tag-overlap lookup against this table before
- * ever calling an external image API.
+ * A tagged recipe photo, indexed by its source recipe and dish attributes so
+ * new client recipes can reuse only a sufficiently close database image.
  */
 @Data
 @Builder

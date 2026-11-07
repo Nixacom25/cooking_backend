@@ -45,7 +45,9 @@ public final class RecipeImagePromptBuilder {
         }
 
         p.append("The finished dish must visibly reflect the listed ingredients and cooking method. ")
-                .append("Do not show ingredients, proteins, garnishes or sides that are not listed. ")
+                .append("The named dish and its listed main protein are mandatory: never substitute chicken, fish, ")
+                .append("meat, or any other protein for the named one. Do not show ingredients, proteins, ")
+                .append("garnishes or sides that are not listed. ")
                 .append("Natural restaurant-quality plating, believable portion, realistic textures, ")
                 .append("soft natural lighting, premium editorial food photography, clean uncluttered background. ")
                 .append("Shot at a 45-degree angle, the whole dish centered and fully in frame with space around it, ")

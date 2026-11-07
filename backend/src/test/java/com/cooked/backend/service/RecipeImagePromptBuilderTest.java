@@ -28,6 +28,7 @@ class RecipeImagePromptBuilderTest {
                 .contains("Made with: fettuccine (250 g), chicken breast (2), parmesan, cherry tomatoes.")
                 .contains("Cooking method: Slice the chicken")
                 .contains("Finished dish and plating: Toss the fettuccine in the sauce and top with parsley.")
+                .contains("never substitute chicken, fish, meat, or any other protein")
                 .contains("Do not show ingredients, proteins, garnishes or sides that are not listed.")
                 .contains("No text, no people");
     }
@@ -42,5 +43,12 @@ class RecipeImagePromptBuilderTest {
         String prompt = RecipeImagePromptBuilder.build(new RecipeImageInput("Tacos", null, null, null, null));
         assertThat(prompt).startsWith("Create a highly realistic, appetizing professional food photograph of Tacos.\n")
                 .doesNotContain("Made with").doesNotContain("Cooking method");
+    }
+
+    @Test
+    void buildRequiresTheNamedDishAndProteinNotASubstitute() {
+        assertThat(RecipeImagePromptBuilder.build(PASTA))
+                .contains("The named dish and its listed main protein are mandatory")
+                .contains("never substitute chicken, fish, meat, or any other protein");
     }
 }

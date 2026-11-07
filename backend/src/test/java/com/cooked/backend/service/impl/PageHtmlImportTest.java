@@ -1,6 +1,7 @@
 package com.cooked.backend.service.impl;
 
 import com.cooked.backend.dto.request.CreateRecipeRequest;
+import com.cooked.backend.dto.request.IngredientPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -184,6 +185,55 @@ class PageHtmlImportTest {
         verify(recipeRepository, never()).findByCuisineWithImage(any(), any());
         verify(recipeRepository, never()).findByCategoryWithImage(any(), any());
         verify(recipeRepository, never()).findRandomPopularRecipes(any(), any(), any());
+    }
+
+    @Test
+    void doesNotBorrowAChickenImageFromARecipeWhoseTitleAlsoNamesFish() {
+        Recipe mixedProteinDish = new Recipe();
+        mixedProteinDish.setName("Chicken Fish Tacos");
+        mixedProteinDish.setImage("https://res.cloudinary.com/cooked/mixed-protein.jpg");
+        when(recipeRepository.findExploreRecipesByKeywords(any(), any(), any(), any(), any()))
+                .thenReturn(List.of(mixedProteinDish));
+        CreateRecipeRequest req = new CreateRecipeRequest();
+        req.setName("Chicken Tacos");
+        IngredientPayload chicken = new IngredientPayload();
+        chicken.setName("chicken");
+        req.setIngredients(List.of(chicken));
+
+        service.finishImport(req);
+
+        assertNull(req.getImage());
+    }
+
+    @Test
+    void generatedRecipesDoNotKeepAnImageOutsideTheRecipeDatabase() {
+        CreateRecipeRequest req = new CreateRecipeRequest();
+        req.setName("Chicken stew");
+        req.setImage("https://external.example.com/possibly-wrong.jpg");
+        when(recipeRepository.findExploreRecipesByKeywords(any(), any(), any(), any(), any()))
+                .thenReturn(List.of());
+
+        ReflectionTestUtils.invokeMethod(service, "finishRecipes", List.of(req));
+
+        assertNull(req.getImage());
+    }
+
+    @Test
+    void generatedRecipesDoNotReuseOneDatabasePhotoForTwoRecipes() {
+        Recipe databaseImage = new Recipe();
+        databaseImage.setName("Chicken Tacos");
+        databaseImage.setImage("https://res.cloudinary.com/cooked/chicken-tacos.jpg");
+        when(recipeRepository.findExploreRecipesByKeywords(any(), any(), any(), any(), any()))
+                .thenReturn(List.of(databaseImage));
+        CreateRecipeRequest first = new CreateRecipeRequest();
+        first.setName("Chicken Tacos");
+        CreateRecipeRequest second = new CreateRecipeRequest();
+        second.setName("Chicken Tacos");
+
+        ReflectionTestUtils.invokeMethod(service, "finishRecipes", List.of(first, second));
+
+        assertEquals("https://res.cloudinary.com/cooked/chicken-tacos.jpg", first.getImage());
+        assertNull(second.getImage());
     }
 
     @Test

@@ -47,6 +47,10 @@ public class MarkhorAiServiceImpl implements AiService {
         "recipe", "recette", "style", "dish", "plat", "sauce", "easy", "quick",
         "facile", "rapide", "healthy", "sain"
     ));
+    private static final Set<String> PROTEIN_WORDS = Set.of(
+            "chicken", "beef", "pork", "turkey", "lamb", "salmon", "tuna",
+            "shrimp", "fish", "tofu", "egg", "eggs", "bacon", "sausage",
+            "beans", "lentil", "lentils", "chickpea", "chickpeas");
 
     /** Shared pool for the parallel web-search engines (daemon threads). */
     private static final java.util.concurrent.ExecutorService SEARCH_POOL =
@@ -1232,12 +1236,9 @@ public class MarkhorAiServiceImpl implements AiService {
         return "HomeCook"; // Fallback
     }
 
-    private static final String GENERIC_FOOD_IMAGE =
-            "https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=800&q=80";
-
     /** Enrich generated recipes before they reach the user. */
     private void finishRecipes(List<CreateRecipeRequest> recipes) {
-        assignBestMatchingImages(recipes);
+        assignBestMatchingImages(recipes, true);
         nutritionService.fillMissingKcal(recipes);
     }
 
@@ -1254,7 +1255,7 @@ public class MarkhorAiServiceImpl implements AiService {
         if (isMissingImage(request.getImage())) {
             request.setImage(null);
             try {
-                assignBestMatchingImages(List.of(request));
+                assignBestMatchingImages(List.of(request), false);
             } catch (Exception e) {
                 log.warn("Closest-image lookup failed for '{}': {}", request.getName(), e.getMessage());
             }
@@ -1333,12 +1334,16 @@ public class MarkhorAiServiceImpl implements AiService {
         return v > 0 && v < 10000 ? (int) v : null;
     }
 
-    private void assignBestMatchingImages(List<CreateRecipeRequest> recipes) {
+    private void assignBestMatchingImages(List<CreateRecipeRequest> recipes, boolean databaseOnly) {
         if (recipes == null) return;
 
+        Set<String> assignedImageUrls = new HashSet<>();
         for (CreateRecipeRequest request : recipes) {
-            if (request.getImage() != null && !request.getImage().isEmpty()
+            if (databaseOnly) {
+                request.setImage(null);
+            } else if (request.getImage() != null && !request.getImage().isEmpty()
                     && !request.getImage().contains("unsplash") && !request.getImage().contains("splash")) {
+                assignedImageUrls.add(request.getImage());
                 continue;
             }
 
@@ -1355,9 +1360,7 @@ public class MarkhorAiServiceImpl implements AiService {
             }
             keywords.sort((a, b) -> Integer.compare(b.length(), a.length()));
 
-            if (keywords.isEmpty()) {
-                // Without useful title terms, no existing photo is safe to reuse.
-            } else {
+            if (!keywords.isEmpty()) {
                 // --- Phase 1: multi-keyword scoring (one DB round-trip) ---
                 // Pad to exactly 5 slots (query requires 5 named params)
                 List<String> kws = new ArrayList<>(keywords.subList(0, Math.min(keywords.size(), 5)));
@@ -1374,8 +1377,17 @@ public class MarkhorAiServiceImpl implements AiService {
 
                 for (com.cooked.backend.entity.Recipe candidate : candidates) {
                     if (candidate.getImage() == null || candidate.getImage().isEmpty()) continue;
+                    if (assignedImageUrls.contains(candidate.getImage())) continue;
                     String candidateName = candidate.getName().toLowerCase(Locale.ROOT);
                     Set<String> candidateWords = new HashSet<>(Arrays.asList(candidateName.split("\\W+")));
+                    Set<String> targetProteins = recipeProteins(request.getName(), request.getIngredients());
+                    Set<String> candidateProteins = candidateWords.stream()
+                            .filter(PROTEIN_WORDS::contains)
+                            .collect(java.util.stream.Collectors.toSet());
+                    if (!targetProteins.isEmpty() && !candidateProteins.isEmpty()
+                            && !targetProteins.containsAll(candidateProteins)) {
+                        continue;
+                    }
                     double score = 0;
                     int matchedWords = 0;
                     for (String kw : keywords) {
@@ -1398,6 +1410,7 @@ public class MarkhorAiServiceImpl implements AiService {
 
                 if (keywords.size() > 1 && bestMatch != null && bestMatchedWords == keywords.size()) {
                     request.setImage(bestMatch.getImage());
+                    assignedImageUrls.add(bestMatch.getImage());
                     log.info("Assigned image for '{}' via multi-keyword match (score={}, matched='{}')",
                             name, bestScore, bestMatch.getName());
                     continue; // Move to the next recipe
@@ -1405,6 +1418,25 @@ public class MarkhorAiServiceImpl implements AiService {
             }
             log.info("No sufficiently close title image found for '{}'; leaving the image unset", name);
         }
+    }
+
+    private Set<String> recipeProteins(
+            String title, List<com.cooked.backend.dto.request.IngredientPayload> ingredients) {
+        Set<String> proteins = new HashSet<>();
+        if (title != null) {
+            Arrays.stream(title.toLowerCase(Locale.ROOT).split("\\W+"))
+                    .filter(PROTEIN_WORDS::contains)
+                    .forEach(proteins::add);
+        }
+        if (ingredients != null) {
+            for (com.cooked.backend.dto.request.IngredientPayload ingredient : ingredients) {
+                if (ingredient == null || ingredient.getName() == null) continue;
+                Arrays.stream(ingredient.getName().toLowerCase(Locale.ROOT).split("\\W+"))
+                        .filter(PROTEIN_WORDS::contains)
+                        .forEach(proteins::add);
+            }
+        }
+        return proteins;
     }
 
 

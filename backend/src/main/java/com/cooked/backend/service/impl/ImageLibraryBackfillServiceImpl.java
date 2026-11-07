@@ -37,12 +37,22 @@ public class ImageLibraryBackfillServiceImpl implements ImageLibraryBackfillServ
             String imageUrl = recipe.getImage();
             if (imageUrl == null || imageUrl.isBlank()) continue;
             if (!seen.add(imageUrl)) continue; // already tagged this run
-            if (imageLibraryRepository.existsByImageUrl(imageUrl)) continue; // already tagged in a previous run
+            if (imageLibraryRepository.existsByImageUrl(imageUrl)) {
+                imageLibraryRepository.findByImageUrlIn(java.util.List.of(imageUrl)).stream()
+                        .filter(entry -> entry.getRecipeTitle() == null || entry.getRecipeTitle().isBlank())
+                        .findFirst()
+                        .ifPresent(entry -> {
+                            entry.setRecipeTitle(recipe.getName());
+                            imageLibraryRepository.save(entry);
+                        });
+                continue;
+            }
 
             try {
                 RecipeTags tags = visionRanker.tagImage(imageUrl, recipe.getName());
                 imageLibraryRepository.save(ImageLibrary.builder()
                         .imageUrl(imageUrl)
+                        .recipeTitle(recipe.getName())
                         .cuisine(tags.getCuisine())
                         .protein(tags.getProtein())
                         .dishType(tags.getDishType())
