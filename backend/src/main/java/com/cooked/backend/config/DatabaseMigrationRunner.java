@@ -39,6 +39,25 @@ public class DatabaseMigrationRunner {
         syncEnumCheck("cost_entries", "category", com.cooked.backend.entity.CostCategory.class);
         syncEnumCheck("image_library", "source", com.cooked.backend.entity.ImageSource.class);
         markReceiptReplayPayments();
+        publishApprovedRecipes();
+    }
+
+    /**
+     * Recipes approved before validation also set status = true were public but hidden from the app
+     * (Explore filters on status = true). Makes every validated/completed, non-deleted recipe public and
+     * active. Idempotent: only rows still missing a flag are touched.
+     */
+    public int publishApprovedRecipes() {
+        try {
+            int n = jdbc.update("UPDATE recipes SET status = TRUE, is_public = TRUE "
+                    + "WHERE is_deleted = FALSE AND (status = FALSE OR status IS NULL OR is_public = FALSE) "
+                    + "AND id IN (SELECT recipe_id FROM recipe_assignments WHERE status IN ('VALIDATED', 'COMPLETED'))");
+            if (n > 0) log.info("[Migration] {} approved recipes published to the app", n);
+            return n;
+        } catch (Exception e) {
+            log.warn("[Migration] Could not publish approved recipes: {}", e.getMessage());
+            return 0;
+        }
     }
 
     /**

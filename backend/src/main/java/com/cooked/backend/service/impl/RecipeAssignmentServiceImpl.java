@@ -321,6 +321,7 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
         if (status == AssignmentStatus.COMPLETED || status == AssignmentStatus.VALIDATED) {
             assignment.setCompletedDate(LocalDateTime.now());
             if (assignment.getValidatedDate() == null) assignment.setValidatedDate(LocalDateTime.now());
+            publishForMobile(assignment.getRecipe());
         }
 
         RecipeAssignment saved = assignmentRepository.save(assignment);
@@ -365,6 +366,17 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
         return resp;
     }
 
+    /**
+     * An approved recipe goes live in the app: public and active (status = true), the two flags every
+     * Explore / home query of the mobile app filters on.
+     */
+    private void publishForMobile(Recipe recipe) {
+        if (recipe == null || recipe.isDeleted()) return;
+        recipe.setPublic(true);
+        recipe.setStatus(true);
+        recipeRepository.save(recipe);
+    }
+
     @Override
     @Transactional
     public RecipeAssignmentResponse validateAssignment(UUID assignmentId, String adminEmail) {
@@ -380,12 +392,7 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
         assignment.setErrorCategories(new ArrayList<>());
         assignment.setFeedbackComment(null);
 
-        // Automatically activate & publish the recipe so it appears active in client mobile app
-        Recipe recipe = assignment.getRecipe();
-        if (recipe != null) {
-            recipe.setPublic(true);
-            recipeRepository.save(recipe);
-        }
+        publishForMobile(assignment.getRecipe());
 
         RecipeAssignment saved = assignmentRepository.save(assignment);
         recordHistory(saved, admin, "VALIDATED", prevStatus, AssignmentStatus.VALIDATED, null, "Recette validée par l'administrateur");

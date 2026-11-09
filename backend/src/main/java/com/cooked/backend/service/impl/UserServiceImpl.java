@@ -215,8 +215,21 @@ public class UserServiceImpl implements UserService {
         
         try {
             Role newRole = Role.valueOf(role.toUpperCase());
+            Role previous = user.getRole();
             user.setRole(newRole);
-            
+
+            // A former creator loses the free lifetime access that came with the role (paid plans are kept).
+            if (previous == Role.CREATOR && newRole != Role.CREATOR && user.getSubscriptionStatus() == SubscriptionStatus.INFINITE) {
+                user.setSubscriptionStatus(SubscriptionStatus.FREE);
+                userSubscriptionRepository.findByUserId(user.getId()).ifPresent(s -> {
+                    if (s.getStatus() == SubscriptionStatus.INFINITE) {
+                        s.setStatus(SubscriptionStatus.FREE);
+                        s.setEndDate(LocalDateTime.now());
+                        userSubscriptionRepository.save(s);
+                    }
+                });
+            }
+
             // If role is CREATOR, set subscription to INFINITE and update UserSubscription
             if (newRole == Role.CREATOR) {
                 user.setSubscriptionStatus(SubscriptionStatus.INFINITE);

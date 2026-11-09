@@ -31,6 +31,26 @@ public class AdminRecipeController {
     private final RecipeService recipeService;
     private final com.cooked.backend.service.RecipeModerationService moderation;
     private final com.cooked.backend.service.RecipeNutritionService nutrition;
+    private final com.cooked.backend.service.ApprovedRecipeImagesService approvedImages;
+
+    @Operation(summary = "Number of recipes approved after an intern's edits that have a photo")
+    @GetMapping("/approved-images/count")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<java.util.Map<String, Integer>> approvedImagesCount() {
+        return ResponseEntity.ok(java.util.Map.of("count", approvedImages.countApprovedWithImage()));
+    }
+
+    @Operation(summary = "Download the photos of every approved recipe as a .zip (with manifest.csv)")
+    @GetMapping("/approved-images")
+    @PreAuthorize("hasRole('ADMIN')")
+    public void approvedImagesZip(jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
+        String file = "cooked-approved-recipe-images-" + java.time.LocalDate.now() + ".zip";
+        response.setContentType("application/zip");
+        response.setHeader(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file + "\"");
+        response.setHeader(org.springframework.http.HttpHeaders.CACHE_CONTROL, "no-store");
+        approvedImages.writeZip(response.getOutputStream());
+        response.flushBuffer();
+    }
 
     @Operation(summary = "Get all recipes for admin")
     @GetMapping

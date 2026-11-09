@@ -25,6 +25,19 @@ public interface RecipeAssignmentRepository extends JpaRepository<RecipeAssignme
         Long getTotal();
     }
 
+    /** One approved (validated or completed) recipe with an image: id, name, image URL. */
+    interface ApprovedRecipeImage {
+        UUID getId();
+        String getName();
+        String getImage();
+    }
+
+    /** Recipes approved by an admin after an intern's edits that have an image. */
+    @Query("select distinct r.id as id, r.name as name, r.image as image from RecipeAssignment a join a.recipe r "
+            + "where a.status in (com.cooked.backend.entity.AssignmentStatus.VALIDATED, com.cooked.backend.entity.AssignmentStatus.COMPLETED) "
+            + "and r.isDeleted = false and r.image is not null and r.image <> ''")
+    List<ApprovedRecipeImage> findApprovedRecipeImages();
+
     /** Assignments per intern and status, in one query (leaderboard). */
     @Query("select a.assignedToUser.id as userId, a.status as status, count(a) as total from RecipeAssignment a "
             + "where a.assignedToUser is not null group by a.assignedToUser.id, a.status")
