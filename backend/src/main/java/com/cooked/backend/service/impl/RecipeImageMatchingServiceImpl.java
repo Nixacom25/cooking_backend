@@ -26,6 +26,7 @@ public class RecipeImageMatchingServiceImpl implements RecipeImageMatchingServic
     private final ImageLibraryRepository imageLibraryRepository;
     private final RecipeImageMatchRepository recipeImageMatchRepository;
     private final RecipeTagExtractor tagExtractor;
+    private final CreatorRecipeImageService aiPhotos;
 
     @Value("${image.matching.library.threshold:0.75}")
     private double libraryThreshold;
@@ -46,6 +47,11 @@ public class RecipeImageMatchingServiceImpl implements RecipeImageMatchingServic
 
             if (tryLibraryMatch(recipe, tags)) return;
             recordNoMatch(recipe, tags);
+            // No verified library photo: an AI photo of this exact dish, as creators get.
+            if (recipe.getImage() == null || recipe.getImage().isBlank()) {
+                aiPhotos.fillMissingImage(recipe.getId(), recipe.getUser() == null ? null : recipe.getUser().getId(),
+                        com.cooked.backend.service.dto.RecipeImageInput.from(recipe));
+            }
         } catch (Exception e) {
             log.error("Image matching failed for recipe {}: {}", recipeId, e.getMessage(), e);
         }
@@ -176,7 +182,7 @@ public class RecipeImageMatchingServiceImpl implements RecipeImageMatchingServic
 
     private void recordNoMatch(Recipe recipe, RecipeTags tags) {
         logMatch(recipe, tags, ImageMatchPath.FALLBACK, null, null);
-        log.info("No verified image found for recipe '{}'; leaving the image unset", recipe.getName());
+        log.info("No verified image found in the library for recipe '{}'", recipe.getName());
     }
 
     private void logMatch(Recipe recipe, RecipeTags tags, ImageMatchPath path, String chosenUrl, Double confidence) {

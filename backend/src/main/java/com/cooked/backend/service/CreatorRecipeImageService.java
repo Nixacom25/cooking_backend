@@ -36,6 +36,14 @@ public interface CreatorRecipeImageService {
     record PhotoLink(String url, boolean done) {
     }
 
+    /**
+     * A saved recipe got no verified photo from the image library (any user, not only creators):
+     * generates an AI photo of that exact recipe in the background and sets it on the recipe if it
+     * still has no image. The row goes to the admin review page like creator photos. Does nothing
+     * when the feature or creator.ai-images.fill-missing is off.
+     */
+    void fillMissingImage(UUID recipeId, UUID userId, com.cooked.backend.service.dto.RecipeImageInput input);
+
     /** A recipe was saved with [imageUrl]: links the AI photo to it, if it is one. */
     void linkSavedRecipe(UUID recipeId, String imageUrl);
 

@@ -30,6 +30,22 @@ public record RecipeImageInput(String title, String cuisine, List<String> dishTy
                 recipe.getSteps() == null ? List.of() : List.copyOf(recipe.getSteps()));
     }
 
+    /** Same input from a saved recipe (read inside a transaction: ingredients and categories are lazy). */
+    public static RecipeImageInput from(com.cooked.backend.entity.Recipe recipe) {
+        var ingredients = recipe.getRecipeIngredients() == null ? java.util.Set.<com.cooked.backend.entity.RecipeIngredient>of() : recipe.getRecipeIngredients();
+        var categories = recipe.getCategories() == null ? java.util.Set.<com.cooked.backend.entity.RecipeCategory>of() : recipe.getCategories();
+        return new RecipeImageInput(
+                recipe.getName(),
+                recipe.getCuisine() == null ? null : recipe.getCuisine().getName(),
+                categories.stream().map(com.cooked.backend.entity.RecipeCategory::getName).filter(Objects::nonNull).sorted().toList(),
+                ingredients.stream()
+                        .filter(i -> i.getIngredient() != null && i.getIngredient().getName() != null && !i.getIngredient().getName().isBlank())
+                        .map(i -> new Ingredient(i.getIngredient().getName().trim(), i.getQuantity()))
+                        .sorted(java.util.Comparator.comparing(Ingredient::name))
+                        .toList(),
+                recipe.getSteps() == null ? List.of() : List.copyOf(recipe.getSteps()));
+    }
+
     public List<String> ingredientNames() {
         return ingredients == null ? List.of() : ingredients.stream().map(Ingredient::name).toList();
     }

@@ -57,6 +57,7 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
     private final VisionImageRankerService vision;
     private final ObjectMapper objectMapper;
     private final boolean enabled;
+    private final boolean fillMissing;
     private final long waitMs;
     private final long linkWaitMs;
     private final double minMatchConfidence;
@@ -74,6 +75,7 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
                                          VisionImageRankerService vision,
                                          ObjectMapper objectMapper,
                                          @Value("${creator.ai-images.enabled:true}") boolean enabled,
+                                         @Value("${creator.ai-images.fill-missing:true}") boolean fillMissing,
                                          @Value("${creator.ai-images.wait-seconds:5}") long waitSeconds,
                                          @Value("${creator.ai-images.link-wait-seconds:85}") long linkWaitSeconds,
                                          @Value("${creator.ai-images.min-match-confidence:0.5}") double minMatchConfidence,
@@ -87,6 +89,7 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
         this.vision = vision;
         this.objectMapper = objectMapper;
         this.enabled = enabled;
+        this.fillMissing = fillMissing;
         this.waitMs = TimeUnit.SECONDS.toMillis(waitSeconds);
         this.linkWaitMs = TimeUnit.SECONDS.toMillis(linkWaitSeconds);
         this.minMatchConfidence = minMatchConfidence;
@@ -215,6 +218,30 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
             row.setRecipeId(recipe.getId());
             regenerate(row);
             log.info("Recipe '{}' showed the placeholder: making a new AI photo", recipe.getName());
+        }
+    }
+
+    @Override
+    public void fillMissingImage(UUID recipeId, UUID userId, RecipeImageInput input) {
+        if (!enabled || !fillMissing || recipeId == null || input == null
+                || input.title() == null || input.title().isBlank()) return;
+        try {
+            RecipeGeneratedImage row = newRow(input, userId, null, null);
+            row.setRecipeId(recipeId);
+            RecipeGeneratedImage saved = images.save(row);
+            start(saved).thenAccept(url -> {
+                if (url == null || url.equals(placeholderUrl)) return;
+                recipeRepository.findById(recipeId).ifPresent(recipe -> {
+                    // Never replace an image set in the meantime (library match, edit).
+                    if (recipe.getImage() == null || recipe.getImage().isBlank()) {
+                        recipe.setImage(url);
+                        recipeRepository.save(recipe);
+                        log.info("Recipe '{}' had no library photo: AI photo set", recipe.getName());
+                    }
+                });
+            });
+        } catch (Exception e) {
+            log.warn("Could not start the AI photo for recipe {}: {}", recipeId, e.getMessage());
         }
     }
 

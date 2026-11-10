@@ -34,6 +34,8 @@ class RecipeImageMatchingServiceImplTest {
     private RecipeImageMatchRepository recipeImageMatchRepository;
     @Mock
     private RecipeTagExtractor tagExtractor;
+    @Mock
+    private com.cooked.backend.service.CreatorRecipeImageService aiPhotos;
 
     @InjectMocks
     private RecipeImageMatchingServiceImpl service;
@@ -120,7 +122,7 @@ class RecipeImageMatchingServiceImplTest {
     }
 
     @Test
-    void leavesImageUnsetWhenNoDishSpecificDatabaseMatchExists() {
+    void asksForAnAiPhotoWhenNoDishSpecificDatabaseMatchExists() {
         UUID id = UUID.randomUUID();
         Recipe recipe = new Recipe();
         recipe.setId(id);
@@ -144,6 +146,7 @@ class RecipeImageMatchingServiceImplTest {
         verify(recipeRepository, never()).save(any(Recipe.class));
         verify(recipeImageMatchRepository).save(argThat(match ->
                 match.getPath() == ImageMatchPath.FALLBACK && match.getChosenImageUrl() == null));
+        verify(aiPhotos).fillMissingImage(eq(id), isNull(), argThat(input -> "Chicken stew".equals(input.title())));
     }
 
     private static ImageLibrary libraryImage(

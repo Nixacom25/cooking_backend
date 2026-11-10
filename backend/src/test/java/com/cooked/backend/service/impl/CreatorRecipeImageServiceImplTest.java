@@ -60,7 +60,7 @@ class CreatorRecipeImageServiceImplTest {
         when(vision.rankCandidates(anyString(), anyList()))
                 .thenReturn(VisionRankResult.builder().bestIndex(0).confidence(0.9).reason("ok").build());
         service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, cloudinary, vision,
-                new ObjectMapper(), true, 30, 5, 0.5, 4, "https://link.cookedapp.com");
+                new ObjectMapper(), true, true, 30, 5, 0.5, 4, "https://link.cookedapp.com");
     }
 
     @AfterEach
@@ -99,6 +99,43 @@ class CreatorRecipeImageServiceImplTest {
         verify(generator, never()).generate(anyString());
         verifyNoInteractions(cloudinary);
         assertThat(saved).isEmpty();
+    }
+
+    @Test
+    void fillMissingImage_givesAClientRecipeWithoutLibraryPhotoItsOwnAiPhoto() {
+        UUID recipeId = UUID.randomUUID();
+        UUID clientId = UUID.randomUUID();
+        com.cooked.backend.entity.Recipe stew = new com.cooked.backend.entity.Recipe();
+        stew.setId(recipeId);
+        stew.setName("Chicken Stew");
+        com.cooked.backend.entity.Recipe edited = new com.cooked.backend.entity.Recipe();
+        edited.setImage("https://images.test/kept.jpg");
+        UUID editedId = UUID.randomUUID();
+        when(recipes.findById(recipeId)).thenReturn(Optional.of(stew));
+        when(recipes.findById(editedId)).thenReturn(Optional.of(edited));
+        var input = new com.cooked.backend.service.dto.RecipeImageInput("Chicken Stew", null, List.of(),
+                List.of(new com.cooked.backend.service.dto.RecipeImageInput.Ingredient("chicken", "2")), List.of("Simmer."));
+
+        service.fillMissingImage(recipeId, clientId, input);
+        service.fillMissingImage(editedId, clientId, input);
+
+        verify(recipes, timeout(5000)).save(stew);
+        assertThat(stew.getImage()).isEqualTo("https://res.cloudinary.com/x/ai.jpg");
+        assertThat(edited.getImage()).isEqualTo("https://images.test/kept.jpg");
+        verify(recipes, never()).save(edited);
+        assertThat(saved).hasSize(2).allSatisfy(row -> assertThat(row.getCreatorUserId()).isEqualTo(clientId));
+        assertThat(saved.get(0).getRecipeId()).isEqualTo(recipeId);
+    }
+
+    @Test
+    void fillMissingImage_doesNothingWhenTurnedOff() throws IOException {
+        service.shutdown();
+        service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, cloudinary, vision,
+                new ObjectMapper(), true, false, 30, 5, 0.5, 4, "https://link.cookedapp.com");
+        service.fillMissingImage(UUID.randomUUID(), null,
+                new com.cooked.backend.service.dto.RecipeImageInput("Chicken Stew", null, List.of(), List.of(), List.of()));
+        assertThat(saved).isEmpty();
+        verify(generator, never()).generate(anyString());
     }
 
     @Test
@@ -152,7 +189,7 @@ class CreatorRecipeImageServiceImplTest {
         });
         service.shutdown();
         service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, cloudinary, vision,
-                new ObjectMapper(), true, 0, 5, 0.5, 4, "https://link.cookedapp.com");
+                new ObjectMapper(), true, true, 0, 5, 0.5, 4, "https://link.cookedapp.com");
         CreateRecipeRequest tacos = recipe("Chicken Tacos");
 
         service.attachImages(List.of(tacos), user(Role.CREATOR).getEmail());
@@ -285,7 +322,7 @@ class CreatorRecipeImageServiceImplTest {
     void attachImages_isOffWhenTheFeatureIsDisabled() {
         service.shutdown();
         service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, cloudinary, vision,
-                new ObjectMapper(), false, 30, 5, 0.5, 4, "https://link.cookedapp.com");
+                new ObjectMapper(), false, true, 30, 5, 0.5, 4, "https://link.cookedapp.com");
         CreateRecipeRequest tacos = recipe("Chicken Tacos");
 
         service.attachImages(List.of(tacos), user(Role.CREATOR).getEmail());
