@@ -1090,7 +1090,7 @@ public class RecipeServiceImpl implements RecipeService {
             recipe.setStatus(!Boolean.TRUE.equals(recipe.getStatus()));
         }
         
-        recipe.setLastModifiedBy(user.getFirstname() + " " + user.getLastname());
+        // Turning a recipe on/off is not an edit: it must stay in the pool of recipes to rework.
         Recipe saved = recipeRepository.save(recipe);
         return mapToResponse(saved, null);
     }
@@ -1104,8 +1104,7 @@ public class RecipeServiceImpl implements RecipeService {
         
         List<Recipe> recipes = recipeRepository.findAllById(ids);
         for (Recipe recipe : recipes) {
-            recipe.setStatus(status);
-            recipe.setLastModifiedBy(user.getFirstname() + " " + user.getLastname());
+            recipe.setStatus(status); // not an edit: lastModifiedBy is left as is
         }
         recipeRepository.saveAll(recipes);
     }

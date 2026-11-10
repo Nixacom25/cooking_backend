@@ -194,7 +194,10 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID>, org.sprin
     // It is free for batch assignment unless an intern currently holds it; old
     // finished/removed assignments no longer block it.
     String LIVE = "(r.isDeleted IS NULL OR r.isDeleted = false)";
-    String UNMODIFIED = LIVE + " AND (r.lastModifiedBy IS NULL OR TRIM(r.lastModifiedBy) = '')";
+    // A client's or creator's own recipe is never handed to interns: only its owner may touch it.
+    String NOT_CLIENT_OWNED = "NOT EXISTS (SELECT 1 FROM User owner WHERE owner = r.user"
+            + " AND owner.role NOT IN (com.cooked.backend.entity.Role.ADMIN, com.cooked.backend.entity.Role.EDITOR))";
+    String UNMODIFIED = LIVE + " AND (r.lastModifiedBy IS NULL OR TRIM(r.lastModifiedBy) = '') AND " + NOT_CLIENT_OWNED;
     String HELD = "EXISTS (SELECT 1 FROM RecipeAssignment h WHERE h.recipe = r AND h.status IN ('ASSIGNED', 'NOT_STARTED', 'IN_PROGRESS', 'SUBMITTED_FOR_VALIDATION', 'NEEDS_CORRECTION'))";
     String IN_REVIEW = "EXISTS (SELECT 1 FROM RecipeAssignment rv WHERE rv.recipe = r AND rv.status IN ('SUBMITTED_FOR_VALIDATION', 'NEEDS_CORRECTION'))";
 
