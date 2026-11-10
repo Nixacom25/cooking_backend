@@ -35,6 +35,7 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final com.cooked.backend.service.RecipeReviewService recipeReview;
 
     @Override
     public RecipeStatsResponse getRecipeStats() {
@@ -120,6 +121,7 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
                         .status(AssignmentStatus.ASSIGNED)
                         .revisionCount(0)
                         .build();
+                recipeReview.captureBaseline(assignment);
 
                 RecipeAssignment saved = assignmentRepository.save(assignment);
 
@@ -217,6 +219,7 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
             a.setStatus(AssignmentStatus.ASSIGNED);
             if (batchLabel != null) a.setBatchLabel(batchLabel);
             if (request.getPriority() != null) a.setPriority(request.getPriority());
+            recipeReview.captureBaseline(a);
             RecipeAssignment saved = assignmentRepository.save(a);
             recordHistory(saved, admin, "REASSIGNED", previous, AssignmentStatus.ASSIGNED, null,
                     "Ré-assignée par lot de " + previousEditor + " à " + displayName(editor) + " (recette non modifiée)");
@@ -236,6 +239,7 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
                     .batchLabel(batchLabel)
                     .priority(request.getPriority())
                     .build();
+            recipeReview.captureBaseline(assignment);
 
             RecipeAssignment saved = assignmentRepository.save(assignment);
             recordHistory(saved, admin, "BATCH_ASSIGNED", null, AssignmentStatus.ASSIGNED, null, "Attribution automatique par lot (" + requestedCount + " recettes)");
@@ -374,6 +378,8 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
         if (recipe == null || recipe.isDeleted()) return;
         recipe.setPublic(true);
         recipe.setStatus(true);
+        // A recipe its owner deleted is reworked: once validated it leaves the archive.
+        recipe.setOwnerDeletedAt(null);
         recipeRepository.save(recipe);
     }
 
@@ -427,6 +433,7 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
         assignment.setErrorCategories(request.getErrorCategories() != null ? request.getErrorCategories() : new ArrayList<>());
         assignment.setFeedbackComment(request.getFeedbackComment());
         assignment.setRevisionCount((assignment.getRevisionCount() == null ? 0 : assignment.getRevisionCount()) + 1);
+        recipeReview.recordSendBack(assignment, request.getFieldsToFix(), request.getFieldsApproved());
 
         RecipeAssignment saved = assignmentRepository.save(assignment);
         recordHistory(saved, admin, "REJECTED_FOR_CORRECTION", prevStatus, AssignmentStatus.NEEDS_CORRECTION, request.getErrorCategories(), request.getFeedbackComment());
@@ -689,6 +696,7 @@ public class RecipeAssignmentServiceImpl implements RecipeAssignmentService {
                 .revisionCount(a.getRevisionCount())
                 .batchLabel(a.getBatchLabel())
                 .priority(a.getPriority())
+                .fieldsToFix(recipeReview.fieldsToFix(a))
                 .build();
     }
 

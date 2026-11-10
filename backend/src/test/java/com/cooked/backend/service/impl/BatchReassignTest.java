@@ -29,6 +29,7 @@ class BatchReassignTest {
     @Mock private UserRepository users;
     @Mock private NotificationService notifications;
     @Mock private SimpMessagingTemplate messaging;
+    @Mock private com.cooked.backend.service.RecipeReviewService review;
     @InjectMocks private RecipeAssignmentServiceImpl service;
 
     private final UUID fromId = UUID.randomUUID(), toId = UUID.randomUUID();

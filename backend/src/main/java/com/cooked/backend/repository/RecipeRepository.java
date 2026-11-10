@@ -201,6 +201,13 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID>, org.sprin
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(r) FROM Recipe r WHERE " + LIVE)
     long countLiveRecipes();
 
+    /** Archive: recipes moved to the trash from the backoffice, or deleted by their owner and awaiting rework. */
+    // A client's own deleted copy stays theirs (user still set): only owner-less recipes are listed.
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM Recipe r LEFT JOIN FETCH r.cuisine WHERE r.user IS NULL "
+            + "AND (r.isDeleted = true OR r.ownerDeletedAt IS NOT NULL OR r.orphanedAt IS NOT NULL) "
+            + "ORDER BY COALESCE(r.orphanedAt, r.ownerDeletedAt, r.deletedAt, r.updatedAt) DESC")
+    List<Recipe> findArchived();
+
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(r) FROM Recipe r WHERE " + UNMODIFIED)
     long countUnmodifiedRecipes();
 

@@ -40,6 +40,8 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    private final com.cooked.backend.service.ArchiveService archiveService;
+    private final com.cooked.backend.service.FormerAccountService formerAccountService;
     private final UserRepository userRepository;
 
     private final com.cooked.backend.repository.AdminInsightsRepository insightsRepository;
@@ -197,8 +199,41 @@ public class UserServiceImpl implements UserService {
     public MessageResponse deleteClient(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        cleanupAndExecuteDelete(user);
-        return new MessageResponse("Client deleted successfully");
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.EDITOR) {
+            archiveService.recordAccountDeletion(user);
+            cleanupAndExecuteDelete(user, false);
+            return new MessageResponse("Account deleted successfully");
+        }
+        scheduleDeletion(user, currentActor());
+        return new MessageResponse("Client will be deleted for good in " + DELETION_GRACE_DAYS + " days unless they log in again.");
+    }
+
+    /** Days between a deletion request and the account being deleted for good. */
+    static final int DELETION_GRACE_DAYS = 30;
+
+    private void scheduleDeletion(User user, String by) {
+        if (user.isPendingDeletion()) return;
+        user.setDeletionRequestedAt(java.time.LocalDateTime.now());
+        user.setDeletionRequestedBy(by);
+        userRepository.save(user);
+    }
+
+    private static String currentActor() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        return auth == null ? null : auth.getName();
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public int purgeAccountsPastGracePeriod() {
+        java.util.List<User> due = userRepository.findAllByDeletionRequestedAtBefore(
+                java.time.LocalDateTime.now().minusDays(DELETION_GRACE_DAYS));
+        for (User user : due) {
+            archiveService.recordAccountDeletion(user);
+            formerAccountService.remember(user.getEmail());
+            cleanupAndExecuteDelete(user, true);
+        }
+        return due.size();
     }
 
     @Override
@@ -330,7 +365,8 @@ public class UserServiceImpl implements UserService {
     public MessageResponse deleteAdmin(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        cleanupAndExecuteDelete(user);
+        archiveService.recordAccountDeletion(user);
+        cleanupAndExecuteDelete(user, false);
         return new MessageResponse("Admin deleted successfully");
     }
 
@@ -410,10 +446,10 @@ public class UserServiceImpl implements UserService {
     public MessageResponse deleteCurrentUser(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        String firstname = user.getFirstname();
-        cleanupAndExecuteDelete(user);
-        emailService.sendAccountDeletedEmail(email, firstname);
-        return new MessageResponse("Your account and all associated data have been permanently deleted.");
+        scheduleDeletion(user, "self");
+        emailService.sendAccountDeletedEmail(email, user.getFirstname());
+        return new MessageResponse("Your account will be permanently deleted in " + DELETION_GRACE_DAYS
+                + " days. Log in again before then if you change your mind.");
     }
 
     @Override
@@ -555,7 +591,11 @@ public class UserServiceImpl implements UserService {
         return new MessageResponse("Welcome email sent successfully");
     }
 
-    private void cleanupAndExecuteDelete(User user) {
+    /**
+     * @param orphanRecipes true for a client / creator account: recipes with no twin wait in the admin archive
+     *                      (keep for rework or delete for good) instead of staying in the database as they were.
+     */
+    private void cleanupAndExecuteDelete(User user, boolean orphanRecipes) {
         // Delete any recipe assignments where this user is assignedToUser or assignedByUser
         recipeAssignmentRepository.deleteByUserId(user.getId());
 
@@ -644,7 +684,17 @@ public class UserServiceImpl implements UserService {
                     // This recipe is unique (no duplicate in the database).
                     // We keep it, just set user to null
                     recipe.setUser(null);
-                    if (recipe.getOrigin() == com.cooked.backend.entity.RecipeOrigin.SCAN || 
+                    if (orphanRecipes) {
+                        // Waits in the archive for an admin: keep it (rework) or delete it for good.
+                        recipe.setPreviousOrigin(recipe.getOrigin());
+                        recipe.setOrphanedAt(java.time.LocalDateTime.now());
+                        recipe.setOwnerDeletedBy(ArchiveServiceImpl.maskEmail(user.getEmail()));
+                        recipe.setOwnerDeletedRole(user.getRole() == Role.CREATOR ? "CREATOR" : "CLIENT");
+                        recipe.setDeleted(true);
+                        recipe.setPublic(false);
+                        recipe.setStatus(false);
+                        recipe.setExpiresAt(null);
+                    } else if (recipe.getOrigin() == com.cooked.backend.entity.RecipeOrigin.SCAN ||
                         recipe.getOrigin() == com.cooked.backend.entity.RecipeOrigin.IMPORT) {
                         recipe.setOrigin(com.cooked.backend.entity.RecipeOrigin.SUGGESTED);
                     }

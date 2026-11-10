@@ -30,4 +30,6 @@ public class RecipeAssignmentResponse {
     private Integer revisionCount;
     private String batchLabel;
     private String priority;
+    /** Recipe parts the reviewer asked to fix on the last send-back (keys of RecipeReviewService.FIELDS). */
+    private List<String> fieldsToFix;
 }

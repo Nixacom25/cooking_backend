@@ -66,6 +66,8 @@ public class AuthServiceImplTest {
     private DeviceSessionRepository deviceSessionRepository;
     @Mock
     private RestTemplate restTemplate;
+    @Mock
+    private com.cooked.backend.service.FormerAccountService formerAccounts;
 
     @InjectMocks
     private AuthServiceImpl authService;
@@ -135,6 +137,53 @@ public class AuthServiceImplTest {
         when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
 
         assertThrows(BadRequestException.class, () -> authService.register(request));
+    }
+
+    @Test
+    void returningPersonGetsNoSecondFreeTrial() {
+        RegisterRequest request = new RegisterRequest();
+        request.setEmail("back@example.com");
+        request.setFirstname("Back");
+        request.setPassword("password123");
+        request.setProvider("LOCAL");
+        when(userRepository.existsByEmail("back@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("password123")).thenReturn("encoded123");
+        when(formerAccounts.hadAccountBefore("back@example.com")).thenReturn(true);
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
+        authService.register(request);
+
+        verify(userSubscriptionRepository, never()).save(any());
+        verify(userRepository, atLeastOnce()).save(argThat(u -> Boolean.TRUE.equals(u.getReturningAccount())
+                && u.getSubscriptionStatus() == com.cooked.backend.entity.SubscriptionStatus.FREE));
+    }
+
+    @Test
+    void registeringAnAccountWaitingForDeletionAsksToLogIn() {
+        dummyUser.setDeletionRequestedAt(java.time.LocalDateTime.now().minusDays(2));
+        RegisterRequest request = new RegisterRequest();
+        request.setEmail("test@example.com");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(dummyUser));
+
+        BadRequestException e = assertThrows(BadRequestException.class, () -> authService.register(request));
+        assertTrue(e.getMessage().contains("Log in to restore"));
+    }
+
+    @Test
+    void loggingInWithinTheGracePeriodCancelsTheDeletion() {
+        dummyUser.setDeletionRequestedAt(java.time.LocalDateTime.now().minusDays(10));
+        dummyUser.setDeletionRequestedBy("self");
+        LoginRequest request = new LoginRequest();
+        request.setIdentifier("test@example.com");
+        request.setPassword("password123");
+        request.setProvider("LOCAL");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(dummyUser));
+        when(jwtService.generateToken("test@example.com")).thenReturn("jwt");
+
+        authService.login(request);
+
+        assertNull(dummyUser.getDeletionRequestedAt());
+        assertFalse(dummyUser.isPendingDeletion());
     }
 
     @Test

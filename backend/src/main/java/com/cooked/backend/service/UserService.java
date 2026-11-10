@@ -55,6 +55,9 @@ public interface UserService {
     
     MessageResponse deleteCurrentUser(String email);
 
+    /** Deletes for good the accounts whose deletion was requested more than 30 days ago; returns how many. */
+    int purgeAccountsPastGracePeriod();
+
     com.cooked.backend.dto.response.UserStatsResponse getUserStats(UUID id);
 
     UserResponse getUserById(UUID id);

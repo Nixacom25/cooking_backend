@@ -193,11 +193,11 @@ public class EmailServiceImpl implements EmailService {
             <div class="container">
                 <div class="header"><img src="%s" alt="Cooked" style="height: 45px;"></div>
                 <div class="content">
-                    <h1>Your Cooked account has been deleted</h1>
+                    <h1>Your Cooked account will be deleted</h1>
                     <p>Hi %s,</p>
-                    <p>Your Cooked account has been deleted.</p>
+                    <p>We received your request: your Cooked account and its data will be permanently deleted in 30 days.</p>
+                    <p>Changed your mind? Just log in to Cooked before then and your account is restored as it was.</p>
                     <p>Your information will be handled according to our Privacy Policy and applicable data-retention requirements.</p>
-                    <p>If you'd like to use Cooked again in the future, you can create a new account.</p>
                     <p>Thank you for using Cooked.</p>
                     <p class="team">The Cooked Team</p>
                 </div>
@@ -567,7 +567,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendAccountDeletedEmail(String to, String firstName) {
         String name = displayName(firstName);
-        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.ACCOUNT_DELETED, to, "Your Cooked account has been deleted",
+        sendHtmlEmail(com.cooked.backend.entity.EmailTemplate.ACCOUNT_DELETED, to, "Your Cooked account will be deleted in 30 days",
                 String.format(ACCOUNT_DELETED_TEMPLATE, LOGO_URL, name));
     }
 

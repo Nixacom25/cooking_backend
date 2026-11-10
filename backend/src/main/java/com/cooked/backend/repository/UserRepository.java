@@ -135,6 +135,10 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
 
     java.util.List<User> findAllByRole(com.cooked.backend.entity.Role role);
 
+    java.util.List<User> findAllByDeletionRequestedAtBefore(java.time.LocalDateTime before);
+
+    java.util.List<User> findAllByDeletionRequestedAtIsNotNullOrderByDeletionRequestedAtAsc();
+
     /** Clients still on the free plan who signed up in [from, to) — one day's cohort. */
     @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.role = com.cooked.backend.entity.Role.CLIENT "
             + "AND u.subscriptionStatus = :status AND u.createdAt >= :from AND u.createdAt < :to")

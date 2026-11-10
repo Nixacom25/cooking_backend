@@ -14,4 +14,8 @@ import java.util.List;
 public class RejectAssignmentRequest {
     private List<String> errorCategories;
     private String feedbackComment;
+    /** Recipe parts to fix (keys of RecipeReviewService.FIELDS). */
+    private List<String> fieldsToFix;
+    /** Recipe parts the reviewer checked as good. */
+    private List<String> fieldsApproved;
 }

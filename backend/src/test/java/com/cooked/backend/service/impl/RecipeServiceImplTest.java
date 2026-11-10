@@ -56,6 +56,9 @@ public class RecipeServiceImplTest {
     @Mock
     private com.cooked.backend.service.CreatorRecipeImageService creatorRecipeImages;
 
+    @Mock
+    private com.cooked.backend.service.RecipeReviewService recipeReview;
+
     @InjectMocks
     private RecipeServiceImpl recipeService;
 

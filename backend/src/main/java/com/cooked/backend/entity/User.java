@@ -68,6 +68,18 @@ public class User implements UserDetails {
     private SubscriptionType subscriptionType = SubscriptionType.NONE;
 
     private LocalDateTime subscriptionExpiresAt;
+
+    /** Set when the account owner (or an admin) asked to delete it; deleted for good 30 days later unless they log in again. */
+    @Column(name = "deletion_requested_at")
+    private LocalDateTime deletionRequestedAt;
+
+    /** The email belonged to an account deleted earlier: no new free trial. */
+    @Column(name = "returning_account")
+    private Boolean returningAccount;
+
+    /** "self" or the email of the admin who asked for the deletion. */
+    @Column(name = "deletion_requested_by", length = 160)
+    private String deletionRequestedBy;
     @Column(columnDefinition = "TEXT")
     private String originalTransactionId;
 
@@ -340,6 +352,13 @@ public class User implements UserDetails {
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
     public Status getStatus() { return status; }
+    public LocalDateTime getDeletionRequestedAt() { return deletionRequestedAt; }
+    public void setDeletionRequestedAt(LocalDateTime deletionRequestedAt) { this.deletionRequestedAt = deletionRequestedAt; }
+    public boolean isPendingDeletion() { return deletionRequestedAt != null; }
+    public String getDeletionRequestedBy() { return deletionRequestedBy; }
+    public void setDeletionRequestedBy(String deletionRequestedBy) { this.deletionRequestedBy = deletionRequestedBy; }
+    public Boolean getReturningAccount() { return returningAccount; }
+    public void setReturningAccount(Boolean returningAccount) { this.returningAccount = returningAccount; }
     public void setStatus(Status status) { this.status = status; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }

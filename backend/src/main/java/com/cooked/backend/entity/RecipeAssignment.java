@@ -82,4 +82,24 @@ public class RecipeAssignment {
     /** NORMAL, HIGH or URGENT (null = NORMAL). */
     @Column(name = "priority", length = 16)
     private String priority;
+
+    /** JSON snapshot of the recipe before the intern's work (see RecipeReviewService): what review highlights. */
+    @Column(name = "baseline_snapshot", columnDefinition = "TEXT")
+    private String baselineSnapshot;
+
+    /** True when the baseline was taken at the intern's first save (assignment older than this feature). */
+    @Column(name = "baseline_late")
+    private Boolean baselineLate;
+
+    /** JSON snapshot taken when the recipe was last sent back: tells which instructions were followed. */
+    @Column(name = "correction_snapshot", columnDefinition = "TEXT")
+    private String correctionSnapshot;
+
+    /** JSON array of recipe parts the reviewer sent back to fix (last send-back). */
+    @Column(name = "fields_to_fix", columnDefinition = "TEXT")
+    private String fieldsToFix;
+
+    /** JSON array of recipe parts the reviewer approved (last send-back). */
+    @Column(name = "fields_approved", columnDefinition = "TEXT")
+    private String fieldsApproved;
 }

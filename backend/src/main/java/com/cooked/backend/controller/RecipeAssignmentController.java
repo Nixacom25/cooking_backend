@@ -29,6 +29,7 @@ import java.util.UUID;
 public class RecipeAssignmentController {
 
     private final RecipeAssignmentService assignmentService;
+    private final com.cooked.backend.service.RecipeReviewService recipeReview;
 
     @Operation(summary = "Get recipe statistics dashboard")
     @GetMapping("/stats")
@@ -189,6 +190,12 @@ public class RecipeAssignmentController {
     }
 
     @Operation(summary = "Get audit history for an assignment")
+    @GetMapping("/assignments/{id}/changes")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
+    public ResponseEntity<com.cooked.backend.dto.response.ReviewChangesResponse> getAssignmentChanges(@PathVariable UUID id) {
+        return ResponseEntity.ok(recipeReview.changes(id));
+    }
+
     @GetMapping("/assignments/{id}/history")
     @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<List<RecipeAssignmentHistoryResponse>> getAssignmentHistory(

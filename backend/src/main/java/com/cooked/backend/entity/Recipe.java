@@ -156,6 +156,35 @@ public class Recipe {
     @Builder.Default
     private boolean isDeleted = false;
 
+    /** When and by whom (email) the recipe was moved to the archive from the backoffice. */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by", length = 160)
+    private String deletedBy;
+
+    /**
+     * Set when the owner (client or creator) deleted their own non-Explore recipe: it was turned into an
+     * Explore recipe to rework. Cleared when an admin validates the reworked recipe.
+     */
+    @Column(name = "owner_deleted_at")
+    private LocalDateTime ownerDeletedAt;
+
+    @Column(name = "owner_deleted_by", length = 160)
+    private String ownerDeletedBy;
+
+    /** CLIENT or CREATOR. */
+    @Column(name = "owner_deleted_role", length = 20)
+    private String ownerDeletedRole;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "previous_origin", length = 20)
+    private RecipeOrigin previousOrigin;
+
+    /** Set when the owner's account was deleted for good: an admin decides to keep the recipe (rework) or delete it. */
+    @Column(name = "orphaned_at")
+    private LocalDateTime orphanedAt;
+
     // --- Getters & Setters Manuels ---
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -221,4 +250,18 @@ public class Recipe {
     public void setDeleted(boolean deleted) { isDeleted = deleted; }
     public Boolean getStatus() { return status; }
     public void setStatus(Boolean status) { this.status = status; }
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+    public String getDeletedBy() { return deletedBy; }
+    public void setDeletedBy(String deletedBy) { this.deletedBy = deletedBy; }
+    public LocalDateTime getOwnerDeletedAt() { return ownerDeletedAt; }
+    public void setOwnerDeletedAt(LocalDateTime ownerDeletedAt) { this.ownerDeletedAt = ownerDeletedAt; }
+    public String getOwnerDeletedBy() { return ownerDeletedBy; }
+    public void setOwnerDeletedBy(String ownerDeletedBy) { this.ownerDeletedBy = ownerDeletedBy; }
+    public String getOwnerDeletedRole() { return ownerDeletedRole; }
+    public void setOwnerDeletedRole(String ownerDeletedRole) { this.ownerDeletedRole = ownerDeletedRole; }
+    public RecipeOrigin getPreviousOrigin() { return previousOrigin; }
+    public void setPreviousOrigin(RecipeOrigin previousOrigin) { this.previousOrigin = previousOrigin; }
+    public LocalDateTime getOrphanedAt() { return orphanedAt; }
+    public void setOrphanedAt(LocalDateTime orphanedAt) { this.orphanedAt = orphanedAt; }
 }

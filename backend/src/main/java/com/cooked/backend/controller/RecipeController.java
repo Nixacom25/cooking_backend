@@ -36,6 +36,7 @@ public class RecipeController {
     private static final Logger log = LoggerFactory.getLogger(RecipeController.class);
 
     private final RecipeService recipeService;
+    private final com.cooked.backend.service.RecipeDeletionService recipeDeletion;
     private final AiService aiService;
     private final TrendingService trendingService;
     private final ProductEventTracker eventTracker;
@@ -159,7 +160,7 @@ public class RecipeController {
     @Operation(summary = "Delete a Recipe")
     @DeleteMapping("/{id}")
     public ResponseEntity<MessageResponse> delete(@PathVariable UUID id, Authentication auth) {
-        return ResponseEntity.ok(recipeService.delete(id, auth.getName()));
+        return ResponseEntity.ok(recipeDeletion.deleteByOwner(id, auth.getName()));
     }
 
     @Operation(summary = "Get personalized home suggestions")

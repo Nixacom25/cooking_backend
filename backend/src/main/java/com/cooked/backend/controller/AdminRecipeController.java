@@ -29,6 +29,7 @@ import java.util.UUID;
 public class AdminRecipeController {
 
     private final RecipeService recipeService;
+    private final com.cooked.backend.service.RecipeDeletionService recipeDeletion;
     private final com.cooked.backend.service.RecipeModerationService moderation;
     private final com.cooked.backend.service.RecipeNutritionService nutrition;
     private final com.cooked.backend.service.ApprovedRecipeImagesService approvedImages;
@@ -159,15 +160,31 @@ public class AdminRecipeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<MessageResponse> deleteRecipe(@PathVariable UUID id, Authentication auth) {
         String userEmail = auth != null ? auth.getName() : null;
-        recipeService.deleteAdminRecipe(id, userEmail);
+        recipeDeletion.deleteFromBackoffice(id, userEmail);
         return ResponseEntity.ok(new MessageResponse("Recipe deleted successfully"));
+    }
+
+    @Operation(summary = "Keep a recipe of a deleted account: it becomes an Explore recipe to rework")
+    @PutMapping("/{id}/keep")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> keepOrphanRecipe(@PathVariable UUID id, Authentication auth) {
+        recipeDeletion.keepOrphan(id, auth != null ? auth.getName() : null);
+        return ResponseEntity.ok(new MessageResponse("Recipe kept for rework"));
+    }
+
+    @Operation(summary = "Delete an archived recipe for good")
+    @DeleteMapping("/{id}/permanent")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<MessageResponse> purgeRecipe(@PathVariable UUID id, Authentication auth) {
+        recipeDeletion.purge(id, auth != null ? auth.getName() : null);
+        return ResponseEntity.ok(new MessageResponse("Recipe permanently deleted"));
     }
 
     @PutMapping("/{id}/restore")
     @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     public ResponseEntity<MessageResponse> restoreRecipe(@PathVariable UUID id, Authentication auth) {
         String userEmail = auth != null ? auth.getName() : null;
-        recipeService.restoreAdminRecipe(id, userEmail);
+        recipeDeletion.restore(id, userEmail);
         return ResponseEntity.ok(new MessageResponse("Recipe restored successfully"));
     }
 

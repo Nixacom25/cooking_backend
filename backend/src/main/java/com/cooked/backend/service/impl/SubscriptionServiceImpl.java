@@ -403,6 +403,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
 
         // Final fallback: 3-day trial period based on account creation (if no other records found)
+        if (Boolean.TRUE.equals(user.getReturningAccount())) {
+            log.info("[hasAiAccess] Returning account: no free trial");
+            return false;
+        }
         LocalDateTime createdAt = user.getCreatedAt();
         if (createdAt == null) {
             // If createdAt is null, it's likely a very new user whose timestamp hasn't been committed yet

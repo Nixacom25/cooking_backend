@@ -34,6 +34,10 @@ public class UserServiceImplTest {
     @Mock
     private UserRepository userRepository;
     @Mock
+    private com.cooked.backend.service.ArchiveService archiveService;
+    @Mock
+    private com.cooked.backend.service.FormerAccountService formerAccountService;
+    @Mock
     private CloudinaryService cloudinaryService;
     @Mock
     private EmailService emailService;
@@ -133,6 +137,22 @@ public class UserServiceImplTest {
         MessageResponse response = userService.deleteCurrentUser("test@example.com");
 
         assertNotNull(response);
+        // 30-day grace period: the account is only scheduled for deletion.
+        assertNotNull(dummyUser.getDeletionRequestedAt());
+        assertEquals("self", dummyUser.getDeletionRequestedBy());
+        verify(userRepository, never()).delete(any(com.cooked.backend.entity.User.class));
+    }
+
+    @Test
+    void accountsPastTheGracePeriodAreDeletedAndRemembered() {
+        dummyUser.setDeletionRequestedAt(java.time.LocalDateTime.now().minusDays(31));
+        dummyUser.setDeletionRequestedBy("self");
+        when(userRepository.findAllByDeletionRequestedAtBefore(any())).thenReturn(java.util.List.of(dummyUser));
+
+        assertEquals(1, userService.purgeAccountsPastGracePeriod());
+
+        verify(formerAccountService).remember("test@example.com");
+        verify(archiveService).recordAccountDeletion(dummyUser);
         verify(userRepository).delete(dummyUser);
     }
 

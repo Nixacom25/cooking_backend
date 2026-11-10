@@ -61,6 +61,7 @@ public class AuthServiceImpl implements AuthService {
         private final DeviceSessionRepository deviceSessionRepository;
         private final RestTemplate restTemplate;
         private final com.cooked.backend.service.PushNotificationService pushNotificationService;
+        private final com.cooked.backend.service.FormerAccountService formerAccounts;
 
         @Value("${google.client.id:YOUR_GOOGLE_CLIENT_ID}")
         private String googleClientId;
@@ -71,6 +72,9 @@ public class AuthServiceImpl implements AuthService {
         @Override
         @Transactional
         public Object register(RegisterRequest request) {
+                if (userRepository.findByEmail(request.getEmail()).filter(User::isPendingDeletion).isPresent()) {
+                        throw new BadRequestException("This account is scheduled for deletion. Log in to restore it.");
+                }
                 if (userRepository.existsByEmail(request.getEmail())) {
                         throw new BadRequestException("This email is already associated with an account. Please log in instead or use a different email address.");
                 }
@@ -245,6 +249,7 @@ public class AuthServiceImpl implements AuthService {
                 userRepository.save(user);
 
                 // Welcome email will be sent after onboarding completion
+                restoreIfPendingDeletion(user);
                 String token = jwtService.generateToken(user.getEmail());
                 return AuthResponse.builder()
                                 .token(token)
@@ -378,6 +383,7 @@ public class AuthServiceImpl implements AuthService {
                                 userRepository.save(user);
                         }
 
+                        restoreIfPendingDeletion(user);
                         String token = jwtService.generateToken(user.getEmail());
                         activityLogService.logActivity(user, "Login Successful", "User logged in via " + request.getProvider());
                         recordSession(user, token);
@@ -416,6 +422,7 @@ public class AuthServiceImpl implements AuthService {
                         throw new BadRequestException("Invalid email or password.");
                 }
 
+                restoreIfPendingDeletion(user);
                 String token = jwtService.generateToken(user.getEmail());
                 activityLogService.logActivity(user, "Login Successful", "User logged in successfully.");
                 recordSession(user, token);
@@ -530,6 +537,7 @@ public class AuthServiceImpl implements AuthService {
                 emailService.sendAccountUpdateEmail(user.getEmail(), "Your account password has been reset successfully.");
                 activityLogService.logActivity(user, "Password Changed", "Your password has been successfully reset.");
 
+                restoreIfPendingDeletion(user);
                 String token = jwtService.generateToken(user.getEmail());
                 recordSession(user, token);
 
@@ -546,7 +554,26 @@ public class AuthServiceImpl implements AuthService {
                 return String.valueOf(otp);
         }
 
+        /** Logging in again within the 30 days cancels the account deletion. */
+        private void restoreIfPendingDeletion(User user) {
+                if (user == null || !user.isPendingDeletion()) return;
+                user.setDeletionRequestedAt(null);
+                user.setDeletionRequestedBy(null);
+                userRepository.save(user);
+                log.info("Account deletion cancelled: {} logged in again", user.getId());
+        }
+
         private void assignTrial(User user) {
+                // Someone whose account was deleted before gets no second free trial.
+                if (formerAccounts.hadAccountBefore(user.getEmail())) {
+                        user.setReturningAccount(true);
+                        user.setSubscriptionStatus(com.cooked.backend.entity.SubscriptionStatus.FREE);
+                        user.setSubscriptionType(com.cooked.backend.entity.SubscriptionType.NONE);
+                        user.setSubscriptionExpiresAt(null);
+                        userRepository.save(user);
+                        log.info("Returning account {}: no free trial", user.getId());
+                        return;
+                }
                 LocalDateTime trialEnd = LocalDateTime.now().plusDays(3);
                 
                 // 1. Update User entity fields for quick access checks

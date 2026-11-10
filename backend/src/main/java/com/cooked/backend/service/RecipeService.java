@@ -14,8 +14,6 @@ public interface RecipeService {
 
         RecipeResponse getRecipe(UUID id, String userEmail);
 
-        MessageResponse delete(UUID id, String userEmail);
-
         MessageResponse togglePublicVisibility(UUID id, String userEmail);
 
         org.springframework.data.domain.Page<RecipeResponse> getExploreRecipes(
@@ -70,8 +68,6 @@ public interface RecipeService {
          */
         RecipeResponse createAdminRecipe(String adminEmail, String recipeJson, org.springframework.web.multipart.MultipartFile image);
 
-        void deleteAdminRecipe(UUID id, String userEmail);
-        void restoreAdminRecipe(UUID id, String userEmail);
         
         void bulkCreateAdminRecipes(String adminEmail, java.util.List<com.cooked.backend.dto.request.CreateRecipeRequest> requests);
         

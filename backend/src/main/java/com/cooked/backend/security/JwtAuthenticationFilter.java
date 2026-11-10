@@ -56,7 +56,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             var userDetails = userDetailsService.loadUserByUsername(email);
 
             // Blocked / archived accounts lose access immediately, even with a valid token.
-            if (jwtService.isTokenValid(token, userDetails) && userDetails.isAccountNonLocked()) {
+            // An account waiting for deletion is signed out everywhere until its owner logs in again.
+            boolean pendingDeletion = userDetails instanceof com.cooked.backend.entity.User u && u.isPendingDeletion();
+            if (jwtService.isTokenValid(token, userDetails) && userDetails.isAccountNonLocked() && !pendingDeletion) {
                 var authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,

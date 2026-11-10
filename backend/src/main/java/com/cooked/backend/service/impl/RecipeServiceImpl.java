@@ -40,6 +40,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final com.cooked.backend.service.RecipeImageMatchingService recipeImageMatchingService;
     private final com.cooked.backend.service.RecipeCopyService recipeCopyService;
     private final com.cooked.backend.service.CreatorRecipeImageService creatorRecipeImages;
+    private final com.cooked.backend.service.RecipeReviewService recipeReview;
 
     @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
     public void onStartup() {
@@ -274,27 +275,6 @@ public class RecipeServiceImpl implements RecipeService {
 
         User user = userRepository.findByEmail(userEmail).orElse(null);
         return mapToResponse(recipe, user);
-    }
-
-    @Override
-    @Transactional
-    public MessageResponse delete(UUID id, String userEmail) {
-        Recipe recipe = recipeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
-
-        if (!recipe.getUser().getEmail().equals(userEmail)) {
-            throw new BadRequestException("You do not have permission to delete this recipe.");
-        }
-
-        // Remove recipe from cookbooks first
-        for (Cookbook cb : recipe.getCookbooks()) {
-            cb.getRecipes().remove(recipe);
-            cookbookRepository.save(cb);
-        }
-
-        recipe.setDeleted(true);
-        recipeRepository.save(recipe);
-        return new MessageResponse("Recipe deleted successfully.");
     }
 
     @Override
@@ -873,6 +853,8 @@ public class RecipeServiceImpl implements RecipeService {
         try {
             Recipe recipe = recipeRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
+            // Assignments from before the review highlights: remember the recipe as it is before this save.
+            recipeReview.captureBaselineIfMissing(recipe);
 
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
@@ -969,29 +951,6 @@ public class RecipeServiceImpl implements RecipeService {
         }
     }
 
-    @Override
-    @Transactional
-    public void deleteAdminRecipe(UUID id, String userEmail) {
-        Recipe recipe = recipeRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
-        recipe.setDeleted(true);
-        if (userEmail != null) {
-            recipe.setLastModifiedBy(userEmail);
-        }
-        recipeRepository.save(recipe);
-    }
-
-    @Override
-    @Transactional
-    public void restoreAdminRecipe(UUID id, String userEmail) {
-        Recipe recipe = recipeRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Recipe not found"));
-        recipe.setDeleted(false);
-        if (userEmail != null) {
-            recipe.setLastModifiedBy(userEmail);
-        }
-        recipeRepository.save(recipe);
-    }
     
     // Category Management
     
