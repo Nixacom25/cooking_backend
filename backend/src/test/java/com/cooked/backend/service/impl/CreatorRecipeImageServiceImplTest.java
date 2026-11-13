@@ -39,6 +39,7 @@ class CreatorRecipeImageServiceImplTest {
     private final RecipeRepository recipes = mock(RecipeRepository.class);
     private final UserRepository users = mock(UserRepository.class);
     private final AiImageGenerator generator = mock(AiImageGenerator.class);
+    private final AiImageGenerator fal = mock(AiImageGenerator.class);
     private final CloudinaryService cloudinary = mock(CloudinaryService.class);
     private final VisionImageRankerService vision = mock(VisionImageRankerService.class);
     private final List<RecipeGeneratedImage> saved = new ArrayList<>();
@@ -56,10 +57,15 @@ class CreatorRecipeImageServiceImplTest {
         when(generator.model()).thenReturn("gpt-image-1");
         when(generator.quality()).thenReturn("medium");
         when(generator.generate(anyString())).thenReturn(new AiImageGenerator.GeneratedImage(new byte[]{1, 2, 3}, "gpt-image-1", 0.04));
+        when(fal.provider()).thenReturn("fal");
+        when(fal.model()).thenReturn("fal-ai/flux-2/klein/9b");
+        when(fal.quality()).thenReturn("1024x1024");
+        when(fal.available()).thenReturn(true);
+        when(fal.generate(anyString())).thenReturn(new AiImageGenerator.GeneratedImage(new byte[]{4, 5}, "fal-ai/flux-2/klein/9b", 0.0063));
         when(cloudinary.uploadBytes(any(), eq("ai-recipes"))).thenReturn("https://res.cloudinary.com/x/ai.jpg");
         when(vision.rankCandidates(anyString(), anyList()))
                 .thenReturn(VisionRankResult.builder().bestIndex(0).confidence(0.9).reason("ok").build());
-        service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, cloudinary, vision,
+        service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, fal, cloudinary, vision,
                 new ObjectMapper(), true, true, 30, 5, 0.5, 4, "https://link.cookedapp.com");
     }
 
@@ -102,40 +108,55 @@ class CreatorRecipeImageServiceImplTest {
     }
 
     @Test
-    void fillMissingImage_givesAClientRecipeWithoutLibraryPhotoItsOwnAiPhoto() {
+    void clientPhotos_onlyForClientsWithAFalKey() {
+        assertThat(service.clientPhotosEnabledFor(user(Role.CLIENT))).isTrue();
+        assertThat(service.clientPhotosEnabledFor(user(Role.CREATOR))).isFalse();
+        assertThat(service.clientPhotosEnabledFor(user(Role.EDITOR))).isFalse();
+        when(fal.available()).thenReturn(false);
+        assertThat(service.clientPhotosEnabledFor(user(Role.CLIENT))).isFalse();
+    }
+
+    @Test
+    void startClientPhoto_givesALinkThenPutsTheFalPhotoOnTheRecipe() throws IOException {
         UUID recipeId = UUID.randomUUID();
         UUID clientId = UUID.randomUUID();
         com.cooked.backend.entity.Recipe stew = new com.cooked.backend.entity.Recipe();
         stew.setId(recipeId);
         stew.setName("Chicken Stew");
-        com.cooked.backend.entity.Recipe edited = new com.cooked.backend.entity.Recipe();
-        edited.setImage("https://images.test/kept.jpg");
-        UUID editedId = UUID.randomUUID();
         when(recipes.findById(recipeId)).thenReturn(Optional.of(stew));
-        when(recipes.findById(editedId)).thenReturn(Optional.of(edited));
+        when(images.findById(any())).thenAnswer(inv -> saved.stream().filter(r -> inv.getArgument(0).equals(r.getId())).findFirst());
         var input = new com.cooked.backend.service.dto.RecipeImageInput("Chicken Stew", null, List.of(),
                 List.of(new com.cooked.backend.service.dto.RecipeImageInput.Ingredient("chicken", "2")), List.of("Simmer."));
 
-        service.fillMissingImage(recipeId, clientId, input);
-        service.fillMissingImage(editedId, clientId, input);
+        when(fal.generate(anyString())).thenAnswer(inv -> {
+            Thread.sleep(300); // the recipe gets its link before the photo is ready
+            return new AiImageGenerator.GeneratedImage(new byte[]{4, 5}, "fal-ai/flux-2/klein/9b", 0.0063);
+        });
+        String link = service.startClientPhoto(recipeId, clientId, input);
+        stew.setImage(link); // what RecipeServiceImpl does with the link
 
+        assertThat(link).startsWith(LINK).endsWith(".jpg");
         verify(recipes, timeout(5000)).save(stew);
         assertThat(stew.getImage()).isEqualTo("https://res.cloudinary.com/x/ai.jpg");
-        assertThat(edited.getImage()).isEqualTo("https://images.test/kept.jpg");
-        verify(recipes, never()).save(edited);
-        assertThat(saved).hasSize(2).allSatisfy(row -> assertThat(row.getCreatorUserId()).isEqualTo(clientId));
-        assertThat(saved.get(0).getRecipeId()).isEqualTo(recipeId);
+        verify(fal).generate(anyString());
+        verify(generator, never()).generate(anyString());
+        RecipeGeneratedImage row = saved.get(0);
+        assertThat(row.getImageProvider()).isEqualTo("fal");
+        assertThat(row.getModel()).isEqualTo("fal-ai/flux-2/klein/9b");
+        assertThat(row.getCreatorUserId()).isEqualTo(clientId);
+        assertThat(row.getRecipeId()).isEqualTo(recipeId);
+        assertThat(row.getCostUsd()).isEqualTo(0.0063);
     }
 
     @Test
-    void fillMissingImage_doesNothingWhenTurnedOff() throws IOException {
+    void startClientPhoto_doesNothingWhenTurnedOff() throws IOException {
         service.shutdown();
-        service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, cloudinary, vision,
+        service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, fal, cloudinary, vision,
                 new ObjectMapper(), true, false, 30, 5, 0.5, 4, "https://link.cookedapp.com");
-        service.fillMissingImage(UUID.randomUUID(), null,
-                new com.cooked.backend.service.dto.RecipeImageInput("Chicken Stew", null, List.of(), List.of(), List.of()));
+        assertThat(service.startClientPhoto(UUID.randomUUID(), null,
+                new com.cooked.backend.service.dto.RecipeImageInput("Chicken Stew", null, List.of(), List.of(), List.of()))).isNull();
         assertThat(saved).isEmpty();
-        verify(generator, never()).generate(anyString());
+        verify(fal, never()).generate(anyString());
     }
 
     @Test
@@ -188,7 +209,7 @@ class CreatorRecipeImageServiceImplTest {
             return new AiImageGenerator.GeneratedImage(new byte[]{1}, "gpt-image-1", 0.04);
         });
         service.shutdown();
-        service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, cloudinary, vision,
+        service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, fal, cloudinary, vision,
                 new ObjectMapper(), true, true, 0, 5, 0.5, 4, "https://link.cookedapp.com");
         CreateRecipeRequest tacos = recipe("Chicken Tacos");
 
@@ -321,7 +342,7 @@ class CreatorRecipeImageServiceImplTest {
     @Test
     void attachImages_isOffWhenTheFeatureIsDisabled() {
         service.shutdown();
-        service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, cloudinary, vision,
+        service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, fal, cloudinary, vision,
                 new ObjectMapper(), false, true, 30, 5, 0.5, 4, "https://link.cookedapp.com");
         CreateRecipeRequest tacos = recipe("Chicken Tacos");
 

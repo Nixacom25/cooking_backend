@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * AI photos for creator recipes: each recipe a creator generates gets a photo
- * made from the whole recipe, saved for admin review. Everyone else keeps the
- * existing image matching. Turned off with creator.ai-images.enabled=false.
+ * AI recipe photos, saved for admin review. Creators: gpt-image photo of each recipe
+ * they generate. Clients: a fal FLUX.2 Klein photo only when the image library has no
+ * verified match (client.ai-images.enabled). Off with creator.ai-images.enabled=false.
  */
 public interface CreatorRecipeImageService {
 
@@ -36,13 +36,15 @@ public interface CreatorRecipeImageService {
     record PhotoLink(String url, boolean done) {
     }
 
+    /** True for app clients (role CLIENT) while client photos are on and FAL_KEY is set. */
+    boolean clientPhotosEnabledFor(User user);
+
     /**
-     * A saved recipe got no verified photo from the image library (any user, not only creators):
-     * generates an AI photo of that exact recipe in the background and sets it on the recipe if it
-     * still has no image. The row goes to the admin review page like creator photos. Does nothing
-     * when the feature or creator.ai-images.fill-missing is off.
+     * A client's saved recipe has no verified library photo: starts a fal (FLUX.2 Klein) photo of that
+     * exact recipe in the background and returns its photo link at once ({@link #photoLink}), which the
+     * recipe can show right away; the photo itself replaces the link when ready. Null when off or failed.
      */
-    void fillMissingImage(UUID recipeId, UUID userId, com.cooked.backend.service.dto.RecipeImageInput input);
+    String startClientPhoto(UUID recipeId, UUID userId, com.cooked.backend.service.dto.RecipeImageInput input);
 
     /** A recipe was saved with [imageUrl]: links the AI photo to it, if it is one. */
     void linkSavedRecipe(UUID recipeId, String imageUrl);

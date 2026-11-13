@@ -53,11 +53,13 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
     private final AiImageGenerator generator;
+    /** Client photos (fal FLUX.2 Klein); creators keep {@link #generator}. */
+    private final AiImageGenerator clientGenerator;
     private final CloudinaryService cloudinary;
     private final VisionImageRankerService vision;
     private final ObjectMapper objectMapper;
     private final boolean enabled;
-    private final boolean fillMissing;
+    private final boolean clientPhotos;
     private final long waitMs;
     private final long linkWaitMs;
     private final double minMatchConfidence;
@@ -71,11 +73,12 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
                                          RecipeRepository recipeRepository,
                                          UserRepository userRepository,
                                          AiImageGenerator generator,
+                                         @org.springframework.beans.factory.annotation.Qualifier("falImageGenerator") AiImageGenerator clientGenerator,
                                          CloudinaryService cloudinary,
                                          VisionImageRankerService vision,
                                          ObjectMapper objectMapper,
                                          @Value("${creator.ai-images.enabled:true}") boolean enabled,
-                                         @Value("${creator.ai-images.fill-missing:true}") boolean fillMissing,
+                                         @Value("${client.ai-images.enabled:true}") boolean clientPhotos,
                                          @Value("${creator.ai-images.wait-seconds:5}") long waitSeconds,
                                          @Value("${creator.ai-images.link-wait-seconds:85}") long linkWaitSeconds,
                                          @Value("${creator.ai-images.min-match-confidence:0.5}") double minMatchConfidence,
@@ -85,11 +88,12 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
         this.recipeRepository = recipeRepository;
         this.userRepository = userRepository;
         this.generator = generator;
+        this.clientGenerator = clientGenerator;
         this.cloudinary = cloudinary;
         this.vision = vision;
         this.objectMapper = objectMapper;
         this.enabled = enabled;
-        this.fillMissing = fillMissing;
+        this.clientPhotos = clientPhotos;
         this.waitMs = TimeUnit.SECONDS.toMillis(waitSeconds);
         this.linkWaitMs = TimeUnit.SECONDS.toMillis(linkWaitSeconds);
         this.minMatchConfidence = minMatchConfidence;
@@ -130,7 +134,7 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
         List<CompletableFuture<String>> photos = new ArrayList<>();
         for (CreateRecipeRequest recipe : recipes) {
             if (recipe == null || recipe.getName() == null || recipe.getName().isBlank()) continue;
-            RecipeGeneratedImage row = newRow(RecipeImageInput.from(recipe), user.getId(), scanId, null);
+            RecipeGeneratedImage row = newRow(RecipeImageInput.from(recipe), user.getId(), scanId, null, generator);
             row = images.save(row);
             targets.add(recipe);
             rowIds.add(row.getId());
@@ -222,26 +226,36 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
     }
 
     @Override
-    public void fillMissingImage(UUID recipeId, UUID userId, RecipeImageInput input) {
-        if (!enabled || !fillMissing || recipeId == null || input == null
-                || input.title() == null || input.title().isBlank()) return;
+    public boolean clientPhotosEnabledFor(User user) {
+        return clientPhotos && clientGenerator != null && clientGenerator.available()
+                && user != null && user.getRole() == Role.CLIENT;
+    }
+
+    @Override
+    public String startClientPhoto(UUID recipeId, UUID userId, RecipeImageInput input) {
+        if (!clientPhotos || clientGenerator == null || !clientGenerator.available() || recipeId == null
+                || input == null || input.title() == null || input.title().isBlank()) return null;
         try {
-            RecipeGeneratedImage row = newRow(input, userId, null, null);
+            RecipeGeneratedImage row = newRow(input, userId, null, null, clientGenerator);
             row.setRecipeId(recipeId);
             RecipeGeneratedImage saved = images.save(row);
-            start(saved).thenAccept(url -> {
-                if (url == null || url.equals(placeholderUrl)) return;
-                recipeRepository.findById(recipeId).ifPresent(recipe -> {
-                    // Never replace an image set in the meantime (library match, edit).
-                    if (recipe.getImage() == null || recipe.getImage().isBlank()) {
-                        recipe.setImage(url);
-                        recipeRepository.save(recipe);
-                        log.info("Recipe '{}' had no library photo: AI photo set", recipe.getName());
-                    }
-                });
-            });
+            // Started once the recipe (and its link) is committed, so swapLinkOnRecipe can then put the
+            // photo itself on the recipe; a link opened earlier starts it too (start() runs it once).
+            if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                        new org.springframework.transaction.support.TransactionSynchronization() {
+                            @Override
+                            public void afterCommit() {
+                                start(saved);
+                            }
+                        });
+            } else {
+                start(saved);
+            }
+            return photoLinkUrl(saved.getId());
         } catch (Exception e) {
-            log.warn("Could not start the AI photo for recipe {}: {}", recipeId, e.getMessage());
+            log.warn("Could not start the client photo for recipe {}: {}", recipeId, e.getMessage());
+            return null;
         }
     }
 
@@ -271,7 +285,7 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
     @Override
     public RecipeGeneratedImage regenerate(RecipeGeneratedImage source) {
         RecipeImageInput input = readSnapshot(source.getRecipeSnapshot());
-        RecipeGeneratedImage row = images.save(newRow(input, source.getCreatorUserId(), source.getScanId(), source.getId()));
+        RecipeGeneratedImage row = images.save(newRow(input, source.getCreatorUserId(), source.getScanId(), source.getId(), generatorFor(source)));
         row.setRecipeId(source.getRecipeId());
         images.save(row);
 
@@ -294,16 +308,22 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
         return row;
     }
 
-    private RecipeGeneratedImage newRow(RecipeImageInput input, UUID creatorId, UUID scanId, UUID regeneratedFrom) {
+    /** The provider that made [row]: fal rows are client photos, the rest creator photos. */
+    private AiImageGenerator generatorFor(RecipeGeneratedImage row) {
+        return clientGenerator != null && clientGenerator.provider().equals(row.getImageProvider()) ? clientGenerator : generator;
+    }
+
+    private RecipeGeneratedImage newRow(RecipeImageInput input, UUID creatorId, UUID scanId, UUID regeneratedFrom,
+                                        AiImageGenerator gen) {
         String snapshot = writeSnapshot(input);
         return RecipeGeneratedImage.builder()
                 .recipeTitle(truncate(input.title(), 255))
                 .recipeSnapshot(snapshot)
                 .recipeVersion(shortHash(snapshot))
                 .imagePrompt(RecipeImagePromptBuilder.build(input))
-                .imageProvider(generator.provider())
-                .model(generator.model())
-                .quality(generator.quality())
+                .imageProvider(gen.provider())
+                .model(gen.model())
+                .quality(gen.quality())
                 .generationStatus(AiImageGenerationStatus.GENERATING)
                 .creatorUserId(creatorId)
                 .scanId(scanId)
@@ -405,7 +425,7 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
 
     /** One generation: image → Cloudinary → vision check against the recipe. */
     private Candidate attempt(RecipeGeneratedImage row, RecipeImageInput input) throws Exception {
-        AiImageGenerator.GeneratedImage image = generator.generate(row.getImagePrompt());
+        AiImageGenerator.GeneratedImage image = generatorFor(row).generate(row.getImagePrompt());
         row.setModel(image.model());
         row.setCostUsd(round((row.getCostUsd() == null ? 0 : row.getCostUsd()) + image.costUsd()));
         String url = cloudinary.uploadBytes(image.bytes(), CLOUDINARY_FOLDER);

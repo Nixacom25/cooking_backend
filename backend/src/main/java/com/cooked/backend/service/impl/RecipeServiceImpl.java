@@ -313,6 +313,8 @@ public class RecipeServiceImpl implements RecipeService {
         // Creators: an AI photo of each exact recipe instead of a matched one.
         boolean aiPhotos = creatorRecipeImages.isEnabledFor(user);
         if (aiPhotos) creatorRecipeImages.attachImages(generated, userEmail);
+        // Clients: library photo or a fal FLUX.2 Klein photo per recipe (see below).
+        boolean clientPhotos = !aiPhotos && creatorRecipeImages.clientPhotosEnabledFor(user);
         List<RecipeResponse> savedResponses = new ArrayList<>();
         java.time.LocalDateTime expiration = java.time.LocalDateTime.now().plusDays(3);
         
@@ -363,6 +365,17 @@ public class RecipeServiceImpl implements RecipeService {
             Recipe finalSaved = recipeRepository.save(saved);
             if (aiPhotos) {
                 creatorRecipeImages.linkSavedRecipe(finalSaved.getId(), finalSaved.getImage());
+            } else if (clientPhotos) {
+                // Library photo first (free); otherwise a fal photo of this exact dish, shown at once
+                // through its link (ready in a few seconds).
+                if (!recipeImageMatchingService.assignFromLibrary(finalSaved)) {
+                    String link = creatorRecipeImages.startClientPhoto(finalSaved.getId(), user.getId(),
+                            com.cooked.backend.service.dto.RecipeImageInput.from(finalSaved));
+                    if (link != null) {
+                        finalSaved.setImage(link);
+                        finalSaved = recipeRepository.save(finalSaved);
+                    }
+                }
             } else {
                 recipeImageMatchingService.matchAndAssignImageAsync(finalSaved.getId());
             }

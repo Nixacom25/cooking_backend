@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 @Service
+@org.springframework.context.annotation.Primary
 public class OpenAiImageGenerator implements AiImageGenerator {
 
     static final String ENDPOINT = "https://api.openai.com/v1/images/generations";

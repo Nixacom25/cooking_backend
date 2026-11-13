@@ -9,4 +9,10 @@ import java.util.UUID;
  */
 public interface RecipeImageMatchingService {
     void matchAndAssignImageAsync(UUID recipeId);
+
+    /**
+     * Same matching, now, on a recipe being saved: sets the best verified library photo and
+     * returns true, or returns false (image left as is) when none matches.
+     */
+    boolean assignFromLibrary(com.cooked.backend.entity.Recipe recipe);
 }

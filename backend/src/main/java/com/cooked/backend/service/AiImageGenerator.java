@@ -2,7 +2,7 @@ package com.cooked.backend.service;
 
 import java.io.IOException;
 
-/** Text-to-image provider for creator recipe photos (OpenAI today). */
+/** Text-to-image provider for recipe photos: OpenAI for creators, fal (FLUX.2 Klein) for clients. */
 public interface AiImageGenerator {
 
     /** One generated photo, with the model that actually made it and its estimated cost. */
@@ -16,6 +16,11 @@ public interface AiImageGenerator {
     String model();
 
     String quality();
+
+    /** False when the provider can't be called (no API key configured). */
+    default boolean available() {
+        return true;
+    }
 
     /** Generates one image for [prompt]; throws when the provider refuses or fails. */
     GeneratedImage generate(String prompt) throws IOException;
