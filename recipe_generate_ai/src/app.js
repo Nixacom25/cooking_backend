@@ -84,7 +84,12 @@ app.get("/health", (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  const statusCode = err instanceof ApiError ? err.statusCode : err.status || 500;
+  const statusCode =
+    err instanceof ApiError
+      ? err.statusCode
+      : err.name === "MulterError" || err.message === "Only image files are allowed"
+      ? 400
+      : err.status || 500;
   let message = err.message || "Internal Server Error";
 
   // Security: Mask OpenAI secrets or internal paths in production errors

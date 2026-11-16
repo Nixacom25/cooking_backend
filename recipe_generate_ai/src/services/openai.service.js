@@ -9,8 +9,6 @@ import {createRecipePrompt} from "../prompts/diggerentRecipiePrompt.js"
 import { parseKcal } from "../utils/nutrition.js";
 
 const DEFAULT_OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
-// Stronger vision model for a second look when the first scan finds nothing.
-const VISION_FALLBACK_MODEL = process.env.OPENAI_VISION_MODEL || "gpt-4o";
 const PROMPT_TEMPLATE_PATH = path.resolve(process.cwd(), "prompt.md");
 const OPENAI_SUPPORTED_IMAGE_TYPES = new Set([
     "image/jpeg",
@@ -23,48 +21,6 @@ const JPEG_QUALITY = 82;
 const PNG_QUALITY = 75;
 let cachedClient = null;
 
-const singlePassScanAndRecipePrompt = `
-You are RecipeAI Pro — High-Speed Food Vision Engine.
-
-Analyze image(s) and return valid JSON with detected ingredients and 3 complete recipes.
-
-JSON Structure:
-{
-  "status": "success",
-  "ingredients": [
-    { "ingredient_name": "Chicken", "category": "Meat", "estimated_quantity": "4 pcs", "confidence": 0.98 }
-  ],
-  "recipes": [
-    {
-      "title": "Crispy Chicken",
-      "description": "Golden fried chicken.",
-      "cuisine": "American",
-      "prep_time": "10 min",
-      "cook_time": "15 min",
-      "total_time": "25 min",
-      "servings": "2",
-      "ingredients": [ { "name": "Chicken", "quantity": "4 pcs" } ],
-    "instructions": [ "1. Detailed preparation step.", "2. Detailed cooking step.", "3. Detailed finishing step." ],
-      "nutrition": { "calories": "450 kcal", "protein": "30g", "carbs": "5g", "fat": "25g" }
-    }
-  ],
-  "fallback_message": ""
-}
-
-RULES:
-- Identify every visible food ingredient, but name only what the image supports.
-- Read package labels when possible. A flavored product is one product (for example, strawberry yogurt is yogurt), not separate ingredients inferred from its flavor.
-- Never identify an ingredient from color or shape alone. Do not turn green onions into lettuce or spinach.
-- If the exact ingredient cannot be confirmed, use the most honest broader name and a lower confidence value. Never invent items that are not there.
-- Look at the WHOLE scene: every shelf, the door, drawers, background, bowls, jars, bottles, bags and packaging. Read labels and brand names.
-- A visible food you are unsure about must still be listed (broader name, e.g. "cheese", "sauce", "vegetables", with a low confidence) rather than left out.
-- Return an empty "ingredients" list ONLY when the image contains no food at all.
-- Generate 3 distinct recipes using only detected ingredients.
-- Include every ingredient used by each recipe with a quantity and unit. Do not hide ingredients in the instructions.
-- Give each recipe 8-12 numbered, practical preparation steps. Include preparation, cooking temperatures and times, doneness checks, assembly, and serving where relevant.
-- Do not merge multiple actions into a short summary step just to save tokens.
-- Return ONLY valid JSON.
-`;
 let cachedPromptTemplate = null;
 
 const getOpenAIClient = async () => {
@@ -431,125 +387,6 @@ export const generateRecipes = async (ingredients) => {
     return JSON.parse(extractTextFromResponse(response));
 };
 
-const SECOND_LOOK_TEXT = `SECOND LOOK: a first analysis of these image(s) found no ingredients, which is almost always wrong.
-Examine every area of every image again, including partly hidden, blurry, dark or packaged items, and list every food or drink you can see (use broader names with lower confidence when unsure).
-Only if there is truly no food at all, return an empty "ingredients" list.`;
-
-const hasScannedIngredients = (parsed) =>
-    Boolean(parsed) && Array.isArray(parsed.ingredients) && parsed.ingredients.length > 0;
-
-/** One scan + recipes call; returns the parsed JSON object. */
-const runScanPass = async (client, model, imageContent, extraText = "") => {
-    const response = await client.responses.create({
-        model,
-        input: [
-            {
-                role: "user",
-                content: [
-                    {
-                        type: "input_text",
-                        text: extraText ? `${singlePassScanAndRecipePrompt}\n${extraText}` : singlePassScanAndRecipePrompt,
-                    },
-                    ...imageContent,
-                ],
-            },
-        ],
-        max_output_tokens: 7000,
-        text: {
-            format: {
-                type: "json_object",
-            },
-        },
-    });
-
-    const rawText = extractTextFromResponse(response);
-    if (!rawText) {
-        throw new ApiError(502, "OpenAI returned an empty response");
-    }
-    return JSON.parse(rawText);
-};
-
-const scanAndGenerateRecipes = async (files) => {
-    const client = await getOpenAIClient();
-
-    const imageContent = await Promise.all(
-        files.map(async (file) => ({
-            type: "input_image",
-            image_url: await toOpenAiImageDataUrl(file),
-            detail: "high",
-        }))
-    );
-
-    try {
-        let parsed = null;
-        try {
-            parsed = await runScanPass(client, DEFAULT_OPENAI_MODEL, imageContent);
-        } catch (error) {
-            console.warn(`[scan] first pass failed (${DEFAULT_OPENAI_MODEL}): ${error?.message}`);
-        }
-        // Nothing found (dark fridge, cluttered shelf, odd angle) or unreadable
-        // answer: take a second, more careful look with the stronger model
-        // before telling the user we saw no ingredients.
-        if (!hasScannedIngredients(parsed)) {
-            console.warn(`[scan] no ingredients on first pass, retrying with ${VISION_FALLBACK_MODEL}`);
-            parsed = await runScanPass(client, VISION_FALLBACK_MODEL, imageContent, SECOND_LOOK_TEXT);
-        }
-
-        let ingredients = Array.isArray(parsed.ingredients) ? parsed.ingredients : [];
-
-        // Normalize string ingredients to object format if needed
-        ingredients = ingredients.map((item) => {
-            if (typeof item === "string") {
-                return {
-                    ingredient_name: item,
-                    brand: "",
-                    estimated_quantity: "1",
-                    quantity_unit: "unit",
-                    confidence: 0.95,
-                };
-            }
-            return item;
-        });
-
-        const recipes = Array.isArray(parsed.recipes)
-            ? parsed.recipes
-            : Array.isArray(parsed.recipe)
-            ? parsed.recipe
-            : [];
-
-        if (!ingredients.length) {
-            return {
-                status: "failed",
-                success: false,
-                message: "No ingredients were detected in the uploaded image(s).",
-                ingredients: [],
-                recipes: [],
-            };
-        }
-
-        if (!recipes.length) {
-            return {
-                status: "failed",
-                success: false,
-                message: "No recipes were generated from the detected ingredients.",
-                ingredients,
-                recipes: [],
-            };
-        }
-
-        return {
-            status: "success",
-            success: true,
-            ingredients,
-            recipes,
-            fallback_message: parsed.fallback_message || "",
-        };
-
-    } catch (error) {
-        throw new ApiError(502, error?.message || "Failed to scan image and generate recipes");
-    }
-};
-
 const parseRecipeModelJson = (rawText) => {
     const fenced = rawText.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
     let candidate = (fenced || rawText).trim();
@@ -802,7 +639,6 @@ export const generateDishImage = async (dishName) => {
 export const openAiService = {
     extractRecipeFromCaption,
     scanWithAI,
-    scanAndGenerateRecipes,
     promptForFourRecipies,
     normalizeRecipeForCooked,
     generateRecipesFromIngredients,

@@ -365,4 +365,12 @@ class CreatorRecipeImageServiceImplTest {
         assertThat(row.getRecipeId()).isEqualTo(recipeId);
         verify(images, never()).findFirstByGeneratedImageUrlAndRecipeIdIsNull(PLACEHOLDER);
     }
+
+    @Test
+    void dataUrlKeepsTheImageType() {
+        byte[] png = {(byte) 0x89, 'P', 'N', 'G', 0, 0};
+        byte[] jpeg = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0};
+        assertThat(CreatorRecipeImageServiceImpl.dataUrl(png)).startsWith("data:image/png;base64,");
+        assertThat(CreatorRecipeImageServiceImpl.dataUrl(jpeg)).startsWith("data:image/jpeg;base64,");
+    }
 }

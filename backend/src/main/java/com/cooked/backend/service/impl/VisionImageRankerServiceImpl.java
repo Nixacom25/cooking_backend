@@ -52,8 +52,10 @@ public class VisionImageRankerServiceImpl implements VisionImageRankerService {
 
         List<Object> content = new ArrayList<>();
         content.add(Map.of("type", "text", "text", prompt.toString()));
+        // "low" detail (512 px) is plenty to tell which dish a photo shows, and
+        // ~9x fewer input tokens than the default for gpt-4o-mini: faster and cheaper.
         for (String url : candidateImageUrls) {
-            content.add(Map.of("type", "image_url", "image_url", Map.of("url", url)));
+            content.add(Map.of("type", "image_url", "image_url", Map.of("url", url, "detail", "low")));
         }
 
         try {

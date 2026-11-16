@@ -1,26 +1,4 @@
 import multer from "multer";
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const tempDir = path.join(__dirname, "../public/temp");
-
-if (!fs.existsSync(tempDir)) {
-  fs.mkdirSync(tempDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, tempDir);
-  },
-
-  filename(req, file, cb) {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
-});
 
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image/")) {
@@ -30,10 +8,14 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+// Images stay in memory: they are resized with sharp and sent to OpenAI
+// right away, so writing them to disk only added I/O and cleanup.
+// Limits are generous because phone photos are big; we downscale anyway.
 export const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024,
+    fileSize: 15 * 1024 * 1024,
+    files: 4,
   },
 });

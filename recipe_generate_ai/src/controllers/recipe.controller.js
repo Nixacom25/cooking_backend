@@ -1,7 +1,8 @@
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { recipesFromIngredients } from "../services/scan.service.js";
 import {
-  generateRecipesFromIngredients,
+  normalizeRecipeForCooked,
   generateRecipeSuggestions,
   generateTrendingDishes,
 } from "../services/openai.service.js";
@@ -19,7 +20,8 @@ export const generateRecipesHandler = asyncHandler(async (req, res) => {
     } catch (_) {}
   }
 
-  const recipes = await generateRecipesFromIngredients(ingredients, userPreferences);
+  // Fast path: short idea pass, then the recipes written in parallel.
+  const recipes = (await recipesFromIngredients(ingredients, userPreferences)).map(normalizeRecipeForCooked);
 
   return res.status(200).json({
     success: true,

@@ -66,6 +66,8 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
     private final String placeholderUrl;
     private final String photoLinkBase;
     private final ExecutorService executor;
+    /** Vision checks, run while the photo uploads (kept off {@link #executor} so they never queue behind generations). */
+    private final ExecutorService checkExecutor;
     /** Photos being made right now, by row id, so the photo link can wait for them. */
     private final Map<UUID, CompletableFuture<String>> inFlight = new ConcurrentHashMap<>();
 
@@ -79,7 +81,7 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
                                          ObjectMapper objectMapper,
                                          @Value("${creator.ai-images.enabled:true}") boolean enabled,
                                          @Value("${client.ai-images.enabled:true}") boolean clientPhotos,
-                                         @Value("${creator.ai-images.wait-seconds:5}") long waitSeconds,
+                                         @Value("${creator.ai-images.wait-seconds:0}") long waitSeconds,
                                          @Value("${creator.ai-images.link-wait-seconds:85}") long linkWaitSeconds,
                                          @Value("${creator.ai-images.min-match-confidence:0.5}") double minMatchConfidence,
                                          @Value("${creator.ai-images.parallelism:8}") int parallelism,
@@ -105,11 +107,17 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
             t.setDaemon(true);
             return t;
         });
+        this.checkExecutor = Executors.newCachedThreadPool(r -> {
+            Thread t = new Thread(r, "ai-recipe-image-check-" + n.incrementAndGet());
+            t.setDaemon(true);
+            return t;
+        });
     }
 
     @PreDestroy
     void shutdown() {
         executor.shutdownNow();
+        checkExecutor.shutdownNow();
     }
 
     @Override
@@ -423,16 +431,43 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
         }
     }
 
-    /** One generation: image → Cloudinary → vision check against the recipe. */
+    /**
+     * One generation: image, then Cloudinary upload and vision check side by side.
+     * The check reads the bytes we already hold instead of waiting for the upload
+     * and having OpenAI download the photo back from Cloudinary.
+     */
     private Candidate attempt(RecipeGeneratedImage row, RecipeImageInput input) throws Exception {
         AiImageGenerator.GeneratedImage image = generatorFor(row).generate(row.getImagePrompt());
         row.setModel(image.model());
         row.setCostUsd(round((row.getCostUsd() == null ? 0 : row.getCostUsd()) + image.costUsd()));
-        String url = cloudinary.uploadBytes(image.bytes(), CLOUDINARY_FOLDER);
-        if (url == null || url.isBlank()) throw new IllegalStateException("Cloudinary upload returned no URL");
+        CompletableFuture<Double> check = CompletableFuture.supplyAsync(
+                () -> matchConfidence(dataUrl(image.bytes()), input), checkExecutor);
+        String url;
+        try {
+            url = cloudinary.uploadBytes(image.bytes(), CLOUDINARY_FOLDER);
+        } catch (Exception e) {
+            check.cancel(true);
+            throw e;
+        }
+        if (url == null || url.isBlank()) {
+            check.cancel(true);
+            throw new IllegalStateException("Cloudinary upload returned no URL");
+        }
 
-        Double confidence = matchConfidence(url, input);
+        Double confidence = check.join(); // never throws: null when the check could not run
         return new Candidate(url, confidence, confidence != null && confidence >= minMatchConfidence);
+    }
+
+    /** The photo as a data URL the vision model reads directly. */
+    static String dataUrl(byte[] bytes) {
+        String mime = "image/jpeg";
+        if (bytes.length > 3 && (bytes[0] & 0xFF) == 0x89 && bytes[1] == 'P' && bytes[2] == 'N' && bytes[3] == 'G') {
+            mime = "image/png";
+        } else if (bytes.length > 11 && bytes[0] == 'R' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == 'F'
+                && bytes[8] == 'W' && bytes[9] == 'E' && bytes[10] == 'B' && bytes[11] == 'P') {
+            mime = "image/webp";
+        }
+        return "data:" + mime + ";base64," + java.util.Base64.getEncoder().encodeToString(bytes);
     }
 
     String photoLinkUrl(UUID id) {
