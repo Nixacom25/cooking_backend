@@ -70,6 +70,11 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
     private final ExecutorService checkExecutor;
     /** Photos being made right now, by row id, so the photo link can wait for them. */
     private final Map<UUID, CompletableFuture<String>> inFlight = new ConcurrentHashMap<>();
+    /**
+     * Client (fal) photos: where fal serves the photo as soon as it is generated, before the Cloudinary copy
+     * and the vision check are done, so the photo link can show it ~2-3 s earlier.
+     */
+    private final Map<UUID, CompletableFuture<String>> previews = new ConcurrentHashMap<>();
 
     public CreatorRecipeImageServiceImpl(RecipeGeneratedImageRepository images,
                                          RecipeRepository recipeRepository,
@@ -207,9 +212,16 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
         if (row.getGenerationStatus() == AiImageGenerationStatus.GENERATING) {
             // Not in flight here: the server restarted mid-generation, so start it again.
             CompletableFuture<String> photo = inFlight.containsKey(id) ? inFlight.get(id) : start(row);
+            CompletableFuture<String> preview = previews.get(id);
             try {
-                String url = photo == null ? null : photo.get(linkWaitMs, TimeUnit.MILLISECONDS);
-                if (url != null) return new PhotoLink(url, true);
+                // Client photos: whichever comes first, fal's own copy (not cached: the link later serves the
+                // verified Cloudinary photo) or the finished photo.
+                CompletableFuture<?> first = photo == null || preview == null ? photo
+                        : CompletableFuture.anyOf(photo, preview);
+                Object ready = first == null ? null : first.get(linkWaitMs, TimeUnit.MILLISECONDS);
+                String done = photo != null && photo.isDone() && !photo.isCompletedExceptionally() ? photo.getNow(null) : null;
+                if (done != null) return new PhotoLink(done, true);
+                if (ready instanceof String url && !url.isBlank()) return new PhotoLink(url, false);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             } catch (Exception e) {
@@ -380,9 +392,14 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
     /** Generates [row]'s photo once, however many callers ask for it. */
     private CompletableFuture<String> start(RecipeGeneratedImage row) {
         UUID id = row.getId();
+        if (isClientRow(row)) previews.computeIfAbsent(id, k -> new CompletableFuture<>());
         CompletableFuture<String> photo = inFlight.computeIfAbsent(id,
                 k -> CompletableFuture.supplyAsync(() -> generateInto(row), executor));
-        photo.whenComplete((url, e) -> inFlight.remove(id, photo));
+        photo.whenComplete((url, e) -> {
+            inFlight.remove(id, photo);
+            CompletableFuture<String> preview = previews.remove(id);
+            if (preview != null) preview.complete(url);
+        });
         return photo;
     }
 
@@ -494,6 +511,10 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
      */
     private Candidate attempt(RecipeGeneratedImage row, RecipeImageInput input) throws Exception {
         AiImageGenerator.GeneratedImage image = generatorFor(row).generate(row.getImagePrompt());
+        if (image.sourceUrl() != null && row.getId() != null) {
+            CompletableFuture<String> preview = previews.get(row.getId());
+            if (preview != null) preview.complete(image.sourceUrl());
+        }
         row.setModel(image.model());
         row.setCostUsd(round((row.getCostUsd() == null ? 0 : row.getCostUsd()) + image.costUsd()));
         CompletableFuture<Double> check = CompletableFuture.supplyAsync(

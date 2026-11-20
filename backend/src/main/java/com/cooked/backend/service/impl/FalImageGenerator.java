@@ -105,7 +105,7 @@ public class FalImageGenerator implements AiImageGenerator {
         int w = image.path("width").asInt(size);
         int h = image.path("height").asInt(size);
         double cost = Math.round(costPerMegapixel * (w * (double) h / 1_000_000) * 10_000) / 10_000.0;
-        return new GeneratedImage(file.body(), model, cost);
+        return new GeneratedImage(file.body(), model, cost, url);
     }
 
     private <T> HttpResponse<T> send(HttpRequest req, HttpResponse.BodyHandler<T> handler) throws IOException {

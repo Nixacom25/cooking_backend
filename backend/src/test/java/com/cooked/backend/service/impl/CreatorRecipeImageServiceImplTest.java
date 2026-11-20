@@ -189,6 +189,33 @@ class CreatorRecipeImageServiceImplTest {
     }
 
     @Test
+    void clientPhotoLinkServesFalsCopyBeforeTheVerifiedPhotoIsReady() throws Exception {
+        java.util.concurrent.CountDownLatch upload = new java.util.concurrent.CountDownLatch(1);
+        when(fal.generate(anyString())).thenReturn(new AiImageGenerator.GeneratedImage(
+                new byte[]{4, 5}, "fal-ai/flux-2/klein/9b", 0.0063, "https://v3.fal.media/files/x.jpg"));
+        when(cloudinary.uploadBytes(any(), eq("ai-recipes"))).thenAnswer(inv -> {
+            upload.await(5, java.util.concurrent.TimeUnit.SECONDS);
+            return "https://res.cloudinary.com/x/ai.jpg";
+        });
+        CreateRecipeRequest tacos = recipe("Chicken Tacos");
+        tacos.setImage(null);
+
+        service.attachImages(List.of(tacos), user(Role.CLIENT).getEmail());
+        RecipeGeneratedImage row = saved.get(0);
+        when(images.findById(row.getId())).thenReturn(Optional.of(row));
+
+        // Cloudinary still uploading: fal's own copy, not cacheable.
+        assertThat(service.photoLink(row.getId()))
+                .isEqualTo(new CreatorRecipeImageService.PhotoLink("https://v3.fal.media/files/x.jpg", false));
+
+        upload.countDown();
+        long until = System.currentTimeMillis() + 3000;
+        while (row.getCompletedAt() == null && System.currentTimeMillis() < until) Thread.onSpinWait();
+        assertThat(service.photoLink(row.getId()))
+                .isEqualTo(new CreatorRecipeImageService.PhotoLink("https://res.cloudinary.com/x/ai.jpg", true));
+    }
+
+    @Test
     void clientScanPhotoLinkServesTheLibraryPhotoWhenFalFails() throws Exception {
         when(fal.generate(anyString())).thenThrow(new IOException("fal down"));
         CreateRecipeRequest tacos = recipe("Chicken Tacos");
