@@ -16,6 +16,14 @@ public interface IngredientVisualRepository extends JpaRepository<IngredientVisu
 
     Optional<IngredientVisual> findByCanonicalId(String canonicalId);
 
+    /** [name, nameKey, canonicalId] of every enabled visual, without loading the art. */
+    @Query("select v.name, v.nameKey, v.canonicalId from IngredientVisual v where v.enabled = true")
+    List<Object[]> findEnabledNames();
+
+    /** [aliasKey, visual name] of every alias of an enabled visual. */
+    @Query("select a.aliasKey, v.name from IngredientVisual v join v.aliases a where v.enabled = true")
+    List<Object[]> findEnabledAliases();
+
     boolean existsByCanonicalId(String canonicalId);
 
     /** Visuals answering to any of these normalized keys, by name, canonical id or alias. */

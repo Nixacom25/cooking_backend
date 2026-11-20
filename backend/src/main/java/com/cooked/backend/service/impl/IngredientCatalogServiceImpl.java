@@ -331,9 +331,13 @@ public class IngredientCatalogServiceImpl implements IngredientCatalogService {
         return releases.findTopByOrderByVersionDesc().map(IngredientCatalogRelease::getManifest);
     }
 
-    /** JSON the app downloads: every enabled ingredient with art, its aliases and animation. */
+    /**
+     * JSON the app downloads: every enabled ingredient with art, its aliases and animation. Many ingredients share
+     * one drawing ("Fresh basil" uses Basil's), so each SVG is shipped once in {@code art}, keyed by its hash.
+     */
     private String manifest(List<IngredientVisual> list, int version, LocalDateTime publishedAt) {
         Map<String, Object> root = new LinkedHashMap<>();
+        root.put("format", 2);
         root.put("version", version);
         root.put("publishedAt", publishedAt == null ? null : publishedAt.toString());
         root.put("draft", publishedAt == null);
@@ -341,7 +345,9 @@ public class IngredientCatalogServiceImpl implements IngredientCatalogService {
         root.put("defaultAnimation", PRESETS.get(0));
         root.put("count", list.size());
         List<Map<String, Object>> items = new ArrayList<>();
+        Map<String, String> art = new LinkedHashMap<>();
         for (IngredientVisual v : list) {
+            art.putIfAbsent(v.getSvgHash(), v.getSvg());
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", v.getCanonicalId());
             m.put("name", v.getName());
@@ -352,10 +358,10 @@ public class IngredientCatalogServiceImpl implements IngredientCatalogService {
             m.put("animation", v.getAnimation() == null ? PRESETS.get(0) : v.getAnimation());
             m.put("delivery", v.getDelivery().name());
             m.put("hash", v.getSvgHash());
-            m.put("svg", v.getSvg());
             items.add(m);
         }
         root.put("ingredients", items);
+        root.put("art", art);
         try {
             return json.writeValueAsString(root);
         } catch (JsonProcessingException e) {

@@ -41,6 +41,7 @@ public class RecipeController {
     private final TrendingService trendingService;
     private final ProductEventTracker eventTracker;
     private final com.cooked.backend.service.IngredientNameReporter ingredientNames;
+    private final com.cooked.backend.service.IngredientNameResolver ingredientCatalog;
     /** Creators only: AI photos made from each scan recipe (see CreatorRecipeImageService). */
     private final com.cooked.backend.service.CreatorRecipeImageService creatorRecipeImages;
 
@@ -74,6 +75,7 @@ public class RecipeController {
         if (detected != null && detected.getAllowed_ingredients() != null) {
             ingredientNames.report(detected.getAllowed_ingredients().stream().map(i -> i.getName()).toList(),
                     com.cooked.backend.entity.IngredientNameSource.SCAN, auth.getName());
+            detected.setAllowed_ingredients(ingredientCatalog.keepKnown(detected.getAllowed_ingredients()));
         }
         return ResponseEntity.ok(detected);
     }
@@ -93,6 +95,13 @@ public class RecipeController {
             Authentication auth) {
         var scan = eventTracker.track(ProductEventType.SCAN, auth.getName(), "photo",
                 () -> aiService.scan(file, auth.getName()), ProductEventCounts::recipes);
+        if (scan != null && scan.getAllowed_ingredients() != null) {
+            // The AI names what it sees freely: only ingredients the catalog knows are shown,
+            // the others go to the admin "Not in catalog" queue.
+            ingredientNames.report(scan.getAllowed_ingredients().stream().map(i -> i.getName()).toList(),
+                    com.cooked.backend.entity.IngredientNameSource.SCAN, auth.getName());
+            scan.setAllowed_ingredients(ingredientCatalog.keepKnown(scan.getAllowed_ingredients()));
+        }
         attachCreatorImagesBestEffort(scan, auth.getName());
         return ResponseEntity.ok(scan);
     }

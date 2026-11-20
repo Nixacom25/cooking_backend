@@ -190,6 +190,11 @@ class IngredientCatalogFlowTest {
         assertEquals(1, manifest.get("version").asInt());
         assertEquals("ingredient_generic", manifest.get("fallback").asText());
         assertEquals(12, manifest.get("ingredients").size());
+        // every ingredient points at a drawing shipped once in "art"
+        for (JsonNode item : manifest.get("ingredients")) {
+            assertTrue(manifest.get("art").get(item.get("hash").asText()).asText().startsWith("<svg"));
+            assertFalse(item.has("svg"));
+        }
         assertEquals(2, json.readTree(catalog.draftManifest()).get("version").asInt());
         em.flush();
 
