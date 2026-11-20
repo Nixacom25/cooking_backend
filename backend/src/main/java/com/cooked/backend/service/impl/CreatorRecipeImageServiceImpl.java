@@ -132,9 +132,13 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
 
     @Override
     public void attachImages(List<CreateRecipeRequest> recipes, String userEmail) {
-        if (recipes == null || recipes.isEmpty() || !enabled || userEmail == null) return;
+        if (recipes == null || recipes.isEmpty() || userEmail == null) return;
         User user = userRepository.findByEmail(userEmail).orElse(null);
-        if (!isEnabledFor(user)) return;
+        if (clientPhotosEnabledFor(user)) {
+            attachClientPhotos(recipes, user);
+            return;
+        }
+        if (!enabled || !isEnabledFor(user)) return;
 
         UUID scanId = UUID.randomUUID();
         List<CreateRecipeRequest> targets = new ArrayList<>();
@@ -167,6 +171,28 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
         }
     }
 
+    /**
+     * Client scan: fal first. Every recipe gets a fal photo of that exact dish, returned at once as its photo
+     * link (the photo takes a few seconds; the link waits for it). The library photo the recipe had, if any,
+     * is kept as the fallback shown when fal fails. Saving the recipe keeps it ({@link #linkSavedRecipe}).
+     */
+    private void attachClientPhotos(List<CreateRecipeRequest> recipes, User user) {
+        UUID scanId = UUID.randomUUID();
+        for (CreateRecipeRequest recipe : recipes) {
+            if (recipe == null || recipe.getName() == null || recipe.getName().isBlank()) continue;
+            String library = recipe.getImage() == null || recipe.getImage().isBlank() ? null : recipe.getImage();
+            try {
+                RecipeGeneratedImage row = newRow(RecipeImageInput.from(recipe), user.getId(), scanId, null, clientGenerator);
+                row.setFallbackImageUrl(library);
+                row = images.save(row);
+                start(row);
+                recipe.setImage(photoLinkUrl(row.getId()));
+            } catch (Exception e) {
+                log.warn("Could not start the scan photo for '{}', keeping the library photo: {}", recipe.getName(), e.getMessage());
+            }
+        }
+    }
+
     @Override
     public PhotoLink photoLink(UUID id) {
         RecipeGeneratedImage row = images.findById(id).orElse(null);
@@ -193,6 +219,10 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
         }
         if (row.getGenerationStatus() == AiImageGenerationStatus.SUCCEEDED && row.getGeneratedImageUrl() != null) {
             return new PhotoLink(row.getGeneratedImageUrl(), true);
+        }
+        if (isClientRow(row) && row.getFallbackImageUrl() != null && !row.getFallbackImageUrl().isBlank()) {
+            // fal failed: the client sees the library photo kept for this recipe.
+            return new PhotoLink(row.getFallbackImageUrl(), false);
         }
         return new PhotoLink(placeholderUrl, false);
     }
@@ -240,12 +270,13 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
     }
 
     @Override
-    public String startClientPhoto(UUID recipeId, UUID userId, RecipeImageInput input) {
+    public String startClientPhoto(UUID recipeId, UUID userId, RecipeImageInput input, String fallbackImageUrl) {
         if (!clientPhotos || clientGenerator == null || !clientGenerator.available() || recipeId == null
                 || input == null || input.title() == null || input.title().isBlank()) return null;
         try {
             RecipeGeneratedImage row = newRow(input, userId, null, null, clientGenerator);
             row.setRecipeId(recipeId);
+            row.setFallbackImageUrl(fallbackImageUrl);
             RecipeGeneratedImage saved = images.save(row);
             // Started once the recipe (and its link) is committed, so swapLinkOnRecipe can then put the
             // photo itself on the recipe; a link opened earlier starts it too (start() runs it once).
@@ -278,6 +309,7 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
                     images.save(row);
                     // Finished in the meantime: show the photo itself rather than its link.
                     if (row.getGenerationStatus() == AiImageGenerationStatus.SUCCEEDED) swapLinkOnRecipe(row);
+                    else if (row.getGenerationStatus() == AiImageGenerationStatus.FAILED) fallBackOnRecipe(row);
                 });
                 return;
             }
@@ -314,6 +346,11 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
             });
         });
         return row;
+    }
+
+    /** A fal (client) photo: only these fall back to the library photo when they fail. */
+    private boolean isClientRow(RecipeGeneratedImage row) {
+        return generatorFor(row) == clientGenerator && clientGenerator != null;
     }
 
     /** The provider that made [row]: fal rows are client photos, the rest creator photos. */
@@ -405,6 +442,7 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
             log.error("Could not save AI photo record for '{}': {}", row.getRecipeTitle(), e.getMessage());
         }
         if (best != null && best.matches()) swapLinkOnRecipe(row);
+        else fallBackOnRecipe(row);
         return best != null && best.matches() ? best.url() : null;
     }
 
@@ -421,6 +459,24 @@ public class CreatorRecipeImageServiceImpl implements CreatorRecipeImageService 
             });
         } catch (Exception e) {
             log.warn("Could not put AI photo on recipe {}: {}", row.getRecipeId(), e.getMessage());
+        }
+    }
+
+    /** fal failed: a saved recipe still showing [row]'s photo link shows the library photo kept for it. */
+    private void fallBackOnRecipe(RecipeGeneratedImage row) {
+        if (!isClientRow(row) || row.getRecipeId() == null || row.getId() == null
+                || row.getFallbackImageUrl() == null || row.getFallbackImageUrl().isBlank()) return;
+        try {
+            String link = photoLinkUrl(row.getId());
+            recipeRepository.findById(row.getRecipeId()).ifPresent(recipe -> {
+                if (link.equals(recipe.getImage())) {
+                    recipe.setImage(row.getFallbackImageUrl());
+                    recipeRepository.save(recipe);
+                    log.info("AI photo failed for '{}': showing its library photo", recipe.getName());
+                }
+            });
+        } catch (Exception e) {
+            log.warn("Could not put the library photo back on recipe {}: {}", row.getRecipeId(), e.getMessage());
         }
     }
 

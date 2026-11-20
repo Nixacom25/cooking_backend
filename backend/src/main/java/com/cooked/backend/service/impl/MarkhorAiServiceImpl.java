@@ -1001,7 +1001,8 @@ public class MarkhorAiServiceImpl implements AiService {
             prefs.put("grocery_frequency", user.getGroceryFrequency());
             prefs.put("grocery_stores", user.getGroceryStores());
             prefs.put("excited_features", user.getExcitedFeatures());
-            prefs.put("system_instructions", "Be extremely precise and generous in the 'tips' (notes and advice) section for each recipe. Include advice on texture, flavor variations, and storage.");
+            // No extra instructions: the AI service already asks for short, precise tips, and every
+            // added sentence per recipe is scan latency.
             
             body.add("user_preferences", objectMapper.writeValueAsString(prefs));
 
@@ -1059,9 +1060,7 @@ public class MarkhorAiServiceImpl implements AiService {
             // Build an ultra-strict prompt that names the exact allowed ingredients
             String ingredientList = String.join(", ", ingredients);
             String systemInstructions =
-                "Be extremely precise and generous in the 'tips' (notes and advice) section for each recipe. "
-                + "Include advice on texture, flavor variations, and storage. "
-                + "=== ABSOLUTE STRICT RULE === "
+                "=== ABSOLUTE STRICT RULE === "
                 + "The ONLY ingredients you are allowed to use are EXACTLY the ones the user provided: [" + ingredientList + "]. "
                 + "You MUST NOT add, suggest, or assume any other ingredient — including basic pantry staples like oil, salt, pepper, water, butter, garlic, onion, or spices — "
                 + "UNLESS they are explicitly listed by the user. "

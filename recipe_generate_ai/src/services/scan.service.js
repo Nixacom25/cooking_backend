@@ -31,7 +31,7 @@ const JPEG_QUALITY = 80;
 const RECIPE_CALL_OPTIONS = { timeout: 20_000, maxRetries: 1 };
 // Once the first recipe is ready, the others get this long; laggards are dropped
 // so one slow call can never hold the whole scan.
-const STRAGGLER_GRACE_MS = 10_000;
+const STRAGGLER_GRACE_MS = 4_000;
 
 let cachedClient = null;
 const getClient = () => {
@@ -91,19 +91,18 @@ const IDEAS = {
     }),
 };
 
-const DETECTION_SCHEMA = strictObject({
-    ingredients: {
-        type: "array",
-        items: strictObject({
-            ingredient_name: str,
-            category: str,
-            estimated_quantity: str,
-            confidence: { type: "number" },
-            allergen_reason: str,
-        }),
-    },
-    recipe_ideas: IDEAS,
+// Names only: every extra field per ingredient is written ~25 times and output
+// tokens are the scan's latency (23 items: 7.9 s with 5 fields, 2.3 s names only).
+// The allergen field exists only when the user declared allergies.
+const INGREDIENT_LIST = (withAllergens) => ({
+    type: "array",
+    items: withAllergens ? strictObject({ name: str, allergen_reason: str }) : str,
 });
+const detectionSchema = (withAllergens, task) =>
+    strictObject({
+        ...(task !== "ideas" ? { ingredients: INGREDIENT_LIST(withAllergens) } : {}),
+        ...(task !== "ingredients" ? { recipe_ideas: IDEAS } : {}),
+    });
 
 const IDEAS_SCHEMA = strictObject({ feasible: { type: "boolean" }, recipe_ideas: IDEAS });
 
@@ -164,30 +163,33 @@ const IDEA_RULES = (staples) => `- Propose exactly ${RECIPE_COUNT} clearly diffe
 - Favour the user's cuisines, diet, tools and skill level; never use an allergen.
 - description: one appetising sentence. key_ingredients: the listed items the dish relies on.`;
 
-const detectionPrompt = (prefs, language) => `You are a food vision expert. Look at the photo(s) of a fridge, pantry, table or groceries.
-
-TASK 1 - INGREDIENTS
+const INGREDIENTS_TASK = (withAllergens) => `INGREDIENTS
 - List every visible food or drink: every shelf, door, drawer, bowl, jar, bottle, bag and package. Read labels and brands.
 - Name only what the image supports. Never identify an item from colour or shape alone (green onions are not lettuce).
-- A flavoured product is one product (strawberry yogurt = yogurt).
-- If unsure, use a broader honest name ("cheese", "sauce", "vegetables") with a lower confidence (0-1) instead of leaving it out.
-- estimated_quantity: short estimate such as "4 pcs", "500 g", "1 bottle".
-- allergen_reason: if the item contains one of the allergies listed in the USER PROFILE, explain briefly (e.g. "contains peanuts"); otherwise "" (always "" when allergies are "none").
-- Return an empty list ONLY when there is no food at all.
+- Use the plain grocery name of each item, 1 to 3 words, without brand, quantity or notes ("cherry tomatoes", "feta cheese").
+- A flavoured product is one product (strawberry yogurt = yogurt). Each item once.
+- If unsure, use a broader honest name ("cheese", "sauce", "vegetables") instead of leaving it out.
+${withAllergens ? `- allergen_reason: if the item contains one of the allergies listed in the USER PROFILE, explain briefly (e.g. "contains peanuts"); otherwise "".\n` : ""}- Return an empty list ONLY when there is no food at all.`;
 
-TASK 2 - RECIPE IDEAS built from the detected ingredients
+const IDEAS_TASK = `RECIPE IDEAS built from the foods visible in the photo
 ${IDEA_RULES(true)}
-- An item with a non-empty allergen_reason must NOT appear in any idea (title, description or key_ingredients).
+- Never use an item that contains one of the user's allergies (title, description or key_ingredients).
+- key_ingredients: plain grocery names, 1 to 3 words each.`;
+
+/** task: "ingredients", "ideas" or "both" (one call doing both, used for the second look). */
+const detectionPrompt = (prefs, language, withAllergens, task) => `You are a food vision expert. Look at the photo(s) of a fridge, pantry, table or groceries.
+
+${[task !== "ideas" ? INGREDIENTS_TASK(withAllergens) : "", task !== "ingredients" ? IDEAS_TASK : ""].filter(Boolean).join("\n\n")}
 
 ${buildProfile(prefs)}
-${appInstructions(prefs)}
-Write ingredient names, titles and descriptions in ${language}.`;
+${task === "ingredients" ? "" : appInstructions(prefs)}
+Write every name, title and description in ${language}.`;
 
 const SECOND_LOOK_TEXT = `
 SECOND LOOK: a first analysis found no ingredients, which is almost always wrong.
 Examine every area again, including partly hidden, blurry, dark or packaged items, and list every food or drink you can see.`;
 
-const ideasPrompt = (available, prefs, language) => `You are a creative chef.
+const ideasPrompt = (available, prefs, language, staples = false) => `You are a creative chef.
 
 INGREDIENTS: ${available.join(", ")}
 
@@ -196,7 +198,7 @@ FEASIBILITY
   (e.g. only condiments, sauces, drinks or seasonings such as ketchup, mustard, soda, salt). Then return no ideas.
 
 RECIPE IDEAS
-${IDEA_RULES(false)}
+${IDEA_RULES(staples)}
 
 ${buildProfile(prefs)}
 ${appInstructions(prefs)}
@@ -218,10 +220,10 @@ ${buildProfile(prefs)}
 ${appInstructions(prefs)}
 RULES
 - List every ingredient the recipe uses with a precise quantity and unit; never hide one in the steps.
-- 8 to 12 numbered steps ("1. ..."), each concrete: preparation, heat level / oven temperature, timings, doneness checks, assembly and serving.
+- 6 to 10 numbered steps ("1. ..."), each concrete: preparation, heat level / oven temperature, timings, doneness checks, assembly and serving.
 - Respect allergies and dietary preferences strictly.
 - Realistic times in minutes, servings as an integer, kcal_per_serving as an honest estimate.
-- tips: 2-3 precise sentences on texture, a flavour variation and storage.
+- tips: 2 short, precise sentences (texture or a flavour variation, and storage).
 - Write every text value in ${language}.`;
 
 // ----------------------------------------------------------------- calls
@@ -235,29 +237,36 @@ const parseJson = (response) => {
     return JSON.parse(text);
 };
 
-const detect = async (client, model, images, prefs, language, extraText = "") => {
+/** Vision pass. Ingredients come back as { ingredient_name, allergen_reason }. */
+const detect = async (client, model, images, prefs, language, withAllergens, task, extraText = "") => {
     const response = await client.responses.create({
         model,
         input: [
             {
                 role: "user",
                 content: [
-                    { type: "input_text", text: detectionPrompt(prefs, language) + extraText },
+                    { type: "input_text", text: detectionPrompt(prefs, language, withAllergens, task) + extraText },
                     ...images.map((url) => ({ type: "input_image", image_url: url, detail: "high" })),
                 ],
             },
         ],
         ...modelParams(model, 0.2),
         max_output_tokens: 1500,
-        text: jsonSchemaFormat("scan_detection", DETECTION_SCHEMA),
+        text: jsonSchemaFormat("scan_detection", detectionSchema(withAllergens, task)),
     });
-    return parseJson(response);
+    const parsed = parseJson(response);
+    const seen = new Set();
+    parsed.ingredients = (parsed.ingredients || [])
+        .map((i) => (typeof i === "string" ? { name: i, allergen_reason: "" } : i))
+        .map((i) => ({ ingredient_name: String(i.name || "").trim(), allergen_reason: i.allergen_reason || "" }))
+        .filter((i) => i.ingredient_name && !seen.has(i.ingredient_name.toLowerCase()) && seen.add(i.ingredient_name.toLowerCase()));
+    return parsed;
 };
 
-const proposeIdeas = async (client, available, prefs, language) => {
+const proposeIdeas = async (client, available, prefs, language, staples = false) => {
     const response = await client.responses.create({
         model: RECIPE_MODEL,
-        input: ideasPrompt(available, prefs, language),
+        input: ideasPrompt(available, prefs, language, staples),
         ...modelParams(RECIPE_MODEL, 0.8),
         max_output_tokens: 800,
         text: jsonSchemaFormat("recipe_ideas", IDEAS_SCHEMA),
@@ -265,6 +274,12 @@ const proposeIdeas = async (client, available, prefs, language) => {
     const parsed = parseJson(response);
     return parsed.feasible === false ? [] : parsed.recipe_ideas || [];
 };
+
+const proposeIdeasWithStaples = (client, available, prefs, language) =>
+    proposeIdeas(client, available, prefs, language, true).catch((error) => {
+        console.warn(`[scan] fallback ideas failed: ${error?.message}`);
+        return [];
+    });
 
 const writeRecipe = async (client, args) => {
     const response = await client.responses.create({
@@ -341,18 +356,22 @@ export const scanFridge = async (files, prefs = {}) => {
 
     const images = await Promise.all(files.map(toImageDataUrl));
 
-    let detection = null;
-    try {
-        detection = await detect(client, SCAN_MODEL, images, prefs, language);
-    } catch (error) {
-        console.warn(`[scan] detection failed (${SCAN_MODEL}): ${error?.message}`);
-    }
+    // The ingredient list and the recipe ideas are read from the photo side by side
+    // (two short answers in parallel instead of one long one).
+    const [listed, proposed] = await Promise.allSettled([
+        detect(client, SCAN_MODEL, images, prefs, language, hasAllergies, "ingredients"),
+        detect(client, SCAN_MODEL, images, prefs, language, hasAllergies, "ideas"),
+    ]);
+    if (listed.status === "rejected") console.warn(`[scan] detection failed (${SCAN_MODEL}): ${listed.reason?.message}`);
+    if (proposed.status === "rejected") console.warn(`[scan] ideas failed (${SCAN_MODEL}): ${proposed.reason?.message}`);
+    let detection = listed.status === "fulfilled" ? listed.value : null;
+    if (detection) detection.recipe_ideas = proposed.status === "fulfilled" ? proposed.value.recipe_ideas || [] : [];
     // Nothing found (dark fridge, cluttered shelf, odd angle) or failed call:
     // a second, more careful look with another model before giving up.
     if (!hasIngredients(detection)) {
         console.warn(`[scan] no ingredients on first pass, retrying with ${VISION_FALLBACK_MODEL}`);
         try {
-            detection = await detect(client, VISION_FALLBACK_MODEL, images, prefs, language, SECOND_LOOK_TEXT);
+            detection = await detect(client, VISION_FALLBACK_MODEL, images, prefs, language, hasAllergies, "both", SECOND_LOOK_TEXT);
         } catch (error) {
             throw new ApiError(502, error?.message || "Failed to scan image");
         }
@@ -368,14 +387,25 @@ export const scanFridge = async (files, prefs = {}) => {
         throw new ApiError(422, "No ingredients were detected in the uploaded image(s).");
     }
 
-    const ideas = (detection.recipe_ideas || []).slice(0, RECIPE_COUNT);
+    let ideas = (detection.recipe_ideas || []).slice(0, RECIPE_COUNT);
+    if (!ideas.length) {
+        // The ideas call failed or came back empty: ask again from the ingredient names.
+        ideas = (await proposeIdeasWithStaples(client, ingredients.map((i) => i.ingredient_name), prefs, language)).slice(0, RECIPE_COUNT);
+    }
     if (!ideas.length) {
         throw new ApiError(502, "No recipes were generated from the detected ingredients.");
     }
+    // Items an idea relies on that the list missed (both calls read the same photo).
+    const available = [...new Set([
+        ...ingredients.map((i) => i.ingredient_name),
+        ...ideas.flatMap((idea) => idea.key_ingredients || []),
+    ].map((n) => String(n).trim()).filter(Boolean))];
+    const forbidden = restricted.map((i) => i.ingredient_name);
+    const allowedAvailable = available.filter((n) => !forbidden.some((f) => f.toLowerCase() === n.toLowerCase()));
 
     const recipes = await writeRecipes(client, ideas, {
-        available: ingredients.map((i) => i.ingredient_name),
-        forbidden: restricted.map((i) => i.ingredient_name),
+        available: allowedAvailable,
+        forbidden,
         staples: true,
         prefs,
         language,

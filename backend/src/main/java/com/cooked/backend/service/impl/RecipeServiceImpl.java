@@ -366,15 +366,15 @@ public class RecipeServiceImpl implements RecipeService {
             if (aiPhotos) {
                 creatorRecipeImages.linkSavedRecipe(finalSaved.getId(), finalSaved.getImage());
             } else if (clientPhotos) {
-                // Library photo first (free); otherwise a fal photo of this exact dish, shown at once
-                // through its link (ready in a few seconds).
-                if (!recipeImageMatchingService.assignFromLibrary(finalSaved)) {
-                    String link = creatorRecipeImages.startClientPhoto(finalSaved.getId(), user.getId(),
-                            com.cooked.backend.service.dto.RecipeImageInput.from(finalSaved));
-                    if (link != null) {
-                        finalSaved.setImage(link);
-                        finalSaved = recipeRepository.save(finalSaved);
-                    }
+                // fal first: a photo of this exact dish, shown at once through its link (ready in a few
+                // seconds). The library photo is the fallback: kept on the recipe when fal is off or
+                // can't start, and put back if the fal photo fails.
+                String library = recipeImageMatchingService.assignFromLibrary(finalSaved) ? finalSaved.getImage() : null;
+                String link = creatorRecipeImages.startClientPhoto(finalSaved.getId(), user.getId(),
+                        com.cooked.backend.service.dto.RecipeImageInput.from(finalSaved), library);
+                if (link != null) {
+                    finalSaved.setImage(link);
+                    finalSaved = recipeRepository.save(finalSaved);
                 }
             } else {
                 recipeImageMatchingService.matchAndAssignImageAsync(finalSaved.getId());

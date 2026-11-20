@@ -21,7 +21,9 @@ public interface CreatorRecipeImageService {
      * For a creator, replaces every recipe's image with an AI photo of that
      * recipe, generated in parallel. A photo that isn't ready in time gets a
      * link ({@link #photoLink}) that serves it as soon as it is; the recipes
-     * themselves are always kept. Does nothing for other users.
+     * themselves are always kept. For a client, every recipe gets a fal photo,
+     * given at once as its photo link; the library photo it had (if any) is
+     * shown instead when fal fails. Does nothing for other users.
      */
     void attachImages(List<CreateRecipeRequest> recipes, String userEmail);
 
@@ -40,11 +42,13 @@ public interface CreatorRecipeImageService {
     boolean clientPhotosEnabledFor(User user);
 
     /**
-     * A client's saved recipe has no verified library photo: starts a fal (FLUX.2 Klein) photo of that
-     * exact recipe in the background and returns its photo link at once ({@link #photoLink}), which the
-     * recipe can show right away; the photo itself replaces the link when ready. Null when off or failed.
+     * A client's saved recipe: starts a fal (FLUX.2 Klein) photo of that exact recipe in the background
+     * and returns its photo link at once ({@link #photoLink}), which the recipe can show right away; the
+     * photo itself replaces the link when ready. If fal fails, [fallbackImageUrl] (the library photo, may
+     * be null) is shown instead. Null when off or failed to start: the caller keeps the library photo.
      */
-    String startClientPhoto(UUID recipeId, UUID userId, com.cooked.backend.service.dto.RecipeImageInput input);
+    String startClientPhoto(UUID recipeId, UUID userId, com.cooked.backend.service.dto.RecipeImageInput input,
+                            String fallbackImageUrl);
 
     /** A recipe was saved with [imageUrl]: links the AI photo to it, if it is one. */
     void linkSavedRecipe(UUID recipeId, String imageUrl);

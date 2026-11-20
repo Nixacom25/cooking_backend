@@ -96,8 +96,8 @@ class CreatorRecipeImageServiceImplTest {
     }
 
     @Test
-    void attachImages_doesNothingForNonCreators() throws IOException {
-        for (Role role : List.of(Role.CLIENT, Role.ADMIN, Role.EDITOR)) {
+    void attachImages_doesNothingForStaff() throws IOException {
+        for (Role role : List.of(Role.ADMIN, Role.EDITOR)) {
             CreateRecipeRequest r = recipe("Chicken Tacos");
             service.attachImages(List.of(r), user(role).getEmail());
             assertThat(r.getImage()).isEqualTo("https://images.unsplash.com/random");
@@ -105,6 +105,7 @@ class CreatorRecipeImageServiceImplTest {
         verify(generator, never()).generate(anyString());
         verifyNoInteractions(cloudinary);
         assertThat(saved).isEmpty();
+        verify(fal, never()).generate(anyString());
     }
 
     @Test
@@ -132,7 +133,7 @@ class CreatorRecipeImageServiceImplTest {
             Thread.sleep(300); // the recipe gets its link before the photo is ready
             return new AiImageGenerator.GeneratedImage(new byte[]{4, 5}, "fal-ai/flux-2/klein/9b", 0.0063);
         });
-        String link = service.startClientPhoto(recipeId, clientId, input);
+        String link = service.startClientPhoto(recipeId, clientId, input, null);
         stew.setImage(link); // what RecipeServiceImpl does with the link
 
         assertThat(link).startsWith(LINK).endsWith(".jpg");
@@ -154,9 +155,74 @@ class CreatorRecipeImageServiceImplTest {
         service = new CreatorRecipeImageServiceImpl(images, recipes, users, generator, fal, cloudinary, vision,
                 new ObjectMapper(), true, false, 30, 5, 0.5, 4, "https://link.cookedapp.com");
         assertThat(service.startClientPhoto(UUID.randomUUID(), null,
-                new com.cooked.backend.service.dto.RecipeImageInput("Chicken Stew", null, List.of(), List.of(), List.of()))).isNull();
+                new com.cooked.backend.service.dto.RecipeImageInput("Chicken Stew", null, List.of(), List.of(), List.of()), null)).isNull();
         assertThat(saved).isEmpty();
         verify(fal, never()).generate(anyString());
+    }
+
+    @Test
+    void attachImages_givesEveryClientScanRecipeAFalPhotoFirst() throws IOException {
+        User client = user(Role.CLIENT);
+        CreateRecipeRequest frittata = recipe("Italian Herb Veggie Frittata");
+        frittata.setImage(null);
+        CreateRecipeRequest tacos = recipe("Chicken Tacos");
+        tacos.setImage("https://res.cloudinary.com/library/tacos.jpg");
+
+        service.attachImages(List.of(frittata, tacos), client.getEmail());
+
+        assertThat(saved).hasSize(2);
+        assertThat(frittata.getImage()).isEqualTo(LINK + saved.get(0).getId() + ".jpg");
+        assertThat(tacos.getImage()).isEqualTo(LINK + saved.get(1).getId() + ".jpg");
+        assertThat(saved).allSatisfy(row -> {
+            assertThat(row.getImageProvider()).isEqualTo("fal");
+            assertThat(row.getCreatorUserId()).isEqualTo(client.getId());
+        });
+        assertThat(saved.get(1).getFallbackImageUrl()).isEqualTo("https://res.cloudinary.com/library/tacos.jpg");
+        // Let both generations finish before verifying (Mockito verification is not thread-safe).
+        long until = System.currentTimeMillis() + 3000;
+        while (saved.stream().anyMatch(r -> r.getCompletedAt() == null) && System.currentTimeMillis() < until) {
+            Thread.onSpinWait();
+        }
+        assertThat(saved).allSatisfy(row -> assertThat(row.getGenerationStatus()).isEqualTo(AiImageGenerationStatus.SUCCEEDED));
+        verify(fal, times(2)).generate(anyString());
+        verify(generator, never()).generate(anyString());
+    }
+
+    @Test
+    void clientScanPhotoLinkServesTheLibraryPhotoWhenFalFails() throws Exception {
+        when(fal.generate(anyString())).thenThrow(new IOException("fal down"));
+        CreateRecipeRequest tacos = recipe("Chicken Tacos");
+        tacos.setImage("https://res.cloudinary.com/library/tacos.jpg");
+
+        service.attachImages(List.of(tacos), user(Role.CLIENT).getEmail());
+
+        RecipeGeneratedImage row = saved.get(0);
+        when(images.findById(row.getId())).thenReturn(Optional.of(row));
+        assertThat(service.photoLink(row.getId()).url()).isEqualTo("https://res.cloudinary.com/library/tacos.jpg");
+        assertThat(row.getGenerationStatus()).isEqualTo(AiImageGenerationStatus.FAILED);
+    }
+
+    @Test
+    void savedClientRecipeGetsItsLibraryPhotoBackWhenFalFails() throws Exception {
+        java.util.concurrent.CountDownLatch linked = new java.util.concurrent.CountDownLatch(1);
+        when(fal.generate(anyString())).thenAnswer(inv -> {
+            linked.await(2, java.util.concurrent.TimeUnit.SECONDS);
+            throw new IOException("fal down");
+        });
+        UUID recipeId = UUID.randomUUID();
+        com.cooked.backend.entity.Recipe recipe = new com.cooked.backend.entity.Recipe();
+        recipe.setId(recipeId);
+        recipe.setName("Chicken Stew");
+        when(recipes.findById(recipeId)).thenReturn(Optional.of(recipe));
+
+        String link = service.startClientPhoto(recipeId, UUID.randomUUID(),
+                new com.cooked.backend.service.dto.RecipeImageInput("Chicken Stew", null, List.of(), List.of(), List.of()),
+                "https://res.cloudinary.com/library/stew.jpg");
+        recipe.setImage(link);
+        linked.countDown();
+
+        verify(recipes, timeout(5000)).save(recipe);
+        assertThat(recipe.getImage()).isEqualTo("https://res.cloudinary.com/library/stew.jpg");
     }
 
     @Test
