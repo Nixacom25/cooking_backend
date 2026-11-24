@@ -178,16 +178,37 @@ class IngredientCatalogFlowTest {
     }
 
     @Test
+    void appGetsAnAutomaticCatalogUntilTheFirstRelease() throws Exception {
+        assertTrue(catalog.appManifest().isEmpty()); // no art at all: 404, the app keeps its emoji
+        catalog.installStarterPack("cheikh@test.com");
+        em.flush();
+
+        assertTrue(catalog.publishedManifest().isEmpty());
+        JsonNode auto = json.readTree(catalog.appManifest().orElseThrow());
+        assertEquals(1, auto.get("version").asInt()); // above 0, so installed apps take it
+        assertEquals("ingredient_generic", auto.get("fallback").asText());
+        assertEquals(12, auto.get("ingredients").size());
+        assertTrue(auto.get("draft").asBoolean());
+
+        // the first release is numbered above the automatic catalog, so phones replace it
+        assertEquals(2, library(all()).release().nextVersion());
+        assertEquals(2, catalog.publish(null, "cheikh@test.com").version());
+        em.flush();
+        assertEquals(2, json.readTree(catalog.appManifest().orElseThrow()).get("version").asInt());
+        assertFalse(json.readTree(catalog.appManifest().orElseThrow()).get("draft").asBoolean());
+    }
+
+    @Test
     void publishShipsEnabledArtAndBumpsTheVersion() throws Exception {
         assertThrows(BadRequestException.class, () -> catalog.publish(null, "cheikh@test.com"));
         catalog.installStarterPack("cheikh@test.com");
         em.flush();
 
-        IngredientReleaseResponse v1 = catalog.publish("Starter pack", "cheikh@test.com");
-        assertEquals(1, v1.version());
-        assertEquals(12, v1.ingredientCount());
+        IngredientReleaseResponse first = catalog.publish("Starter pack", "cheikh@test.com");
+        assertEquals(2, first.version()); // version 1 is the automatic catalog apps get before any release
+        assertEquals(12, first.ingredientCount());
         JsonNode manifest = json.readTree(catalog.publishedManifest().orElseThrow());
-        assertEquals(1, manifest.get("version").asInt());
+        assertEquals(2, manifest.get("version").asInt());
         assertEquals("ingredient_generic", manifest.get("fallback").asText());
         assertEquals(12, manifest.get("ingredients").size());
         // every ingredient points at a drawing shipped once in "art"
@@ -195,13 +216,13 @@ class IngredientCatalogFlowTest {
             assertTrue(manifest.get("art").get(item.get("hash").asText()).asText().startsWith("<svg"));
             assertFalse(item.has("svg"));
         }
-        assertEquals(2, json.readTree(catalog.draftManifest()).get("version").asInt());
+        assertEquals(3, json.readTree(catalog.draftManifest()).get("version").asInt());
         em.flush();
 
         IngredientLibraryResponse page = library(all());
-        assertEquals(1, page.release().latestVersion());
-        assertEquals(2, page.release().nextVersion());
-        assertEquals(2, catalog.publish(null, "cheikh@test.com").version());
+        assertEquals(2, page.release().latestVersion());
+        assertEquals(3, page.release().nextVersion());
+        assertEquals(3, catalog.publish(null, "cheikh@test.com").version());
         assertEquals(2, catalog.releases().size());
     }
 

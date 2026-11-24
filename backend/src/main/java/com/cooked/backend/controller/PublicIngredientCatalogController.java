@@ -20,10 +20,10 @@ public class PublicIngredientCatalogController {
 
     private final IngredientCatalogService catalog;
 
-    @Operation(summary = "Latest published ingredient manifest (404 before the first publish)")
+    @Operation(summary = "Latest published ingredient manifest; before the first publish, an automatic one (404 only when no ingredient has art)")
     @GetMapping(value = "/public/ingredient-catalog/manifest", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> manifest() {
-        return catalog.publishedManifest()
+        return catalog.appManifest()
                 .map(m -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(10, TimeUnit.MINUTES).cachePublic()).body(m))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

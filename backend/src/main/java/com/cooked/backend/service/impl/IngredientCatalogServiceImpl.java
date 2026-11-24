@@ -86,6 +86,11 @@ public class IngredientCatalogServiceImpl implements IngredientCatalogService {
 
     static final String GENERIC_ID = "ingredient_generic";
     static final int KEPT_MANIFESTS = 5;
+    /**
+     * Version of the automatic catalog the app gets while nothing is published (see {@link #appManifest()}).
+     * The first real release is one above it, so phones that cached the automatic one take the release.
+     */
+    static final int AUTO_VERSION = 1;
     static final int MAX_REUSABLE = 80;
     static final int IMPORT_CHUNK = 250;
     static final int MAX_IMPORT_PER_CALL = 1000;
@@ -138,7 +143,7 @@ public class IngredientCatalogServiceImpl implements IngredientCatalogService {
 
     private IngredientLibraryResponse.Release releaseState() {
         Optional<IngredientCatalogRelease> last = releases.findTopByOrderByVersionDesc();
-        if (last.isEmpty()) return new IngredientLibraryResponse.Release(0, null, null, 0, 1, visuals.count());
+        if (last.isEmpty()) return new IngredientLibraryResponse.Release(0, null, null, 0, AUTO_VERSION + 1, visuals.count());
         IngredientCatalogRelease r = last.get();
         return new IngredientLibraryResponse.Release(r.getVersion(), r.getPublishedAt(), r.getPublishedBy(),
                 r.getIngredientCount(), r.getVersion() + 1, visuals.countByUpdatedAtAfter(r.getPublishedAt()));
@@ -298,7 +303,7 @@ public class IngredientCatalogServiceImpl implements IngredientCatalogService {
     public IngredientReleaseResponse publish(String notes, String adminEmail) {
         List<IngredientVisual> ready = visuals.findPublishable();
         if (ready.isEmpty()) throw new BadRequestException("Nothing to publish: no enabled ingredient has art yet.");
-        int version = releases.findTopByOrderByVersionDesc().map(IngredientCatalogRelease::getVersion).orElse(0) + 1;
+        int version = nextVersion();
         LocalDateTime now = LocalDateTime.now();
         IngredientCatalogRelease release = releases.save(IngredientCatalogRelease.builder()
                 .version(version)
@@ -321,14 +326,30 @@ public class IngredientCatalogServiceImpl implements IngredientCatalogService {
     @Override
     @Transactional(readOnly = true)
     public String draftManifest() {
-        int next = releases.findTopByOrderByVersionDesc().map(IngredientCatalogRelease::getVersion).orElse(0) + 1;
-        return manifest(visuals.findPublishable(), next, null);
+        return manifest(visuals.findPublishable(), nextVersion(), null);
+    }
+
+    private int nextVersion() {
+        return releases.findTopByOrderByVersionDesc().map(IngredientCatalogRelease::getVersion).orElse(AUTO_VERSION) + 1;
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<String> publishedManifest() {
         return releases.findTopByOrderByVersionDesc().map(IngredientCatalogRelease::getManifest);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<String> appManifest() {
+        Optional<String> published = publishedManifest();
+        if (published.isPresent()) return published;
+        // Nothing published yet: the app still shows the drawings (every enabled ingredient with art) instead of emoji.
+        // (A release whose manifest is missing keeps its number, so phones never go back to an older catalog.)
+        Optional<IngredientCatalogRelease> last = releases.findTopByOrderByVersionDesc();
+        List<IngredientVisual> ready = visuals.findPublishable();
+        if (ready.isEmpty()) return Optional.empty();
+        return Optional.of(last.map(r -> manifest(ready, r.getVersion(), r.getPublishedAt())).orElseGet(() -> manifest(ready, AUTO_VERSION, null)));
     }
 
     /**

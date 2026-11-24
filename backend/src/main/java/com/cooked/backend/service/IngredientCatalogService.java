@@ -40,6 +40,9 @@ public interface IngredientCatalogService {
     /** Manifest of the latest published release. */
     Optional<String> publishedManifest();
 
+    /** What the app downloads: the latest release, or while nothing is published an automatic catalog (version 1). */
+    Optional<String> appManifest();
+
     /**
      * Adds up to {@code max} ingredient names of the database the catalog does not resolve yet, as Missing Asset
      * entries (one per normalized name, most used spelling first). Call again while {@code remaining > 0}:
