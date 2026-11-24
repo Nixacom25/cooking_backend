@@ -100,6 +100,8 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/public/creator-applications").permitAll()
                         // Website page views (anonymous counter for Acquisition → Visitors)
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/public/visits").permitAll()
+                        // App onboarding screens (anonymous, one row per install and screen, rate limited)
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/public/onboarding/steps").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/public/ingredient-catalog/manifest").permitAll()
                         // Unsubscribe link of campaign emails (signed per user)
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/public/email/unsubscribe").permitAll()
